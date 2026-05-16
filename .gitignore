@@ -1,6 +1,9 @@
 node_modules/
 dist/
 data/runs/
+data/digests/
+data/history.json
+data/test-history/
 .env
 *.log
 .DS_Store

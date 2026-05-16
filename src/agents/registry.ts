@@ -66,6 +66,14 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     needsWeb: true,
     preflightKeys: ["ecosystem_audit", "briefing"],
   },
+  {
+    id: "self_improve",
+    name: "Self-improvement reflector",
+    promptFile: "self-improve.md",
+    skills: [],
+    needsWeb: false,
+    preflightKeys: ["briefing"],
+  },
 ];
 
 export function getAgent(id: string): AgentDefinition | undefined {

@@ -8,7 +8,8 @@ export type AgentId =
   | "issue_planner"
   | "pr_alignment"
   | "pr_review"
-  | "numerics_research";
+  | "numerics_research"
+  | "self_improve";
 
 export interface AgentDefinition {
   id: AgentId;
