@@ -3,12 +3,26 @@ import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import type { PreflightBundle } from "./types.js";
 
+function hasBriefingScript(root: string): boolean {
+  return existsSync(join(root, "scripts", "agent-briefing.py"));
+}
+
 export function resolveBenchmarksRoot(explicit?: string): string | undefined {
-  if (explicit) return explicit;
+  if (explicit && hasBriefingScript(explicit)) return explicit;
   const env = process.env.BENCHMARKS_ROOT;
-  if (env && existsSync(env)) return env;
-  const sibling = join(process.cwd(), "..", "benchmarks");
-  if (existsSync(join(sibling, "scripts", "agent-briefing.py"))) return sibling;
+  if (env && hasBriefingScript(env)) return env;
+
+  const cwd = process.cwd();
+  if (hasBriefingScript(cwd)) return cwd;
+
+  // Sibling clone: repo/li-cursor-agents next to repo/benchmarks
+  const sibling = join(cwd, "..", "benchmarks");
+  if (hasBriefingScript(sibling)) return sibling;
+
+  // Workspace checkout: git root is benchmarks repo; li-cursor-agents is a subfolder
+  const parent = join(cwd, "..");
+  if (hasBriefingScript(parent)) return parent;
+
   return undefined;
 }
 

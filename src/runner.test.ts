@@ -12,9 +12,11 @@ test("shouldUseMock when CURSOR_MOCK=1", () => {
 
 test("mock agent run produces output file", async () => {
   const cwd = process.cwd();
+  const benchmarksRoot = process.env.BENCHMARKS_ROOT;
   const result = await runAgent({
     agentId: "orchestrator",
     cwd,
+    benchmarksRoot,
     mock: true,
     dryRun: false,
   });

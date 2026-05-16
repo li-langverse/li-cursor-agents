@@ -39,7 +39,7 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
   }
 
   const packageRoot = agentsPackageRoot();
-  const benchmarksRoot = resolveBenchmarksRoot(options.benchmarksRoot ?? options.cwd);
+  const benchmarksRoot = resolveBenchmarksRoot(options.benchmarksRoot);
   const preflight = runPreflight(benchmarksRoot, true);
   const systemPrompt = loadPrompt(packageRoot, definition.promptFile);
   const workCwd = options.cwd || packageRoot;

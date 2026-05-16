@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { loadDotEnv, resolveCursorApiKey } from "../env.js";
+loadDotEnv();
 import { AGENT_REGISTRY } from "../agents/registry.js";
 import { runAgent, shouldUseMock } from "../runner.js";
 import type { AgentId } from "../types.js";
@@ -38,10 +40,10 @@ Usage:
 Agents: ${AGENT_REGISTRY.map((a) => a.id).join(", ")}
 
 Env:
-  CURSOR_API_KEY     Required for real SDK runs
+  CURSOR_API_KEY     Real SDK (also CURSOR_SDK_KEY, CURSOR_SDK)
   CURSOR_MOCK=1      Force mock backend
   BENCHMARKS_ROOT    Path to benchmarks repo for preflight
-  CI=true            Auto-mock without API key
+  CI=true            Auto-mock when no API key
 `);
 }
 

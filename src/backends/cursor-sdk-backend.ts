@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { Agent } from "@cursor/sdk";
+import { resolveCursorApiKey } from "../env.js";
 import type { AgentBackend, AgentDefinition, AgentRunOptions, AgentRunResult } from "../types.js";
 
 export class CursorSdkBackend implements AgentBackend {
@@ -28,9 +29,11 @@ export class CursorSdkBackend implements AgentBackend {
       };
     }
 
-    const apiKey = options.apiKey ?? process.env.CURSOR_API_KEY;
+    const apiKey = options.apiKey ?? resolveCursorApiKey();
     if (!apiKey) {
-      throw new Error("CURSOR_API_KEY required for cursor-sdk backend (use --mock for CI)");
+      throw new Error(
+        "Cursor API key required (set CURSOR_API_KEY, CURSOR_SDK_KEY, or CURSOR_SDK; use --mock for CI)",
+      );
     }
 
     const modelId = options.modelId ?? process.env.CURSOR_MODEL ?? "composer-2";
