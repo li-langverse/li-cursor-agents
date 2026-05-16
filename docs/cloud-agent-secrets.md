@@ -15,10 +15,22 @@ For **overnight SDK runs** in a Cursor Cloud Agent VM, the API key must be in **
 In Cursor → your Cloud / Background Agent settings → **Environment variables**:
 
 ```
-CURSOR_SDK_KEY=<your key from dashboard.integrations>
+CURSOR_SDK=<your key from dashboard.integrations>
 ```
 
-Restart or start a new agent session so the VM inherits it.
+**You must restart the Cloud Agent VM** after adding or changing env vars. Existing VMs do not pick up new secrets (a background `wait-and-overnight` from the old session will never see the key).
+
+After restart, from the agent chat ask to run:
+
+```bash
+cd li-cursor-agents && ./scripts/session-start-sdk.sh
+```
+
+Or manually:
+
+```bash
+./scripts/check-sdk-key.sh && ./scripts/sdk-smoke.sh && ./scripts/overnight-run.sh
+```
 
 ## Option B — `li-cursor-agents/.env` (gitignored)
 

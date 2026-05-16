@@ -9,7 +9,10 @@ log() { echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] $*" | tee -a "$LOG"; }
 
 has_key() {
   [[ -n "${CURSOR_API_KEY:-}${CURSOR_SDK_KEY:-}${CURSOR_SDK:-}" ]] && return 0
-  [[ -f "$ROOT/.env" ]] && grep -qE '^(CURSOR_API_KEY|CURSOR_SDK_KEY|CURSOR_SDK)=' "$ROOT/.env" 2>/dev/null
+  if [[ -f "$ROOT/.env" ]]; then set -a; source "$ROOT/.env"; set +a; fi
+  [[ -n "${CURSOR_API_KEY:-}${CURSOR_SDK_KEY:-}${CURSOR_SDK:-}" ]] && return 0
+  npm run build -s >/dev/null 2>&1 || true
+  node -e "import('./dist/env.js').then(m=>{m.loadDotEnv();process.exit(m.resolveCursorApiKey()?0:1)})" 2>/dev/null
 }
 
 MAX_WAIT_HOURS="${MAX_WAIT_HOURS:-12}"
@@ -24,7 +27,7 @@ for ((i=1; i<=TRIES; i++)); do
     log "API key detected — starting overnight-run"
     exec "$ROOT/scripts/overnight-run.sh"
   fi
-  log "poll $i/$TRIES: no key yet (set CURSOR_SDK_KEY or li-cursor-agents/.env)"
+  log "poll $i/$TRIES: no key (set CURSOR_SDK / CURSOR_SDK_KEY / CURSOR_API_KEY — restart VM after adding)"
   sleep "$INTERVAL_SEC"
 done
 
