@@ -30,10 +30,13 @@ jobs:
 
       - name: Run each agent in mock mode
         run: |
-          for id in orchestrator ecosystem_explorer pr_alignment pr_review numerics_research; do
+          for id in orchestrator ecosystem_explorer implementation_gaps plan_completion issue_planner pr_alignment pr_review pr_merger numerics_research autonomous_researcher benchmark_improver docs_implementer ci_implementer self_improve; do
             echo "==> $id"
             node dist/cli/run-agent.js --agent "$id" --mock
           done
+
+      - name: Run adaptive overnight cycle (mock)
+        run: node dist/cli/overnight-adaptive.js --mock --sleep 0
 
       - name: Verify run artifacts
         run: test -n "$(ls data/runs/*.md 2>/dev/null | head -1)"

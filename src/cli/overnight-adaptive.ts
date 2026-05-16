@@ -186,8 +186,11 @@ function inferNextPriorities(cycle: CycleRecord): string[] {
     }
   }
 
-  const notRun = ["ecosystem_explorer", "implementation_gaps", "numerics_research", "pr_review", "issue_planner"]
-    .filter((id) => !cycle.agentsRun.includes(id));
+  const notRun = [
+    "ecosystem_explorer", "implementation_gaps", "numerics_research",
+    "pr_review", "autonomous_researcher", "benchmark_improver",
+    "docs_implementer", "ci_implementer", "pr_merger", "issue_planner",
+  ].filter((id) => !cycle.agentsRun.includes(id));
   for (const id of notRun.slice(0, 2)) {
     if (!priorities.includes(id)) {
       priorities.push(id);

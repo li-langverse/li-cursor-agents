@@ -8,7 +8,12 @@ export type AgentId =
   | "issue_planner"
   | "pr_alignment"
   | "pr_review"
+  | "pr_merger"
   | "numerics_research"
+  | "autonomous_researcher"
+  | "benchmark_improver"
+  | "docs_implementer"
+  | "ci_implementer"
   | "self_improve";
 
 export interface AgentDefinition {
