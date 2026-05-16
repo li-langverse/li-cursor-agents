@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-mock-agents:
+    runs-on: ubuntu-24.04
+    env:
+      CURSOR_MOCK: "1"
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install and build
+        run: |
+          npm ci
+          npm run build
+
+      - name: Unit tests (mock backend)
+        run: npm test
+
+      - name: Run each agent in mock mode
+        run: |
+          for id in orchestrator ecosystem_explorer pr_alignment pr_review numerics_research; do
+            echo "==> $id"
+            node dist/cli/run-agent.js --agent "$id" --mock
+          done
+
+      - name: Verify run artifacts
+        run: test -n "$(ls data/runs/*.md 2>/dev/null | head -1)"

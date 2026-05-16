@@ -1,0 +1,14 @@
+{
+  "generated_at": "2026-01-01T00:00:00Z",
+  "role": "preflight_for_cursor_agents",
+  "recommended_agents": [
+    { "agent": "ecosystem_explorer", "reason": "fixture: missing std modules" },
+    { "agent": "pr_alignment", "reason": "fixture: open PRs" }
+  ],
+  "ecosystem_explorer": {
+    "missing_std_modules": [
+      { "module": "std.io", "status": "missing", "ph_id": "PH-IO-4" }
+    ]
+  },
+  "pr_program": { "open": 2, "ci_green": 1 }
+}

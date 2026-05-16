@@ -1,0 +1,73 @@
+import type { AgentDefinition } from "../types.js";
+
+/** Maps to benchmarks .cursor/automations/*.md (copied under prompts/). */
+export const AGENT_REGISTRY: AgentDefinition[] = [
+  {
+    id: "orchestrator",
+    name: "Agent orchestrator",
+    promptFile: "agent-orchestrator.md",
+    skills: [],
+    needsWeb: false,
+    preflightKeys: ["briefing"],
+  },
+  {
+    id: "ecosystem_explorer",
+    name: "Ecosystem explorer",
+    promptFile: "ecosystem-explorer.md",
+    skills: ["explore-li-ecosystem"],
+    needsWeb: true,
+    preflightKeys: ["explorer", "ecosystem_audit", "briefing"],
+  },
+  {
+    id: "implementation_gaps",
+    name: "Implementation gaps",
+    promptFile: "implementation-gaps-agent.md",
+    skills: ["explore-li-ecosystem", "audit-plan-completion"],
+    needsWeb: true,
+    preflightKeys: ["plan_audit", "explorer", "issue_triage", "briefing"],
+  },
+  {
+    id: "plan_completion",
+    name: "Plan completion audit",
+    promptFile: "plan-completion-audit.md",
+    skills: ["audit-plan-completion"],
+    needsWeb: false,
+    preflightKeys: ["plan_audit", "briefing"],
+  },
+  {
+    id: "issue_planner",
+    name: "Issue feature planner",
+    promptFile: "issue-feature-planner.md",
+    skills: ["plan-feature-from-issue"],
+    needsWeb: false,
+    preflightKeys: ["issue_triage", "briefing"],
+  },
+  {
+    id: "pr_alignment",
+    name: "PR alignment",
+    promptFile: "pr-alignment-agent.md",
+    skills: ["review-pr-alignment"],
+    needsWeb: false,
+    preflightKeys: ["merge_plan", "pr_program", "briefing"],
+  },
+  {
+    id: "pr_review",
+    name: "PR review",
+    promptFile: "pr-review-agent.md",
+    skills: ["merge-approved-pr", "review-pr-alignment"],
+    needsWeb: false,
+    preflightKeys: ["merge_plan", "pr_program", "briefing"],
+  },
+  {
+    id: "numerics_research",
+    name: "Numerics research",
+    promptFile: "numerics-research-cycle.md",
+    skills: ["research-li-numerics", "numerics-autoresearch"],
+    needsWeb: true,
+    preflightKeys: ["ecosystem_audit", "briefing"],
+  },
+];
+
+export function getAgent(id: string): AgentDefinition | undefined {
+  return AGENT_REGISTRY.find((a) => a.id === id);
+}

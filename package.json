@@ -1,0 +1,28 @@
+{
+  "name": "@li-langverse/cursor-agents",
+  "version": "0.1.0",
+  "description": "Local Cursor SDK agent runner for li-langverse (mock backend for CI)",
+  "type": "module",
+  "license": "Apache-2.0",
+  "bin": {
+    "li-agent": "./dist/cli/run-agent.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "agent": "node dist/cli/run-agent.js",
+    "preflight": "node dist/cli/preflight.js",
+    "list": "node dist/cli/run-agent.js --list",
+    "test": "npm run build && CURSOR_MOCK=1 node --test dist/**/*.test.js",
+    "ci": "npm run build && CURSOR_MOCK=1 npm test && node dist/cli/run-agent.js --agent orchestrator --mock --dry-run"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@cursor/sdk": "^1.0.13"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}
