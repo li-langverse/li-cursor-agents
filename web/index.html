@@ -49,7 +49,7 @@
             </div>
             <div class="panel supervisor-panel">
               <h2>Supervisor log <span id="supervisor-loop-badge" class="badge hidden">loop on</span></h2>
-              <p id="supervisor-loop-meta" class="hint">Start loop from the footer to run agents continuously.</p>
+              <p id="supervisor-loop-meta" class="hint">Footer: Supervisor mode (continuous) or Run all (parallel once).</p>
               <ul id="supervisor-activity" class="activity-feed supervisor-feed"></ul>
             </div>
             <div class="split-panels">
@@ -162,18 +162,9 @@
       <div id="backdrop" class="backdrop hidden"></div>
     </div>
 
-    <footer class="footer-controls">
-      <div class="footer-group">
-        <span class="footer-label">Supervisor</span>
-        <button type="button" id="supervisor-start" class="btn primary sm">Start loop</button>
-        <button type="button" id="supervisor-stop" class="btn danger sm">Stop loop</button>
-        <button type="button" id="tick" class="btn ghost sm">One tick</button>
-      </div>
-      <div class="footer-group">
-        <span class="footer-label">Swarm</span>
-        <button type="button" id="swarm-run-all" class="btn primary sm">Run all</button>
-        <button type="button" id="swarm-stop-all" class="btn danger sm">Stop all</button>
-      </div>
+    <footer class="footer-controls footer-modes">
+      <button type="button" id="mode-supervisor" class="btn primary sm">Supervisor mode</button>
+      <button type="button" id="mode-parallel" class="btn ghost sm">Run all (parallel)</button>
     </footer>
 
     <script src="/app.js" type="module"></script>

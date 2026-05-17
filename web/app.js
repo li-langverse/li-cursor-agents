@@ -281,19 +281,31 @@ function renderSidebar() {
   else if ((rt.active_run_count ?? 0) > 0) label = "agents running";
   pill.textContent = label;
   pill.className = `pill ${label.includes("running") || label.includes("on") ? "running" : "idle"}`;
-  renderFooterControls(loopOn);
+  renderFooterControls(loopOn, rt.active_run_count ?? 0);
 }
 
-function renderFooterControls(loopOn) {
-  const startBtn = $("#supervisor-start");
-  const stopBtn = $("#supervisor-stop");
-  if (startBtn) {
-    startBtn.disabled = loopOn;
-    startBtn.textContent = loopOn ? "Loop running" : "Start loop";
-    startBtn.classList.toggle("active", loopOn);
+function renderFooterControls(loopOn, activeRunCount = 0) {
+  const sup = $("#mode-supervisor");
+  const par = $("#mode-parallel");
+  if (sup) {
+    if (loopOn) {
+      sup.textContent = "Stop supervisor";
+      sup.className = "btn danger sm active";
+    } else {
+      sup.textContent = "Supervisor mode";
+      sup.className = "btn primary sm";
+    }
   }
-  if (stopBtn) {
-    stopBtn.disabled = !loopOn;
+  if (par) {
+    par.disabled = loopOn;
+    par.title = loopOn
+      ? "Stop supervisor mode before running all agents in parallel"
+      : "Spawn every leaf agent in parallel (one process each)";
+    if (!loopOn && activeRunCount > 0) {
+      par.textContent = `Run all (parallel) · ${activeRunCount} running`;
+    } else {
+      par.textContent = "Run all (parallel)";
+    }
   }
 }
 
@@ -316,7 +328,7 @@ function renderSupervisorActivity() {
     if (loopOn) {
       meta.textContent = `Running since ${formatTime(started)} · last completed tick ${lastTick ? formatTime(lastTick) : "pending…"}`;
     } else {
-      meta.textContent = "Start loop from the footer to run agents continuously.";
+      meta.textContent = "Footer: Supervisor mode runs agents on a schedule; Run all (parallel) spawns every leaf agent once.";
     }
   }
 
@@ -853,15 +865,28 @@ $("#refresh").addEventListener("click", refresh);
 $("#refresh-briefing").addEventListener("click", () =>
   postControl("/api/briefing/refresh", $("#refresh-briefing")),
 );
-$("#tick").addEventListener("click", () => postControl("/api/tick", $("#tick"), { label: "Tick" }));
-$("#supervisor-start").addEventListener("click", () =>
-  postControl("/api/supervisor/start", $("#supervisor-start"), { label: "Starting" }),
-);
-$("#supervisor-stop").addEventListener("click", () =>
-  postControl("/api/supervisor/stop", $("#supervisor-stop"), { label: "Stopping" }),
-);
-$("#swarm-run-all").addEventListener("click", () => postControl("/api/swarm/run-all", $("#swarm-run-all")));
-$("#swarm-stop-all").addEventListener("click", () => postControl("/api/swarm/stop-all", $("#swarm-stop-all")));
+$("#mode-supervisor")?.addEventListener("click", async () => {
+  const loopOn = ui.data?.runtime?.supervisor_loop_running;
+  const btn = $("#mode-supervisor");
+  if (loopOn) {
+    await postControl("/api/supervisor/stop", btn, { label: "Stopping" });
+    return;
+  }
+  try {
+    await fetchJson("/api/swarm/stop-all", { method: "POST" });
+  } catch {
+    /* no parallel runs */
+  }
+  await postControl("/api/supervisor/start", btn, { label: "Starting" });
+});
+
+$("#mode-parallel")?.addEventListener("click", async () => {
+  const btn = $("#mode-parallel");
+  if (ui.data?.runtime?.supervisor_loop_running) {
+    await fetchJson("/api/supervisor/stop", { method: "POST" });
+  }
+  await postControl("/api/swarm/run-all", btn, { label: "Spawning" });
+});
 
 $("#backdrop").addEventListener("click", closeDrawers);
 $$(".drawer-close").forEach((btn) => {

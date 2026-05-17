@@ -156,11 +156,8 @@ npm run dashboard
 
 | Button | Action |
 |--------|--------|
-| **Start supervisor** | Background loop: preflight → dispatch agents (fire-and-forget in-process) |
-| **Stop supervisor** | Halt the loop |
-| **Run all agents** | Spawn every leaf agent as a separate process now (parallel) |
-| **Stop all runs** | Kill active agent processes + stop supervisor |
-| **One tick** | Single supervisor pass |
+| **Supervisor mode** | Continuous loop: preflight → up to 3 agents per tick (sequential). Click again to stop. |
+| **Run all (parallel)** | Stops supervisor if on, then spawns every leaf agent in its own process at once. |
 
 Each **leaf/root** card has **Start** / **Stop** / **Resume**. Stop kills a running process and excludes the agent until Resume.
 
