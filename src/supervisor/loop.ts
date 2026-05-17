@@ -22,6 +22,7 @@ import {
 } from "../preflight/agent-kit-sync.js";
 import { rolloutAgentKitPrs } from "../repo-workflow/agent-kit-rollout.js";
 import { buildPrMergerInstruction, mergePlanFromBriefing } from "../preflight/merge-queue.js";
+import { runLocalCiSweepForMergeAgents } from "../local-ci/sweep.js";
 import { runPreflight, resolveBenchmarksRoot } from "../preflight.js";
 import type { AgentRunResult, PreflightBundle } from "../types.js";
 import type { ControlPlaneState, HumanIntervention, QueuedAgentTask } from "../control-plane/types.js";
@@ -63,8 +64,8 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
 
   const benchmarksRoot = resolveBenchmarksRoot(options.benchmarksRoot);
   const preflight: PreflightBundle = runPreflight(benchmarksRoot, options.skipSlowPreflight !== false);
-  const briefing = preflight.briefing;
-  const briefingHash = hashBriefing(briefing);
+  let briefing = preflight.briefing;
+  let briefingHash = hashBriefing(briefing);
   state.last_preflight_at = preflight.generated_at;
   state.last_briefing_hash = briefingHash;
 
@@ -128,6 +129,28 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
       links: ["https://docs.agentron.rocks/concepts/heap/"],
       created_at: new Date().toISOString(),
     });
+  }
+
+  if (benchmarksRoot && tasks.some((t) => ["pr_merger", "pr_reviewer", "pr_alignment"].includes(t.agentId))) {
+    const sweep = runLocalCiSweepForMergeAgents(
+      benchmarksRoot,
+      tasks.map((t) => t.agentId),
+    );
+    if (!sweep.skipped) {
+      pushSupervisorActivity(
+        sweep.ok ? "info" : "warn",
+        sweep.ok
+          ? `local-ci sweep: ${sweep.message.split("\n").slice(-2).join(" ") || "done"}`
+          : `local-ci sweep failed: ${sweep.message.split("\n").slice(-2).join(" ") || "see logs"}`,
+      );
+      const refreshed = runPreflight(benchmarksRoot, true);
+      preflight.briefing = refreshed.briefing;
+      preflight.generated_at = refreshed.generated_at;
+      briefing = refreshed.briefing;
+      briefingHash = hashBriefing(briefing);
+      state.last_briefing_hash = briefingHash;
+      state.last_preflight_at = refreshed.generated_at;
+    }
   }
 
   const skippedUnchanged =

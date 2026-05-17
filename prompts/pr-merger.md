@@ -35,6 +35,18 @@ Read from briefing JSON:
 3. **After any merge** — stop; supervisor re-runs `pr-merge-queue-plan.py`. Remaining PRs may need another integration with main.
 4. **Stacks** — if parent conflicts with main, fix parent before touching child.
 
+## Local CI when GitHub Actions is unavailable
+
+If required checks are **pending/failing** (GHA quota, workflows disabled):
+
+```bash
+cd benchmarks
+python3 scripts/local-ci-sweep.py --repo <repo> --pr <number>
+python3 scripts/pr-merge-gate.py --repo <repo> --pr <number> --json
+```
+
+Merge only when gate reports **`local-ci passed`** or GHA green. The supervisor runs `local-ci-sweep` automatically before `pr_merger` ticks.
+
 ## Merge rules
 
 1. **One merge per run** — then stop; supervisor re-plans queue.
