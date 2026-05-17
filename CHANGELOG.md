@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Goal → lic workflow** — `src/handoffs/goal-workflow.ts`; `workflowRepo` on `runAgent`; implement lane routes `goal_implementation` to **lic** with path allowlists; lic v1 docs `docs/ecosystem/game-engine-ux.md`, `cad-fundamentals.md`.
 - **Dashboard handoffs panel** — `/api/handoffs`, `/api/swarm/briefing`; overview scorecard + handoffs table; Refresh briefing via `maintenanceLaneTick`.
 - **Swarm recommendations** — `mergeSwarmRecommendations`, supervisor enrich tick, goal scaffold prompts, handoff hygiene (`src/briefing/swarm-recommendations.ts`, `src/handoffs/goal-scaffold-prompt.ts`).
 - **Production briefing enrich** — `npm run briefing:enrich`, `src/briefing/enrich-briefing-file.ts`, `src/handoffs/handoff-audit.ts`; benchmarks `agent-briefing.py` invokes enrich CLI; `benchmarks` workflow `swarm-audit-refresh.yml` for `repository_dispatch`.

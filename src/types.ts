@@ -79,6 +79,8 @@ export interface AgentRunOptions {
   apiKey?: string;
   modelId?: string;
   extraInstruction?: string;
+  /** Override repo for guaranteed-push workflow clone (e.g. `lic` for goal implementation). */
+  workflowRepo?: string;
 }
 
 export interface AgentRunCompletionMeta {

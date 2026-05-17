@@ -97,6 +97,7 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
   if (agentUsesGuaranteedPush(definition)) {
     workflowSession = beginRepoWorkflowSession({
       agentId: definition.id,
+      repo: options.workflowRepo,
       dryRun: options.dryRun,
       skipPush: mock || options.dryRun || process.env.LI_REPO_WORKFLOW_SKIP_PUSH === "1",
     });
