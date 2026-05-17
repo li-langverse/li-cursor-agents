@@ -12,6 +12,7 @@ import { loadState, pruneRecentTasks, saveState } from "../control-plane/state.j
 import { buildHeapPlan, parseOrgRoadmapFromBriefing } from "../heap/plan.js";
 import { buildHeapTaskQueue } from "../heap/task-queue.js";
 import { recordTaskRun, shouldSkipDispatch } from "../control-plane/task-queue.js";
+import { buildPrMergerInstruction, mergePlanFromBriefing } from "../preflight/merge-queue.js";
 import { runPreflight, resolveBenchmarksRoot } from "../preflight.js";
 import type { AgentRunResult, PreflightBundle } from "../types.js";
 import type { ControlPlaneState, HumanIntervention, QueuedAgentTask } from "../control-plane/types.js";
@@ -101,12 +102,17 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
       state.supervisor_status = "running_agent";
       saveState(state);
       try {
+        const extraInstruction =
+          task.agentId === "pr_merger"
+            ? buildPrMergerInstruction(mergePlanFromBriefing(briefing))
+            : undefined;
         const result = await runAgent({
           agentId: task.agentId,
           cwd: workCwd,
           benchmarksRoot,
           mock: options.mock,
           dryRun: false,
+          extraInstruction,
         });
         executed.push(result);
         persistRunMeta(task, result, briefingHash);

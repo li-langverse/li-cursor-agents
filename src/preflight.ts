@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import type { PreflightBundle } from "./types.js";
+import { buildPrMergerInstruction, mergePlanFromBriefing } from "./preflight/merge-queue.js";
 
 function hasBriefingScript(root: string): boolean {
   return existsSync(join(root, "scripts", "agent-briefing.py"));
@@ -76,25 +77,49 @@ export function buildUserMessage(
   preflight: PreflightBundle,
   extra?: string,
 ): string {
+  const isMerger = definitionId === "pr_merger";
+  const mergePlan = mergePlanFromBriefing(preflight.briefing);
+
   const lines = [
     `Run the **${definitionId}** agent pass for li-langverse.`,
     "",
     "## Org roadmap (canonical vision)",
     "Follow `org_roadmap` pillars and `master_plan_url` — proof → easy → fast.",
     "",
+  ];
+
+  if (isMerger) {
+    lines.push(buildPrMergerInstruction(mergePlan), "");
+  }
+
+  lines.push(
     "## Preflight JSON (deterministic scripts — already ran)",
     "```json",
     JSON.stringify(preflight.briefing ?? preflight, null, 2).slice(0, 120_000),
     "```",
     "",
     "## Your task",
-    "Follow the system prompt (automation instructions). Produce a markdown digest with:",
-    "- Executive summary (≤8 bullets)",
-    "- Recommended issues/PRs (titles + repos)",
-    "- Deferred items",
-    "",
-    "Do not merge PRs. Do not add GitHub Actions cron.",
-  ];
+  );
+
+  if (isMerger) {
+    lines.push(
+      "Follow the system prompt and **Merge queue** section above.",
+      "- Merge **at most one** PR: `merge_plan.next_merge` only.",
+      "- Use org scripts (`pr-auto-merge.py --dry-run` first); never skip ahead in `merge_sequence`.",
+      "- After merge: note PR in digest; next tick must re-run `pr-merge-queue-plan.py`.",
+      "- Produce digest: what merged (or why nothing merged), updated queue ranks, deferred PRs.",
+    );
+  } else {
+    lines.push(
+      "Follow the system prompt (automation instructions). Produce a markdown digest with:",
+      "- Executive summary (≤8 bullets)",
+      "- Recommended issues/PRs (titles + repos)",
+      "- Deferred items",
+      "",
+      "Do not merge PRs. Do not add GitHub Actions cron.",
+    );
+  }
+
   if (extra) lines.push("", "## Additional instruction", extra);
   return lines.join("\n");
 }

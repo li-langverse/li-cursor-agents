@@ -32,6 +32,8 @@ export class MockBackend implements AgentBackend {
 
     const briefing = extractBriefing(userMessage);
     const recommended = (briefing?.recommended_agents as Array<{ agent: string; reason: string }>) ?? [];
+    const mergePlan = briefing?.merge_plan as Record<string, unknown> | undefined;
+    const nextMerge = mergePlan?.next_merge as Record<string, unknown> | undefined;
     const lines = [
       `# Mock agent run: ${definition.name}`,
       "",
@@ -46,6 +48,15 @@ export class MockBackend implements AgentBackend {
       "## Recommended agents (from briefing)",
       ...recommended.map((r) => `- **${r.agent}**: ${r.reason}`),
       "",
+      ...(definition.id === "pr_merger"
+        ? [
+            "## Merge queue (mock)",
+            nextMerge
+              ? `- Would merge: ${nextMerge.repo}#${nextMerge.number} (${nextMerge.url ?? ""})`
+              : "- No `next_merge` in plan — would skip merge",
+            "",
+          ]
+        : []),
       "## Mock actions (would be agent in production)",
       `1. Execute prompt: \`prompts/${definition.promptFile}\``,
       "2. File up to 3 issues with labels `explorer-finding` / `plan-needed`",
