@@ -1,23 +1,32 @@
 import type { ControlPlaneReport, ControlPlaneState, HumanIntervention } from "../control-plane/types.js";
 import type { HeapPlan } from "../heap/plan.js";
 import { dbEnabled, getSupabase } from "./client.js";
+import { withSupabaseRetry } from "./supabase-retry.js";
 
 export async function loadControlPlaneStateFromDb(): Promise<ControlPlaneState | null> {
   if (!dbEnabled()) return null;
 
-  const { data, error } = await getSupabase().from("control_plane_state").select("payload").eq("id", 1).maybeSingle();
-  if (error) throw new Error(`loadControlPlaneState: ${error.message}`);
-  if (!data?.payload) return null;
-  return data.payload as ControlPlaneState;
+  return withSupabaseRetry("loadControlPlaneState", async () => {
+    const { data, error } = await getSupabase()
+      .from("control_plane_state")
+      .select("payload")
+      .eq("id", 1)
+      .maybeSingle();
+    if (error) throw new Error(`loadControlPlaneState: ${error.message}`);
+    if (!data?.payload) return null;
+    return data.payload as ControlPlaneState;
+  });
 }
 
 export async function saveControlPlaneStateToDb(state: ControlPlaneState): Promise<void> {
   if (!dbEnabled()) return;
 
-  const { error } = await getSupabase()
-    .from("control_plane_state")
-    .upsert({ id: 1, version: state.version, payload: state, updated_at: new Date().toISOString() });
-  if (error) throw new Error(`saveControlPlaneState: ${error.message}`);
+  await withSupabaseRetry("saveControlPlaneState", async () => {
+    const { error } = await getSupabase()
+      .from("control_plane_state")
+      .upsert({ id: 1, version: state.version, payload: state, updated_at: new Date().toISOString() });
+    if (error) throw new Error(`saveControlPlaneState: ${error.message}`);
+  });
 }
 
 export async function saveReportToDb(

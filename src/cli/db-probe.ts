@@ -2,6 +2,7 @@
 /** Smoke-test control-plane DB read path and MCP SQL validator. */
 import { loadRuntimeEnv } from "../env.js";
 import { dbEnabled } from "../db/client.js";
+import { probeSupabaseRest } from "../db/rest-health.js";
 import { schemaMarkdown } from "../db/schema-catalog.js";
 import { runReadOnlyQuery } from "../db/read-query.js";
 
@@ -14,6 +15,14 @@ async function main(): Promise<void> {
   if (!dbEnabled()) {
     console.log("SKIP: Supabase store not configured (LI_CONTROL_PLANE_STORE=disk or missing SUPABASE_URL)");
     process.exit(0);
+  }
+
+  const rest = await probeSupabaseRest();
+  console.log(`REST (PostgREST @ ${process.env.SUPABASE_URL}): ${rest.ok ? "OK" : `FAIL — ${rest.error}`}`);
+  console.log("");
+  if (!rest.ok) {
+    console.error("Fix: npm run db:ensure — REST must be up (port 54321), not only Postgres 54322.");
+    process.exit(1);
   }
 
   const queries = [
