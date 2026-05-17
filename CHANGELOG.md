@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - Dashboard footer: two modes only — **Supervisor mode** (toggle loop) and **Run all (parallel)**.
+- Dashboard shows **cursor-sdk vs mock** in top bar, overview banner, runs table, Activity cards, and run drawer (`sdk_ready` on `/api/status`).
 - **Real Cursor SDK is the default** for dashboard, `agents:keep`, and supervisor; `CURSOR_MOCK=1` only in `npm test` / CI / `--mock`. Production scripts `unset CURSOR_MOCK` after loading `.env`.
 
 ### Fixed

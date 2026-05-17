@@ -125,12 +125,18 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       supervisor_loop_running: isSupervisorLoopRunning(),
       store: dbEnabled() ? "supabase" : "disk",
       agent_backend: agentBackendLabel(),
+      sdk_ready: agentBackendLabel() === "cursor-sdk" && Boolean(resolveCursorApiKey()),
     });
     return;
   }
 
   if (url.pathname === "/api/runtime") {
-    json(res, 200, { ...runtime, agent_backend: agentBackendLabel() });
+    const backend = agentBackendLabel();
+    json(res, 200, {
+      ...runtime,
+      agent_backend: backend,
+      sdk_ready: backend === "cursor-sdk" && Boolean(resolveCursorApiKey()),
+    });
     return;
   }
 

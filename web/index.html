@@ -33,6 +33,7 @@
           </div>
           <div class="topbar-right">
             <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+            <span id="backend-pill" class="backend-pill sdk" title="Agent execution backend">cursor-sdk</span>
             <span id="status-pill" class="pill idle">loading</span>
             <span id="updated" class="updated"></span>
             <button type="button" id="refresh-briefing" class="btn ghost sm" title="Re-run agent-briefing.py">Refresh briefing</button>
@@ -42,6 +43,7 @@
 
         <main class="main-views">
           <section id="view-overview" class="view active" aria-label="Overview">
+            <div id="backend-banner" class="backend-banner hidden" role="alert" aria-live="polite"></div>
             <div class="stat-cards" id="stat-cards"></div>
             <div class="panel" id="gaps-panel" hidden>
               <h2>Implementation &amp; deliverable gaps</h2>
@@ -78,6 +80,7 @@
                     <tr>
                       <th>Agent</th>
                       <th>Status</th>
+                      <th>Backend</th>
                       <th>When</th>
                       <th>Preview</th>
                     </tr>

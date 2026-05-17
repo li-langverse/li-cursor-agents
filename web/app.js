@@ -81,6 +81,53 @@ function statusDot(status) {
   return `<span class="status-dot ${escAttr(status)}"></span>${esc(statusLabel(status))}`;
 }
 
+function runBackendLabel(run) {
+  return run?.backend ?? run?.run_input?.backend ?? null;
+}
+
+function backendBadge(backend) {
+  const b = backend ?? "cursor-sdk";
+  const mock = b === "mock";
+  return `<span class="backend-badge ${mock ? "mock" : "sdk"}">${esc(b)}</span>`;
+}
+
+function renderAgentBackendUi() {
+  const status = ui.data?.status ?? {};
+  const agentBackend = status.agent_backend ?? ui.data?.runtime?.agent_backend ?? "cursor-sdk";
+  const sdkReady = Boolean(status.sdk_ready);
+
+  const pill = $("#backend-pill");
+  if (pill) {
+    pill.textContent = agentBackend;
+    pill.className = `backend-pill backend-badge ${agentBackend === "mock" ? "mock" : "sdk"}`;
+    pill.title =
+      agentBackend === "mock"
+        ? "Mock backend — no real LLM, tools, or web search"
+        : sdkReady
+          ? "Cursor SDK — real agent runs (LLM + tools)"
+          : "Cursor SDK selected but CURSOR_API_KEY missing";
+  }
+
+  const banner = $("#backend-banner");
+  if (!banner) return;
+  if (agentBackend === "mock") {
+    banner.className = "backend-banner warn";
+    banner.hidden = false;
+    banner.innerHTML =
+      "<strong>Mock mode</strong> — runs do not use the Cursor SDK or web search. Put <code>CURSOR_API_KEY</code> in <code>li-cursor-agents/.env</code> and restart the dashboard (<code>npm run agents:keep</code>).";
+  } else if (!sdkReady) {
+    banner.className = "backend-banner error";
+    banner.hidden = false;
+    banner.innerHTML =
+      "<strong>Missing API key</strong> — add <code>CURSOR_API_KEY</code> to <code>li-cursor-agents/.env</code>, then restart the dashboard.";
+  } else {
+    banner.className = "backend-banner ok";
+    banner.hidden = false;
+    banner.innerHTML =
+      "<strong>Cursor SDK active</strong> — Supervisor mode and Run all (parallel) use real agents (LLM, file edits, tools, web when required).";
+  }
+}
+
 function agentStatusMap(roster, report, runtime, statusPayload) {
   const map = new Map();
   const activeRuns = runtime?.active_runs ?? [];
@@ -203,7 +250,7 @@ function renderActivityCard(item, { compact = false } = {}) {
           <span class="status-pill sm ${escAttr(status)}">${esc(statusLabel(status))}</span>
           <span class="time">${formatTime(item.started_at)}</span>
         </div>
-        <span class="action-chips">${esc(item.action_summary ?? "—")}</span>
+        <span class="action-chips">${backendBadge(runBackendLabel(item))} ${esc(item.action_summary ?? "—")}</span>
       </header>
       ${compact ? `<p class="action-preview">${esc(preview)}</p>` : ""}
       ${renderActionDrilldowns(item, { compact })}
@@ -259,6 +306,8 @@ function renderSidebar() {
 
   const store = rt.store ?? status?.store ?? "disk";
   const agentBackend = status?.agent_backend ?? rt.agent_backend ?? "cursor-sdk";
+  const sup = report?.supervisor ?? {};
+  const st = status?.state ?? {};
   const loopOn = Boolean(rt.supervisor_loop_running);
   const loopStarted = rt.supervisor_loop_started_at ?? st.supervisor_loop_started_at;
   $("#sidebar-stats").innerHTML = `
@@ -272,8 +321,6 @@ function renderSidebar() {
       <dt>Briefing</dt><dd title="${escAttr(report?.briefing_hash ?? "")}">${esc((report?.briefing_hash ?? "—").slice(0, 12))}</dd>
     </dl>`;
 
-  const sup = report?.supervisor ?? {};
-  const st = status?.state ?? {};
   const pill = $("#status-pill");
   let label = sup.status ?? st.supervisor_status ?? "idle";
   if (rt.current_supervisor_agent) label = `running ${rt.current_supervisor_agent}`;
@@ -429,7 +476,7 @@ function renderRunsTable() {
   const tbody = $("#runs-table-body");
   const runs = runsPayload?.runs ?? [];
   if (!runs.length) {
-    tbody.innerHTML = '<tr><td colspan="4" class="empty">No runs yet</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">No runs yet</td></tr>';
     return;
   }
   tbody.innerHTML = runs
@@ -439,6 +486,7 @@ function renderRunsTable() {
     <tr data-open-run="${escAttr(r.run_id)}" data-agent="${escAttr(r.agent_id)}">
       <td class="mono">${esc(r.agent_id)}</td>
       <td>${statusDot(r.live ? "running" : r.status)}</td>
+      <td>${backendBadge(runBackendLabel(r))}</td>
       <td>${esc(formatTime(r.started_at))}</td>
       <td class="preview">${esc((r.output_preview ?? "").replace(/\s+/g, " ").slice(0, 80))}</td>
     </tr>`,
@@ -755,9 +803,10 @@ async function openRunDrawer(runId) {
   $("#drawer-run-output").textContent = "Loading…";
   try {
     const detail = await fetchJson(`/api/runs/${encodeURIComponent(runId)}`);
+    const runBackend = runBackendLabel(detail) ?? ui.data?.status?.agent_backend ?? "cursor-sdk";
     $("#drawer-run-header").innerHTML = `
       <div>
-        <h2><code>${esc(detail.agent_id)}</code></h2>
+        <h2><code>${esc(detail.agent_id)}</code> ${backendBadge(runBackend)}</h2>
         <p class="sub">${esc(statusLabel(detail.live ? "running" : detail.status))} · ${formatTime(detail.started_at)}</p>
       </div>`;
     const traceHtml = renderRunTrace(detail);
@@ -780,6 +829,7 @@ async function refresh() {
   try {
     await loadDashboard();
     renderSidebar();
+    renderAgentBackendUi();
     renderSupervisorActivity();
     renderStatCards();
     renderLiveActivity();
