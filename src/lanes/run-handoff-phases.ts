@@ -4,7 +4,13 @@ import { researchLaneTick } from "./research-lane.js";
 import type { ActiveAgentRun } from "../control-plane/types.js";
 import type { AgentId } from "../types.js";
 
+export interface HandoffPhaseTick {
+  phase: "research" | "placement" | "implement";
+  tick: Awaited<ReturnType<typeof researchLaneTick>>;
+}
+
 export interface HandoffPhaseResult {
+  phases: HandoffPhaseTick[];
   research?: Awaited<ReturnType<typeof researchLaneTick>>;
   implement?: Awaited<ReturnType<typeof implementLaneTick>>;
   spawned: ActiveAgentRun[];
@@ -19,26 +25,29 @@ export async function runHandoffPhasedSwarm(options?: {
   mock?: boolean;
 }): Promise<HandoffPhaseResult> {
   const mock = options?.mock ?? false;
+  const phases: HandoffPhaseTick[] = [];
+
   const research = await researchLaneTick({ mock });
-  const implementAfterResearch = await implementLaneTick({ mock });
+  phases.push({ phase: "research", tick: research });
 
-  const pendingPlacement = await listHandoffs({
-    status: "pending_placement",
-    limit: 5,
-  });
-  let implement = implementAfterResearch;
-  if (pendingPlacement.length > 0 && implementAfterResearch.skipped) {
-    implement = await implementLaneTick({ mock });
-  }
-  if (
-    implement.status &&
-    !implement.skipped &&
-    (await listHandoffs({ status: "pending", toAgent: "code_implementer", limit: 1 })).length
-  ) {
-    implement = await implementLaneTick({ mock });
+  let implement = await implementLaneTick({ mock });
+  phases.push({ phase: "placement", tick: implement });
+
+  const pendingPlacement = await listHandoffs({ status: "pending_placement", limit: 5 });
+  if (pendingPlacement.length > 0) {
+    const placement = await implementLaneTick({ mock });
+    phases.push({ phase: "placement", tick: placement });
+    implement = placement;
   }
 
-  return { research, implement, spawned: [], skipped: [] };
+  const ready = await listHandoffs({ status: "pending", toAgent: "code_implementer", limit: 1 });
+  if (ready.length > 0) {
+    const impl = await implementLaneTick({ mock });
+    phases.push({ phase: "implement", tick: impl });
+    implement = impl;
+  }
+
+  return { phases, research, implement, spawned: [], skipped: [] };
 }
 
 /** Legacy parallel spawn — used when handoff phases disabled. */

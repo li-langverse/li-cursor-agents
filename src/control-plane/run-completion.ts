@@ -1,5 +1,6 @@
 import { readFileSync, existsSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
+import type { AgentRunTrace } from "../agent-run-trace.js";
 import type { AgentDefinition } from "../types.js";
 
 export interface AgentRunCompletion {
@@ -65,10 +66,22 @@ export interface AuditRunCompletionInput {
   backend: string;
   mock?: boolean;
   rolloutPrUrls?: string[];
+  trace?: AgentRunTrace;
+}
+
+const TRUSTED_LEAN_RE = /trusted\.lean/i;
+const TRUSTED_APPROVED_RE = /trusted-change-approved|trusted_change_approved/i;
+
+export function outputTouchesTrustedLean(text: string, trace?: AgentRunTrace): boolean {
+  if (TRUSTED_LEAN_RE.test(text)) return true;
+  for (const edit of trace?.file_edits ?? []) {
+    if (TRUSTED_LEAN_RE.test(edit.path)) return true;
+  }
+  return false;
 }
 
 export function auditRunCompletion(input: AuditRunCompletionInput): AgentRunCompletion {
-  const { agentId, definition, outputText, backend, mock, rolloutPrUrls } = input;
+  const { agentId, definition, outputText, backend, mock, rolloutPrUrls, trace } = input;
   const gaps: string[] = [];
   const evidence: string[] = [];
   const pr_urls = [...new Set([...extractPrUrls(outputText), ...(rolloutPrUrls ?? [])])];
@@ -117,6 +130,14 @@ export function auditRunCompletion(input: AuditRunCompletionInput): AgentRunComp
     } else {
       gaps.push("numerics PR claimed but no test/bench evidence in agent output — verify PR files in review");
     }
+  }
+
+  if (
+    (agentId === "code_implementer" || agentId === "package_architect") &&
+    outputTouchesTrustedLean(outputText, trace) &&
+    !TRUSTED_APPROVED_RE.test(outputText)
+  ) {
+    gaps.push("trusted.lean touched without trusted-change-approved in deliverable");
   }
 
   if (hasDeliverableSection(outputText)) {

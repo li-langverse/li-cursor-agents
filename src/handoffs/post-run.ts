@@ -1,4 +1,5 @@
 import { createHandoff, listHandoffs, updateHandoff } from "./handoff-store.js";
+import { applyPlacementDecision } from "./placement-governance.js";
 import { validateNorthStarFit, validatePackagePlacement } from "./placement-validator.js";
 import type { PackagePlacement } from "./types.js";
 import {
@@ -103,11 +104,7 @@ export async function applyPackageArchitectPostRun(result: AgentRunResult): Prom
   const target = pending[0];
   if (!target) return;
 
-  await updateHandoff(target.handoff_id, {
-    package_placement: placement,
-    status: "pending",
-    work: { ...target.work, placement_decided_at: new Date().toISOString() },
-  });
+  await applyPlacementDecision(target.handoff_id, placement, target);
 }
 
 export async function applySwarmPostRunEffects(

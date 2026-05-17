@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://li-langverse.github.io/schemas/agent-handoff.v1.json",
+  "title": "AgentHandoff",
+  "type": "object",
+  "required": ["handoff_id", "from_agent", "to_agents", "status", "work"],
+  "properties": {
+    "handoff_id": { "type": "string", "format": "uuid" },
+    "research_goal_id": { "type": "string" },
+    "from_agent": { "type": "string" },
+    "to_agents": { "type": "array", "items": { "type": "string" } },
+    "status": {
+      "enum": ["pending_placement", "pending", "claimed", "done", "failed", "issue_only"]
+    },
+    "domains": { "type": "array", "items": { "type": "string" } },
+    "north_star_fit": { "type": "string", "minLength": 12 },
+    "package_placement": { "$ref": "#/$defs/package_placement" },
+    "work": { "type": "object" },
+    "research_session_id": { "type": "string" },
+    "briefing_hash": { "type": "string" },
+    "source_run_id": { "type": "string" }
+  },
+  "$defs": {
+    "package_placement": {
+      "type": "object",
+      "required": ["action", "target", "rationale"],
+      "properties": {
+        "action": {
+          "enum": [
+            "extend_existing",
+            "create_monorepo",
+            "create_official",
+            "extend_std",
+            "issue_only"
+          ]
+        },
+        "target": { "type": "string" },
+        "path": { "type": "string" },
+        "pkg_id": { "type": "string", "pattern": "^PKG-" },
+        "rationale": { "type": "string" },
+        "alternatives_considered": { "type": "array" },
+        "decided_by": { "type": "string" },
+        "run_id": { "type": "string" }
+      }
+    }
+  }
+}

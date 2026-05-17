@@ -47,6 +47,7 @@ export function finalizeAgentRun(
     backend: result.backend,
     mock: result.backend === "mock",
     rolloutPrUrls: options?.rolloutPrUrls,
+    trace: result.trace,
   });
   if (options?.extraEvidence?.length) {
     completion.evidence = [...new Set([...completion.evidence, ...options.extraEvidence])];

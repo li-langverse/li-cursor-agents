@@ -25,5 +25,5 @@ test("handoff store disk fallback: create and list", async () => {
   const updated = await updateHandoff(h.handoff_id, { status: "pending" });
   assert.equal(updated?.status, "pending");
 
-  rmSync(dir, { recursive: true, force: true });
+  await updateHandoff(h.handoff_id, { status: "done", completed_at: new Date().toISOString() });
 });
