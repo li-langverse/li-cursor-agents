@@ -1,0 +1,29 @@
+{
+  "generated_at": "2026-05-17T12:00:00Z",
+  "role": "preflight_for_cursor_agents",
+  "note": "E2E fixture — deterministic swarm handoff",
+  "preflight_runs": {
+    "ecosystem_audit": { "exit_code": 0 }
+  },
+  "recommended_agents": [
+    { "agent": "pr_alignment", "reason": "e2e: open PRs need alignment first" },
+    { "agent": "gap_explorer", "reason": "e2e: missing std modules second" }
+  ],
+  "pr_program": {
+    "open": 1,
+    "all_open": [
+      {
+        "repo": "roadmap",
+        "number": 99,
+        "title": "e2e governance PR",
+        "url": "https://github.com/li-langverse/roadmap/pull/99",
+        "merge_approved": true,
+        "gate_ready_with_approval": false,
+        "gate_blockers_if_approved": ["governance_repo: roadmap requires human merge"]
+      }
+    ]
+  },
+  "ecosystem_explorer": {
+    "missing_std_modules": [{ "module": "std.io", "status": "missing", "ph_id": "PH-IO-4" }]
+  }
+}

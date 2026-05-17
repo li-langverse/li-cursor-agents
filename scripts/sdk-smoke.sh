@@ -6,7 +6,7 @@ cd "$ROOT"
 [[ -f "$ROOT/.env" ]] && set -a && source "$ROOT/.env" && set +a
 npm run build -s
 node --input-type=module <<'EOF'
-import { loadDotEnv, resolveCursorApiKey } from "./dist/env.js";
+import { loadDotEnv, resolveCursorApiKey, resolveCursorModelId } from "./dist/env.js";
 import { Agent } from "@cursor/sdk";
 loadDotEnv();
 const key = resolveCursorApiKey();
@@ -17,7 +17,7 @@ if (!key) {
 console.log("OK: API key resolved");
 const agent = await Agent.create({
   apiKey: key,
-  model: { id: process.env.CURSOR_MODEL || "composer-2" },
+  model: { id: resolveCursorModelId() },
   local: { cwd: process.cwd() },
 });
 try {

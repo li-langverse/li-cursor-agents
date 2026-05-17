@@ -1,0 +1,106 @@
+{
+  "generated_at": "2026-05-17T12:00:00Z",
+  "role": "preflight_for_cursor_agents",
+  "note": "E2E fixture \u2014 deterministic swarm handoff",
+  "preflight_runs": {
+    "ecosystem_audit": {
+      "exit_code": 0
+    }
+  },
+  "recommended_agents": [
+    {
+      "agent": "pr_alignment",
+      "reason": "e2e: open PRs need alignment first"
+    },
+    {
+      "agent": "gap_explorer",
+      "reason": "e2e: missing std modules second"
+    }
+  ],
+  "pr_program": {
+    "open": 1,
+    "all_open": [
+      {
+        "repo": "roadmap",
+        "number": 99,
+        "title": "e2e governance PR",
+        "url": "https://github.com/li-langverse/roadmap/pull/99",
+        "merge_approved": true,
+        "gate_ready_with_approval": false,
+        "gate_blockers_if_approved": [
+          "governance_repo: roadmap requires human merge"
+        ]
+      }
+    ]
+  },
+  "ecosystem_explorer": {
+    "missing_std_modules": [
+      {
+        "module": "std.io",
+        "status": "missing",
+        "ph_id": "PH-IO-4"
+      }
+    ]
+  },
+  "org_roadmap": {
+    "loaded_at": "2026-05-17T09:20Z",
+    "vision_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/vision-and-roadmap.md",
+    "engineering_standards_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/engineering-standards.md",
+    "master_plan_url": "https://github.com/li-langverse/lic/blob/main/docs/superpowers/plans/2026-05-14-li-master-plan.md",
+    "pillars": [
+      "easy",
+      "ai-first",
+      "secure",
+      "provable",
+      "blazingly-fast"
+    ],
+    "current_ph": "PH-7e (e2e fixture)",
+    "master_plan_open_items": 0
+  },
+  "heap_plan": {
+    "version": 1,
+    "model": "agentron-heap-v1",
+    "reference": "https://docs.agentron.rocks/concepts/heap/",
+    "priority_order": [
+      "coord_pull_requests",
+      "coord_ecosystem"
+    ],
+    "layers": [
+      {
+        "coordinator": "coord_pull_requests",
+        "name": "PR coordinator",
+        "agents": [
+          {
+            "agent": "pr_alignment",
+            "reason": "e2e: open PRs need alignment first"
+          }
+        ]
+      },
+      {
+        "coordinator": "coord_ecosystem",
+        "name": "Ecosystem coordinator",
+        "agents": [
+          {
+            "agent": "gap_explorer",
+            "reason": "e2e: missing std modules second"
+          }
+        ]
+      }
+    ],
+    "flat_tasks": [
+      {
+        "coordinator": "coord_pull_requests",
+        "agent": "pr_alignment",
+        "reason": "e2e: open PRs need alignment first",
+        "priority": 10
+      },
+      {
+        "coordinator": "coord_ecosystem",
+        "agent": "gap_explorer",
+        "reason": "e2e: missing std modules second",
+        "priority": 40
+      }
+    ],
+    "validation_errors": []
+  }
+}

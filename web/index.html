@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Li Agent Control Plane</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Navigation">
+        <div class="brand">
+          <span class="brand-mark">Li</span>
+          <span class="brand-title">Agent Swarm</span>
+        </div>
+        <nav class="nav" id="nav">
+          <button type="button" class="nav-item active" data-view="overview">Overview</button>
+          <button type="button" class="nav-item" data-view="agents">Agents</button>
+          <button type="button" class="nav-item" data-view="heap">Heap plan</button>
+          <button type="button" class="nav-item" data-view="interventions">
+            Interventions <span id="nav-intervention-count" class="nav-badge hidden">0</span>
+          </button>
+        </nav>
+        <div class="sidebar-stats" id="sidebar-stats"></div>
+      </aside>
+
+      <div class="content-column">
+        <header class="topbar">
+          <div class="topbar-left">
+            <h1 id="view-title">Overview</h1>
+            <p id="view-subtitle" class="view-subtitle">Swarm status at a glance</p>
+          </div>
+          <div class="topbar-right">
+            <span id="status-pill" class="pill idle">loading</span>
+            <span id="updated" class="updated"></span>
+            <button type="button" id="refresh-briefing" class="btn ghost sm" title="Re-run agent-briefing.py">Refresh briefing</button>
+            <button type="button" id="refresh" class="btn ghost" title="Refresh UI">↻</button>
+          </div>
+        </header>
+
+        <main class="main-views">
+          <section id="view-overview" class="view active" aria-label="Overview">
+            <div class="stat-cards" id="stat-cards"></div>
+            <div class="panel" id="gaps-panel" hidden>
+              <h2>Implementation &amp; deliverable gaps</h2>
+              <ul id="gaps-list" class="simple-list"></ul>
+            </div>
+            <div class="split-panels">
+              <div class="panel">
+                <h2>Live activity</h2>
+                <ul id="live-activity" class="activity-feed"></ul>
+              </div>
+              <div class="panel">
+                <h2>Recommended this briefing</h2>
+                <ul id="queue" class="simple-list"></ul>
+              </div>
+            </div>
+            <div class="panel">
+              <h2>Recent runs</h2>
+              <div class="table-wrap">
+                <table class="data-table" id="runs-table">
+                  <thead>
+                    <tr>
+                      <th>Agent</th>
+                      <th>Status</th>
+                      <th>When</th>
+                      <th>Preview</th>
+                    </tr>
+                  </thead>
+                  <tbody id="runs-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="view-agents" class="view" aria-label="Agents" hidden>
+            <div class="toolbar">
+              <div class="filter-chips" id="agent-filters">
+                <button type="button" class="chip active" data-filter="all">All</button>
+                <button type="button" class="chip" data-filter="running">Running</button>
+                <button type="button" class="chip" data-filter="queued">Queued</button>
+                <button type="button" class="chip" data-filter="stopped">Stopped</button>
+                <button type="button" class="chip" data-filter="idle">Idle</button>
+              </div>
+              <input type="search" id="agent-search" class="search" placeholder="Search agents…" />
+            </div>
+            <div class="table-wrap">
+              <table class="data-table data-table-agents">
+                <thead>
+                  <tr>
+                    <th>Agent</th>
+                    <th>Status</th>
+                    <th>Coordinator</th>
+                    <th>Current task</th>
+                    <th>Last run</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="agents-table-body"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="view-heap" class="view" aria-label="Heap plan" hidden>
+            <p class="hint">
+              Sub-coordinators route leaf agents (max 10 each).
+              <a href="https://docs.agentron.rocks/concepts/heap/" target="_blank" rel="noopener">Heap docs</a>
+            </p>
+            <dl id="roadmap-meta" class="meta compact"></dl>
+            <div id="heap-layers" class="heap-layers"></div>
+          </section>
+
+          <section id="view-interventions" class="view" aria-label="Interventions" hidden>
+            <p class="hint">P0 = act now. Agents never self-merge roadmap governance.</p>
+            <ul id="interventions" class="intervention-list"></ul>
+          </section>
+        </main>
+      </div>
+
+      <aside id="agent-drawer" class="drawer" aria-label="Agent detail" hidden>
+        <header class="drawer-header">
+          <button type="button" class="btn icon drawer-close" data-close="agent" aria-label="Close">×</button>
+          <div id="drawer-agent-header"></div>
+        </header>
+        <div class="drawer-body" id="drawer-agent-body">
+          <p class="empty">Select an agent to see live status and output.</p>
+        </div>
+      </aside>
+
+      <aside id="run-drawer" class="drawer drawer-output" aria-label="Run output" hidden>
+        <header class="drawer-header">
+          <button type="button" class="btn icon drawer-close" data-close="run" aria-label="Close">×</button>
+          <div id="drawer-run-header"></div>
+        </header>
+        <div class="drawer-body">
+          <pre id="drawer-run-output" class="run-output"></pre>
+        </div>
+      </aside>
+      <div id="backdrop" class="backdrop hidden"></div>
+    </div>
+
+    <footer class="footer-controls">
+      <div class="footer-group">
+        <span class="footer-label">Supervisor</span>
+        <button type="button" id="supervisor-start" class="btn primary sm">Start loop</button>
+        <button type="button" id="supervisor-stop" class="btn danger sm">Stop loop</button>
+        <button type="button" id="tick" class="btn ghost sm">One tick</button>
+      </div>
+      <div class="footer-group">
+        <span class="footer-label">Swarm</span>
+        <button type="button" id="swarm-run-all" class="btn primary sm">Run all</button>
+        <button type="button" id="swarm-stop-all" class="btn danger sm">Stop all</button>
+      </div>
+    </footer>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "generated_at": "2026-05-17T12:30:00Z",
+  "role": "preflight_for_cursor_agents",
+  "recommended_agents": [
+    { "agent": "numerics_researcher", "reason": "e2e: red benches after goal shift" }
+  ],
+  "ecosystem_audit": {
+    "benchmarks": {
+      "red": [{ "id": "horner_pure_li", "ratio_vs_cpp": 88.8 }]
+    }
+  }
+}

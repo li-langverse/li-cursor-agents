@@ -25,15 +25,11 @@ jobs:
           npm ci
           npm run build
 
-      - name: Unit tests (mock backend)
+      - name: Unit + E2E tests (mock backend)
         run: npm test
 
-      - name: Run each agent in mock mode
-        run: |
-          for id in orchestrator ecosystem_explorer pr_alignment pr_review numerics_research; do
-            echo "==> $id"
-            node dist/cli/run-agent.js --agent "$id" --mock
-          done
+      - name: E2E swarm + heap + agent matrix
+        run: npm run test:e2e
 
       - name: Verify run artifacts
         run: test -n "$(ls data/runs/*.md 2>/dev/null | head -1)"

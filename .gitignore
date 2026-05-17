@@ -1,6 +1,10 @@
 node_modules/
 dist/
 data/runs/
+data/workspaces/
+# e2e temp runs use LI_RUNS_DIR outside repo
+data/supervisor/
+data/control-plane/
 .env
 *.log
 .DS_Store

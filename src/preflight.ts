@@ -2,6 +2,8 @@ import { spawnSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import type { PreflightBundle } from "./types.js";
+import { getAgent } from "./agents/registry.js";
+import { buildPrMergerInstruction, mergePlanFromBriefing } from "./preflight/merge-queue.js";
 
 function hasBriefingScript(root: string): boolean {
   return existsSync(join(root, "scripts", "agent-briefing.py"));
@@ -76,22 +78,65 @@ export function buildUserMessage(
   preflight: PreflightBundle,
   extra?: string,
 ): string {
+  const isMerger = definitionId === "pr_merger";
+  const mergePlan = mergePlanFromBriefing(preflight.briefing);
+
   const lines = [
     `Run the **${definitionId}** agent pass for li-langverse.`,
     "",
+    "## Org roadmap (canonical vision)",
+    "Follow `org_roadmap` pillars and `master_plan_url` — proof → easy → fast.",
+    "",
+  ];
+
+  if (isMerger) {
+    lines.push(buildPrMergerInstruction(mergePlan), "");
+  }
+
+  lines.push(
     "## Preflight JSON (deterministic scripts — already ran)",
     "```json",
     JSON.stringify(preflight.briefing ?? preflight, null, 2).slice(0, 120_000),
     "```",
     "",
     "## Your task",
-    "Follow the system prompt (automation instructions). Produce a markdown digest with:",
-    "- Executive summary (≤8 bullets)",
-    "- Recommended issues/PRs (titles + repos)",
-    "- Deferred items",
-    "",
-    "Do not merge PRs. Do not add GitHub Actions cron.",
-  ];
+  );
+
+  if (isMerger) {
+    lines.push(
+      "Follow the system prompt and **Merge queue** section above.",
+      "- Merge **at most one** PR: `merge_plan.next_merge` only when not CONFLICTING.",
+      "- Respect `repo_merge_plans` and `pair_risks` — fix conflicts before merge (preserve main + PR commits).",
+      "- Use org scripts (`pr-auto-merge.py --dry-run` first); never skip ahead in `merge_sequence`.",
+      "- After merge: stop; re-plan required before the next PR in the same repo.",
+      "- Produce digest: merged PR, repos needing rebase, CONFLICTING PRs, deferred overlap pairs.",
+    );
+  } else if (getAgent(definitionId)?.repoWorkflow) {
+    lines.push(
+      "Repo workflow: isolated clone under `data/workspaces/` — see **repo-workflow-tools** in system prompt.",
+      "CLI: `./scripts/agent-repo-workflow.sh prepare|commit-pr` (requires GH_TOKEN).",
+      "",
+    );
+  }
+
+  if (definitionId === "agent_kit_maintainer") {
+    lines.push(
+      "Follow the system prompt and **Agent-kit sync** section above.",
+      "- File sync may already be done by the control plane; focus on **git branch, commit, push, open PR** per dirty repo.",
+      "- Do not self-merge; `roadmap` governance PRs need a human reviewer.",
+      "- Produce digest: repos synced, PR URLs, any install failures.",
+    );
+  } else {
+    lines.push(
+      "Follow the system prompt (automation instructions). Produce a markdown digest with:",
+      "- Executive summary (≤8 bullets)",
+      "- Recommended issues/PRs (titles + repos)",
+      "- Deferred items",
+      "",
+      "Do not merge PRs. Do not add GitHub Actions cron.",
+    );
+  }
+
   if (extra) lines.push("", "## Additional instruction", extra);
   return lines.join("\n");
 }

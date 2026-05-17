@@ -1,0 +1,15 @@
+---
+description: li-cursor-agents runner — roadmap agent-kit, commit-when-done, PR-only
+alwaysApply: true
+---
+
+# li-cursor-agents (overlay)
+
+1. **Agent-kit** — run `./scripts/sync-agent-kit.sh` after `roadmap/agent-kit/` changes; `./scripts/check-agent-kit-sync.sh` on PRs.
+2. **Shared policy** — `li-pr-only.mdc`, `li-ecosystem-gates.mdc`, `li-release-notes.mdc` from agent-kit apply to every agent run in this repo.
+3. **Commit when done** — after a verified slice (build + `npm run test:e2e`), commit on a feature branch, push, open/update a PR; do not self-merge.
+4. **Preflight** — use sibling `benchmarks` `agent-briefing.py`; agents must not weaken proof/security/perf gates in prompts or code.
+
+## Org hygiene agent
+
+`agent_kit_maintainer` scans org repos for agent-kit drift (see `benchmarks` `ensure-org-agent-kit.py`) and opens sync PRs per repo.
