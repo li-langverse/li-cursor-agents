@@ -18,6 +18,7 @@
     "agents:keep": "bash scripts/keep-agents-running.sh",
     "dashboard": "node dist/cli/serve-dashboard.js",
     "repo-workflow": "node dist/cli/repo-workflow.js",
+    "workspace:sweep": "npm run build && node dist/cli/workspace-sweep.js",
     "test": "npm run build && LI_CONTROL_PLANE_STORE=disk CURSOR_MOCK=1 node --test 'dist/**/*.test.js' --test 'dist/e2e/*.e2e.js'",
     "test:dashboard-api": "npm run build && CURSOR_MOCK=1 node --test dist/e2e/dashboard-api.e2e.js dist/e2e/dashboard-live-runs.e2e.js dist/e2e/dashboard-run-trace.e2e.js",
     "smoke:dashboard": "node scripts/smoke-dashboard-api.mjs",

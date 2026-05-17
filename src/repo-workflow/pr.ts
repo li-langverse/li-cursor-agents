@@ -13,6 +13,8 @@ export function commitPushOpenPr(
     prBody: string;
     dryRun?: boolean;
     skipPush?: boolean;
+    /** When true, assume `git add` already ran (e.g. workspace sweeper safe paths). */
+    skipGitAdd?: boolean;
   },
 ): CommitPushPrResult {
   const dryRun = options.dryRun ?? false;
@@ -43,15 +45,17 @@ export function commitPushOpenPr(
     };
   }
 
-  const add = runCmd("git", ["add", "-A"], cloneDir, dryRun);
-  if (!add.ok) {
-    return {
-      ok: false,
-      committed: false,
-      pushed: false,
-      branch,
-      error: add.stderr || "git add failed",
-    };
+  if (!options.skipGitAdd) {
+    const add = runCmd("git", ["add", "-A"], cloneDir, dryRun);
+    if (!add.ok) {
+      return {
+        ok: false,
+        committed: false,
+        pushed: false,
+        branch,
+        error: add.stderr || "git add failed",
+      };
+    }
   }
 
   const commit = runCmd("git", ["commit", "-m", options.commitMessage], cloneDir, dryRun);

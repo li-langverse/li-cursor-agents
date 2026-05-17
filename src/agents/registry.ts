@@ -208,6 +208,18 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     preflightKeys: ["org_agent_kit_audit", "ecosystem_explorer", "briefing"],
     repoWorkflow: true,
   },
+  {
+    id: "workspace_sweeper",
+    name: "Workspace sweeper",
+    description:
+      "Fallback safety: commit/push/PR uncommitted work in sibling repos; document tests; restart control plane.",
+    category: "platform",
+    promptFile: "workspace-sweeper.md",
+    skills: [],
+    needsWeb: false,
+    preflightKeys: ["workspace_dirty_sweep", "briefing"],
+    workspaceSweep: true,
+  },
 ];
 
 export function getAgent(id: string): AgentDefinition | undefined {

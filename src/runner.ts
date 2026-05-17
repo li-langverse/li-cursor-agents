@@ -25,6 +25,10 @@ import {
   commitPushOpenPrAfterAgentRun,
 } from "./repo-workflow/post-hook.js";
 import {
+  formatWorkspaceSweepReport,
+  runWorkspaceDirtySweep,
+} from "./repo-workflow/workspace-sweep.js";
+import {
   agentUsesGuaranteedPush,
   beginRepoWorkflowSession,
 } from "./repo-workflow/workspace-session.js";
@@ -99,6 +103,66 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
   }
 
   let extra = options.extraInstruction;
+
+  if (definition.workspaceSweep) {
+    const start = Date.now();
+    const sweep = await runWorkspaceDirtySweep({
+      benchmarksRoot,
+      dryRun: mock || options.dryRun,
+      skipPush: mock || options.dryRun || process.env.LI_REPO_WORKFLOW_SKIP_PUSH === "1",
+      runTests: process.env.LI_WORKSPACE_SWEEP_RUN_TESTS === "1",
+      restart: process.env.LI_WORKSPACE_SWEEP_RESTART !== "0",
+      agentId: definition.id,
+    });
+    const text = formatWorkspaceSweepReport(sweep);
+    const outputPath = join(runsDir(), `${definition.id}-${Date.now()}.md`);
+    writeFileSync(outputPath, text, "utf8");
+    const prUrls = sweep.sweeps.map((s) => s.push.pr_url).filter((u): u is string => Boolean(u));
+    const forceLlm = process.env.LI_WORKSPACE_SWEEP_FORCE_LLM === "1";
+    const needsFollowUp = sweep.sweeps.some((s) => !s.push.ok && !s.push.skipped) || sweep.dirty_found > sweep.sweeps.length;
+    if (!forceLlm && !needsFollowUp) {
+      const base = {
+        agentId: definition.id,
+        backend: (mock ? "mock" : "cursor-sdk") as "mock" | "cursor-sdk",
+        status: "finished" as const,
+        durationMs: Date.now() - start,
+        outputText: text,
+        outputPath,
+      };
+      const sweepInput = buildRunInput({
+        agentId: definition.id,
+        backend: mock ? "mock" : "cursor-sdk",
+        systemPrompt,
+        userMessage: text,
+        cwd: workCwd,
+        benchmarksRoot,
+        briefingPath: preflight.briefing_path,
+        briefingHash:
+          preflight.briefing && typeof preflight.briefing === "object"
+            ? hashBriefing(preflight.briefing)
+            : undefined,
+        preflightGeneratedAt: preflight.generated_at,
+        dryRun: options.dryRun,
+        mock,
+      });
+      const finalized = finalizeAgentRun(
+        {
+          ...base,
+          runInput: sweepInput,
+          trace: buildMockTrace({
+            definitionId: definition.id,
+            assistantText: text,
+            userMessage: sweepInput.user_message,
+            cwd: workCwd,
+          }),
+        },
+        { definition, rolloutPrUrls: prUrls, preflight, extraEvidence: ["workspace_sweep"] },
+      );
+      await persistAgentRun({ run: finalized });
+      return finalized;
+    }
+    extra = [text, extra].filter(Boolean).join("\n\n");
+  }
 
   if (definition.id === "agent_kit_maintainer" && benchmarksRoot && preflight.briefing) {
     const rollout = rolloutAgentKitPrs(benchmarksRoot, preflight.briefing, {

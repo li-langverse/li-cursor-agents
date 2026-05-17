@@ -114,17 +114,7 @@ export function buildUserMessage(
           : null,
       ),
       "",
-      "When `local_ci_results` / `pr_program` show GHA `none` or `fail`, ensure local-ci sweep ran; ",
-      "post or update PR comments with `<!-- li-agent local-ci -->` and log excerpt (supervisor does this when sweep runs).",
-      "",
     );
-  } else if (
-    definitionId === "code_implementer" ||
-    definitionId === "bug_fixer" ||
-    definitionId === "security_auditor"
-  ) {
-    const queue = buildImplementationQueue(preflight.briefing);
-    lines.push(buildImplementationQueueInstruction(queue), "");
   }
 
   lines.push(
@@ -153,7 +143,13 @@ export function buildUserMessage(
     );
   }
 
-  if (definitionId === "agent_kit_maintainer") {
+  if (definitionId === "workspace_sweeper") {
+    lines.push(
+      "Deterministic sweep may already have run (see **Additional instruction** / sweep digest).",
+      "- Focus on failed pushes, repos over max sweep limit, and confirming test commands.",
+      "- Env: `LI_WORKSPACE_SWEEP_MAX_REPOS`, `LI_WORKSPACE_SWEEP_RUN_TESTS=1`, `GH_TOKEN` for push/PR.",
+    );
+  } else if (definitionId === "agent_kit_maintainer") {
     lines.push(
       "Follow the system prompt and **Agent-kit sync** section above.",
       "- File sync may already be done by the control plane; focus on **git branch, commit, push, open PR** per dirty repo.",

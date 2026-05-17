@@ -65,7 +65,7 @@ export const COORDINATOR_REGISTRY: CoordinatorDefinition[] = [
     id: "coord_platform",
     name: "Platform coordinator",
     description: "Org CI templates and repo hygiene.",
-    leafAgents: ["ci_maintainer", "agent_kit_maintainer"],
+    leafAgents: ["ci_maintainer", "agent_kit_maintainer", "workspace_sweeper"],
     priority: 50,
     promptFile: "coord-platform.md",
   },

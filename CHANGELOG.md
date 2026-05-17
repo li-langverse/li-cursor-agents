@@ -7,6 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- **`workspace_sweeper` agent** — fallback safety: scan sibling clones for uncommitted work, safe `commit`/`push`/`gh pr create`, document test commands, restart dashboard via `keep-agents-running.sh` (`src/repo-workflow/workspace-sweep.ts`, `npm run workspace:sweep`).
+
+### Added
 
 - **`bug_fixer`**, **`security_auditor`**, **`code_implementer`** agents — CI/bug queue, CWE catalog audit, implements gaps with guaranteed push (`repo-workflow` post-hook).
 - **Local CI PR comments** — after `local-ci-sweep`, posts `<!-- li-agent local-ci -->` on PRs when GHA is missing/red (`src/local-ci/pr-comment.ts`).

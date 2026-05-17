@@ -21,7 +21,8 @@ export type AgentId =
   | "bench_improver"
   | "docs_maintainer"
   | "ci_maintainer"
-  | "agent_kit_maintainer";
+  | "agent_kit_maintainer"
+  | "workspace_sweeper";
 
 /** @deprecated Briefing/fixtures may still use legacy ids — resolved in registry. */
 export type LegacyAgentId =
@@ -52,6 +53,8 @@ export interface AgentDefinition {
   repoWorkflow?: boolean;
   /** Supervisor post-hook runs commitPushOpenPr when workspace is dirty after run. */
   guaranteedPush?: boolean;
+  /** Deterministic sibling-repo sweep (commit/push/PR/restart) — no isolated clone. */
+  workspaceSweep?: boolean;
 }
 
 export interface PreflightBundle {
