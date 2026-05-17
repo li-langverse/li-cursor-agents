@@ -127,6 +127,10 @@ export function buildMockDeliverable(
       return buildPlanVerifierMockBody(briefing);
     case "implementation_gaps":
       return buildImplementationGapsMockBody(briefing);
+    case "code_implementer":
+    case "bug_fixer":
+    case "security_auditor":
+      return buildImplementationGapsMockBody(briefing);
     case "pr_merger":
       return buildPrMergerMockBody(briefing);
     case "pr_branch_opener":

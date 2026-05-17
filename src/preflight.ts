@@ -9,6 +9,10 @@ import {
   buildPrBranchOpenerInstruction,
   prHygieneFromBriefing,
 } from "./preflight/pr-hygiene.js";
+import {
+  buildImplementationQueue,
+  buildImplementationQueueInstruction,
+} from "./preflight/implementation-queue.js";
 
 function hasBriefingScript(root: string): boolean {
   return existsSync(join(root, "scripts", "agent-briefing.py"));
@@ -110,7 +114,17 @@ export function buildUserMessage(
           : null,
       ),
       "",
+      "When `local_ci_results` / `pr_program` show GHA `none` or `fail`, ensure local-ci sweep ran; ",
+      "post or update PR comments with `<!-- li-agent local-ci -->` and log excerpt (supervisor does this when sweep runs).",
+      "",
     );
+  } else if (
+    definitionId === "code_implementer" ||
+    definitionId === "bug_fixer" ||
+    definitionId === "security_auditor"
+  ) {
+    const queue = buildImplementationQueue(preflight.briefing);
+    lines.push(buildImplementationQueueInstruction(queue), "");
   }
 
   lines.push(

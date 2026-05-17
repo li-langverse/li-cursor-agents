@@ -8,6 +8,9 @@ export type AgentId =
   | "plan_verifier"
   | "gap_explorer"
   | "implementation_gaps"
+  | "code_implementer"
+  | "bug_fixer"
+  | "security_auditor"
   | "issue_planner"
   | "pr_branch_opener"
   | "pr_alignment"
@@ -30,6 +33,7 @@ export type LegacyAgentId =
 export type AgentCategory =
   | "orchestration"
   | "governance"
+  | "security"
   | "ecosystem"
   | "pull_requests"
   | "numerics"

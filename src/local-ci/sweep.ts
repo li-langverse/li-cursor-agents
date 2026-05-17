@@ -2,8 +2,14 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import { resolveLocalCiRoot } from "../env.js";
+import { postLocalCiCommentsForRecentRuns } from "./pr-comment.js";
 
-const MERGE_CI_AGENTS = new Set(["pr_merger", "pr_reviewer", "pr_alignment"]);
+const LOCAL_CI_SWEEP_AGENTS = new Set([
+  "pr_merger",
+  "pr_reviewer",
+  "pr_alignment",
+  "bug_fixer",
+]);
 
 export { resolveLocalCiRoot };
 
@@ -23,8 +29,8 @@ export function runLocalCiSweepForMergeAgents(
   if (process.env.LI_USE_LOCAL_CI === "0" || process.env.LI_SKIP_LOCAL_CI_SWEEP === "1") {
     return { ok: true, skipped: true, message: "local CI sweep disabled", exitCode: 0 };
   }
-  if (!agentIds.some((id) => MERGE_CI_AGENTS.has(id))) {
-    return { ok: true, skipped: true, message: "no merge agents in tick", exitCode: 0 };
+  if (!agentIds.some((id) => LOCAL_CI_SWEEP_AGENTS.has(id))) {
+    return { ok: true, skipped: true, message: "no local-ci sweep agents in tick", exitCode: 0 };
   }
 
   const script = join(benchmarksRoot, "scripts/local-ci-sweep.py");
@@ -44,8 +50,37 @@ export function runLocalCiSweepForMergeAgents(
   );
 
   const msg = (proc.stdout || proc.stderr || "").trim().slice(-800);
+  const ok = proc.status === 0;
+
+  if (ok && process.env.LI_LOCAL_CI_POST_PR_COMMENTS !== "0") {
+    try {
+      const dryRun = process.env.LI_LOCAL_CI_COMMENT_DRY_RUN === "1";
+      const posted = postLocalCiCommentsForRecentRuns(benchmarksRoot, {
+        dryRun,
+        limit: Number(process.env.LI_LOCAL_CI_COMMENT_LIMIT ?? 5),
+      });
+      const n = posted.filter((p) => p.posted).length;
+      if (n > 0) {
+        return {
+          ok: true,
+          skipped: false,
+          message: `${msg}\nposted ${n} local-ci PR comment(s)`,
+          exitCode: 0,
+        };
+      }
+    } catch (e) {
+      const err = e instanceof Error ? e.message : String(e);
+      return {
+        ok: true,
+        skipped: false,
+        message: `${msg}\nlocal-ci PR comment failed: ${err}`,
+        exitCode: 0,
+      };
+    }
+  }
+
   return {
-    ok: proc.status === 0,
+    ok,
     skipped: false,
     message: msg || `local-ci-sweep exit ${proc.status}`,
     exitCode: proc.status ?? 1,

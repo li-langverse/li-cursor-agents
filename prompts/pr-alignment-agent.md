@@ -35,7 +35,17 @@ From `pr-branch-hygiene.json` → `prs_recommended_close` and `merge_plan.redund
 
 ---
 
-## 3. Per open PR (max 8)
+## 3. Local CI on PRs (when GHA missing or red)
+
+If briefing `local_ci_results` has a run for a PR and GHA is `none` or `fail`:
+
+- Ensure comment contains `<!-- li-agent local-ci -->` with status + log excerpt
+- Supervisor runs `local-ci-sweep` + posts comments automatically when `LI_LOCAL_CI_POST_PR_COMMENTS` is set
+- Reference local-ci pass in alignment verdict when merge gate accepts it
+
+---
+
+## 4. Per open PR (max 8)
 
 For each PR in plan / program output:
 
@@ -54,7 +64,7 @@ Use `gh pr view`, `gh pr diff`, master plan, linked issues.
 
 ---
 
-## 4. Alignment comment template
+## 5. Alignment comment template
 
 ```markdown
 ## PR alignment (agent)
@@ -67,7 +77,7 @@ Use `gh pr view`, `gh pr diff`, master plan, linked issues.
 
 ---
 
-## 5. Labels
+## 6. Labels
 
 - Add `plan-needed` if feature without plan
 - Do **not** add `merge-approved` (that's **pr-review-agent**)

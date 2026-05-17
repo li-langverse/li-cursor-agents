@@ -24,9 +24,11 @@ export const REPO_WORKFLOW_AGENT_IDS = new Set([
   "ci_maintainer",
   "docs_maintainer",
   "pr_branch_opener",
+  "code_implementer",
+  "bug_fixer",
+  "security_auditor",
   "bench_improver",
   "autoresearch",
-  "implementation_gaps",
 ]);
 
 /** Numerics agents must cite tests/bench evidence in output or PR body. */

@@ -18,6 +18,9 @@ export interface RepoWorkflowSession extends PrepareWorkspaceResult {
 const DEFAULT_REPO_BY_AGENT: Partial<Record<AgentId, string>> = {
   docs_maintainer: "li-demo",
   ci_maintainer: "li-demo",
+  code_implementer: "li-demo",
+  bug_fixer: "li-demo",
+  security_auditor: "lic",
   bench_improver: "lic",
   numerics_researcher: "lic",
   autoresearch: "lic",
