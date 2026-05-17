@@ -33,9 +33,9 @@ export function shouldUseMock(explicitMock: boolean): boolean {
 }
 
 export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult> {
-  const definition = getAgent(options.agentId);
+  const definition = getAgent(String(options.agentId));
   if (!definition) {
-    throw new Error(`Unknown agent: ${options.agentId}`);
+    throw new Error(`Unknown agent: ${options.agentId} (see npm run agents:list)`);
   }
 
   const packageRoot = agentsPackageRoot();

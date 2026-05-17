@@ -1,5 +1,6 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { runsDir } from "../control-plane/paths.js";
 import type { AgentBackend, AgentDefinition, AgentRunOptions, AgentRunResult } from "../types.js";
 
 /**
@@ -16,9 +17,7 @@ export class MockBackend implements AgentBackend {
     options: AgentRunOptions,
   ): Promise<AgentRunResult> {
     const start = Date.now();
-    const outDir = join(options.cwd, "data", "runs");
-    mkdirSync(outDir, { recursive: true });
-    const outputPath = join(outDir, `${definition.id}-${Date.now()}.md`);
+    const outputPath = join(runsDir(), `${definition.id}-${Date.now()}.md`);
 
     if (options.dryRun) {
       return {

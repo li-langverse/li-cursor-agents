@@ -1,7 +1,8 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { Agent } from "@cursor/sdk";
-import { resolveCursorApiKey } from "../env.js";
+import { runsDir } from "../control-plane/paths.js";
+import { resolveCursorApiKey, resolveCursorModelId } from "../env.js";
 import type { AgentBackend, AgentDefinition, AgentRunOptions, AgentRunResult } from "../types.js";
 
 export class CursorSdkBackend implements AgentBackend {
@@ -14,9 +15,7 @@ export class CursorSdkBackend implements AgentBackend {
     options: AgentRunOptions,
   ): Promise<AgentRunResult> {
     const start = Date.now();
-    const outDir = join(options.cwd, "data", "runs");
-    mkdirSync(outDir, { recursive: true });
-    const outputPath = join(outDir, `${definition.id}-${Date.now()}.md`);
+    const outputPath = join(runsDir(), `${definition.id}-${Date.now()}.md`);
 
     if (options.dryRun) {
       return {
@@ -36,7 +35,7 @@ export class CursorSdkBackend implements AgentBackend {
       );
     }
 
-    const modelId = options.modelId ?? process.env.CURSOR_MODEL ?? "composer-2";
+    const modelId = options.modelId ?? resolveCursorModelId();
     const fullPrompt = `${systemPrompt}\n\n---\n\n${userMessage}`;
 
     const agent = await Agent.create({

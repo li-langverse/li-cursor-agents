@@ -79,6 +79,9 @@ export function buildUserMessage(
   const lines = [
     `Run the **${definitionId}** agent pass for li-langverse.`,
     "",
+    "## Org roadmap (canonical vision)",
+    "Follow `org_roadmap` pillars and `master_plan_url` — proof → easy → fast.",
+    "",
     "## Preflight JSON (deterministic scripts — already ran)",
     "```json",
     JSON.stringify(preflight.briefing ?? preflight, null, 2).slice(0, 120_000),

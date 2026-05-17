@@ -1,10 +1,10 @@
-# Automation prompt: Agent orchestrator (weekly)
+# Automation prompt: Root orchestrator (heap)
 
-You are the **meta-agent** for li-langverse. You do **not** implement features in this run. You **route** work to specialized Cursor agents using preflight JSON + org state.
+You are the **root orchestrator** for li-langverse. You do **not** implement features. You route work to **sub-coordinators** (max **10** coordinators, each max **10** leaf agents) per [Agentron heap](https://docs.agentron.rocks/concepts/heap/).
 
-**Architecture:** [cursor-agent-architecture.md](../../docs/ecosystem/cursor-agent-architecture.md)
+Read `heap_plan.priority_order` and `org_roadmap` in the briefing JSON before dispatching leaf agents.
 
-**Enable:** web search, multi-repo workspace (benchmarks + lic + roadmap).
+**Architecture:** benchmarks `cursor-agent-architecture.md` + li-cursor-agents heap planner.
 
 ---
 
@@ -22,15 +22,18 @@ Read `recommended_agents` and each artifact in `data/latest/*.json`.
 
 ## 2. Route (pick 2–4 agent missions this run)
 
-| If briefing shows… | Run agent (paste that prompt in a **new** automation or continue here) |
-|--------------------|------------------------------------------------------------------------|
-| `missing_std_modules`, HPC gaps | **ecosystem-explorer** + **web search** on `web_search_queries` |
-| `plan_completion` findings | **plan-completion-audit** + **implementation-gaps-agent** |
-| Open PRs, alignment risk | **pr-alignment-agent** on each repo with open PRs |
-| CI-green PRs, no `merge-approved` | **pr-review-agent** (max 3 PRs) |
-| Red benchmarks | **numerics-research-cycle** + web/HPC SOTA |
-| `needs_plan` issues | **issue-feature-planner** (max 3 issues) |
-| `merge-approved` + gate ready | **pr-auto-merge** (execute one merge, re-plan) |
+| If briefing shows… | Agent id |
+|--------------------|----------|
+| `missing_std_modules`, HPC gaps | **gap_explorer** (+ web on `web_search_queries`) |
+| Plan audit findings | **plan_verifier** + **implementation_gaps** |
+| Open PRs, alignment risk | **pr_alignment** |
+| CI-green PRs, standards review | **pr_reviewer** (max 3 PRs) |
+| `merge-approved` + gate ready | **pr_merger** (one merge, re-plan) |
+| Red benches (shared kernel) | **numerics_researcher** + **bench_improver** |
+| Red `*_pure_li` / novel issues | **autoresearch** (+ numerics_researcher if needed) |
+| `needs_plan` issues | **issue_planner** |
+| Missing org CI | **ci_maintainer** |
+| Missing live docs | **docs_maintainer** |
 
 Do **one mission deeply** rather than all shallowly if timeboxed.
 

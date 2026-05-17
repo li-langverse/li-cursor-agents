@@ -2,17 +2,39 @@
 
 export type AgentId =
   | "orchestrator"
-  | "ecosystem_explorer"
+  | "plan_verifier"
+  | "gap_explorer"
   | "implementation_gaps"
-  | "plan_completion"
   | "issue_planner"
   | "pr_alignment"
+  | "pr_reviewer"
+  | "pr_merger"
+  | "numerics_researcher"
+  | "autoresearch"
+  | "bench_improver"
+  | "docs_maintainer"
+  | "ci_maintainer";
+
+/** @deprecated Briefing/fixtures may still use legacy ids — resolved in registry. */
+export type LegacyAgentId =
+  | "plan_completion"
+  | "ecosystem_explorer"
   | "pr_review"
   | "numerics_research";
+
+export type AgentCategory =
+  | "orchestration"
+  | "governance"
+  | "ecosystem"
+  | "pull_requests"
+  | "numerics"
+  | "platform";
 
 export interface AgentDefinition {
   id: AgentId;
   name: string;
+  description: string;
+  category: AgentCategory;
   promptFile: string;
   skills: string[];
   needsWeb: boolean;
@@ -27,7 +49,7 @@ export interface PreflightBundle {
 }
 
 export interface AgentRunOptions {
-  agentId: AgentId;
+  agentId: AgentId | LegacyAgentId | string;
   cwd: string;
   benchmarksRoot?: string;
   mock: boolean;
@@ -38,7 +60,7 @@ export interface AgentRunOptions {
 }
 
 export interface AgentRunResult {
-  agentId: AgentId;
+  agentId: string;
   backend: "cursor-sdk" | "mock";
   status: "finished" | "error" | "cancelled" | "dry-run";
   durationMs: number;

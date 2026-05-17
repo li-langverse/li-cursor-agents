@@ -1,0 +1,75 @@
+import { writeFileSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
+import { join } from "node:path";
+import type { AgentRunResult, PreflightBundle } from "../types.js";
+import { interventionsPath, reportPath, runsDir } from "./paths.js";
+import type { HeapPlan, OrgRoadmapContext } from "../heap/plan.js";
+import type { CoordinatorId } from "../heap/coordinators.js";
+import type { ControlPlaneReport, ControlPlaneState, HumanIntervention } from "./types.js";
+
+export function writeReport(report: ControlPlaneReport, interventions: HumanIntervention[]): void {
+  writeFileSync(reportPath(), JSON.stringify(report, null, 2) + "\n", "utf8");
+  writeFileSync(
+    interventionsPath(),
+    JSON.stringify({ generated_at: report.generated_at, interventions }, null, 2) + "\n",
+    "utf8",
+  );
+}
+
+export function loadRecentRunSummaries(limit = 12): AgentRunResult[] {
+  const dir = runsDir();
+  let files: string[];
+  try {
+    files = readdirSync(dir)
+      .filter((f) => f.endsWith(".json"))
+      .map((f) => ({ f, m: statSync(join(dir, f)).mtimeMs }))
+      .sort((a, b) => b.m - a.m)
+      .slice(0, limit)
+      .map((x) => x.f);
+  } catch {
+    return [];
+  }
+  const out: AgentRunResult[] = [];
+  for (const f of files) {
+    try {
+      const raw = JSON.parse(readFileSync(join(dir, f), "utf8")) as AgentRunResult;
+      if (raw.agentId) out.push(raw);
+    } catch {
+      /* skip corrupt */
+    }
+  }
+  return out;
+}
+
+export function assembleReport(params: {
+  briefingHash: string;
+  preflight: PreflightBundle;
+  recommended: Array<{ agent: string; reason: string }>;
+  orgRoadmap?: OrgRoadmapContext;
+  heapPlan?: HeapPlan;
+  activeCoordinator?: CoordinatorId;
+  interventions: HumanIntervention[];
+  state: ControlPlaneState;
+  tasksExecuted: number;
+  tasksSkippedCooldown: number;
+  recentRuns: AgentRunResult[];
+}): ControlPlaneReport {
+  return {
+    generated_at: new Date().toISOString(),
+    briefing_hash: params.briefingHash,
+    preflight: params.preflight,
+    recommended_agents: params.recommended,
+    org_roadmap: params.orgRoadmap,
+    heap_plan: params.heapPlan,
+    active_coordinator: params.activeCoordinator,
+    interventions: params.interventions,
+    recent_runs: params.recentRuns,
+    supervisor: {
+      status: params.state.supervisor_status,
+      runs_total: params.state.runs_total,
+      last_tick_at: params.state.last_tick_at,
+      tasks_executed_this_tick: params.tasksExecuted,
+      tasks_skipped_cooldown: params.tasksSkippedCooldown,
+    },
+  };
+}

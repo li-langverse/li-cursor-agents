@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Li Agent Control Plane</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Li Agent Control Plane</h1>
+      <p class="subtitle">
+        Preflight → prioritized agents → interventions · proof-first HPC &amp; simulation swarm
+      </p>
+      <span id="status-pill" class="pill idle">loading…</span>
+    </header>
+
+    <main class="grid">
+      <section class="panel critical-panel">
+        <h2>Human interventions</h2>
+        <p class="hint">P0 = act now (merge, governance, CI). Agents never self-merge roadmap.</p>
+        <ul id="interventions" class="intervention-list"></ul>
+      </section>
+
+      <section class="panel">
+        <h2>Supervisor</h2>
+        <dl id="supervisor-meta" class="meta"></dl>
+        <h3>Recommended agents (this briefing)</h3>
+        <ul id="queue" class="simple-list"></ul>
+        <h3>Recent runs</h3>
+        <ul id="runs" class="simple-list"></ul>
+      </section>
+
+      <section class="panel heap-panel">
+        <h2>Heap plan (all coordinators)</h2>
+        <p class="hint">
+          Every sub-coordinator and leaf agent is listed; <strong>active</strong> = this briefing.
+          <a href="https://docs.agentron.rocks/concepts/heap/" target="_blank" rel="noopener">Heap docs</a>
+        </p>
+        <dl id="roadmap-meta" class="meta compact"></dl>
+        <div id="heap-layers" class="heap-layers"></div>
+      </section>
+
+      <section class="panel roster-panel">
+        <h2>Full agent roster</h2>
+        <p class="hint">Root + 5 coordinators + 12 leaf agents (entire swarm). Badge <em>web search</em> = needs live web when running, not dashboard visibility.</p>
+        <div id="roster" class="roster-grid"></div>
+      </section>
+    </main>
+
+    <footer>
+      <span id="updated"></span>
+      <button type="button" id="refresh">Refresh</button>
+      <button type="button" id="tick" class="secondary">Run one tick</button>
+    </footer>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

@@ -1,0 +1,393 @@
+:root {
+  --bg: #0f1419;
+  --panel: #1a2332;
+  --text: #e7ecf3;
+  --muted: #8b9cb3;
+  --accent: #5b9fd4;
+  --critical: #e85d5d;
+  --high: #e6a23c;
+  --medium: #d4c35b;
+  --low: #6bbf8a;
+  --border: #2a3a52;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+header {
+  padding: 1.5rem 2rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+h1 {
+  margin: 0 0 0.25rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.pill {
+  display: inline-block;
+  margin-top: 0.75rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pill.idle {
+  background: #243044;
+  color: var(--low);
+}
+
+.pill.running {
+  background: #2a3d5c;
+  color: var(--accent);
+}
+
+.pill.waiting {
+  background: #3d3520;
+  color: var(--medium);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 1rem 2rem 4rem;
+}
+
+.heap-panel {
+  grid-column: 1 / -1;
+}
+
+.heap-layers {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 0.75rem;
+}
+
+.heap-layer {
+  background: #121820;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.heap-layer h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+}
+
+.heap-layer ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.meta.compact {
+  margin-bottom: 1rem;
+}
+
+.roster-panel {
+  grid-column: 1 / -1;
+}
+
+.roster-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.75rem;
+}
+
+.agent-card {
+  background: #121820;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.agent-card header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.agent-id {
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+
+.badge {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  margin-left: 0.25rem;
+}
+
+.badge.web {
+  background: #2a3d5c;
+  color: var(--accent);
+}
+
+.badge.role-root {
+  background: #3d2a52;
+  color: #c9a0ff;
+}
+
+.badge.role-coordinator {
+  background: #2a4038;
+  color: var(--low);
+}
+
+.badge.role-leaf {
+  background: #243044;
+  color: var(--muted);
+}
+
+.badge.active-run {
+  background: #1e3d2a;
+  color: #8fdf9f;
+}
+
+.badge.idle-leaf {
+  background: #1a2030;
+  color: var(--muted);
+}
+
+.agent-card-active {
+  border-color: var(--low);
+  box-shadow: 0 0 0 1px #2a4a38;
+}
+
+.roster-summary {
+  font-size: 0.88rem;
+  color: var(--muted);
+  margin: 0 0 1rem;
+}
+
+.roster-summary .muted {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+}
+
+.roster-section-title {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+
+.roster-section-title .count {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.roster-section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 0.75rem;
+}
+
+.manages,
+.parent-coord,
+.heap-desc {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin: 0.2rem 0;
+}
+
+.heap-active {
+  color: var(--text);
+}
+
+.heap-layer .count {
+  font-size: 0.75rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.agent-card h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+}
+
+.agent-card p {
+  margin: 0.25rem 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+.agent-card .skills {
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+}
+
+button.secondary {
+  background: #243044;
+  color: var(--text);
+  margin-left: 0.5rem;
+}
+
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+}
+
+.critical-panel {
+  border-color: #4a3038;
+}
+
+h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+h3 {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.hint {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin: 0 0 1rem;
+}
+
+.meta {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 1rem;
+  font-size: 0.9rem;
+}
+
+.meta dt {
+  color: var(--muted);
+}
+
+.meta dd {
+  margin: 0;
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+}
+
+.intervention-list,
+.simple-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.intervention {
+  border-left: 4px solid var(--medium);
+  padding: 0.75rem 0 0.75rem 0.75rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.intervention.severity-p0 {
+  border-left-color: var(--critical);
+}
+
+.intervention.severity-p1 {
+  border-left-color: var(--high);
+}
+
+.intervention.severity-p2 {
+  border-left-color: var(--medium);
+}
+
+.tag {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.intervention h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+}
+
+.intervention p {
+  margin: 0.25rem 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.intervention .action {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.intervention a {
+  color: var(--accent);
+  font-size: 0.85rem;
+}
+
+.run-row {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.88rem;
+}
+
+.empty {
+  color: var(--muted);
+  font-style: italic;
+}
+
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 2rem;
+  background: #121820ee;
+  border-top: 1px solid var(--border);
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+button {
+  background: var(--accent);
+  color: #0a1018;
+  border: none;
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:hover {
+  filter: brightness(1.08);
+}

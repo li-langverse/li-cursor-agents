@@ -44,3 +44,10 @@ export function resolveCursorApiKey(): string | undefined {
   }
   return undefined;
 }
+
+/** SDK model id; `default` is Cursor "Auto" (`Cursor.models.list` displayName). */
+export function resolveCursorModelId(): string {
+  loadDotEnv();
+  const v = process.env.CURSOR_MODEL?.trim();
+  return v || "default";
+}

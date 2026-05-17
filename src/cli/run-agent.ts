@@ -51,7 +51,9 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (args.list) {
     for (const a of AGENT_REGISTRY) {
-      console.log(`${a.id}\t${a.name}\tweb=${a.needsWeb}\t${a.promptFile}`);
+      console.log(
+        `${a.id}\t${a.category}\tweb=${a.needsWeb}\t${a.name}\t— ${a.description}`,
+      );
     }
     return;
   }

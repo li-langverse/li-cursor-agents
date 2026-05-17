@@ -1,0 +1,51 @@
+#!/usr/bin/env node
+import { loadDotEnv } from "../env.js";
+loadDotEnv();
+import { runSupervisorLoop } from "../supervisor/loop.js";
+import { resolveBenchmarksRoot } from "../preflight.js";
+
+function parseArgs(argv: string[]) {
+  let mock = false;
+  let once = false;
+  let force = false;
+  let benchmarksRoot: string | undefined;
+  let intervalMs = Number(process.env.LI_SUPERVISOR_INTERVAL_MS ?? 300_000);
+  let cooldownMs = Number(process.env.LI_SUPERVISOR_COOLDOWN_MS ?? 6 * 60 * 60 * 1000);
+  let maxTasksPerTick = Number(process.env.LI_SUPERVISOR_MAX_TASKS ?? 2);
+
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === "--mock") mock = true;
+    else if (a === "--once") once = true;
+    else if (a === "--force") force = true;
+    else if (a === "--benchmarks") benchmarksRoot = argv[++i];
+    else if (a === "--interval-ms") intervalMs = Number(argv[++i]);
+    else if (a === "--cooldown-ms") cooldownMs = Number(argv[++i]);
+    else if (a === "--max-tasks") maxTasksPerTick = Number(argv[++i]);
+    else if (a === "--help" || a === "-h") {
+      console.log(`Usage: npm run supervisor [-- --mock] [-- --once] [-- --benchmarks PATH]`);
+      process.exit(0);
+    }
+  }
+  return { mock, once, force, benchmarksRoot, intervalMs, cooldownMs, maxTasksPerTick };
+}
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2));
+  if (process.env.CURSOR_MOCK === "1") args.mock = true;
+
+  await runSupervisorLoop({
+    benchmarksRoot: resolveBenchmarksRoot(args.benchmarksRoot),
+    mock: args.mock,
+    once: args.once,
+    force: args.force,
+    intervalMs: args.intervalMs,
+    cooldownMs: args.cooldownMs,
+    maxTasksPerTick: args.maxTasksPerTick,
+  });
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
