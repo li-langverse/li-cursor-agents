@@ -7,6 +7,10 @@ import { dbEnabled } from "./db/client.js";
 import { schemaMarkdown } from "./db/schema-catalog.js";
 import { buildPrMergerInstruction, mergePlanFromBriefing } from "./preflight/merge-queue.js";
 import {
+  buildAutoMergeInstruction,
+  evaluateNextMerge,
+} from "./merge/auto-merge-gate.js";
+import {
   buildPrAlignmentCloseInstruction,
   buildPrBranchOpenerInstruction,
   prHygieneFromBriefing,
@@ -107,7 +111,13 @@ export function buildUserMessage(
   }
 
   if (isMerger) {
-    lines.push(buildPrMergerInstruction(mergePlan), "");
+    const autoEval = evaluateNextMerge(mergePlan, preflight.briefing);
+    lines.push(
+      buildPrMergerInstruction(mergePlan),
+      "",
+      buildAutoMergeInstruction(mergePlan, autoEval),
+      "",
+    );
   }
 
   const hygiene = prHygieneFromBriefing(preflight.briefing);

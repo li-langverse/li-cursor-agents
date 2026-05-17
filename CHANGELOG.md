@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Auto-merge gate** — `src/merge/auto-merge-gate.ts` (`LI_AUTO_MERGE`, `LI_TRUSTED_MERGE_APPROVED`); wired into `preflight.ts` and `supervisor/loop.ts` for `pr_merger`.
+- **Ecosystem MCP** — `list_org_repos`, `search_repo_tree`, `describe_package` in `li-ecosystem-context-mcp.ts` + `ecosystem-briefing-tools.ts`.
+- **Research → implement handoffs** — `implementation-handoff.ts`, goal scaffolds under `config/goal-scaffolds/` for `game_engine_ux` / `cad_fundamentals`.
 - **Placement governance** — `placement-governance.ts` hard gates (roadmap, `trusted.lean`, `PKG-*`); `applyPlacementDecision` used by MCP + post-run.
 - **Run-all handoff phases** — `runHandoffPhasedSwarm` returns `phases[]`; e2e `run-all-handoff.e2e.ts`; `schemas/agent-handoff.v1.json`.
 - **Completion audit** — flags `trusted.lean` edits without `trusted-change-approved` in deliverable/trace.

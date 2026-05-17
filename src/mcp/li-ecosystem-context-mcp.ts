@@ -9,9 +9,14 @@ import {
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { loadRuntimeEnv } from "../env.js";
-import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
+import {
+  describePackageFromBriefing,
+  listOrgReposFromBriefing,
+  loadBriefingJson,
+  searchRepoTree,
+} from "./ecosystem-briefing-tools.js";
 import { listHandoffs } from "../handoffs/handoff-store.js";
 import { applyPlacementDecision } from "../handoffs/placement-governance.js";
 import type { HandoffStatus, PackagePlacement } from "../handoffs/types.js";
@@ -77,6 +82,45 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
       },
     },
     {
+      name: "list_org_repos",
+      description: "List org repo names from briefing ecosystem_explorer.repos or org_packages keys.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          benchmarks_root: { type: "string" },
+        },
+        additionalProperties: false,
+      },
+    },
+    {
+      name: "search_repo_tree",
+      description: "Read-only filename/content search under BENCHMARKS_ROOT/../repo or fixture explorer tree.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          repo: { type: "string" },
+          query: { type: "string" },
+          max_results: { type: "number" },
+          benchmarks_root: { type: "string" },
+        },
+        required: ["repo", "query"],
+        additionalProperties: false,
+      },
+    },
+    {
+      name: "describe_package",
+      description: "Return org_packages or lic_packages row for package_id from briefing JSON.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          package_id: { type: "string" },
+          benchmarks_root: { type: "string" },
+        },
+        required: ["package_id"],
+        additionalProperties: false,
+      },
+    },
+    {
       name: "advance_research_session",
       description: "Mark current focus complete and advance queue for agent.",
       inputSchema: {
@@ -114,11 +158,11 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
         typeof args.benchmarks_root === "string"
           ? args.benchmarks_root
           : process.env.BENCHMARKS_ROOT ?? join(agentsPackageRoot(), "fixtures", "e2e-benchmarks");
-      const path = join(root, "data", "latest", "agent-briefing.json");
-      if (!existsSync(path)) {
+      const full = loadBriefingJson(root);
+      if (!full) {
+        const path = join(root, "data", "latest", "agent-briefing.json");
         return { content: [{ type: "text", text: `missing ${path}` }], isError: true };
       }
-      const full = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
       const compact = {
         generated_at: full.generated_at,
         recommended_agents: full.recommended_agents,
@@ -129,6 +173,35 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
         lic_packages: full.lic_packages,
       };
       return { content: [{ type: "text", text: JSON.stringify(compact, null, 2) }] };
+    }
+
+    if (name === "list_org_repos") {
+      const root = typeof args.benchmarks_root === "string" ? args.benchmarks_root : undefined;
+      const briefing = loadBriefingJson(root);
+      const repos = listOrgReposFromBriefing(briefing);
+      return { content: [{ type: "text", text: JSON.stringify({ repos }, null, 2) }] };
+    }
+
+    if (name === "search_repo_tree") {
+      const repo = String(args.repo);
+      const query = String(args.query ?? "");
+      const max = Number(args.max_results ?? 20);
+      const root = typeof args.benchmarks_root === "string" ? args.benchmarks_root : undefined;
+      const result = searchRepoTree(repo, query, max, root);
+      return { content: [{ type: "text", text: JSON.stringify(result, null, 2) }] };
+    }
+
+    if (name === "describe_package") {
+      const root = typeof args.benchmarks_root === "string" ? args.benchmarks_root : undefined;
+      const briefing = loadBriefingJson(root);
+      const row = describePackageFromBriefing(briefing, String(args.package_id));
+      if (!row) {
+        return {
+          content: [{ type: "text", text: `package not found: ${args.package_id}` }],
+          isError: true,
+        };
+      }
+      return { content: [{ type: "text", text: JSON.stringify(row, null, 2) }] };
     }
 
     if (name === "record_placement_decision") {

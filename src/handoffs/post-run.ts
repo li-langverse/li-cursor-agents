@@ -1,6 +1,6 @@
 import { createHandoff, listHandoffs, updateHandoff } from "./handoff-store.js";
 import { applyPlacementDecision } from "./placement-governance.js";
-import { validateNorthStarFit, validatePackagePlacement } from "./placement-validator.js";
+import { validatePackagePlacement } from "./placement-validator.js";
 import type { PackagePlacement } from "./types.js";
 import {
   agentUsesResearchSession,
@@ -8,6 +8,7 @@ import {
   markResearchRunFailed,
 } from "../research-sessions/session-lifecycle.js";
 import { loadResearchGoals, northStarFitForGoal } from "../research-goals/load-goals.js";
+import { enqueueImplementationFromResearch } from "./implementation-from-research.js";
 import { runIdFromOutputPath } from "../db/persist.js";
 import type { AgentId, AgentRunResult } from "../types.js";
 
@@ -35,13 +36,13 @@ export async function createCycleCompleteHandoff(
   sessionId: string,
   briefingHash?: string,
   sourceRunId?: string,
-): Promise<void> {
+): Promise<import("./types.js").AgentHandoff> {
   const goals = loadResearchGoals();
   const goal = goals.find((g) => g.id === goalId);
   const north = goal ? northStarFitForGoal(goal) : `Research cycle complete for ${goalId}`;
   const to = goal?.handoff_to ?? ["package_architect", "code_implementer"];
 
-  await createHandoff({
+  return createHandoff({
     from_agent: agentId,
     to_agents: to.includes("package_architect") ? ["package_architect", ...to] : to,
     status: "pending_placement",
@@ -90,6 +91,13 @@ export async function applyResearchPostRun(result: AgentRunResult, briefingHash?
         briefingHash,
         runId,
       );
+      await enqueueImplementationFromResearch(
+        result.agentId,
+        session.goal_id,
+        session.session_id,
+        briefingHash,
+        runId,
+      );
     }
   }
 }
@@ -104,7 +112,24 @@ export async function applyPackageArchitectPostRun(result: AgentRunResult): Prom
   const target = pending[0];
   if (!target) return;
 
-  await applyPlacementDecision(target.handoff_id, placement, target);
+  const applied = await applyPlacementDecision(target.handoff_id, placement, target);
+  if (!applied.ok || !applied.handoff) return;
+
+  const impl = await listHandoffs({
+    status: ["pending_placement", "pending"],
+    toAgent: "code_implementer",
+    limit: 20,
+  });
+  for (const h of impl) {
+    if (
+      h.research_session_id === target.research_session_id &&
+      h.work?.implementation_from_research === true
+    ) {
+      await updateHandoff(h.handoff_id, {
+        package_placement: applied.handoff.package_placement,
+      });
+    }
+  }
 }
 
 export async function applySwarmPostRunEffects(

@@ -25,6 +25,13 @@ export function validatePackagePlacement(placement: PackagePlacement | null | un
 export function handoffReadyForImplement(handoff: AgentHandoff): boolean {
   if (handoff.status !== "pending" && handoff.status !== "claimed") return false;
   if (validateNorthStarFit(handoff.north_star_fit)) return false;
+  if (
+    handoff.work?.kind === "goal_implementation" ||
+    (handoff.work?.implementation_from_research === true &&
+      typeof handoff.work.goal_scaffold_path === "string")
+  ) {
+    return !validateNorthStarFit(handoff.north_star_fit);
+  }
   if (handoff.status === "pending" && !handoff.package_placement) return false;
   if (handoff.package_placement && validatePackagePlacement(handoff.package_placement)) {
     return false;

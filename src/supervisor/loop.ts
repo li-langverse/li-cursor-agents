@@ -22,6 +22,10 @@ import {
 } from "../preflight/agent-kit-sync.js";
 import { rolloutAgentKitPrs } from "../repo-workflow/agent-kit-rollout.js";
 import { buildPrMergerInstruction, mergePlanFromBriefing } from "../preflight/merge-queue.js";
+import {
+  buildAutoMergeInstruction,
+  evaluateNextMerge,
+} from "../merge/auto-merge-gate.js";
 import { runLocalCiSweepForMergeAgents } from "../local-ci/sweep.js";
 import { runPreflight, resolveBenchmarksRoot } from "../preflight.js";
 import type { AgentRunResult, PreflightBundle } from "../types.js";
@@ -177,7 +181,12 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
       try {
         let extraInstruction: string | undefined;
         if (task.agentId === "pr_merger") {
-          extraInstruction = buildPrMergerInstruction(mergePlanFromBriefing(briefing));
+          const mergePlan = mergePlanFromBriefing(briefing);
+          const autoEval = evaluateNextMerge(mergePlan, briefing);
+          extraInstruction = [
+            buildPrMergerInstruction(mergePlan),
+            buildAutoMergeInstruction(mergePlan, autoEval),
+          ].join("\n\n");
         } else if (task.agentId === "agent_kit_maintainer" && benchmarksRoot) {
           const rollout = rolloutAgentKitPrs(benchmarksRoot, briefing, {
             dryRun: options.mock,
