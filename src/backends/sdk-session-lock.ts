@@ -1,7 +1,56 @@
 /** Serialize Cursor SDK agent sessions — avoids local store "wedged run" / overlap failures. */
 
+import { closeSync, existsSync, mkdirSync, openSync, unlinkSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { agentsPackageRoot } from "../runner.js";
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function fileLockPath(): string {
+  return join(agentsPackageRoot(), "data", "control-plane", "sdk-session.lock");
+}
+
+function tryAcquireFileLock(): boolean {
+  const path = fileLockPath();
+  try {
+    mkdirSync(dirname(path), { recursive: true });
+    if (existsSync(path)) return false;
+    const fd = openSync(path, "wx");
+    closeSync(fd);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function releaseFileLock(): void {
+  try {
+    unlinkSync(fileLockPath());
+  } catch {
+    /* already released */
+  }
+}
+
+async function acquireFileLock(maxWaitMs = 600_000): Promise<void> {
+  const start = Date.now();
+  while (!tryAcquireFileLock()) {
+    if (Date.now() - start > maxWaitMs) {
+      throw new Error("sdk-session.lock: timeout waiting for cross-process lock");
+    }
+    await sleep(500);
+  }
+}
+
+/** In-process + cross-process lock for SDK runs (lanes, dashboard, supervisor). */
+export async function withGlobalSdkSessionLock<T>(fn: () => Promise<T>): Promise<T> {
+  await acquireFileLock();
+  try {
+    return await withSdkSessionLock(fn);
+  } finally {
+    releaseFileLock();
+  }
 }
 
 let chain: Promise<void> = Promise.resolve();

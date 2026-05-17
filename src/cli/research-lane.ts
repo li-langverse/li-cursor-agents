@@ -1,0 +1,36 @@
+#!/usr/bin/env node
+import { loadRuntimeEnv } from "../env.js";
+loadRuntimeEnv();
+import { runResearchLaneLoop, researchLaneTick } from "../lanes/research-lane.js";
+import { shouldUseMock } from "../runner.js";
+
+function parseArgs(argv: string[]) {
+  let once = false;
+  let mock = false;
+  for (const a of argv) {
+    if (a === "--once") once = true;
+    if (a === "--mock") mock = true;
+    if (a === "--help" || a === "-h") {
+      console.log(`Usage: research-lane [--once] [--mock]
+Env: LI_RESEARCH_LANE_INTERVAL_MS, LI_RESEARCH_LANE_ENABLED=0 to disable`);
+      process.exit(0);
+    }
+  }
+  return { once, mock: mock || shouldUseMock(false) };
+}
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2));
+  if (args.once) {
+    const tick = await researchLaneTick({ mock: args.mock });
+    console.log(JSON.stringify(tick, null, 2));
+    process.exit(tick.skipped ? 0 : 0);
+    return;
+  }
+  await runResearchLaneLoop({ mock: args.mock, once: false });
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

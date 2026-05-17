@@ -165,17 +165,19 @@ export async function listHandoffs(filter?: {
 }
 
 export async function claimNextHandoff(toAgent: string): Promise<AgentHandoff | null> {
-  const pending = await listHandoffs({
-    status: ["pending", "pending_placement"],
-    toAgent,
-    limit: 50,
-  });
-  const ready = pending.find((h) => h.status === "pending" && h.package_placement);
-  const target = ready ?? pending.find((h) => h.status === "pending_placement");
+  const statuses =
+    toAgent === "package_architect"
+      ? (["pending_placement"] as HandoffStatus[])
+      : (["pending"] as HandoffStatus[]);
+  const pending = await listHandoffs({ status: statuses, toAgent, limit: 50 });
+  const target =
+    toAgent === "code_implementer"
+      ? pending.find((h) => h.package_placement)
+      : pending[0];
   if (!target) return null;
 
   return updateHandoff(target.handoff_id, {
-    status: target.status === "pending_placement" ? "pending_placement" : "claimed",
+    status: toAgent === "package_architect" ? "pending_placement" : "claimed",
     claimed_at: nowIso(),
   });
 }

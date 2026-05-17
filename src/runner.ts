@@ -8,6 +8,7 @@ import { buildMockTrace, buildRunInput } from "./agent-run-trace.js";
 import { resolveCursorApiKey } from "./env.js";
 import { hashBriefing } from "./control-plane/briefing-hash.js";
 import { finalizeAgentRun } from "./control-plane/finalize-run.js";
+import { applySwarmPostRunEffects } from "./handoffs/post-run.js";
 import { persistAgentRun } from "./db/persist.js";
 import { runsDir } from "./control-plane/paths.js";
 import {
@@ -299,6 +300,7 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
     { definition, rolloutPrUrls, preflight, extraEvidence },
   );
 
+  await applySwarmPostRunEffects(finalized, briefingHash);
   await persistAgentRun({ run: finalized });
   return finalized;
 }

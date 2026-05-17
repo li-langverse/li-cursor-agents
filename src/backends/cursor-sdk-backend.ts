@@ -10,7 +10,7 @@ import {
 } from "../env.js";
 import { buildControlPlaneDbMcpServers } from "../mcp/mcp-config.js";
 import type { AgentBackend, AgentDefinition, AgentRunOptions, AgentRunResult } from "../types.js";
-import { sdkSessionGapMs, withSdkSessionLock } from "./sdk-session-lock.js";
+import { sdkSessionGapMs, withGlobalSdkSessionLock } from "./sdk-session-lock.js";
 
 export interface SdkAttemptMeta {
   attempt: number;
@@ -107,7 +107,7 @@ export class CursorSdkBackend implements AgentBackend {
     let lastResult: RunResult | undefined;
     let lastErrorMessage = "SDK run failed";
 
-    return withSdkSessionLock(async () => {
+    return withGlobalSdkSessionLock(async () => {
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         if (attempt > 1) {
           const backoff = sdkRetryBackoffMs(attempt - 1);

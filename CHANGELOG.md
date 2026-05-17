@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Research + implement lanes** — `src/lanes/research-lane.ts`, `implement-lane.ts`; `npm run agents:research-lane` / `agents:implement-lane`; session-first scheduling; placement gate via `package_architect`.
+- **`config/research-goals.yaml`** + `src/research-goals/load-goals.ts` — goal priority, cadence, agent mapping.
+- **Post-run swarm effects** — `src/handoffs/post-run.ts` advances research sessions, creates cycle handoffs, parses architect placement JSON.
+- **Cross-process SDK lock** — `data/control-plane/sdk-session.lock` via `withGlobalSdkSessionLock()`.
 - **Swarm handoffs + research sessions** — Supabase migration `20260517150000_swarm_handoffs_sessions.sql`; disk fallback `data/handoffs/pending.jsonl`; `src/handoffs/handoff-store.ts`, `src/research-sessions/session-store.ts`.
 - **Agents** — `package_architect` (plan), `goal_researcher`, `proof_gap_researcher`, `stdlib_researcher`; prompts under `prompts/`; heap coordinator mapping in `src/heap/coordinators.ts`.
 - **Prompt wiring** — `config/swarm-mandate.md`, `src/preflight/swarm-context.ts`, `src/agents/sdk-mode.ts` (plan/debug prefixes); pending handoffs + session continuation in `buildUserMessage`.

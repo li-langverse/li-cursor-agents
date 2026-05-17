@@ -1,0 +1,119 @@
+import { createHandoff, listHandoffs, updateHandoff } from "./handoff-store.js";
+import { validateNorthStarFit, validatePackagePlacement } from "./placement-validator.js";
+import type { PackagePlacement } from "./types.js";
+import {
+  agentUsesResearchSession,
+  completeResearchRunStep,
+  markResearchRunFailed,
+} from "../research-sessions/session-lifecycle.js";
+import { loadResearchGoals, northStarFitForGoal } from "../research-goals/load-goals.js";
+import { runIdFromOutputPath } from "../db/persist.js";
+import type { AgentId, AgentRunResult } from "../types.js";
+
+export function extractPackagePlacementFromOutput(text: string): PackagePlacement | null {
+  const fence = text.match(/```(?:json)?\s*([\s\S]*?package_placement[\s\S]*?)```/i);
+  const blob = fence?.[1] ?? text;
+  const jsonMatch = blob.match(/\{[\s\S]*"action"\s*:\s*"[\w_]+"[\s\S]*\}/);
+  if (!jsonMatch) return null;
+  try {
+    const parsed = JSON.parse(jsonMatch[0]) as Record<string, unknown>;
+    const inner =
+      parsed.package_placement && typeof parsed.package_placement === "object"
+        ? (parsed.package_placement as PackagePlacement)
+        : (parsed as unknown as PackagePlacement);
+    if (validatePackagePlacement(inner)) return null;
+    return inner;
+  } catch {
+    return null;
+  }
+}
+
+export async function createCycleCompleteHandoff(
+  agentId: string,
+  goalId: string,
+  sessionId: string,
+  briefingHash?: string,
+  sourceRunId?: string,
+): Promise<void> {
+  const goals = loadResearchGoals();
+  const goal = goals.find((g) => g.id === goalId);
+  const north = goal ? northStarFitForGoal(goal) : `Research cycle complete for ${goalId}`;
+  const to = goal?.handoff_to ?? ["package_architect", "code_implementer"];
+
+  await createHandoff({
+    from_agent: agentId,
+    to_agents: to.includes("package_architect") ? ["package_architect", ...to] : to,
+    status: "pending_placement",
+    research_goal_id: goalId,
+    research_session_id: sessionId,
+    north_star_fit: north,
+    domains: goal?.domains,
+    briefing_hash: briefingHash,
+    source_run_id: sourceRunId,
+    work: {
+      summary: `Cycle complete for goal ${goalId}`,
+      session_id: sessionId,
+    },
+  });
+}
+
+export async function applyResearchPostRun(result: AgentRunResult, briefingHash?: string): Promise<void> {
+  if (!agentUsesResearchSession(result.agentId as AgentId)) return;
+  const runId = result.outputPath ? runIdFromOutputPath(result.outputPath) : undefined;
+
+  if (result.status !== "finished") {
+    await markResearchRunFailed(result.agentId as AgentId, runId ?? "unknown", result.status);
+    return;
+  }
+
+  const summary =
+    result.completion?.evidence?.[0] ??
+    (result.outputText?.slice(0, 120) || "research step finished");
+  const session = await completeResearchRunStep(
+    result.agentId as AgentId,
+    runId ?? "unknown",
+    result.status,
+    summary,
+  );
+
+  if (session?.status === "cycle_complete" && session.goal_id) {
+    const dup = await listHandoffs({
+      status: ["pending_placement", "pending"],
+      limit: 20,
+    });
+    if (!dup.some((h) => h.research_session_id === session.session_id)) {
+      await createCycleCompleteHandoff(
+        result.agentId,
+        session.goal_id,
+        session.session_id,
+        briefingHash,
+        runId,
+      );
+    }
+  }
+}
+
+export async function applyPackageArchitectPostRun(result: AgentRunResult): Promise<void> {
+  if (result.agentId !== "package_architect" || result.status !== "finished") return;
+  const text = result.outputText ?? "";
+  const placement = extractPackagePlacementFromOutput(text);
+  if (!placement) return;
+
+  const pending = await listHandoffs({ status: "pending_placement", toAgent: "package_architect", limit: 1 });
+  const target = pending[0];
+  if (!target) return;
+
+  await updateHandoff(target.handoff_id, {
+    package_placement: placement,
+    status: "pending",
+    work: { ...target.work, placement_decided_at: new Date().toISOString() },
+  });
+}
+
+export async function applySwarmPostRunEffects(
+  result: AgentRunResult,
+  briefingHash?: string,
+): Promise<void> {
+  await applyResearchPostRun(result, briefingHash);
+  await applyPackageArchitectPostRun(result);
+}
