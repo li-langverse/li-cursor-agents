@@ -14,6 +14,7 @@
     "list": "node dist/cli/run-agent.js --list",
     "supervisor": "node dist/cli/supervisor.js",
     "stack": "bash scripts/start-stack.sh",
+    "agents:keep": "bash scripts/keep-agents-running.sh",
     "dashboard": "node dist/cli/serve-dashboard.js",
     "repo-workflow": "node dist/cli/repo-workflow.js",
     "test": "npm run build && CURSOR_MOCK=1 node --test 'dist/**/*.test.js' --test 'dist/e2e/*.e2e.js'",

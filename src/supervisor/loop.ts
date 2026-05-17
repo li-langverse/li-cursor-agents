@@ -10,7 +10,9 @@ import {
 import { ensureControlPlaneDirs } from "../control-plane/paths.js";
 import { loadState, pruneRecentTasks, saveState } from "../control-plane/state.js";
 import { buildHeapPlan, parseOrgRoadmapFromBriefing } from "../heap/plan.js";
-import { buildHeapTaskQueue } from "../heap/task-queue.js";
+import { AGENT_REGISTRY } from "../agents/registry.js";
+import { buildHeapTaskQueue, taskFingerprint } from "../heap/task-queue.js";
+import type { AgentId } from "../types.js";
 import { pushSupervisorActivity } from "../control-plane/supervisor-activity.js";
 import { recordTaskRun, shouldSkipDispatch } from "../control-plane/task-queue.js";
 import { completeSupervisorRun, registerSupervisorRun } from "../control-plane/runtime.js";
@@ -29,6 +31,8 @@ export interface SupervisorOptions {
   mock: boolean;
   once: boolean;
   force: boolean;
+  /** First loop iteration uses force=true so agents run immediately after Start loop. */
+  forceFirstTick?: boolean;
   intervalMs: number;
   cooldownMs: number;
   maxTasksPerTick: number;
@@ -64,7 +68,7 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
   state.last_preflight_at = preflight.generated_at;
   state.last_briefing_hash = briefingHash;
 
-  const {
+  let {
     tasks,
     skippedCooldown,
     heapPlan,
@@ -74,6 +78,37 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
     cooldownMs: options.cooldownMs,
     maxTasks: options.maxTasksPerTick,
   });
+
+  if (tasks.length === 0) {
+    const recommended = extractRecommended(briefing);
+    const stopped = new Set(state.stopped_agents ?? []);
+    for (const r of recommended) {
+      const agentId = r.agent as AgentId;
+      if (stopped.has(agentId)) continue;
+      tasks.push({
+        fingerprint: taskFingerprint(agentId, r.reason),
+        agentId,
+        reason: r.reason,
+        source: "recommended",
+      });
+      if (tasks.length >= options.maxTasksPerTick) break;
+    }
+  }
+
+  if (tasks.length === 0 && options.force) {
+    const stopped = new Set(state.stopped_agents ?? []);
+    for (const def of AGENT_REGISTRY) {
+      if (def.id === "orchestrator") continue;
+      if (stopped.has(def.id)) continue;
+      tasks.push({
+        fingerprint: taskFingerprint(def.id, "supervisor force dispatch"),
+        agentId: def.id,
+        reason: "supervisor force dispatch",
+        source: "recommended",
+      });
+      if (tasks.length >= options.maxTasksPerTick) break;
+    }
+  }
 
   const orgRoadmap = parseOrgRoadmapFromBriefing(briefing) ?? undefined;
   const pendingWeb = tasks.filter((t) => agentNeedsWeb(t.agentId)).map((t) => t.agentId);
@@ -240,9 +275,15 @@ export async function runSupervisorLoop(
     `Loop running (mock=${options.mock}, interval=${Math.round(options.intervalMs / 1000)}s)`,
     { once: options.once, force: options.force },
   );
+  let tickIndex = 0;
   for (;;) {
     if (signal?.aborted) break;
-    const tick = await supervisorTick(options);
+    const tickOptions =
+      tickIndex === 0 && options.forceFirstTick !== false
+        ? { ...options, force: true }
+        : options;
+    const tick = await supervisorTick(tickOptions);
+    tickIndex += 1;
     const msg = [
       `tick briefing=${tick.briefingHash}`,
       `executed=${tick.tasksExecuted}`,

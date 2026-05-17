@@ -76,6 +76,11 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
         console.error("[db] hydrate state:", err instanceof Error ? err.message : err);
       });
     }
+    if (process.env.LI_AUTO_START_SUPERVISOR === "1" || process.env.LI_AUTO_START_SUPERVISOR === "true") {
+      void startSupervisorLoop({ forceFirstTick: true }).then((r) => {
+        console.error(`[dashboard] auto-start supervisor: ${r.message}`);
+      });
+    }
   });
   return server;
 }
@@ -242,12 +247,19 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
   }
 
   if (url.pathname === "/api/supervisor/start" && req.method === "POST") {
-    const result = await startSupervisorLoop();
+    const result = await startSupervisorLoop({
+      forceFirstTick: true,
+      force: false,
+    });
+    const message =
+      result.message +
+      (result.started ? " — first tick runs agents immediately (check Supervisor log)." : "");
     json(res, 200, {
       ok: result.started || result.already_running,
       ...result,
+      message,
       runtime: runtimeSnapshot(loadState()),
-      activity: listSupervisorActivity(5),
+      activity: listSupervisorActivity(8),
     });
     return;
   }
