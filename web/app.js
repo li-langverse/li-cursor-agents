@@ -185,13 +185,12 @@ function renderStatCards() {
     (gaps?.agent_prs_blocked ?? 0) +
     (gaps?.numerics_without_evidence ?? 0);
 
-    $("#stat-cards").innerHTML = `
+  $("#stat-cards").innerHTML = `
     <div class="stat-card accent"><div class="label">Running</div><div class="value">${running}</div></div>
-    <div class="stat-card"><div class="label">Idle</div><div class="value">${idle}</div></div>
-    <div class="stat-card"><div class="label">Cooldown</div><div class="value">${cooldown}</div></div>
     <div class="stat-card"><div class="label">Queued</div><div class="value">${queued}</div></div>
     <div class="stat-card"><div class="label">Stopped</div><div class="value">${stopped}</div></div>
-    <div class="stat-card"><div class="label">Interventions</div><div class="value">${interventions}</div></div>`;
+    <div class="stat-card"><div class="label">Interventions</div><div class="value">${interventions}</div></div>
+    <div class="stat-card"><div class="label">Run artifacts</div><div class="value">${runs}</div></div>`;
 }
 
 function renderLiveActivity() {
@@ -512,6 +511,60 @@ function renderAgentDrawer(d) {
     </div>`;
 }
 
+function renderRunTrace(detail) {
+  const input = detail.run_input;
+  const trace = detail.run_trace;
+  const parts = [];
+
+  if (input) {
+    parts.push(`<section class="trace-section"><h4>Input</h4>
+      <p class="trace-meta">Agent <code>${esc(input.agent_id)}</code> · ${esc(input.backend)} · cwd <code>${esc(input.cwd)}</code></p>
+      <details open><summary>System prompt</summary><pre class="trace-pre">${esc(input.system_prompt)}</pre></details>
+      <details open><summary>User message</summary><pre class="trace-pre">${esc(input.user_message)}</pre></details>
+    </section>`);
+  }
+
+  if (trace) {
+    if (trace.thinking_text) {
+      parts.push(`<section class="trace-section"><h4>Thinking</h4><pre class="trace-pre">${esc(trace.thinking_text)}</pre></section>`);
+    }
+    if (trace.file_edits?.length) {
+      parts.push(`<section class="trace-section"><h4>Files touched (${trace.file_edits.length})</h4><ul class="simple-list">
+        ${trace.file_edits.map((f) => `<li><code>${esc(f.path)}</code> · ${esc(f.tool)}${f.ok === false ? " · failed" : ""}</li>`).join("")}
+      </ul></section>`);
+    }
+    if (trace.steps?.length) {
+      parts.push(`<section class="trace-section"><h4>Tool steps (${trace.tool_call_count ?? trace.steps.length})</h4>
+        <ul class="simple-list">${trace.steps
+          .filter((s) => s.type === "toolCall")
+          .map((s) => {
+            const m = s.message ?? {};
+            const path = m.args?.path ?? m.args?.command ?? m.type;
+            return `<li><code>${esc(m.type)}</code> ${esc(String(path).slice(0, 120))}</li>`;
+          })
+          .join("")}</ul></section>`);
+    }
+    parts.push(`<section class="trace-section"><h4>Assistant output</h4><pre class="trace-pre">${esc(trace.assistant_text ?? detail.output_preview ?? "")}</pre></section>`);
+  } else {
+    parts.push(`<section class="trace-section"><h4>Output</h4><pre class="trace-pre">${esc(detail.output_preview ?? "(empty)")}</pre></section>`);
+  }
+
+  const comp = detail.completion;
+  if (comp) {
+    parts.push(`<section class="trace-section"><h4>Completion audit</h4>
+      <p>complete=${esc(String(comp.complete))} premature=${esc(String(comp.premature))}</p>
+      ${comp.gaps?.length ? `<p>Gaps: ${esc(comp.gaps.join("; "))}</p>` : ""}
+    </section>`);
+  }
+  if (detail.pr_urls?.length) {
+    parts.push(`<section class="trace-section"><h4>PRs</h4><ul class="simple-list">
+      ${detail.pr_urls.map((u) => `<li><a href="${escAttr(u)}" target="_blank" rel="noopener">${esc(u)}</a></li>`).join("")}
+    </ul></section>`);
+  }
+
+  return parts.join("") || `<pre class="trace-pre">${esc(detail.output_preview ?? "(no trace recorded)")}</pre>`;
+}
+
 async function openRunDrawer(runId) {
   ui.selectedRunId = runId;
   const drawer = $("#run-drawer");
@@ -524,17 +577,8 @@ async function openRunDrawer(runId) {
         <h2><code>${esc(detail.agent_id)}</code></h2>
         <p class="sub">${esc(statusLabel(detail.live ? "running" : detail.status))} · ${formatTime(detail.started_at)}</p>
       </div>`;
-    const prBlock =
-      detail.pr_urls?.length ?
-        `\n\nPRs:\n${detail.pr_urls.map((u) => u).join("\n")}`
-      : "";
-    const comp = detail.completion;
-    const compBlock =
-      comp ?
-        `\n\nCompletion: complete=${comp.complete} premature=${comp.premature}${comp.gaps?.length ? `\nGaps: ${comp.gaps.join("; ")}` : ""}`
-      : "";
-    $("#drawer-run-output").textContent =
-      (detail.output_preview ?? "(empty output)") + prBlock + compBlock;
+    const traceHtml = renderRunTrace(detail);
+    $("#drawer-run-output").innerHTML = traceHtml;
   } catch (e) {
     $("#drawer-run-output").textContent = e.message;
   }

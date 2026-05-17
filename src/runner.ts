@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 import { getAgent } from "./agents/registry.js";
 import { CursorSdkBackend } from "./backends/cursor-sdk-backend.js";
 import { MockBackend } from "./backends/mock-backend.js";
+import { buildMockTrace, buildRunInput } from "./agent-run-trace.js";
+import { hashBriefing } from "./control-plane/briefing-hash.js";
 import { finalizeAgentRun } from "./control-plane/finalize-run.js";
 import { persistAgentRun } from "./db/persist.js";
 import { runsDir } from "./control-plane/paths.js";
@@ -88,7 +90,35 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
         outputPath,
       };
       writeFileSync(outputPath.replace(/\.md$/, ".json"), JSON.stringify(base, null, 2) + "\n", "utf8");
-      const finalized = finalizeAgentRun(base, { definition, rolloutPrUrls: prUrls });
+      const kitInput = buildRunInput({
+        agentId: definition.id,
+        backend: mock ? "mock" : "cursor-sdk",
+        systemPrompt,
+        userMessage: extra ?? "(agent-kit rollout only — no LLM)",
+        cwd: workCwd,
+        benchmarksRoot,
+        briefingPath: preflight.briefing_path,
+        briefingHash:
+          preflight.briefing && typeof preflight.briefing === "object"
+            ? hashBriefing(preflight.briefing)
+            : undefined,
+        preflightGeneratedAt: preflight.generated_at,
+        dryRun: options.dryRun,
+        mock,
+      });
+      const finalized = finalizeAgentRun(
+        {
+          ...base,
+          runInput: kitInput,
+          trace: buildMockTrace({
+            definitionId: definition.id,
+            assistantText: text,
+            userMessage: kitInput.user_message,
+            cwd: workCwd,
+          }),
+        },
+        { definition, rolloutPrUrls: prUrls },
+      );
       await persistAgentRun({ run: finalized, rolloutRows: rollout });
       return finalized;
     }
@@ -96,9 +126,32 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
 
   const userMessage = buildUserMessage(definition.id, preflight, extra);
   const backend = mock ? new MockBackend() : new CursorSdkBackend();
+  const briefingHash =
+    preflight.briefing && typeof preflight.briefing === "object"
+      ? hashBriefing(preflight.briefing)
+      : undefined;
+
+  const runInput = buildRunInput({
+    agentId: definition.id,
+    backend: mock ? "mock" : "cursor-sdk",
+    systemPrompt,
+    userMessage,
+    cwd: workCwd,
+    benchmarksRoot,
+    briefingPath: preflight.briefing_path,
+    briefingHash,
+    preflightGeneratedAt: preflight.generated_at,
+    modelId: options.modelId,
+    extraInstruction: extra,
+    dryRun: options.dryRun,
+    mock,
+  });
 
   const result = await backend.run(definition, systemPrompt, userMessage, { ...options, cwd: workCwd });
-  const finalized = finalizeAgentRun(result, { definition });
+  const finalized = finalizeAgentRun(
+    { ...result, runInput: result.runInput ?? runInput },
+    { definition },
+  );
   await persistAgentRun({ run: finalized });
   return finalized;
 }

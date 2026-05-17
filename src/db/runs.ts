@@ -27,6 +27,8 @@ export interface AgentRunHistoryRow {
   error?: string | null;
   completion?: AgentRunResult["completion"] | null;
   pr_urls?: string[] | null;
+  run_input?: AgentRunResult["runInput"] | null;
+  run_trace?: AgentRunResult["trace"] | null;
   summary?: string;
   premature?: boolean;
 }
@@ -55,6 +57,8 @@ function rowToHistory(row: Record<string, unknown>): AgentRunHistoryRow {
     error: row.error as string | null,
     completion: completion ?? null,
     pr_urls: (row.pr_urls as string[]) ?? [],
+    run_input: (row.run_input as AgentRunResult["runInput"]) ?? null,
+    run_trace: (row.run_trace as AgentRunResult["trace"]) ?? null,
     summary: summaryFromOutput(output),
     premature: completion?.premature ?? false,
   };
@@ -94,7 +98,13 @@ export async function upsertAgentRun(input: PersistRunInput): Promise<void> {
       error: run.error ?? null,
       completion: run.completion ?? null,
       pr_urls: prUrls,
-      meta: { rollout_count: rolloutRows?.length ?? 0 },
+      run_input: run.runInput ?? null,
+      run_trace: run.trace ?? null,
+      meta: {
+        rollout_count: rolloutRows?.length ?? 0,
+        tool_call_count: run.trace?.tool_call_count ?? 0,
+        file_edit_count: run.trace?.file_edits?.length ?? 0,
+      },
       updated_at: finishedAt,
     },
     { onConflict: "run_id" },
@@ -127,6 +137,34 @@ export async function upsertAgentRun(input: PersistRunInput): Promise<void> {
     event_type: "run_finished",
     payload: { status: run.status, premature: run.completion?.premature ?? false },
   });
+
+  if (run.trace?.steps?.length) {
+    const events = run.trace.steps.map((step, idx) => ({
+      run_id: runId,
+      seq: idx + 1,
+      event_type: step.type === "toolCall" ? "tool_call" : step.type,
+      payload: step,
+    }));
+    const { error: evErr } = await getSupabase().from("agent_run_events").insert(events);
+    if (evErr) throw new Error(`agent_run_events insert: ${evErr.message}`);
+  }
+}
+
+export async function getRunEvents(runId: string): Promise<Array<{ seq: number; event_type: string; payload: unknown }>> {
+  if (!dbEnabled()) return [];
+
+  const { data, error } = await getSupabase()
+    .from("agent_run_events")
+    .select("seq, event_type, payload")
+    .eq("run_id", runId)
+    .order("seq", { ascending: true });
+
+  if (error) throw new Error(`getRunEvents: ${error.message}`);
+  return (data ?? []).map((r) => ({
+    seq: Number(r.seq),
+    event_type: String(r.event_type),
+    payload: r.payload,
+  }));
 }
 
 export async function listAgentRunHistory(agentId: string, limit = 50): Promise<AgentRunHistoryRow[]> {

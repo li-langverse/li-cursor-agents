@@ -17,7 +17,7 @@
     "dashboard": "node dist/cli/serve-dashboard.js",
     "repo-workflow": "node dist/cli/repo-workflow.js",
     "test": "npm run build && CURSOR_MOCK=1 node --test 'dist/**/*.test.js' --test 'dist/e2e/*.e2e.js'",
-    "test:dashboard-api": "npm run build && CURSOR_MOCK=1 node --test dist/e2e/dashboard-api.e2e.js dist/e2e/dashboard-live-runs.e2e.js",
+    "test:dashboard-api": "npm run build && CURSOR_MOCK=1 node --test dist/e2e/dashboard-api.e2e.js dist/e2e/dashboard-live-runs.e2e.js dist/e2e/dashboard-run-trace.e2e.js",
     "smoke:dashboard": "node scripts/smoke-dashboard-api.mjs",
     "verify:dashboard": "npm run build && node scripts/verify-dashboard-live.mjs",
     "db:backfill": "node scripts/backfill-control-plane-db.mjs",

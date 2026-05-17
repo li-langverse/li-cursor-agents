@@ -1,3 +1,5 @@
+import type { AgentRunInputRecord, AgentRunTrace } from "./agent-run-trace.js";
+
 /** Agent run request / result contract (SDK or mock). */
 
 export type AgentId =
@@ -81,6 +83,10 @@ export interface AgentRunResult {
   outputPath: string;
   error?: string;
   completion?: AgentRunCompletionMeta;
+  /** Exact prompts and preflight context sent to the backend. */
+  runInput?: AgentRunInputRecord;
+  /** LLM output, thinking, tool steps, and file edits. */
+  trace?: AgentRunTrace;
 }
 
 export interface AgentBackend {

@@ -108,6 +108,13 @@ try {
   if ((detail.body.output_preview ?? "").length < 10) fail("run trace missing output");
   else ok(`run trace ${runId} (${detail.body.output_preview.length} chars)`);
 
+  const input = detail.body.run_input;
+  const trace = detail.body.run_trace;
+  if (!input?.user_message || !input?.system_prompt) fail("run_input missing prompts");
+  else ok("run_input has system + user prompts");
+  if (!trace?.thinking_text || !(trace.file_edits?.length >= 1)) fail("run_trace missing thinking/edits");
+  else ok(`run_trace thinking + ${trace.file_edits.length} file edits`);
+
   const hist = await get(port, `/api/agents/${encodeURIComponent(agentId)}/history?limit=5`);
   if (!hist.body.runs?.some((r) => r.run_id === runId)) fail("history missing run");
   else ok(`agent ${agentId} history has run`);

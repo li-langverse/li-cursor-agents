@@ -846,6 +846,39 @@ footer.footer-controls {
   margin-right: 0.25rem;
 }
 
+.trace-section {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.trace-section h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.trace-pre {
+  margin: 0.35rem 0 0;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--surface-2);
+  border-radius: 6px;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.trace-meta {
+  font-size: 0.82rem;
+  color: var(--muted);
+  margin: 0 0 0.5rem;
+}
+
 @media (max-width: 900px) {
   .app-shell {
     flex-direction: column;

@@ -1,5 +1,6 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { buildMockTrace } from "../agent-run-trace.js";
 import { runsDir } from "../control-plane/paths.js";
 import type { AgentBackend, AgentDefinition, AgentRunOptions, AgentRunResult } from "../types.js";
 
@@ -24,13 +25,20 @@ export class MockBackend implements AgentBackend {
     const outputPath = join(runsDir(), `${definition.id}-${Date.now()}.md`);
 
     if (options.dryRun) {
+      const dryText = `[dry-run] mock backend would run ${definition.id}`;
       return {
         agentId: definition.id,
         backend: "mock",
         status: "dry-run",
         durationMs: Date.now() - start,
         outputPath,
-        outputText: `[dry-run] mock backend would run ${definition.id}`,
+        outputText: dryText,
+        trace: buildMockTrace({
+          definitionId: definition.id,
+          assistantText: dryText,
+          userMessage,
+          cwd: options.cwd,
+        }),
       };
     }
 
@@ -97,6 +105,12 @@ export class MockBackend implements AgentBackend {
       durationMs: Date.now() - start,
       outputText: text,
       outputPath,
+      trace: buildMockTrace({
+        definitionId: definition.id,
+        assistantText: text,
+        userMessage,
+        cwd: options.cwd,
+      }),
     };
   }
 }

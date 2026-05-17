@@ -10,11 +10,13 @@ import { reportPath } from "./paths.js";
 import { dbEnabled } from "../db/client.js";
 import {
   getRunById,
+  getRunEvents,
   getRolloutsForRun,
   listAgentRunHistory,
   listRunsGlobal,
   type AgentRunHistoryRow,
 } from "../db/runs.js";
+import type { AgentRunInputRecord, AgentRunTrace } from "../agent-run-trace.js";
 import type { AgentId } from "../types.js";
 
 export interface RunCatalogEntry {
@@ -35,6 +37,9 @@ export interface RunCatalogEntry {
   pr_urls?: string[];
   premature?: boolean;
   summary?: string;
+  run_input?: AgentRunInputRecord;
+  run_trace?: AgentRunTrace;
+  trace_events?: Array<{ seq: number; event_type: string; payload: unknown }>;
 }
 
 function parseRunBasename(file: string): { agentId: string; ts: number } | null {
@@ -65,6 +70,8 @@ function historyRowToCatalog(row: AgentRunHistoryRow): RunCatalogEntry {
     pr_urls: row.pr_urls ?? [],
     premature: row.premature,
     summary: row.summary,
+    run_input: row.run_input ?? undefined,
+    run_trace: row.run_trace ?? undefined,
   };
 }
 
@@ -109,6 +116,8 @@ export function listRunsFromDisk(limit = 80): RunCatalogEntry[] {
       completion,
       pr_urls: (completion?.pr_urls as string[]) ?? [],
       premature: completion?.premature,
+      run_input: meta.runInput as AgentRunInputRecord | undefined,
+      run_trace: meta.trace as AgentRunTrace | undefined,
     });
   }
 
@@ -159,6 +168,9 @@ export async function getRunDetail(runId: string): Promise<RunCatalogEntry | nul
       if (row) {
         const entry = historyRowToCatalog(row);
         if (row.output_md) entry.output_preview = row.output_md;
+        entry.run_input = row.run_input ?? undefined;
+        entry.run_trace = row.run_trace ?? undefined;
+        entry.trace_events = await getRunEvents(runId);
         const rollouts = await getRolloutsForRun(runId);
         const prFromRollout = rollouts.map((r) => r.pr_url).filter((u): u is string => Boolean(u));
         if (prFromRollout.length && !entry.pr_urls?.length) entry.pr_urls = prFromRollout;
@@ -171,6 +183,7 @@ export async function getRunDetail(runId: string): Promise<RunCatalogEntry | nul
 
   const dir = runsDir();
   const md = join(dir, `${runId}.md`);
+  const jsonPath = join(dir, `${runId}.json`);
   if (!existsSync(md)) return null;
 
   const all = listRunsFromDisk(200);
@@ -180,6 +193,15 @@ export async function getRunDetail(runId: string): Promise<RunCatalogEntry | nul
     row.output_preview = readFileSync(md, "utf8");
   } catch {
     /* empty */
+  }
+  if (existsSync(jsonPath)) {
+    try {
+      const meta = JSON.parse(readFileSync(jsonPath, "utf8")) as Record<string, unknown>;
+      row.run_input = meta.runInput as AgentRunInputRecord | undefined;
+      row.run_trace = meta.trace as AgentRunTrace | undefined;
+    } catch {
+      /* ignore */
+    }
   }
   return row;
 }

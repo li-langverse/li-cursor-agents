@@ -1,6 +1,7 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { Agent } from "@cursor/sdk";
+import { createTraceCollector } from "../agent-run-trace.js";
 import { runsDir } from "../control-plane/paths.js";
 import { resolveCursorApiKey, resolveCursorModelId } from "../env.js";
 import type { AgentBackend, AgentDefinition, AgentRunOptions, AgentRunResult } from "../types.js";
@@ -18,13 +19,17 @@ export class CursorSdkBackend implements AgentBackend {
     const outputPath = join(runsDir(), `${definition.id}-${Date.now()}.md`);
 
     if (options.dryRun) {
+      const trace = createTraceCollector().finalize(
+        `[dry-run] would call @cursor/sdk for ${definition.id}`,
+      );
       return {
         agentId: definition.id,
         backend: "cursor-sdk",
         status: "dry-run",
         durationMs: Date.now() - start,
         outputPath,
-        outputText: `[dry-run] would call @cursor/sdk for ${definition.id}`,
+        outputText: trace.assistant_text,
+        trace,
       };
     }
 
@@ -46,8 +51,11 @@ export class CursorSdkBackend implements AgentBackend {
 
     try {
       const chunks: string[] = [];
+      const collector = createTraceCollector();
       const run = await agent.send(fullPrompt, {
+        onStep: async ({ step }) => collector.onStep({ step }),
         onDelta: async ({ update }) => {
+          collector.onDelta({ update });
           if (update.type === "text-delta") chunks.push(update.text);
         },
       });
@@ -55,6 +63,7 @@ export class CursorSdkBackend implements AgentBackend {
       const result = await run.wait();
       const text =
         result.result ?? (chunks.join("") || `(no text; status=${result.status})`);
+      const trace = collector.finalize(text);
 
       writeFileSync(outputPath, text, "utf8");
 
@@ -66,6 +75,7 @@ export class CursorSdkBackend implements AgentBackend {
         outputText: text,
         outputPath,
         error: result.status !== "finished" ? `run status: ${result.status}` : undefined,
+        trace,
       };
     } finally {
       agent.close();

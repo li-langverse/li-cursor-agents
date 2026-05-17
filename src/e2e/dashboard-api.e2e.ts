@@ -115,6 +115,9 @@ describe("dashboard drilldown API e2e", () => {
       typeof runDetail.output_preview === "string" && runDetail.output_preview.length > 0,
       "run output drilldown",
     );
+    const trace = runDetail as { run_input?: { user_message: string }; run_trace?: { steps: unknown[] } };
+    assert.ok(trace.run_input?.user_message, "run_input on detail");
+    assert.ok((trace.run_trace?.steps?.length ?? 0) >= 1, "run_trace on detail");
 
     const agentId = firstRun.agent_id;
     const agentDetailRes = await httpGetJson(
