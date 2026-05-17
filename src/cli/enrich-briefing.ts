@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 import { loadRuntimeEnv } from "../env.js";
 loadRuntimeEnv();
+if (!process.env.LI_CONTROL_PLANE_STORE?.trim()) {
+  process.env.LI_CONTROL_PLANE_STORE = "disk";
+}
 import { enrichBriefingFile } from "../briefing/enrich-briefing-file.js";
 import { resolveBenchmarksRoot } from "../preflight.js";
 
