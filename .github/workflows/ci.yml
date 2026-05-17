@@ -1,9 +1,10 @@
 name: CI
 
+# GHA minutes: prefer local CI — ../li-local-ci/bin/li-local-ci run li-cursor-agents
+# Cloud CI: manual dispatch only (or add pull_request back when quota allows).
 on:
+  workflow_dispatch:
   push:
-    branches: [main]
-  pull_request:
     branches: [main]
 
 jobs:
