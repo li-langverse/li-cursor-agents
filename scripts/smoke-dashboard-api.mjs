@@ -25,6 +25,7 @@ const paths = [
   "/api/runs",
   "/api/runtime",
   "/api/queue",
+  "/api/statistics",
   "/",
   "/app.js",
 ];
@@ -76,6 +77,14 @@ try {
   if (tick.ok) console.log(`     → executed=${tickJson.tick?.tasksExecuted}`);
 } catch (e) {
   console.log(`WARN POST /api/tick: ${e.message} (preflight can be slow — drilldown GETs are what matter)`);
+}
+
+const stats = await get("/api/statistics");
+if (stats.status === 200 && stats.body?.statistics) {
+  const s = stats.body.statistics;
+  console.log(
+    `     → statistics runs=${s.runs_scanned} actions=${s.actions_taken} prs_open=${s.prs_open_now}`,
+  );
 }
 
 process.exit(failed ? 1 : 0);

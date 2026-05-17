@@ -18,6 +18,7 @@
           <button type="button" class="nav-item" data-view="activity">Activity</button>
           <button type="button" class="nav-item" data-view="agents">Agents</button>
           <button type="button" class="nav-item" data-view="heap">Heap plan</button>
+          <button type="button" class="nav-item" data-view="statistics">Statistics</button>
           <button type="button" class="nav-item" data-view="interventions">
             Interventions <span id="nav-intervention-count" class="nav-badge hidden">0</span>
           </button>
@@ -45,11 +46,6 @@
           <section id="view-overview" class="view active" aria-label="Overview">
             <div id="backend-banner" class="backend-banner hidden" role="alert" aria-live="polite"></div>
             <div class="stat-cards" id="stat-cards"></div>
-            <div class="panel" id="swarm-stats-panel">
-              <h2>Swarm statistics</h2>
-              <p class="hint" id="swarm-stats-meta">Aggregated from agent run traces, briefing, and GitHub (agent PRs).</p>
-              <div class="stat-cards swarm-stat-cards" id="swarm-stat-cards"></div>
-            </div>
             <div class="panel" id="gaps-panel" hidden>
               <h2>Implementation &amp; deliverable gaps</h2>
               <ul id="gaps-list" class="simple-list"></ul>
@@ -139,6 +135,16 @@
             </p>
             <dl id="roadmap-meta" class="meta compact"></dl>
             <div id="heap-layers" class="heap-layers"></div>
+          </section>
+
+                                                  <section id="view-statistics" class="view" aria-label="Statistics" hidden>
+            <p class="hint" id="swarm-stats-meta">Swarm output metrics from agent runs and briefing snapshots.</p>
+            <div id="swarm-stats-panel" class="panel">
+              <h2>Swarm statistics</h2>
+              <p class="hint">Aggregated from run traces, PR URLs in outputs, and persisted counters.</p>
+              <div id="swarm-stat-cards" class="stat-cards swarm-stat-cards"></div>
+              <ul id="swarm-stats-notes" class="simple-list swarm-stats-notes hidden"></ul>
+            </div>
           </section>
 
           <section id="view-interventions" class="view" aria-label="Interventions" hidden>
