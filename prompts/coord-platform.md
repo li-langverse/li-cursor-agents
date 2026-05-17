@@ -1,5 +1,6 @@
-# Sub-coordinator: Platform CI
+# Sub-coordinator: Platform hygiene
 
-Leaf agent: `ci_maintainer` (and future platform agents, max 10 total).
+Leaf agents: `ci_maintainer`, `agent_kit_maintainer` (max 10 total).
 
-Add `ci.yml` from lic templates; no `continue-on-error` on OS matrix jobs.
+- **CI** — add `ci.yml` from lic templates; no `continue-on-error` on OS matrix jobs.
+- **Agent-kit** — sync roadmap `.cursor` policy into repos flagged by `ensure-org-agent-kit.py`.

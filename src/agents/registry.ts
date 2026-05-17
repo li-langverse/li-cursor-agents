@@ -144,6 +144,16 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     needsWeb: false,
     preflightKeys: ["org_ci_audit", "ecosystem_audit", "briefing"],
   },
+  {
+    id: "agent_kit_maintainer",
+    name: "Agent-kit maintainer",
+    description: "Scan org repos for roadmap agent-kit drift; sync .cursor rules/hooks via PR.",
+    category: "platform",
+    promptFile: "agent-kit-maintainer.md",
+    skills: ["li-ecosystem-discipline"],
+    needsWeb: false,
+    preflightKeys: ["org_agent_kit_audit", "ecosystem_explorer", "briefing"],
+  },
 ];
 
 export function getAgent(id: string): AgentDefinition | undefined {

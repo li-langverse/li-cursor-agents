@@ -13,7 +13,8 @@ export type AgentId =
   | "autoresearch"
   | "bench_improver"
   | "docs_maintainer"
-  | "ci_maintainer";
+  | "ci_maintainer"
+  | "agent_kit_maintainer";
 
 /** @deprecated Briefing/fixtures may still use legacy ids — resolved in registry. */
 export type LegacyAgentId =

@@ -16,7 +16,7 @@ COORDINATOR_LEAVES: dict[str, list[str]] = {
     "coord_numerics": ["numerics_researcher", "autoresearch", "bench_improver"],
     "coord_governance": ["plan_verifier", "implementation_gaps", "issue_planner"],
     "coord_ecosystem": ["gap_explorer", "docs_maintainer"],
-    "coord_platform": ["ci_maintainer"],
+    "coord_platform": ["ci_maintainer", "agent_kit_maintainer"],
 }
 
 COORDINATOR_PRIORITY = [

@@ -18,7 +18,7 @@ describe("heap planner (Agentron-style)", () => {
     assert.ok(plan.priority_order.length <= MAX_COORDINATORS_PER_ROOT);
   });
 
-  test("13 agents fit under coordinator caps", () => {
+  test("14 leaf agents fit under coordinator caps", () => {
     const rec = [
       { agent: "pr_alignment", reason: "a" },
       { agent: "pr_reviewer", reason: "b" },
@@ -32,6 +32,7 @@ describe("heap planner (Agentron-style)", () => {
       { agent: "gap_explorer", reason: "j" },
       { agent: "docs_maintainer", reason: "k" },
       { agent: "ci_maintainer", reason: "l" },
+      { agent: "agent_kit_maintainer", reason: "m" },
     ];
     const plan = buildHeapPlan(rec);
     assert.equal(plan.validation_errors.length, 0);

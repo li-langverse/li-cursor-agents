@@ -4,6 +4,17 @@ Local **Cursor SDK** (`@cursor/sdk`) runner for li-langverse automations. **CI u
 
 Benchmarks repo keeps **preflight scripts** (`agent-briefing.py`); this repo runs **agents**.
 
+## Agent-kit (roadmap Cursor rules)
+
+This repo uses the same **roadmap `agent-kit/`** as lic/benchmarks (PR-only, ecosystem gates, release notes):
+
+```bash
+./scripts/sync-agent-kit.sh          # after ../roadmap/agent-kit changes
+./scripts/check-agent-kit-sync.sh    # CI / pre-push
+```
+
+Org drift audit (feeds **agent_kit_maintainer**): `python3 ../benchmarks/scripts/ensure-org-agent-kit.py --local-only`
+
 ## Quick start
 
 ```bash
@@ -49,6 +60,7 @@ npm run list
 | `bench_improver` | Fix red dashboard rows in lic | no |
 | `docs_maintainer` | Missing docs → implement | no |
 | `ci_maintainer` | Missing org CI workflows | no |
+| `agent_kit_maintainer` | Sync roadmap agent-kit into drifted org repos | no |
 | `orchestrator` | Route from briefing | no |
 
 Legacy briefing ids (`ecosystem_explorer`, `plan_completion`, …) still resolve via aliases.
@@ -103,7 +115,7 @@ The root **orchestrator** never dispatches more than **10 leaf agents** at once.
 | `coord_numerics` | numerics_researcher, autoresearch, bench_improver |
 | `coord_governance` | plan_verifier, implementation_gaps, issue_planner |
 | `coord_ecosystem` | gap_explorer, docs_maintainer |
-| `coord_platform` | ci_maintainer |
+| `coord_platform` | ci_maintainer, agent_kit_maintainer |
 
 Preflight writes `heap_plan` + `org_roadmap` into `agent-briefing.json` ([Agentron heap](https://docs.agentron.rocks/concepts/heap/)). Vision/pillars come from **roadmap** `vision-and-roadmap.md` and lic master plan PH tracker.
 

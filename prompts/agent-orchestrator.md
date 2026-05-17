@@ -33,6 +33,7 @@ Read `recommended_agents` and each artifact in `data/latest/*.json`.
 | Red `*_pure_li` / novel issues | **autoresearch** (+ numerics_researcher if needed) |
 | `needs_plan` issues | **issue_planner** |
 | Missing org CI | **ci_maintainer** |
+| Agent-kit drift / missing `.cursor` policy | **agent_kit_maintainer** |
 | Missing live docs | **docs_maintainer** |
 
 Do **one mission deeply** rather than all shallowly if timeboxed.
