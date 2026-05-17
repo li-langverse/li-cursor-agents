@@ -154,6 +154,9 @@ export function buildPrMergerInstruction(plan: MergeQueuePlan | undefined): stri
 
   lines.push(
     "## Conflict / progress rules (mandatory)",
+    "- **CI / GHA quota:** If GitHub Actions checks are missing or failed, run **local CI** first: "
+    + "`python3 benchmarks/scripts/local-ci-sweep.py --repo <repo> --pr <n>` (or supervisor runs this automatically). "
+    + "Merge only when `pr-merge-gate` shows `local-ci passed` or GHA green.",
     "- **Never** merge a PR with `mergeable: CONFLICTING` — integrate `origin/main` first.",
     "- **Never** drop commits from main or from an open PR when resolving conflicts.",
     "- After merging one PR in a repo, **re-plan**; other PRs must absorb updated main before merge.",

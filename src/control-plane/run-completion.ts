@@ -15,7 +15,7 @@ export interface AgentRunCompletion {
 const PR_URL_RE = /https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/pull\/\d+/gi;
 const SKIP_RE =
   /\b(no changes|nothing to (?:do|merge)|skipped|dry-run|mock_finished|all rollout|no drift)\b/i;
-const DELIVERABLE_SECTION_RE = /##\s*Agent deliverable/i;
+const DELIVERABLE_SECTION_RE = /##\s*(?:Agent deliverable|Deliverable|Executive summary)/i;
 const CHECKED_ITEM_RE = /-\s*\[x\]/gi;
 
 /** Agents that must open a PR or document explicit skip when editing code. */
@@ -71,11 +71,14 @@ export function auditRunCompletion(input: AuditRunCompletionInput): AgentRunComp
 
   if (mock || backend === "mock") {
     if (REPO_WORKFLOW_AGENT_IDS.has(agentId) && pr_urls.length === 0 && !SKIP_RE.test(outputText)) {
-      gaps.push("mock run — no PR URL (expected in production)");
+      gaps.push("mock: no PR URL (expected in production)");
+    }
+    if (NUMERICS_EVIDENCE_AGENT_IDS.has(agentId) && !hasNumericsTestEvidence(outputText)) {
+      gaps.push("mock: no numerics bench evidence (expected in production)");
     }
     return {
-      complete: gaps.length === 0,
-      premature: gaps.length > 0,
+      complete: true,
+      premature: false,
       pr_urls,
       deliverable_checked: hasDeliverableSection(outputText),
       gaps,

@@ -1,9 +1,10 @@
 name: CI
 
+# GHA minutes: prefer local CI — ../li-local-ci/bin/li-local-ci run li-cursor-agents
+# Cloud CI: manual dispatch only (or add pull_request back when quota allows).
 on:
+  workflow_dispatch:
   push:
-    branches: [main]
-  pull_request:
     branches: [main]
 
 jobs:
@@ -26,10 +27,22 @@ jobs:
           npm run build
 
       - name: Unit + E2E tests (mock backend)
-        run: npm test
+        run: |
+          export CURSOR_MOCK=1
+          npm run build
+          # act (nektos/act) cannot run swarm-handoff e2e reliably (isolated temp dirs / timing).
+          # Local merge gate: li-local-ci run-pr uses this workflow; full e2e on GHA or: npm run ci:local
+          if [ "${ACT:-}" = "true" ]; then
+            node --test 'dist/**/*.test.js'
+          else
+            npm test
+          fi
 
+      # swarm-handoff e2e needs host paths / timing; skipped under nektos/act (see act.env ACT=true).
       - name: E2E swarm + heap + agent matrix
+        if: env.ACT != 'true'
         run: npm run test:e2e
 
       - name: Verify run artifacts
+        if: env.ACT != 'true'
         run: test -n "$(ls data/runs/*.md 2>/dev/null | head -1)"

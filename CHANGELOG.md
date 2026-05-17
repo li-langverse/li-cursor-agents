@@ -6,8 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Supervisor cooldown: do not re-dispatch recommended agents when heap queue skipped tasks on cooldown (`src/supervisor/loop.ts`); cooldown treats terminal run statuses (`src/heap/task-queue.ts`).
+- Native `sqlite3` / arch mismatch: `scripts/ensure-native-modules.sh` rebuilds for host Node before `agents:keep`.
+
 ### Added
 
+- `LI_CONTROL_PLANE_STORE=supabase|disk` (default supabase); `assertStoreReady()` at stack start; single-store persist path in `src/db/persist.ts`.
+- `src/agent-output-format.ts` — structured agent markdown (metadata, preflight, deliverable, error + stack).
+
+### Added
+- `scripts/ensure-supabase.sh` + `npm run db:ensure`: start local Supabase, apply migrations, write `.env.supabase` with JWT keys (CLI 2.53 does not print service role).
+- Supabase is the **default** primary store (`LI_STACK_SKIP_SUPABASE=0`); `agents:keep` and `npm run setup` call ensure automatically.
+
+### Changed
+- Removed auto `LI_STACK_SKIP_SUPABASE=1` on low disk; opt out explicitly when Docker is unavailable.
+
+### Added
+
+- **Local CI** — `npm run ci:local` via sibling `li-local-ci` (host); GHA workflow is `workflow_dispatch` only to save quota.
+- **Swarm statistics** on Overview: actions taken (tool calls), file edits, lines added/deleted, PRs opened/merged/open, packages created — `GET /api/statistics`, persisted counters in `data/control-plane/swarm-stats.json`.
+
+### Changed
+
+- Interventions recomputed from fresh `agent-briefing.json`, filtered to open PRs only, persisted to `interventions_latest` (Supabase) + disk; auto-refresh briefing when older than 20m (throttled).
+- Dashboard footer: two modes only — **Supervisor mode** (toggle loop) and **Run all (parallel)**.
+- Dashboard shows **cursor-sdk vs mock** in top bar, overview banner, runs table, Activity cards, and run drawer (`sdk_ready` on `/api/status`).
+- **Real Cursor SDK is the default** for dashboard, `agents:keep`, and supervisor; `CURSOR_MOCK=1` only in `npm test` / CI / `--mock`. Production scripts `unset CURSOR_MOCK` after loading `.env`.
+
+### Fixed
+
+- Dashboard no longer shows a frozen `last_tick_at` while the subprocess supervisor keeps ticking — reload state from disk on API poll; supervisor activity log shared via `supervisor-activity.jsonl`.
+
+### Added
+
+- Dashboard **Activity** view and overview teaser: `GET /api/activity/recent` with prompt/output/action drill-downs; **Full trace** opens existing run drawer.
+- Supervisor loop feedback: in-memory activity log (`GET /api/supervisor/activity`), CLI startup banner, dashboard toast + supervisor log panel + footer button states.
 - Local Supabase control-plane store: `supabase/migrations/20260517120000_control_plane.sql`, `supabase/config.toml`, `src/db/*`.
 - APIs: `GET /api/agents/:id/history`, DB-first `/api/runs` and run detail.
 - Backfill: `scripts/backfill-control-plane-db.mjs`, `npm run db:backfill`.

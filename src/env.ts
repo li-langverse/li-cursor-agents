@@ -71,10 +71,26 @@ export function loadGithubEnv(): void {
   }
 }
 
+/** Absolute path to li-local-ci checkout (sibling of li-cursor-agents). */
+export function resolveLocalCiRoot(): string | undefined {
+  loadDotEnv();
+  const env = process.env.LI_LOCAL_CI_ROOT?.trim();
+  if (env && existsSync(join(env, "bin/li-local-ci"))) return env;
+  const pkg = packageRoot();
+  const sibling = join(pkg, "..", "li-local-ci");
+  if (existsSync(join(sibling, "bin/li-local-ci"))) return sibling;
+  return undefined;
+}
+
 /** Cursor + local .env + GitHub (for dashboard / supervisor / agent children). */
 export function loadRuntimeEnv(): void {
   loadDotEnv();
   loadGithubEnv();
+  const localCi = resolveLocalCiRoot();
+  if (localCi) process.env.LI_LOCAL_CI_ROOT = localCi;
+  if (process.env.LI_USE_LOCAL_CI === undefined) {
+    process.env.LI_USE_LOCAL_CI = "1";
+  }
   // gh accepts either name; keep both in sync when only GH_TOKEN is set
   if (process.env.GH_TOKEN && !process.env.GITHUB_TOKEN) {
     process.env.GITHUB_TOKEN = process.env.GH_TOKEN;

@@ -15,6 +15,7 @@
         </div>
         <nav class="nav" id="nav">
           <button type="button" class="nav-item active" data-view="overview">Overview</button>
+          <button type="button" class="nav-item" data-view="activity">Activity</button>
           <button type="button" class="nav-item" data-view="agents">Agents</button>
           <button type="button" class="nav-item" data-view="heap">Heap plan</button>
           <button type="button" class="nav-item" data-view="interventions">
@@ -31,6 +32,8 @@
             <p id="view-subtitle" class="view-subtitle">Swarm status at a glance</p>
           </div>
           <div class="topbar-right">
+            <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+            <span id="backend-pill" class="backend-pill sdk" title="Agent execution backend">cursor-sdk</span>
             <span id="status-pill" class="pill idle">loading</span>
             <span id="updated" class="updated"></span>
             <button type="button" id="refresh-briefing" class="btn ghost sm" title="Re-run agent-briefing.py">Refresh briefing</button>
@@ -40,10 +43,21 @@
 
         <main class="main-views">
           <section id="view-overview" class="view active" aria-label="Overview">
+            <div id="backend-banner" class="backend-banner hidden" role="alert" aria-live="polite"></div>
             <div class="stat-cards" id="stat-cards"></div>
+            <div class="panel" id="swarm-stats-panel">
+              <h2>Swarm statistics</h2>
+              <p class="hint" id="swarm-stats-meta">Aggregated from agent run traces, briefing, and GitHub (agent PRs).</p>
+              <div class="stat-cards swarm-stat-cards" id="swarm-stat-cards"></div>
+            </div>
             <div class="panel" id="gaps-panel" hidden>
               <h2>Implementation &amp; deliverable gaps</h2>
               <ul id="gaps-list" class="simple-list"></ul>
+            </div>
+            <div class="panel supervisor-panel">
+              <h2>Supervisor log <span id="supervisor-loop-badge" class="badge hidden">loop on</span></h2>
+              <p id="supervisor-loop-meta" class="hint">Footer: Supervisor mode (continuous) or Run all (parallel once).</p>
+              <ul id="supervisor-activity" class="activity-feed supervisor-feed"></ul>
             </div>
             <div class="split-panels">
               <div class="panel">
@@ -55,6 +69,14 @@
                 <ul id="queue" class="simple-list"></ul>
               </div>
             </div>
+            <div class="panel" id="overview-activity-panel">
+              <div class="panel-head-row">
+                <h2>Recent agent actions</h2>
+                <button type="button" class="btn ghost sm" id="goto-activity">View all</button>
+              </div>
+              <p class="hint">Prompts, outputs, and file/tool actions from the latest runs.</p>
+              <div id="overview-activity-feed" class="action-feed compact"></div>
+            </div>
             <div class="panel">
               <h2>Recent runs</h2>
               <div class="table-wrap">
@@ -63,6 +85,7 @@
                     <tr>
                       <th>Agent</th>
                       <th>Status</th>
+                      <th>Backend</th>
                       <th>When</th>
                       <th>Preview</th>
                     </tr>
@@ -71,6 +94,14 @@
                 </table>
               </div>
             </div>
+          </section>
+
+          <section id="view-activity" class="view" aria-label="Activity" hidden>
+            <p class="hint">
+              Latest agent runs with drill-downs for input prompts, assistant output, thinking, and actions taken.
+              Use <strong>Full trace</strong> for the complete step log.
+            </p>
+            <div id="activity-feed" class="action-feed"></div>
           </section>
 
           <section id="view-agents" class="view" aria-label="Agents" hidden>
@@ -111,7 +142,7 @@
           </section>
 
           <section id="view-interventions" class="view" aria-label="Interventions" hidden>
-            <p class="hint">P0 = act now. Agents never self-merge roadmap governance.</p>
+            <p class="hint">P0 = act now. Agents never self-merge roadmap governance. List refreshes from latest briefing (merged PRs dropped). Use <strong>Refresh briefing</strong> if a PR still looks wrong.</p>
             <ul id="interventions" class="intervention-list"></ul>
           </section>
         </main>
@@ -133,24 +164,15 @@
           <div id="drawer-run-header"></div>
         </header>
         <div class="drawer-body">
-          <pre id="drawer-run-output" class="run-output"></pre>
+          <div id="drawer-run-output" class="run-output run-trace-body"></div>
         </div>
       </aside>
       <div id="backdrop" class="backdrop hidden"></div>
     </div>
 
-    <footer class="footer-controls">
-      <div class="footer-group">
-        <span class="footer-label">Supervisor</span>
-        <button type="button" id="supervisor-start" class="btn primary sm">Start loop</button>
-        <button type="button" id="supervisor-stop" class="btn danger sm">Stop loop</button>
-        <button type="button" id="tick" class="btn ghost sm">One tick</button>
-      </div>
-      <div class="footer-group">
-        <span class="footer-label">Swarm</span>
-        <button type="button" id="swarm-run-all" class="btn primary sm">Run all</button>
-        <button type="button" id="swarm-stop-all" class="btn danger sm">Stop all</button>
-      </div>
+    <footer class="footer-controls footer-modes">
+      <button type="button" id="mode-supervisor" class="btn primary sm">Supervisor mode</button>
+      <button type="button" id="mode-parallel" class="btn ghost sm">Run all (parallel)</button>
     </footer>
 
     <script src="/app.js" type="module"></script>

@@ -115,6 +115,25 @@ describe("dashboard drilldown API e2e", () => {
       typeof runDetail.output_preview === "string" && runDetail.output_preview.length > 0,
       "run output drilldown",
     );
+    const trace = runDetail as { run_input?: { user_message: string }; run_trace?: { steps: unknown[] } };
+    assert.ok(trace.run_input?.user_message, "run_input on detail");
+    assert.ok((trace.run_trace?.steps?.length ?? 0) >= 1, "run_trace on detail");
+
+    const recentActivity = await httpGetJson(port, "/api/activity/recent?limit=10");
+    assert.equal(recentActivity.status, 200);
+    const actBody = recentActivity.body as {
+      items?: Array<{
+        run_id: string;
+        action_summary: string;
+        prompt_preview?: string;
+        has_trace?: boolean;
+      }>;
+    };
+    assert.ok(actBody.items && actBody.items.length >= 1, "activity recent list");
+    const firstItem = actBody.items![0];
+    assert.equal(firstItem.run_id, firstRun.run_id);
+    assert.ok(typeof firstItem.action_summary === "string");
+    assert.ok(firstItem.has_trace || firstItem.prompt_preview, "activity summaries");
 
     const agentId = firstRun.agent_id;
     const agentDetailRes = await httpGetJson(
@@ -169,6 +188,35 @@ describe("dashboard drilldown API e2e", () => {
       assert.equal(res.status, 200, path);
       assert.ok(res.type.length > 0);
     }
+  });
+
+  test("POST supervisor start returns feedback and activity log", async () => {
+    if (!server) {
+      env = setupE2eEnv("v1");
+      server = startOpsServer(0);
+      await new Promise((r) => setTimeout(r, 150));
+    }
+    const port = opsPort(server);
+
+    const startRes = await httpPostJson(port, "/api/supervisor/start");
+    assert.equal(startRes.status, 200);
+    const body = startRes.body as {
+      started?: boolean;
+      message?: string;
+      runtime?: { supervisor_loop_running?: boolean };
+    };
+    assert.equal(body.started, true);
+    assert.ok(body.message?.includes("started"));
+    assert.equal(body.runtime?.supervisor_loop_running, true);
+
+    const activity = await httpGetJson(port, "/api/supervisor/activity");
+    assert.equal(activity.status, 200);
+    const act = activity.body as { loop_running?: boolean; entries?: Array<{ message: string }> };
+    assert.equal(act.loop_running, true);
+    assert.ok(act.entries?.some((e) => e.message.includes("started")));
+
+    const stopRes = await httpPostJson(port, "/api/supervisor/stop");
+    assert.equal(stopRes.status, 200);
   });
 
   test("POST control endpoints respond", async () => {

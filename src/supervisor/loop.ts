@@ -10,14 +10,19 @@ import {
 import { ensureControlPlaneDirs } from "../control-plane/paths.js";
 import { loadState, pruneRecentTasks, saveState } from "../control-plane/state.js";
 import { buildHeapPlan, parseOrgRoadmapFromBriefing } from "../heap/plan.js";
-import { buildHeapTaskQueue } from "../heap/task-queue.js";
+import { AGENT_REGISTRY } from "../agents/registry.js";
+import { buildHeapTaskQueue, taskFingerprint } from "../heap/task-queue.js";
+import type { AgentId } from "../types.js";
+import { pushSupervisorActivity } from "../control-plane/supervisor-activity.js";
 import { recordTaskRun, shouldSkipDispatch } from "../control-plane/task-queue.js";
+import { completeSupervisorRun, registerSupervisorRun } from "../control-plane/runtime.js";
 import {
   buildAgentKitMaintainerInstruction,
   refreshAgentKitAudit,
 } from "../preflight/agent-kit-sync.js";
 import { rolloutAgentKitPrs } from "../repo-workflow/agent-kit-rollout.js";
 import { buildPrMergerInstruction, mergePlanFromBriefing } from "../preflight/merge-queue.js";
+import { runLocalCiSweepForMergeAgents } from "../local-ci/sweep.js";
 import { runPreflight, resolveBenchmarksRoot } from "../preflight.js";
 import type { AgentRunResult, PreflightBundle } from "../types.js";
 import type { ControlPlaneState, HumanIntervention, QueuedAgentTask } from "../control-plane/types.js";
@@ -27,6 +32,8 @@ export interface SupervisorOptions {
   mock: boolean;
   once: boolean;
   force: boolean;
+  /** First loop iteration uses force=true so agents run immediately after Start loop. */
+  forceFirstTick?: boolean;
   intervalMs: number;
   cooldownMs: number;
   maxTasksPerTick: number;
@@ -57,12 +64,12 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
 
   const benchmarksRoot = resolveBenchmarksRoot(options.benchmarksRoot);
   const preflight: PreflightBundle = runPreflight(benchmarksRoot, options.skipSlowPreflight !== false);
-  const briefing = preflight.briefing;
-  const briefingHash = hashBriefing(briefing);
+  let briefing = preflight.briefing;
+  let briefingHash = hashBriefing(briefing);
   state.last_preflight_at = preflight.generated_at;
   state.last_briefing_hash = briefingHash;
 
-  const {
+  let {
     tasks,
     skippedCooldown,
     heapPlan,
@@ -72,6 +79,38 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
     cooldownMs: options.cooldownMs,
     maxTasks: options.maxTasksPerTick,
   });
+
+  // Do not re-queue recommended agents when heap skipped them on cooldown.
+  if (tasks.length === 0 && skippedCooldown === 0) {
+    const recommended = extractRecommended(briefing);
+    const stopped = new Set(state.stopped_agents ?? []);
+    for (const r of recommended) {
+      const agentId = r.agent as AgentId;
+      if (stopped.has(agentId)) continue;
+      tasks.push({
+        fingerprint: taskFingerprint(agentId, r.reason),
+        agentId,
+        reason: r.reason,
+        source: "recommended",
+      });
+      if (tasks.length >= options.maxTasksPerTick) break;
+    }
+  }
+
+  if (tasks.length === 0 && options.force) {
+    const stopped = new Set(state.stopped_agents ?? []);
+    for (const def of AGENT_REGISTRY) {
+      if (def.id === "orchestrator") continue;
+      if (stopped.has(def.id)) continue;
+      tasks.push({
+        fingerprint: taskFingerprint(def.id, "supervisor force dispatch"),
+        agentId: def.id,
+        reason: "supervisor force dispatch",
+        source: "recommended",
+      });
+      if (tasks.length >= options.maxTasksPerTick) break;
+    }
+  }
 
   const orgRoadmap = parseOrgRoadmapFromBriefing(briefing) ?? undefined;
   const pendingWeb = tasks.filter((t) => agentNeedsWeb(t.agentId)).map((t) => t.agentId);
@@ -93,6 +132,28 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
     });
   }
 
+  if (benchmarksRoot && tasks.some((t) => ["pr_merger", "pr_reviewer", "pr_alignment"].includes(t.agentId))) {
+    const sweep = runLocalCiSweepForMergeAgents(
+      benchmarksRoot,
+      tasks.map((t) => t.agentId),
+    );
+    if (!sweep.skipped) {
+      pushSupervisorActivity(
+        sweep.ok ? "info" : "warn",
+        sweep.ok
+          ? `local-ci sweep: ${sweep.message.split("\n").slice(-2).join(" ") || "done"}`
+          : `local-ci sweep failed: ${sweep.message.split("\n").slice(-2).join(" ") || "see logs"}`,
+      );
+      const refreshed = runPreflight(benchmarksRoot, true);
+      preflight.briefing = refreshed.briefing;
+      preflight.generated_at = refreshed.generated_at;
+      briefing = refreshed.briefing;
+      briefingHash = hashBriefing(briefing);
+      state.last_briefing_hash = briefingHash;
+      state.last_preflight_at = refreshed.generated_at;
+    }
+  }
+
   const skippedUnchanged =
     shouldSkipDispatch(state, briefingHash, tasks.length, options.force) && interventions.length === 0;
 
@@ -105,7 +166,9 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
 
     for (const task of tasks) {
       state.supervisor_status = "running_agent";
+      state.current_supervisor_agent = task.agentId;
       saveState(state);
+      const supervisorRunId = registerSupervisorRun(task.agentId, task.reason);
       try {
         let extraInstruction: string | undefined;
         if (task.agentId === "pr_merger") {
@@ -129,10 +192,19 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
         await persistRunMeta(task, result, briefingHash);
         recordTaskRun(state, task, briefingHash, result.status);
         tasksExecuted += 1;
+        completeSupervisorRun(
+          supervisorRunId,
+          result.status === "error"
+            ? "error"
+            : result.status === "cancelled"
+              ? "cancelled"
+              : "finished",
+        );
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         state.last_error = msg;
         recordTaskRun(state, task, briefingHash, "error");
+        completeSupervisorRun(supervisorRunId, "error");
         interventions.push({
           id: `agent_error:${task.agentId}`,
           kind: "agent_error",
@@ -143,6 +215,10 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
           links: [],
           created_at: new Date().toISOString(),
         });
+      } finally {
+        if (state.current_supervisor_agent === task.agentId) {
+          state.current_supervisor_agent = undefined;
+        }
       }
     }
   }
@@ -150,6 +226,8 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
   const pruneAgeMs = Math.max(options.cooldownMs * 2, 86_400_000);
   pruneRecentTasks(state, 80, pruneAgeMs);
   state.supervisor_status = "idle";
+  state.current_supervisor_agent = undefined;
+  state.last_tick_at = new Date().toISOString();
   saveState(state);
 
   const recentRuns =
@@ -217,9 +295,20 @@ export async function runSupervisorLoop(
   options: SupervisorOptions,
   signal?: AbortSignal,
 ): Promise<void> {
+  pushSupervisorActivity(
+    "info",
+    `Loop running (mock=${options.mock}, interval=${Math.round(options.intervalMs / 1000)}s)`,
+    { once: options.once, force: options.force },
+  );
+  const forceFirst =
+    options.forceFirstTick !== false || process.env.LI_SUPERVISOR_FORCE_FIRST_TICK === "1";
+  let tickIndex = 0;
   for (;;) {
     if (signal?.aborted) break;
-    const tick = await supervisorTick(options);
+    const tickOptions =
+      tickIndex === 0 && forceFirst ? { ...options, force: true } : options;
+    const tick = await supervisorTick(tickOptions);
+    tickIndex += 1;
     const msg = [
       `tick briefing=${tick.briefingHash}`,
       `executed=${tick.tasksExecuted}`,
@@ -230,6 +319,12 @@ export async function runSupervisorLoop(
       .filter(Boolean)
       .join(" ");
     console.error(`[supervisor] ${msg}`);
+    pushSupervisorActivity("tick", msg, {
+      tasks_executed: tick.tasksExecuted,
+      skipped_cooldown: tick.tasksSkippedCooldown,
+      interventions: tick.interventions,
+      skipped_unchanged_briefing: tick.skippedUnchangedBriefing,
+    });
 
     if (options.once) break;
     if (signal?.aborted) break;

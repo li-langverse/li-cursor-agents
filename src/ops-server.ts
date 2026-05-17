@@ -18,20 +18,24 @@ import {
   stopSupervisorLoop,
 } from "./control-plane/runtime.js";
 import { sortedCoordinators } from "./heap/coordinators.js";
-import { agentsPackageRoot } from "./runner.js";
+import { agentsPackageRoot, agentBackendLabel } from "./runner.js";
+import { resolveCursorApiKey } from "./env.js";
 import { interventionsPath, reportPath, statePath } from "./control-plane/paths.js";
-import { buildLiveReport } from "./control-plane/live-report.js";
+import { loadLiveInterventionsPayload, loadLiveReportAsync } from "./control-plane/live-report.js";
 import { readJson } from "./control-plane/read-json.js";
 import {
   getAgentDetail,
   getAgentRunHistory,
   getRunDetail,
+  listRecentActivity,
   listRunsMerged,
 } from "./control-plane/runs-catalog.js";
 import { listActiveRuns } from "./control-plane/runtime.js";
-import { hydrateStateFromDb, loadState } from "./control-plane/state.js";
-import { dbEnabled } from "./db/client.js";
-import type { ControlPlaneReport } from "./control-plane/types.js";
+import { listSupervisorActivity } from "./control-plane/supervisor-activity.js";
+import { buildSwarmStatistics } from "./control-plane/swarm-statistics.js";
+import { hydrateStateFromDb, loadState, reloadStateIfNewer } from "./control-plane/state.js";
+import { assertStoreReady, configuredStore, dataStoreLabel, dbEnabled } from "./db/client.js";
+import type { ControlPlaneReport, ControlPlaneState } from "./control-plane/types.js";
 import { resolveBenchmarksRoot } from "./preflight.js";
 import type { AgentId } from "./types.js";
 
@@ -46,9 +50,9 @@ export function defaultOpsPort(): number {
 }
 
 export function startOpsServer(port: number): ReturnType<typeof createServer> {
+  assertStoreReady();
   const packageRoot = agentsPackageRoot();
   const webRoot = join(packageRoot, "web");
-
   const server = createServer(async (req, res) => {
     try {
       const url = new URL(req.url ?? "/", "http://127.0.0.1");
@@ -69,49 +73,92 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
   server.listen(port, "127.0.0.1", () => {
     const addr = server.address();
     const p = typeof addr === "object" && addr ? addr.port : port;
-    if (port !== 0) {
-      console.error(`Agent dashboard: http://127.0.0.1:${p}/`);
-    }
+    const backend = agentBackendLabel();
+    const keyOk = Boolean(resolveCursorApiKey());
+    console.error(`Agent dashboard: http://127.0.0.1:${p}/`);
+    console.error(
+      `[dashboard] Agent backend: ${backend}${backend === "cursor-sdk" && !keyOk ? " (missing CURSOR_API_KEY — add to .env)" : ""}`,
+    );
     if (dbEnabled()) {
       void hydrateStateFromDb().catch((err) => {
         console.error("[db] hydrate state:", err instanceof Error ? err.message : err);
       });
     }
+    if (process.env.LI_AUTO_START_SUPERVISOR === "1" || process.env.LI_AUTO_START_SUPERVISOR === "true") {
+      void startSupervisorLoop({ forceFirstTick: true }).then((r) => {
+        console.error(`[dashboard] auto-start supervisor: ${r.message}`);
+      });
+    } else {
+      console.error("[dashboard] Start loop from footer or: LI_AUTO_START_SUPERVISOR=1 npm run dashboard");
+    }
   });
   return server;
 }
 
-function liveReportPayload(): ControlPlaneReport | { error: string } {
-  const stored = readJson(reportPath()) as ControlPlaneReport | null;
-  return buildLiveReport(stored) ?? { error: "no report — run supervisor or start swarm" };
+async function liveReportPayload(): Promise<ControlPlaneReport | { error: string }> {
+  const report = await loadLiveReportAsync();
+  return report ?? { error: "no report — run supervisor or start swarm" };
+}
+
+async function loadStateForApi(): Promise<ControlPlaneState> {
+  if (isSupervisorLoopRunning()) {
+    return reloadStateIfNewer();
+  }
+  return loadState();
 }
 
 async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const state = loadState();
-  const report = liveReportPayload();
+  const state = await loadStateForApi();
+  const store = dataStoreLabel();
   const runtime = runtimeSnapshot(state);
 
+  // Fast paths — avoid loadLiveReportAsync on every poll (blocks dashboard).
   if (url.pathname === "/api/status" || url.pathname === "/api/state") {
     json(res, 200, {
       state,
       state_path: statePath(),
       benchmarks_root: resolveBenchmarksRoot(),
-      runtime,
+      runtime: {
+        ...runtime,
+        store,
+        db_enabled: dbEnabled(),
+        control_plane_store: configuredStore(),
+        current_supervisor_agent: state.current_supervisor_agent ?? null,
+      },
       supervisor_loop_running: isSupervisorLoopRunning(),
+      store,
+      agent_backend: agentBackendLabel(),
+      sdk_ready: agentBackendLabel() === "cursor-sdk" && Boolean(resolveCursorApiKey()),
     });
     return;
   }
 
   if (url.pathname === "/api/runtime") {
-    json(res, 200, runtime);
+    const backend = agentBackendLabel();
+    json(res, 200, {
+      ...runtime,
+      agent_backend: backend,
+      sdk_ready: backend === "cursor-sdk" && Boolean(resolveCursorApiKey()),
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/supervisor/activity") {
+    json(res, 200, {
+      loop_running: isSupervisorLoopRunning(),
+      started_at: state.supervisor_loop_started_at ?? null,
+      entries: listSupervisorActivity(40),
+    });
     return;
   }
 
   if (url.pathname === "/api/interventions") {
-    const iv = "interventions" in report ? report.interventions : [];
-    json(res, 200, { generated_at: new Date().toISOString(), interventions: iv });
+    const payload = await loadLiveInterventionsPayload();
+    json(res, 200, payload);
     return;
   }
+
+  const report = await liveReportPayload();
 
   if (url.pathname === "/api/report") {
     json(res, 200, report);
@@ -133,7 +180,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       ok: proc.status === 0,
       exit_code: proc.status,
       stderr: proc.stderr?.slice(-500),
-      report: liveReportPayload(),
+      report: await liveReportPayload(),
     });
     return;
   }
@@ -166,11 +213,27 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     return;
   }
 
+  if (url.pathname === "/api/activity/recent") {
+    const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit") ?? 25)));
+    json(res, 200, {
+      items: await listRecentActivity(limit),
+      store,
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/statistics" && req.method === "GET") {
+    const limit = Math.min(800, Math.max(50, Number(url.searchParams.get("runs") ?? 400)));
+    const stats = await buildSwarmStatistics(limit);
+    json(res, 200, { statistics: stats, store });
+    return;
+  }
+
   if (url.pathname === "/api/runs" && req.method === "GET") {
     json(res, 200, {
       runs: await listRunsMerged(60),
       active: listActiveRuns(),
-      store: dbEnabled() ? "supabase" : "disk",
+      store,
     });
     return;
   }
@@ -217,38 +280,60 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
 
   if (url.pathname === "/api/tick" && req.method === "POST") {
     const tick = await runOneTick();
+    const tickState = await loadStateForApi();
     json(res, 200, {
       ok: true,
       tick,
-      state: loadState(),
-      runtime: runtimeSnapshot(loadState()),
+      state: tickState,
+      runtime: runtimeSnapshot(tickState),
       report: readJson(reportPath()),
     });
     return;
   }
 
   if (url.pathname === "/api/supervisor/start" && req.method === "POST") {
-    const result = await startSupervisorLoop();
-    json(res, 200, { ok: true, ...result, runtime: runtimeSnapshot(loadState()) });
+    const result = await startSupervisorLoop({
+      forceFirstTick: true,
+      force: false,
+    });
+    const message =
+      result.message +
+      (result.started ? " — first tick runs agents immediately (check Supervisor log)." : "");
+    const loopState = await loadStateForApi();
+    json(res, 200, {
+      ok: result.started || result.already_running,
+      ...result,
+      message,
+      runtime: runtimeSnapshot(loopState),
+      activity: listSupervisorActivity(8),
+    });
     return;
   }
 
   if (url.pathname === "/api/supervisor/stop" && req.method === "POST") {
-    await stopSupervisorLoop();
-    json(res, 200, { ok: true, runtime: runtimeSnapshot(loadState()) });
+    const stopped = await stopSupervisorLoop();
+    const stopState = await loadStateForApi();
+    json(res, 200, {
+      ok: true,
+      ...stopped,
+      runtime: runtimeSnapshot(stopState),
+      activity: listSupervisorActivity(5),
+    });
     return;
   }
 
   if (url.pathname === "/api/swarm/run-all" && req.method === "POST") {
     const result = await runAllAgentsNow();
-    json(res, 200, { ok: true, ...result, runtime: runtimeSnapshot(loadState()) });
+    const swarmState = await loadStateForApi();
+    json(res, 200, { ok: true, ...result, runtime: runtimeSnapshot(swarmState) });
     return;
   }
 
   if (url.pathname === "/api/swarm/stop-all" && req.method === "POST") {
-    await stopSupervisorLoop();
+    void stopSupervisorLoop();
     const killed = await stopAllActiveRuns();
-    json(res, 200, { ok: true, killed, runtime: runtimeSnapshot(loadState()) });
+    const haltState = await loadStateForApi();
+    json(res, 200, { ok: true, killed, runtime: runtimeSnapshot(haltState) });
     return;
   }
 
@@ -264,7 +349,8 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       json(res, 409, { error: result.error });
       return;
     }
-    json(res, 200, { ok: true, run: result.run, runtime: runtimeSnapshot(loadState()) });
+    const startState = await loadStateForApi();
+    json(res, 200, { ok: true, run: result.run, runtime: runtimeSnapshot(startState) });
     return;
   }
 
@@ -295,7 +381,8 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
   const runCancel = url.pathname.match(/^\/api\/runs\/([^/]+)\/cancel$/);
   if (runCancel && req.method === "POST") {
     const ok = cancelRun(runCancel[1]);
-    json(res, ok ? 200 : 404, { ok, runtime: runtimeSnapshot(loadState()) });
+    const cancelState = await loadStateForApi();
+    json(res, ok ? 200 : 404, { ok, runtime: runtimeSnapshot(cancelState) });
     return;
   }
 

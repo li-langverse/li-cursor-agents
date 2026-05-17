@@ -9,6 +9,8 @@ export function taskFingerprint(agentId: string, reason: string): string {
   return createHash("sha256").update(`${agentId}\0${reason}`).digest("hex").slice(0, 20);
 }
 
+const COOLDOWN_TERMINAL_STATUSES = new Set(["finished", "error", "incomplete", "cancelled"]);
+
 function wasRecentlyRun(
   recent: ControlPlaneState["recent_tasks"],
   fingerprint: string,
@@ -21,7 +23,7 @@ function wasRecentlyRun(
       t.fingerprint === fingerprint &&
       t.briefing_hash === briefingHash &&
       new Date(t.finished_at).getTime() >= cutoff &&
-      t.status === "finished",
+      COOLDOWN_TERMINAL_STATUSES.has(t.status),
   );
 }
 

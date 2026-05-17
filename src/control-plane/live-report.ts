@@ -1,57 +1,47 @@
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
-import { hashBriefing } from "./briefing-hash.js";
 import { loadRecentRunSummaries } from "./build-report.js";
-import { scanInterventions, defaultCoordPath } from "./interventions.js";
+import { dbEnabled } from "../db/client.js";
+import { loadLatestReportHybrid, persistLiveInterventions } from "../db/persist.js";
+import {
+  isBriefingNewerThanReport,
+  liveBriefingHash,
+  loadFreshBriefing,
+  recomputeLiveInterventions,
+} from "./live-interventions.js";
 import { readJson } from "./read-json.js";
 import { reportPath } from "./paths.js";
 import { loadState } from "./state.js";
-import { resolveBenchmarksRoot } from "../preflight.js";
 import { parseHeapPlanFromBriefing, parseOrgRoadmapFromBriefing } from "../heap/plan.js";
 import type { ControlPlaneReport } from "./types.js";
 
-function briefingPathOnDisk(stored: ControlPlaneReport | null): string | undefined {
-  const fromStored = stored?.preflight?.briefing_path;
-  if (fromStored && existsSync(fromStored)) return fromStored;
-  const root = resolveBenchmarksRoot();
-  if (!root) return undefined;
-  const path = join(root, "data", "latest", "agent-briefing.json");
-  return existsSync(path) ? path : undefined;
-}
-
-function loadBriefing(path: string): Record<string, unknown> | null {
-  const raw = readJson(path);
-  return raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
-}
-
 /**
- * Recompute interventions and queue from current agent-briefing.json on disk.
- * The stored latest-report.json is a supervisor snapshot and can show closed PRs until refreshed.
+ * Recompute interventions and queue from current agent-briefing.json (and persist to DB).
+ * Stored supervisor snapshots can list merged PRs until briefing is refreshed.
  */
-export function buildLiveReport(stored: ControlPlaneReport | null): ControlPlaneReport | null {
+export async function buildLiveReportAsync(stored: ControlPlaneReport | null): Promise<ControlPlaneReport | null> {
   if (!stored) return null;
 
-  const path = briefingPathOnDisk(stored);
-  const briefing = path ? loadBriefing(path) : (stored.preflight?.briefing as Record<string, unknown> | undefined);
-  if (!briefing) return stored;
+  const fresh = loadFreshBriefing(stored);
+  if (!fresh) return stored;
 
-  const state = loadState();
-  const interventions = scanInterventions(briefing, {
-    coordPath: defaultCoordPath(),
-    pendingWebAgents: [],
-  });
+  const { briefing, path, briefingGeneratedAt } = fresh;
+  const interventions = recomputeLiveInterventions(briefing);
+  const briefingHash = liveBriefingHash(briefing);
 
   const recommended = Array.isArray(briefing.recommended_agents)
     ? (briefing.recommended_agents as Array<{ agent: string; reason: string }>)
     : stored.recommended_agents;
 
-  return {
+  const liveAt = new Date().toISOString();
+  const stale =
+    isBriefingNewerThanReport(briefingGeneratedAt, stored.generated_at) ||
+    briefingHash !== stored.briefing_hash;
+
+  const report: ControlPlaneReport = {
     ...stored,
-    generated_at: stored.generated_at,
-    live_at: new Date().toISOString(),
-    briefing_hash: hashBriefing(briefing),
+    live_at: liveAt,
+    briefing_hash: briefingHash,
     briefing_source: path ?? "embedded",
-    briefing_generated_at: String(briefing.generated_at ?? ""),
+    briefing_generated_at: briefingGeneratedAt,
     preflight: {
       ...stored.preflight,
       briefing_path: path ?? stored.preflight.briefing_path,
@@ -65,19 +55,90 @@ export function buildLiveReport(stored: ControlPlaneReport | null): ControlPlane
     agent_incomplete_runs: briefing.agent_incomplete_runs as ControlPlaneReport["agent_incomplete_runs"],
     agent_pr_deliverable_failures:
       briefing.agent_pr_deliverable_failures as ControlPlaneReport["agent_pr_deliverable_failures"],
-    recent_runs: (() => {
-      const runs = loadRecentRunSummaries(12);
-      return runs.length ? runs : stored.recent_runs;
-    })(),
+    recent_runs: dbEnabled()
+      ? stored.recent_runs
+      : (() => {
+          const runs = loadRecentRunSummaries(12);
+          return runs.length ? runs : stored.recent_runs;
+        })(),
     supervisor: stored.supervisor,
-    stale_warning:
-      path && stored.generated_at
-        ? undefined
-        : "Run agent-briefing.py or click Refresh briefing in dashboard",
+    stale_warning: stale
+      ? `Interventions refreshed from briefing ${briefingGeneratedAt} (supervisor report was ${stored.generated_at})`
+      : undefined,
   };
+
+  await persistLiveInterventions({
+    interventions,
+    briefingHash,
+    briefingGeneratedAt,
+    generatedAt: liveAt,
+  });
+
+  return report;
+}
+
+/** Sync wrapper — prefer buildLiveReportAsync when DB or refresh is needed. */
+export function buildLiveReport(stored: ControlPlaneReport | null): ControlPlaneReport | null {
+  if (!stored) return null;
+  const fresh = loadFreshBriefing(stored);
+  if (!fresh) return stored;
+  const interventions = recomputeLiveInterventions(fresh.briefing);
+  return {
+    ...stored,
+    live_at: new Date().toISOString(),
+    briefing_hash: liveBriefingHash(fresh.briefing),
+    briefing_source: fresh.path ?? "embedded",
+    briefing_generated_at: fresh.briefingGeneratedAt,
+    interventions,
+    preflight: {
+      ...stored.preflight,
+      briefing_path: fresh.path ?? stored.preflight.briefing_path,
+      briefing: fresh.briefing,
+    },
+  };
+}
+
+export async function loadLiveReportAsync(): Promise<ControlPlaneReport | null> {
+  let stored: ControlPlaneReport | null = null;
+  if (dbEnabled()) {
+    try {
+      stored = await loadLatestReportHybrid();
+    } catch {
+      stored = null;
+    }
+  }
+  if (!stored) {
+    stored = readJson(reportPath()) as ControlPlaneReport | null;
+  }
+  return buildLiveReportAsync(stored);
 }
 
 export function loadLiveReport(): ControlPlaneReport | null {
   const stored = readJson(reportPath()) as ControlPlaneReport | null;
   return buildLiveReport(stored);
+}
+
+export async function loadLiveInterventionsPayload(): Promise<{
+  generated_at: string;
+  briefing_generated_at: string;
+  briefing_hash: string;
+  interventions: ControlPlaneReport["interventions"];
+  stale_warning?: string;
+}> {
+  const report = await loadLiveReportAsync();
+  if (!report) {
+    return {
+      generated_at: new Date().toISOString(),
+      briefing_generated_at: "",
+      briefing_hash: "",
+      interventions: [],
+    };
+  }
+  return {
+    generated_at: report.live_at ?? report.generated_at,
+    briefing_generated_at: report.briefing_generated_at ?? "",
+    briefing_hash: report.briefing_hash,
+    interventions: report.interventions,
+    stale_warning: report.stale_warning,
+  };
 }

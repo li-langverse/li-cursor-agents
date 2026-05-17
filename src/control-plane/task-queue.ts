@@ -1,23 +1,7 @@
-import type { ControlPlaneState, QueuedAgentTask, RecentTaskRecord } from "./types.js";
+import type { ControlPlaneState, QueuedAgentTask } from "./types.js";
 
 export { taskFingerprint } from "../heap/task-queue.js";
 export { buildHeapTaskQueue as buildTaskQueue } from "../heap/task-queue.js";
-
-function wasRecentlyRun(
-  recent: RecentTaskRecord[],
-  fingerprint: string,
-  briefingHash: string,
-  cooldownMs: number,
-): boolean {
-  const cutoff = Date.now() - cooldownMs;
-  return recent.some(
-    (t) =>
-      t.fingerprint === fingerprint &&
-      t.briefing_hash === briefingHash &&
-      new Date(t.finished_at).getTime() >= cutoff &&
-      t.status === "finished",
-  );
-}
 
 export function recordTaskRun(
   state: ControlPlaneState,

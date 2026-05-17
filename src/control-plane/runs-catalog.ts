@@ -7,15 +7,20 @@ import { listActiveRuns } from "./runtime.js";
 import { loadState } from "./state.js";
 import { readJson } from "./read-json.js";
 import { reportPath } from "./paths.js";
-import { dbEnabled } from "../db/client.js";
+import { dbEnabled, useDiskStore, useSupabaseStore } from "../db/client.js";
 import {
   getRunById,
+  getRunEvents,
   getRolloutsForRun,
   listAgentRunHistory,
   listRunsGlobal,
   type AgentRunHistoryRow,
 } from "../db/runs.js";
+import type { AgentRunInputRecord, AgentRunTrace } from "../agent-run-trace.js";
+import { listToActivityItems, type ActivityListItem } from "./activity-summary.js";
 import type { AgentId } from "../types.js";
+
+export type { ActivityListItem } from "./activity-summary.js";
 
 export interface RunCatalogEntry {
   run_id: string;
@@ -35,6 +40,9 @@ export interface RunCatalogEntry {
   pr_urls?: string[];
   premature?: boolean;
   summary?: string;
+  run_input?: AgentRunInputRecord;
+  run_trace?: AgentRunTrace;
+  trace_events?: Array<{ seq: number; event_type: string; payload: unknown }>;
 }
 
 function parseRunBasename(file: string): { agentId: string; ts: number } | null {
@@ -65,6 +73,8 @@ function historyRowToCatalog(row: AgentRunHistoryRow): RunCatalogEntry {
     pr_urls: row.pr_urls ?? [],
     premature: row.premature,
     summary: row.summary,
+    run_input: row.run_input ?? undefined,
+    run_trace: row.run_trace ?? undefined,
   };
 }
 
@@ -109,6 +119,8 @@ export function listRunsFromDisk(limit = 80): RunCatalogEntry[] {
       completion,
       pr_urls: (completion?.pr_urls as string[]) ?? [],
       premature: completion?.premature,
+      run_input: meta.runInput as AgentRunInputRecord | undefined,
+      run_trace: meta.trace as AgentRunTrace | undefined,
     });
   }
 
@@ -117,15 +129,18 @@ export function listRunsFromDisk(limit = 80): RunCatalogEntry[] {
 }
 
 export async function listRunsMerged(limit = 80): Promise<RunCatalogEntry[]> {
-  if (dbEnabled()) {
-    try {
-      const fromDb = await listRunsGlobal(limit);
-      if (fromDb.length) return fromDb.map(historyRowToCatalog);
-    } catch {
-      /* disk */
-    }
+  if (useSupabaseStore()) {
+    if (!dbEnabled()) return [];
+    const fromDb = await listRunsGlobal(limit);
+    return fromDb.map(historyRowToCatalog);
   }
   return listRunsFromDisk(limit);
+}
+
+/** Recent agent runs with prompt/output/action summaries for the Activity overview. */
+export async function listRecentActivity(limit = 30): Promise<ActivityListItem[]> {
+  const runs = await listRunsMerged(limit);
+  return listToActivityItems(runs);
 }
 
 function readPreview(path: string, maxChars: number): string {
@@ -153,24 +168,25 @@ export async function getRunDetail(runId: string): Promise<RunCatalogEntry | nul
     };
   }
 
-  if (dbEnabled()) {
-    try {
-      const row = await getRunById(runId);
-      if (row) {
-        const entry = historyRowToCatalog(row);
-        if (row.output_md) entry.output_preview = row.output_md;
-        const rollouts = await getRolloutsForRun(runId);
-        const prFromRollout = rollouts.map((r) => r.pr_url).filter((u): u is string => Boolean(u));
-        if (prFromRollout.length && !entry.pr_urls?.length) entry.pr_urls = prFromRollout;
-        return entry;
-      }
-    } catch {
-      /* disk */
+  if (useSupabaseStore() && dbEnabled()) {
+    const row = await getRunById(runId);
+    if (row) {
+      const entry = historyRowToCatalog(row);
+      if (row.output_md) entry.output_preview = row.output_md;
+      entry.run_input = row.run_input ?? undefined;
+      entry.run_trace = row.run_trace ?? undefined;
+      entry.trace_events = await getRunEvents(runId);
+      const rollouts = await getRolloutsForRun(runId);
+      const prFromRollout = rollouts.map((r) => r.pr_url).filter((u): u is string => Boolean(u));
+      if (prFromRollout.length && !entry.pr_urls?.length) entry.pr_urls = prFromRollout;
+      return entry;
     }
+    return null;
   }
 
   const dir = runsDir();
   const md = join(dir, `${runId}.md`);
+  const jsonPath = join(dir, `${runId}.json`);
   if (!existsSync(md)) return null;
 
   const all = listRunsFromDisk(200);
@@ -181,20 +197,25 @@ export async function getRunDetail(runId: string): Promise<RunCatalogEntry | nul
   } catch {
     /* empty */
   }
+  if (existsSync(jsonPath)) {
+    try {
+      const meta = JSON.parse(readFileSync(jsonPath, "utf8")) as Record<string, unknown>;
+      row.run_input = meta.runInput as AgentRunInputRecord | undefined;
+      row.run_trace = meta.trace as AgentRunTrace | undefined;
+    } catch {
+      /* ignore */
+    }
+  }
   return row;
 }
 
 export async function listRunsForAgent(agentId: string, limit = 15): Promise<RunCatalogEntry[]> {
-  let disk: RunCatalogEntry[] = [];
-  if (dbEnabled()) {
-    try {
-      const fromDb = await listAgentRunHistory(agentId, limit);
-      if (fromDb.length) disk = fromDb.map(historyRowToCatalog);
-    } catch {
-      disk = listRunsFromDisk(200).filter((r) => r.agent_id === agentId);
-    }
+  let history: RunCatalogEntry[] = [];
+  if (useSupabaseStore() && dbEnabled()) {
+    const fromDb = await listAgentRunHistory(agentId, limit);
+    history = fromDb.map(historyRowToCatalog);
   } else {
-    disk = listRunsFromDisk(200).filter((r) => r.agent_id === agentId);
+    history = listRunsFromDisk(200).filter((r) => r.agent_id === agentId);
   }
 
   const live = listActiveRuns()
@@ -213,20 +234,16 @@ export async function listRunsForAgent(agentId: string, limit = 15): Promise<Run
       }),
     );
   const seen = new Set(live.map((r) => r.run_id));
-  const merged = [...live, ...disk.filter((r) => !seen.has(r.run_id))];
+  const merged = [...live, ...history.filter((r) => !seen.has(r.run_id))];
   return merged.slice(0, limit);
 }
 
 export async function getAgentRunHistory(agentId: string, limit = 50): Promise<AgentRunHistoryRow[]> {
-  if (dbEnabled()) {
-    try {
-      return await listAgentRunHistory(agentId, limit);
-    } catch {
-      /* fall through */
-    }
+  if (useSupabaseStore() && dbEnabled()) {
+    return listAgentRunHistory(agentId, limit);
   }
-  const disk = await listRunsForAgent(agentId, limit);
-  return disk.map(
+  const fromDisk = await listRunsForAgent(agentId, limit);
+  return fromDisk.map(
     (r): AgentRunHistoryRow => ({
       run_id: r.run_id,
       agent_id: r.agent_id,
@@ -260,13 +277,15 @@ export async function getAgentDetail(agentId: AgentId) {
   const heapTask = flatTasks.find((t) => t.agent === agentId);
   const recentTasks = cpState.recent_tasks.filter((t) => t.agentId === agentId).slice(-8).reverse();
   const activeRun = listActiveRuns().find((r) => r.agent_id === agentId && r.status === "running");
+  const supervisorRunning =
+    cpState.supervisor_status === "running_agent" && cpState.current_supervisor_agent === agentId;
   const stopped = (cpState.stopped_agents ?? []).includes(agentId);
   const runs = await listRunsForAgent(agentId, 12);
   const history = await getAgentRunHistory(agentId, 50);
 
   let status: "running" | "stopped" | "queued" | "idle" | "cooldown" = "idle";
   if (stopped) status = "stopped";
-  else if (activeRun) status = "running";
+  else if (activeRun || supervisorRunning) status = "running";
   else if (rec || heapTask) status = "queued";
   else if (recentTasks.length && recentTasks[0].status === "finished") {
     const finishedAt = new Date(recentTasks[0].finished_at).getTime();

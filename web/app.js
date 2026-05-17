@@ -8,10 +8,21 @@ const ui = {
   selectedAgentId: null,
   selectedRunId: null,
   data: null,
+  pollMs: 4000,
+  toastTimer: null,
+  /** @type {Set<string>} keys runId:section — survives poll re-renders */
+  openDrilldowns: new Set(),
+  /** @type {Set<string>} user explicitly collapsed (overrides defaults) */
+  closedDrilldowns: new Set(),
+
 };
 
 const VIEW_META = {
   overview: { title: "Overview", subtitle: "Swarm status at a glance" },
+  activity: {
+    title: "Activity",
+    subtitle: "Recent runs — prompts, outputs, and actions taken",
+  },
   agents: { title: "Agents", subtitle: "Click a row for live status and run output" },
   heap: { title: "Heap plan", subtitle: "Coordinator routing and briefing queue" },
   interventions: { title: "Interventions", subtitle: "Human action required" },
@@ -75,15 +86,66 @@ function statusDot(status) {
   return `<span class="status-dot ${escAttr(status)}"></span>${esc(statusLabel(status))}`;
 }
 
-function agentStatusMap(roster, report, runtime) {
+function runBackendLabel(run) {
+  return run?.backend ?? run?.run_input?.backend ?? null;
+}
+
+function backendBadge(backend) {
+  const b = backend ?? "cursor-sdk";
+  const mock = b === "mock";
+  return `<span class="backend-badge ${mock ? "mock" : "sdk"}">${esc(b)}</span>`;
+}
+
+function renderAgentBackendUi() {
+  const status = ui.data?.status ?? {};
+  const agentBackend = status.agent_backend ?? ui.data?.runtime?.agent_backend ?? "cursor-sdk";
+  const sdkReady = Boolean(status.sdk_ready);
+
+  const pill = $("#backend-pill");
+  if (pill) {
+    pill.textContent = agentBackend;
+    pill.className = `backend-pill backend-badge ${agentBackend === "mock" ? "mock" : "sdk"}`;
+    pill.title =
+      agentBackend === "mock"
+        ? "Mock backend — no real LLM, tools, or web search"
+        : sdkReady
+          ? "Cursor SDK — real agent runs (LLM + tools)"
+          : "Cursor SDK selected but CURSOR_API_KEY missing";
+  }
+
+  const banner = $("#backend-banner");
+  if (!banner) return;
+  if (agentBackend === "mock") {
+    banner.className = "backend-banner warn";
+    banner.hidden = false;
+    banner.innerHTML =
+      "<strong>Mock mode</strong> — runs do not use the Cursor SDK or web search. Put <code>CURSOR_API_KEY</code> in <code>li-cursor-agents/.env</code> and restart the dashboard (<code>npm run agents:keep</code>).";
+  } else if (!sdkReady) {
+    banner.className = "backend-banner error";
+    banner.hidden = false;
+    banner.innerHTML =
+      "<strong>Missing API key</strong> — add <code>CURSOR_API_KEY</code> to <code>li-cursor-agents/.env</code>, then restart the dashboard.";
+  } else {
+    banner.className = "backend-banner ok";
+    banner.hidden = false;
+    banner.innerHTML =
+      "<strong>Cursor SDK active</strong> — Supervisor mode and Run all (parallel) use real agents (LLM, file edits, tools, web when required).";
+  }
+}
+
+function agentStatusMap(roster, report, runtime, statusPayload) {
   const map = new Map();
   const activeRuns = runtime?.active_runs ?? [];
   const stopped = new Set(runtime?.stopped_agents ?? []);
+  const currentSupervisor = runtime?.current_supervisor_agent ?? statusPayload?.state?.current_supervisor_agent;
   const rec = new Map((report?.recommended_agents ?? []).map((r) => [r.agent, r.reason]));
   const heapTasks = new Map(
     (report?.heap_plan?.flat_tasks ?? []).map((t) => [t.agent, { reason: t.reason, coord: t.coordinator }]),
   );
   const recentByAgent = new Map();
+  for (const t of statusPayload?.state?.recent_tasks ?? []) {
+    if (!recentByAgent.has(t.agentId)) recentByAgent.set(t.agentId, t);
+  }
   for (const r of report?.recent_runs ?? []) {
     if (!recentByAgent.has(r.agentId)) recentByAgent.set(r.agentId, r);
   }
@@ -91,16 +153,22 @@ function agentStatusMap(roster, report, runtime) {
   for (const entry of roster?.roster ?? []) {
     if (entry.role === "coordinator") continue;
     let status = "idle";
+    const activeRun = activeRuns.find((r) => r.agent_id === entry.id && r.status === "running");
     if (stopped.has(entry.id)) status = "stopped";
-    else if (activeRuns.some((r) => r.agent_id === entry.id && r.status === "running")) status = "running";
+    else if (activeRun || currentSupervisor === entry.id) status = "running";
     else if (rec.has(entry.id) || heapTasks.has(entry.id)) status = "queued";
+    else {
+      const last = recentByAgent.get(entry.id);
+      const finishedAt = last?.finished_at ? new Date(last.finished_at).getTime() : 0;
+      if (last?.status === "finished" && finishedAt && Date.now() - finishedAt < 1_800_000) status = "cooldown";
+    }
 
     map.set(entry.id, {
       status,
       reason: rec.get(entry.id) ?? heapTasks.get(entry.id)?.reason,
       coordinator: entry.coordinator ?? heapTasks.get(entry.id)?.coord,
       lastRun: recentByAgent.get(entry.id),
-      activeRun: activeRuns.find((r) => r.agent_id === entry.id && r.status === "running"),
+      activeRun: activeRun ?? null,
       entry,
     });
   }
@@ -108,15 +176,223 @@ function agentStatusMap(roster, report, runtime) {
 }
 
 async function loadDashboard() {
-  const [report, status, roster, runsPayload] = await Promise.all([
-    fetchJson("/api/report").catch(() => ({})),
-    fetchJson("/api/status"),
-    fetchJson("/api/agents"),
-    fetchJson("/api/runs").catch(() => ({ runs: [], active: [] })),
-  ]);
+  const [report, status, roster, runsPayload, supervisorActivity, activityPayload, interventionsPayload, statisticsPayload] =
+    await Promise.all([
+      fetchJson("/api/report").catch(() => ({})),
+      fetchJson("/api/status"),
+      fetchJson("/api/agents"),
+      fetchJson("/api/runs").catch(() => ({ runs: [], active: [] })),
+      fetchJson("/api/supervisor/activity").catch(() => ({ entries: [], loop_running: false })),
+      fetchJson("/api/activity/recent?limit=25").catch(() => ({ items: [] })),
+      fetchJson("/api/interventions").catch(() => ({ interventions: [] })),
+      fetchJson("/api/statistics").catch(() => ({ statistics: null })),
+    ]);
   const runtime = status?.runtime ?? roster?.runtime;
-  ui.data = { report, status, roster, runtime, runsPayload };
+  ui.data = {
+    report: { ...report, interventions: interventionsPayload.interventions ?? report.interventions },
+    status,
+    roster,
+    runtime,
+    runsPayload,
+    supervisorActivity,
+    activityPayload,
+    interventionsPayload,
+    statisticsPayload,
+  };
   return ui.data;
+}
+
+function fmtNum(n) {
+  if (n == null || Number.isNaN(n)) return "—";
+  return Number(n).toLocaleString();
+}
+
+function renderSwarmStatistics() {
+  const s = ui.data?.statisticsPayload?.statistics;
+  const meta = $("#swarm-stats-meta");
+  const cards = $("#swarm-stat-cards");
+  if (!cards) return;
+  if (!s) {
+    cards.innerHTML = '<p class="empty">Statistics unavailable — refresh briefing and ensure runs are logged.</p>';
+    if (meta) meta.textContent = "No statistics yet.";
+    return;
+  }
+  const runsNote = s.runs_scanned ? `${s.runs_scanned} runs scanned` : "";
+  const briefingNote = s.briefing_generated_at ? `Briefing ${s.briefing_generated_at}` : "";
+  if (meta) {
+    meta.textContent = [runsNote, briefingNote, s.notes?.[0]].filter(Boolean).join(" · ") || "Swarm output metrics.";
+  }
+  const items = [
+    { label: "Actions taken", value: fmtNum(s.actions_taken), hint: "tool calls in traces", accent: true },
+    { label: "File edits", value: fmtNum(s.file_edits), hint: "write/edit/delete in traces" },
+    { label: "Lines added", value: fmtNum(s.lines_added), hint: "from SDK edit results" },
+    { label: "Lines deleted", value: fmtNum(s.lines_deleted), hint: "from SDK edit results" },
+    { label: "PRs opened", value: fmtNum(s.prs_opened), hint: "unique PR URLs in run outputs" },
+    { label: "PRs open now", value: fmtNum(s.prs_open_now), hint: "latest briefing all_open" },
+    { label: "PRs merged", value: fmtNum(s.prs_merged), hint: "agent merges (runs + gh + history)" },
+    { label: "Packages created", value: fmtNum(s.packages_created), hint: "packages/* writes in traces" },
+  ];
+  cards.innerHTML = items
+    .map(
+      (it) => `
+    <div class="stat-card${it.accent ? " accent" : ""}" title="${escAttr(it.hint)}">
+      <div class="label">${esc(it.label)}</div>
+      <div class="value">${esc(it.value)}</div>
+    </div>`,
+    )
+    .join("");
+}
+
+function drillKey(runId, section) {
+  return `${runId}:${section}`;
+}
+
+function isDrillOpen(runId, section, defaultOpen = false) {
+  const key = drillKey(runId, section);
+  if (ui.closedDrilldowns.has(key)) return false;
+  if (ui.openDrilldowns.has(key)) return true;
+  return defaultOpen;
+}
+
+function captureOpenDrilldowns(root) {
+  if (!root) return;
+  for (const el of root.querySelectorAll("details[data-drill][open]")) {
+    ui.openDrilldowns.add(el.getAttribute("data-drill"));
+  }
+}
+
+function activityItemsFingerprint(items) {
+  return items
+    .map(
+      (i) =>
+        `${i.run_id}:${i.status}:${i.live ? 1 : 0}:${i.run_trace?.steps?.length ?? 0}:${i.run_trace?.file_edits?.length ?? 0}:${(i.output_snippet ?? "").length}`,
+    )
+    .join("|");
+}
+
+function renderActionDrilldowns(item, { compact = false } = {}) {
+  const runId = item.run_id ?? "unknown";
+  const dk = (section) => escAttr(drillKey(runId, section));
+  const openAttr = (section, defaultOpen = false) => (isDrillOpen(runId, section, defaultOpen) ? " open" : "");
+
+  const input = item.run_input;
+  const trace = item.run_trace;
+  const edits = trace?.file_edits ?? [];
+  const toolSteps = (trace?.steps ?? []).filter((s) => s.type === "toolCall");
+  const outputText = trace?.assistant_text ?? item.output_snippet ?? item.output_preview ?? "";
+  const thinking = trace?.thinking_text ?? item.thinking_preview ?? "";
+
+  const inputBlock = input
+    ? `${compact ? "" : `<details><summary>System prompt</summary><pre class="trace-pre">${esc(input.system_prompt)}</pre></details>`}
+       <pre class="trace-pre">${esc(input.user_message)}</pre>`
+    : `<p class="empty">No input recorded for this run.</p>`;
+
+  const outputBlock = outputText
+    ? `<pre class="trace-pre">${esc(outputText)}</pre>`
+    : `<p class="empty">No assistant output recorded.</p>`;
+
+  const actionsParts = [];
+  if (edits.length) {
+    actionsParts.push(`<h5>File edits (${edits.length})</h5><ul class="simple-list">${edits
+      .map((f) => `<li><code>${esc(f.path)}</code> · ${esc(f.tool)}${f.ok === false ? " · failed" : ""}</li>`)
+      .join("")}</ul>`);
+  }
+  if (toolSteps.length) {
+    actionsParts.push(`<h5>Tool calls (${toolSteps.length})</h5><ul class="simple-list">${toolSteps
+      .map((s) => {
+        const m = s.message ?? {};
+        const target = m.args?.path ?? m.args?.command ?? m.type ?? "tool";
+        return `<li><code>${esc(m.type ?? "tool")}</code> ${esc(String(target).slice(0, 140))}</li>`;
+      })
+      .join("")}</ul>`);
+  }
+  const actionsBlock = actionsParts.length
+    ? actionsParts.join("")
+    : `<p class="empty">No file edits or tool calls recorded.</p>`;
+
+  return `
+    <div class="action-drilldowns">
+      <details data-drill="${dk("input")}"${openAttr("input", Boolean(input && !compact))}>
+        <summary>Input prompt</summary>
+        ${input ? `<p class="trace-meta">${esc(input.backend)} · <code>${esc(input.cwd)}</code></p>` : ""}
+        ${inputBlock}
+      </details>
+      ${
+        thinking && !compact
+          ? `<details data-drill="${dk("thinking")}"${openAttr("thinking")}><summary>Thinking</summary><pre class="trace-pre">${esc(thinking)}</pre></details>`
+          : ""
+      }
+      <details data-drill="${dk("output")}"${openAttr("output")}>
+        <summary>Output</summary>
+        ${outputBlock}
+      </details>
+      <details data-drill="${dk("actions")}"${openAttr("actions")}>
+        <summary>Actions taken</summary>
+        ${actionsBlock}
+      </details>
+    </div>`;
+}
+
+function renderActivityCard(item, { compact = false } = {}) {
+  const status = item.live ? "running" : item.status;
+  const preview = item.prompt_preview || item.output_snippet || item.summary || "—";
+  return `
+    <article class="action-card ${compact ? "compact" : ""}" data-run-id="${escAttr(item.run_id)}">
+      <header class="action-card-head">
+        <div class="action-card-title">
+          <code>${esc(item.agent_id)}</code>
+          <span class="status-pill sm ${escAttr(status)}">${esc(statusLabel(status))}</span>
+          <span class="time">${formatTime(item.started_at)}</span>
+        </div>
+        <span class="action-chips">${backendBadge(runBackendLabel(item))} ${esc(item.action_summary ?? "—")}</span>
+      </header>
+      ${compact ? `<p class="action-preview">${esc(preview)}</p>` : ""}
+      ${renderActionDrilldowns(item, { compact })}
+      <footer class="action-card-foot">
+        <button type="button" class="btn ghost sm" data-open-run="${escAttr(item.run_id)}">Full trace →</button>
+      </footer>
+    </article>`;
+}
+
+function renderActionFeed(feed, items, { compact = false, emptyMessage } = {}) {
+  if (!feed) return;
+  if (!items.length) {
+    feed.innerHTML = `<p class="empty">${emptyMessage}</p>`;
+    delete feed.dataset.activityFp;
+    return;
+  }
+  captureOpenDrilldowns(feed);
+  const fp = activityItemsFingerprint(items);
+  if (fp === feed.dataset.activityFp && feed.querySelector("[data-run-id]")) {
+    return;
+  }
+  feed.dataset.activityFp = fp;
+  feed.innerHTML = items.map((item) => renderActivityCard(item, { compact })).join("");
+}
+
+function renderActivityFeed() {
+  const items = ui.data?.activityPayload?.items ?? [];
+  renderActionFeed($("#activity-feed"), items, {
+    emptyMessage: "No agent runs yet — start the supervisor or run an agent.",
+  });
+}
+
+function renderOverviewActivityTeaser() {
+  const items = (ui.data?.activityPayload?.items ?? []).slice(0, 4);
+  renderActionFeed($("#overview-activity-feed"), items, {
+    compact: true,
+    emptyMessage: "No recorded runs with prompts or traces yet.",
+  });
+}
+
+function showToast(message, kind = "info") {
+  const el = $("#toast");
+  if (!el) return;
+  el.textContent = message;
+  el.className = `toast toast-${kind}`;
+  el.classList.remove("hidden");
+  if (ui.toastTimer) clearTimeout(ui.toastTimer);
+  ui.toastTimer = setTimeout(() => el.classList.add("hidden"), 8000);
 }
 
 function renderSidebar() {
@@ -131,34 +407,108 @@ function renderSidebar() {
     countEl.classList.add("hidden");
   }
 
+  const store = rt.store ?? status?.store ?? "disk";
+  const agentBackend = status?.agent_backend ?? rt.agent_backend ?? "cursor-sdk";
+  const sup = report?.supervisor ?? {};
+  const st = status?.state ?? {};
+  const loopOn = Boolean(rt.supervisor_loop_running);
+  const loopStarted = rt.supervisor_loop_started_at ?? st.supervisor_loop_started_at;
   $("#sidebar-stats").innerHTML = `
     <dl>
-      <dt>Supervisor</dt><dd>${rt.supervisor_loop_running ? "loop on" : "loop off"}</dd>
-      <dt>Live processes</dt><dd>${rt.active_run_count ?? 0}</dd>
+      <dt>Data store</dt><dd title="History in Supabase; live runs in this process">${esc(store)}</dd>
+      <dt>Agent backend</dt><dd class="${agentBackend === "mock" ? "text-warn" : "text-ok"}">${esc(agentBackend)}</dd>
+      <dt>Supervisor</dt><dd class="${loopOn ? "text-ok" : ""}">${loopOn ? "● loop on" : "○ loop off"}</dd>
+      <dt>Loop since</dt><dd>${loopOn && loopStarted ? formatTime(loopStarted) : "—"}</dd>
+      <dt>Running now</dt><dd>${rt.active_run_count ?? 0}</dd>
       <dt>Swarm</dt><dd>${roster?.total ?? "—"} agents</dd>
       <dt>Briefing</dt><dd title="${escAttr(report?.briefing_hash ?? "")}">${esc((report?.briefing_hash ?? "—").slice(0, 12))}</dd>
     </dl>`;
 
-  const sup = report?.supervisor ?? {};
-  const st = status?.state ?? {};
   const pill = $("#status-pill");
   let label = sup.status ?? st.supervisor_status ?? "idle";
-  if (rt.supervisor_loop_running) label = "supervisor on";
+  if (rt.current_supervisor_agent) label = `running ${rt.current_supervisor_agent}`;
+  else if (rt.supervisor_loop_running) label = "supervisor on";
   else if ((rt.active_run_count ?? 0) > 0) label = "agents running";
   pill.textContent = label;
   pill.className = `pill ${label.includes("running") || label.includes("on") ? "running" : "idle"}`;
+  renderFooterControls(loopOn, rt.active_run_count ?? 0);
+}
+
+function renderFooterControls(loopOn, activeRunCount = 0) {
+  const sup = $("#mode-supervisor");
+  const par = $("#mode-parallel");
+  if (sup) {
+    if (loopOn) {
+      sup.textContent = "Stop supervisor";
+      sup.className = "btn danger sm active";
+    } else {
+      sup.textContent = "Supervisor mode";
+      sup.className = "btn primary sm";
+    }
+  }
+  if (par) {
+    par.disabled = loopOn;
+    par.title = loopOn
+      ? "Stop supervisor mode before running all agents in parallel"
+      : "Spawn every leaf agent in parallel (one process each)";
+    if (!loopOn && activeRunCount > 0) {
+      par.textContent = `Run all (parallel) · ${activeRunCount} running`;
+    } else {
+      par.textContent = "Run all (parallel)";
+    }
+  }
+}
+
+function renderSupervisorActivity() {
+  const { supervisorActivity, runtime, status } = ui.data ?? {};
+  const rt = runtime ?? {};
+  const loopOn = Boolean(rt.supervisor_loop_running ?? supervisorActivity?.loop_running);
+  const badge = $("#supervisor-loop-badge");
+  const meta = $("#supervisor-loop-meta");
+  const feed = $("#supervisor-activity");
+  if (!feed) return;
+
+  if (badge) {
+    badge.classList.toggle("hidden", !loopOn);
+    badge.textContent = loopOn ? "loop on" : "loop off";
+  }
+  if (meta) {
+    const started = rt.supervisor_loop_started_at ?? supervisorActivity?.started_at;
+    const lastTick = status?.state?.last_tick_at;
+    if (loopOn) {
+      meta.textContent = `Running since ${formatTime(started)} · last completed tick ${lastTick ? formatTime(lastTick) : "pending…"}`;
+    } else {
+      meta.textContent = "Footer: Supervisor mode runs agents on a schedule; Run all (parallel) spawns every leaf agent once.";
+    }
+  }
+
+  const entries = supervisorActivity?.entries ?? [];
+  if (!entries.length) {
+    feed.innerHTML = `<li class="empty">${loopOn ? "Waiting for first tick…" : "No supervisor events yet."}</li>`;
+    return;
+  }
+  feed.innerHTML = entries
+    .map((e) => {
+      const cls = e.level === "error" ? "severity-p0" : e.level === "warn" ? "severity-p1" : "";
+      return `<li class="${cls}"><span class="time">${formatTime(e.at)}</span> <span class="badge">${esc(e.level)}</span> ${esc(e.message)}</li>`;
+    })
+    .join("");
 }
 
 function renderStatCards() {
-  const { report, runtime, roster, runsPayload } = ui.data;
-  const statusMap = agentStatusMap(roster, report, runtime);
+  const { report, runtime, roster, runsPayload, status } = ui.data;
+  const statusMap = agentStatusMap(roster, report, runtime, status);
   let running = 0;
   let queued = 0;
   let stopped = 0;
+  let idle = 0;
+  let cooldown = 0;
   for (const v of statusMap.values()) {
     if (v.status === "running") running++;
     if (v.status === "queued") queued++;
     if (v.status === "stopped") stopped++;
+    if (v.status === "idle") idle++;
+    if (v.status === "cooldown") cooldown++;
   }
   const interventions = report?.interventions?.length ?? 0;
   const runs = runsPayload?.runs?.length ?? 0;
@@ -229,7 +579,7 @@ function renderRunsTable() {
   const tbody = $("#runs-table-body");
   const runs = runsPayload?.runs ?? [];
   if (!runs.length) {
-    tbody.innerHTML = '<tr><td colspan="4" class="empty">No runs yet</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="empty">No runs yet</td></tr>';
     return;
   }
   tbody.innerHTML = runs
@@ -239,6 +589,7 @@ function renderRunsTable() {
     <tr data-open-run="${escAttr(r.run_id)}" data-agent="${escAttr(r.agent_id)}">
       <td class="mono">${esc(r.agent_id)}</td>
       <td>${statusDot(r.live ? "running" : r.status)}</td>
+      <td>${backendBadge(runBackendLabel(r))}</td>
       <td>${esc(formatTime(r.started_at))}</td>
       <td class="preview">${esc((r.output_preview ?? "").replace(/\s+/g, " ").slice(0, 80))}</td>
     </tr>`,
@@ -247,8 +598,8 @@ function renderRunsTable() {
 }
 
 function renderAgentsTable() {
-  const { roster, report, runtime } = ui.data;
-  const statusMap = agentStatusMap(roster, report, runtime);
+  const { roster, report, runtime, status } = ui.data;
+  const statusMap = agentStatusMap(roster, report, runtime, status);
   const q = ui.agentSearch.trim().toLowerCase();
   const tbody = $("#agents-table-body");
   const rows = [];
@@ -280,7 +631,13 @@ function renderAgentsTable() {
       <td>${statusDot(info.status)}</td>
       <td class="mono">${esc(info.coordinator ?? "—")}</td>
       <td>${esc((info.reason ?? "—").slice(0, 72))}</td>
-      <td>${info.lastRun ? `${esc(statusLabel(info.lastRun.status))} · ${formatTime(info.lastRun.finished_at ?? info.lastRun.started_at)}` : "—"}</td>
+      <td>${
+        info.status === "running"
+          ? "now"
+          : info.lastRun
+            ? `${esc(statusLabel(info.lastRun.status ?? "finished"))} · ${formatTime(info.lastRun.finished_at ?? info.lastRun.started_at)}`
+            : "—"
+      }</td>
       <td><button type="button" class="btn ghost sm" data-open-agent="${escAttr(id)}">Details</button></td>
     </tr>`,
     )
@@ -288,13 +645,19 @@ function renderAgentsTable() {
 }
 
 function renderInterventions() {
+  const ivPayload = ui.data.interventionsPayload ?? {};
   const report = ui.data.report;
-  const items = report?.interventions ?? [];
+  const items = ivPayload.interventions ?? report?.interventions ?? [];
   const list = $("#interventions");
-  const staleNote =
-    report?.briefing_generated_at && report?.generated_at
-      ? `<p class="hint">Interventions from briefing <strong>${esc(report.briefing_generated_at)}</strong> (live; supervisor snapshot was ${esc(String(report.generated_at).slice(0, 19))}).</p>`
-      : "";
+  const briefingAt = ivPayload.briefing_generated_at ?? report?.briefing_generated_at;
+  const liveAt = ivPayload.generated_at ?? report?.live_at;
+  let staleNote = "";
+  if (briefingAt) {
+    staleNote = `<p class="hint">Interventions from briefing <strong>${esc(briefingAt)}</strong>${liveAt ? ` · recomputed ${formatTime(liveAt)}` : ""}. Merged/closed PRs are excluded.</p>`;
+  }
+  if (ivPayload.stale_warning || report?.stale_warning) {
+    staleNote += `<p class="hint warn">${esc(ivPayload.stale_warning ?? report.stale_warning)}</p>`;
+  }
   if (!items.length) {
     list.innerHTML = `${staleNote}<li class="empty">No interventions — automated agents can proceed.</li>`;
     return;
@@ -488,6 +851,60 @@ function renderAgentDrawer(d) {
     </div>`;
 }
 
+function renderRunTrace(detail) {
+  const input = detail.run_input;
+  const trace = detail.run_trace;
+  const parts = [];
+
+  if (input) {
+    parts.push(`<section class="trace-section"><h4>Input</h4>
+      <p class="trace-meta">Agent <code>${esc(input.agent_id)}</code> · ${esc(input.backend)} · cwd <code>${esc(input.cwd)}</code></p>
+      <details open><summary>System prompt</summary><pre class="trace-pre">${esc(input.system_prompt)}</pre></details>
+      <details open><summary>User message</summary><pre class="trace-pre">${esc(input.user_message)}</pre></details>
+    </section>`);
+  }
+
+  if (trace) {
+    if (trace.thinking_text) {
+      parts.push(`<section class="trace-section"><h4>Thinking</h4><pre class="trace-pre">${esc(trace.thinking_text)}</pre></section>`);
+    }
+    if (trace.file_edits?.length) {
+      parts.push(`<section class="trace-section"><h4>Files touched (${trace.file_edits.length})</h4><ul class="simple-list">
+        ${trace.file_edits.map((f) => `<li><code>${esc(f.path)}</code> · ${esc(f.tool)}${f.ok === false ? " · failed" : ""}</li>`).join("")}
+      </ul></section>`);
+    }
+    if (trace.steps?.length) {
+      parts.push(`<section class="trace-section"><h4>Tool steps (${trace.tool_call_count ?? trace.steps.length})</h4>
+        <ul class="simple-list">${trace.steps
+          .filter((s) => s.type === "toolCall")
+          .map((s) => {
+            const m = s.message ?? {};
+            const path = m.args?.path ?? m.args?.command ?? m.type;
+            return `<li><code>${esc(m.type)}</code> ${esc(String(path).slice(0, 120))}</li>`;
+          })
+          .join("")}</ul></section>`);
+    }
+    parts.push(`<section class="trace-section"><h4>Assistant output</h4><pre class="trace-pre">${esc(trace.assistant_text ?? detail.output_preview ?? "")}</pre></section>`);
+  } else {
+    parts.push(`<section class="trace-section"><h4>Output</h4><pre class="trace-pre">${esc(detail.output_preview ?? "(empty)")}</pre></section>`);
+  }
+
+  const comp = detail.completion;
+  if (comp) {
+    parts.push(`<section class="trace-section"><h4>Completion audit</h4>
+      <p>complete=${esc(String(comp.complete))} premature=${esc(String(comp.premature))}</p>
+      ${comp.gaps?.length ? `<p>Gaps: ${esc(comp.gaps.join("; "))}</p>` : ""}
+    </section>`);
+  }
+  if (detail.pr_urls?.length) {
+    parts.push(`<section class="trace-section"><h4>PRs</h4><ul class="simple-list">
+      ${detail.pr_urls.map((u) => `<li><a href="${escAttr(u)}" target="_blank" rel="noopener">${esc(u)}</a></li>`).join("")}
+    </ul></section>`);
+  }
+
+  return parts.join("") || `<pre class="trace-pre">${esc(detail.output_preview ?? "(no trace recorded)")}</pre>`;
+}
+
 async function openRunDrawer(runId) {
   ui.selectedRunId = runId;
   const drawer = $("#run-drawer");
@@ -495,22 +912,14 @@ async function openRunDrawer(runId) {
   $("#drawer-run-output").textContent = "Loading…";
   try {
     const detail = await fetchJson(`/api/runs/${encodeURIComponent(runId)}`);
+    const runBackend = runBackendLabel(detail) ?? ui.data?.status?.agent_backend ?? "cursor-sdk";
     $("#drawer-run-header").innerHTML = `
       <div>
-        <h2><code>${esc(detail.agent_id)}</code></h2>
+        <h2><code>${esc(detail.agent_id)}</code> ${backendBadge(runBackend)}</h2>
         <p class="sub">${esc(statusLabel(detail.live ? "running" : detail.status))} · ${formatTime(detail.started_at)}</p>
       </div>`;
-    const prBlock =
-      detail.pr_urls?.length ?
-        `\n\nPRs:\n${detail.pr_urls.map((u) => u).join("\n")}`
-      : "";
-    const comp = detail.completion;
-    const compBlock =
-      comp ?
-        `\n\nCompletion: complete=${comp.complete} premature=${comp.premature}${comp.gaps?.length ? `\nGaps: ${comp.gaps.join("; ")}` : ""}`
-      : "";
-    $("#drawer-run-output").textContent =
-      (detail.output_preview ?? "(empty output)") + prBlock + compBlock;
+    const traceHtml = renderRunTrace(detail);
+    $("#drawer-run-output").innerHTML = traceHtml;
   } catch (e) {
     $("#drawer-run-output").textContent = e.message;
   }
@@ -529,10 +938,15 @@ async function refresh() {
   try {
     await loadDashboard();
     renderSidebar();
+    renderAgentBackendUi();
+    renderSupervisorActivity();
     renderStatCards();
+    renderSwarmStatistics();
     renderLiveActivity();
     renderQueue();
     renderRunsTable();
+    renderOverviewActivityTeaser();
+    renderActivityFeed();
     renderAgentsTable();
     renderInterventions();
     renderHeap();
@@ -551,15 +965,25 @@ async function refresh() {
   }
 }
 
-async function postControl(path, button) {
+async function postControl(path, button, { label } = {}) {
   if (button) button.disabled = true;
+  const prevText = button?.textContent;
+  if (button && label) button.textContent = `${label}…`;
   try {
-    await fetchJson(path, { method: "POST" });
+    const body = await fetchJson(path, { method: "POST" });
+    const msg = body.message ?? (body.started ? "Supervisor loop started" : body.stopped ? "Supervisor stopped" : "OK");
+    showToast(msg, body.already_running ? "warn" : body.started === false && body.stopped === false ? "warn" : "ok");
+    ui.pollMs = body.runtime?.supervisor_loop_running ? 2000 : 4000;
+    schedulePoll();
     await refresh();
   } catch (e) {
+    showToast(e.message, "error");
     alert(e.message);
   } finally {
-    if (button) button.disabled = false;
+    if (button) {
+      button.disabled = false;
+      if (prevText) button.textContent = prevText;
+    }
   }
 }
 
@@ -596,15 +1020,33 @@ $("#agent-search").addEventListener("input", (ev) => {
   renderAgentsTable();
 });
 
+$("#goto-activity")?.addEventListener("click", () => setView("activity"));
 $("#refresh").addEventListener("click", refresh);
 $("#refresh-briefing").addEventListener("click", () =>
   postControl("/api/briefing/refresh", $("#refresh-briefing")),
 );
-$("#tick").addEventListener("click", () => postControl("/api/tick", $("#tick")));
-$("#supervisor-start").addEventListener("click", () => postControl("/api/supervisor/start", $("#supervisor-start")));
-$("#supervisor-stop").addEventListener("click", () => postControl("/api/supervisor/stop", $("#supervisor-stop")));
-$("#swarm-run-all").addEventListener("click", () => postControl("/api/swarm/run-all", $("#swarm-run-all")));
-$("#swarm-stop-all").addEventListener("click", () => postControl("/api/swarm/stop-all", $("#swarm-stop-all")));
+$("#mode-supervisor")?.addEventListener("click", async () => {
+  const loopOn = ui.data?.runtime?.supervisor_loop_running;
+  const btn = $("#mode-supervisor");
+  if (loopOn) {
+    await postControl("/api/supervisor/stop", btn, { label: "Stopping" });
+    return;
+  }
+  try {
+    await fetchJson("/api/swarm/stop-all", { method: "POST" });
+  } catch {
+    /* no parallel runs */
+  }
+  await postControl("/api/supervisor/start", btn, { label: "Starting" });
+});
+
+$("#mode-parallel")?.addEventListener("click", async () => {
+  const btn = $("#mode-parallel");
+  if (ui.data?.runtime?.supervisor_loop_running) {
+    await fetchJson("/api/supervisor/stop", { method: "POST" });
+  }
+  await postControl("/api/swarm/run-all", btn, { label: "Spawning" });
+});
 
 $("#backdrop").addEventListener("click", closeDrawers);
 $$(".drawer-close").forEach((btn) => {
@@ -613,6 +1055,24 @@ $$(".drawer-close").forEach((btn) => {
     else closeDrawers();
   });
 });
+
+document.addEventListener(
+  "toggle",
+  (ev) => {
+    const d = ev.target;
+    if (!(d instanceof HTMLDetailsElement)) return;
+    const key = d.getAttribute("data-drill");
+    if (!key || !d.closest(".action-feed, .action-drilldowns")) return;
+    if (d.open) {
+      ui.openDrilldowns.add(key);
+      ui.closedDrilldowns.delete(key);
+    } else {
+      ui.openDrilldowns.delete(key);
+      ui.closedDrilldowns.add(key);
+    }
+  },
+  true,
+);
 
 document.body.addEventListener("click", async (ev) => {
   const openAgent = ev.target.closest("[data-open-agent]");
@@ -648,6 +1108,12 @@ document.body.addEventListener("click", async (ev) => {
   }
 });
 
+let pollHandle = null;
+function schedulePoll() {
+  if (pollHandle) clearInterval(pollHandle);
+  pollHandle = setInterval(refresh, ui.pollMs);
+}
+
 setView("overview");
 refresh();
-setInterval(refresh, 4_000);
+schedulePoll();

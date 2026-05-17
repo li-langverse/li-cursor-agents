@@ -128,11 +128,13 @@ export function buildUserMessage(
     );
   } else {
     lines.push(
-      "Follow the system prompt (automation instructions). Produce a markdown digest with:",
-      "- Executive summary (≤8 bullets)",
-      "- Recommended issues/PRs (titles + repos)",
-      "- Deferred items",
+      "Follow the system prompt (automation instructions). Produce a markdown digest with these sections:",
+      "- **Executive summary** (≤8 bullets)",
+      "- **Deliverable / findings** (agent-specific — see system prompt)",
+      "- **Recommended issues/PRs** (titles + repos + labels)",
+      "- **Deferred** items",
       "",
+      "On errors, include a clear **Error** message and stack trace if available.",
       "Do not merge PRs. Do not add GitHub Actions cron.",
     );
   }

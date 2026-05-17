@@ -105,6 +105,9 @@ export async function loadLatestReportFromDb(): Promise<ControlPlaneReport | nul
 export async function loadLatestInterventionsFromDb(): Promise<HumanIntervention[]> {
   if (!dbEnabled()) return [];
 
+  const live = await loadLiveInterventionsFromDb();
+  if (live.length) return live;
+
   const { data, error } = await getSupabase()
     .from("interventions_snapshots")
     .select("items")
@@ -113,6 +116,47 @@ export async function loadLatestInterventionsFromDb(): Promise<HumanIntervention
     .maybeSingle();
 
   if (error) throw new Error(`loadLatestInterventions: ${error.message}`);
+  return (data?.items as HumanIntervention[]) ?? [];
+}
+
+export async function saveLiveInterventionsToDb(params: {
+  interventions: HumanIntervention[];
+  briefingHash: string;
+  briefingGeneratedAt: string;
+  generatedAt: string;
+}): Promise<void> {
+  if (!dbEnabled()) return;
+
+  const row = {
+    id: 1,
+    generated_at: params.generatedAt,
+    briefing_hash: params.briefingHash,
+    briefing_generated_at: params.briefingGeneratedAt,
+    items: params.interventions,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error } = await getSupabase().from("interventions_latest").upsert(row);
+  if (error) throw new Error(`interventions_latest: ${error.message}`);
+
+  const { error: snapErr } = await getSupabase().from("interventions_snapshots").insert({
+    generated_at: params.generatedAt,
+    briefing_hash: params.briefingHash,
+    items: params.interventions,
+  });
+  if (snapErr) throw new Error(`interventions_snapshots: ${snapErr.message}`);
+}
+
+export async function loadLiveInterventionsFromDb(): Promise<HumanIntervention[]> {
+  if (!dbEnabled()) return [];
+
+  const { data, error } = await getSupabase()
+    .from("interventions_latest")
+    .select("items, briefing_generated_at, generated_at")
+    .eq("id", 1)
+    .maybeSingle();
+
+  if (error) throw new Error(`loadLiveInterventions: ${error.message}`);
   return (data?.items as HumanIntervention[]) ?? [];
 }
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { loadRuntimeEnv } from "../env.js";
 loadRuntimeEnv();
+import { agentBackendLabel, shouldUseMock } from "../runner.js";
 import { runSupervisorLoop } from "../supervisor/loop.js";
 import { resolveBenchmarksRoot } from "../preflight.js";
 
@@ -32,11 +33,17 @@ function parseArgs(argv: string[]) {
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
-  if (process.env.CURSOR_MOCK === "1") args.mock = true;
+  const mock = shouldUseMock(args.mock);
+
+  const benchmarks = resolveBenchmarksRoot(args.benchmarksRoot);
+  console.error(
+    `[supervisor] CLI starting — backend=${agentBackendLabel(mock)} once=${args.once} interval=${args.intervalMs}ms cooldown=${args.cooldownMs}ms benchmarks=${benchmarks ?? "(none)"}`,
+  );
+  console.error("[supervisor] Press Ctrl+C to stop. Tick lines appear below as [supervisor] tick: …");
 
   await runSupervisorLoop({
-    benchmarksRoot: resolveBenchmarksRoot(args.benchmarksRoot),
-    mock: args.mock,
+    benchmarksRoot: benchmarks,
+    mock,
     once: args.once,
     force: args.force,
     intervalMs: args.intervalMs,

@@ -3,8 +3,10 @@ import { readFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getAgent } from "./agents/registry.js";
-import { CursorSdkBackend } from "./backends/cursor-sdk-backend.js";
 import { MockBackend } from "./backends/mock-backend.js";
+import { buildMockTrace, buildRunInput } from "./agent-run-trace.js";
+import { resolveCursorApiKey } from "./env.js";
+import { hashBriefing } from "./control-plane/briefing-hash.js";
 import { finalizeAgentRun } from "./control-plane/finalize-run.js";
 import { persistAgentRun } from "./db/persist.js";
 import { runsDir } from "./control-plane/paths.js";
@@ -38,14 +40,28 @@ export function loadPrompt(repoRoot: string, promptFile: string): string {
   return readFileSync(p, "utf8");
 }
 
+/** True only for `--mock`, `CURSOR_MOCK=1` (tests/CI), or CI without an API key. */
 export function shouldUseMock(explicitMock: boolean): boolean {
   if (explicitMock) return true;
   if (process.env.CURSOR_MOCK === "1" || process.env.CURSOR_MOCK === "true") return true;
-  if (process.env.CI === "true" && !process.env.CURSOR_API_KEY) return true;
+  if (process.env.CI === "true" && !resolveCursorApiKey()) return true;
   return false;
 }
 
+export function agentBackendLabel(mock?: boolean): "mock" | "cursor-sdk" {
+  return shouldUseMock(mock ?? false) ? "mock" : "cursor-sdk";
+}
+
+export function assertRealBackendReady(explicitMock?: boolean): void {
+  if (shouldUseMock(explicitMock ?? false)) return;
+  if (resolveCursorApiKey()) return;
+  throw new Error(
+    "CURSOR_API_KEY is required for real agent runs. Add it to li-cursor-agents/.env (see .env.example). Tests use CURSOR_MOCK=1; local dry-run: --mock.",
+  );
+}
+
 export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult> {
+  assertRealBackendReady(options.mock);
   const definition = getAgent(String(options.agentId));
   if (!definition) {
     throw new Error(`Unknown agent: ${options.agentId} (see npm run agents:list)`);
@@ -88,17 +104,89 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
         outputPath,
       };
       writeFileSync(outputPath.replace(/\.md$/, ".json"), JSON.stringify(base, null, 2) + "\n", "utf8");
-      const finalized = finalizeAgentRun(base, { definition, rolloutPrUrls: prUrls });
+      const kitInput = buildRunInput({
+        agentId: definition.id,
+        backend: mock ? "mock" : "cursor-sdk",
+        systemPrompt,
+        userMessage: extra ?? "(agent-kit rollout only — no LLM)",
+        cwd: workCwd,
+        benchmarksRoot,
+        briefingPath: preflight.briefing_path,
+        briefingHash:
+          preflight.briefing && typeof preflight.briefing === "object"
+            ? hashBriefing(preflight.briefing)
+            : undefined,
+        preflightGeneratedAt: preflight.generated_at,
+        dryRun: options.dryRun,
+        mock,
+      });
+      const finalized = finalizeAgentRun(
+        {
+          ...base,
+          runInput: kitInput,
+          trace: buildMockTrace({
+            definitionId: definition.id,
+            assistantText: text,
+            userMessage: kitInput.user_message,
+            cwd: workCwd,
+          }),
+        },
+        { definition, rolloutPrUrls: prUrls, preflight },
+      );
       await persistAgentRun({ run: finalized, rolloutRows: rollout });
       return finalized;
     }
   }
 
   const userMessage = buildUserMessage(definition.id, preflight, extra);
-  const backend = mock ? new MockBackend() : new CursorSdkBackend();
+  const backend = mock
+    ? new MockBackend()
+    : new (await import("./backends/cursor-sdk-backend.js")).CursorSdkBackend();
+  const briefingHash =
+    preflight.briefing && typeof preflight.briefing === "object"
+      ? hashBriefing(preflight.briefing)
+      : undefined;
 
-  const result = await backend.run(definition, systemPrompt, userMessage, { ...options, cwd: workCwd });
-  const finalized = finalizeAgentRun(result, { definition });
+  const runInput = buildRunInput({
+    agentId: definition.id,
+    backend: mock ? "mock" : "cursor-sdk",
+    systemPrompt,
+    userMessage,
+    cwd: workCwd,
+    benchmarksRoot,
+    briefingPath: preflight.briefing_path,
+    briefingHash,
+    preflightGeneratedAt: preflight.generated_at,
+    modelId: options.modelId,
+    extraInstruction: extra,
+    dryRun: options.dryRun,
+    mock,
+  });
+
+  let result: AgentRunResult;
+  try {
+    result = await backend.run(definition, systemPrompt, userMessage, { ...options, cwd: workCwd });
+  } catch (err) {
+    const outputPath = join(runsDir(), `${definition.id}-${Date.now()}.md`);
+    result = {
+      agentId: definition.id,
+      backend: mock ? "mock" : "cursor-sdk",
+      status: "error",
+      durationMs: 0,
+      outputPath,
+      outputText: "",
+      error: err instanceof Error ? err.message : String(err),
+      errorDetail:
+        err instanceof Error
+          ? { name: err.name, message: err.message, stack: err.stack }
+          : { message: String(err) },
+      runInput,
+    };
+  }
+  const finalized = finalizeAgentRun(
+    { ...result, runInput: result.runInput ?? runInput },
+    { definition, preflight },
+  );
   await persistAgentRun({ run: finalized });
   return finalized;
 }

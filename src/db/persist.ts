@@ -4,20 +4,23 @@ import type { ControlPlaneReport, ControlPlaneState, HumanIntervention } from ".
 import type { AgentRunResult } from "../types.js";
 import type { AgentKitRolloutRow } from "../repo-workflow/types.js";
 import { interventionsPath, reportPath, statePath } from "../control-plane/paths.js";
-import { exportDiskCacheEnabled, dbEnabled } from "./client.js";
+import { dbEnabled, exportDiskCacheEnabled, useDiskStore, useSupabaseStore } from "./client.js";
 import * as runsDb from "./runs.js";
 import * as cpDb from "./control-plane.js";
 
 export type { PersistRunInput } from "./runs.js";
 
-/** Persist agent run to Supabase (primary) and optional disk cache. */
+function requireSupabaseWrite(op: string): void {
+  if (useSupabaseStore() && !dbEnabled()) {
+    throw new Error(`[db] ${op}: LI_CONTROL_PLANE_STORE=supabase but Supabase is not configured`);
+  }
+}
+
+/** Persist agent run to Supabase; optional disk export when LI_EXPORT_DISK_CACHE=1. */
 export async function persistAgentRun(input: runsDb.PersistRunInput): Promise<void> {
+  requireSupabaseWrite("persistAgentRun");
   if (dbEnabled()) {
-    try {
-      await runsDb.upsertAgentRun(input);
-    } catch (err) {
-      console.error("[db] persistAgentRun failed:", err instanceof Error ? err.message : err);
-    }
+    await runsDb.upsertAgentRun(input);
   }
 
   if (exportDiskCacheEnabled() && input.run.outputPath) {
@@ -34,12 +37,9 @@ export async function persistAgentRun(input: runsDb.PersistRunInput): Promise<vo
 }
 
 export async function persistControlPlaneState(state: ControlPlaneState): Promise<void> {
+  requireSupabaseWrite("persistControlPlaneState");
   if (dbEnabled()) {
-    try {
-      await cpDb.saveControlPlaneStateToDb(state);
-    } catch (err) {
-      console.error("[db] saveState failed:", err instanceof Error ? err.message : err);
-    }
+    await cpDb.saveControlPlaneStateToDb(state);
   }
   if (exportDiskCacheEnabled()) {
     state.updated_at = new Date().toISOString();
@@ -48,12 +48,9 @@ export async function persistControlPlaneState(state: ControlPlaneState): Promis
 }
 
 export async function persistReport(report: ControlPlaneReport, interventions: HumanIntervention[]): Promise<void> {
+  requireSupabaseWrite("persistReport");
   if (dbEnabled()) {
-    try {
-      await cpDb.saveReportToDb(report, interventions);
-    } catch (err) {
-      console.error("[db] saveReport failed:", err instanceof Error ? err.message : err);
-    }
+    await cpDb.saveReportToDb(report, interventions);
   }
   if (exportDiskCacheEnabled()) {
     writeFileSync(reportPath(), JSON.stringify(report, null, 2) + "\n", "utf8");
@@ -66,49 +63,64 @@ export async function persistReport(report: ControlPlaneReport, interventions: H
 }
 
 export async function loadControlPlaneStateHybrid(): Promise<ControlPlaneState | null> {
-  if (dbEnabled()) {
-    try {
-      const fromDb = await cpDb.loadControlPlaneStateFromDb();
-      if (fromDb) return fromDb;
-    } catch (err) {
-      console.error("[db] loadState failed:", err instanceof Error ? err.message : err);
-    }
+  if (useSupabaseStore() && dbEnabled()) {
+    return cpDb.loadControlPlaneStateFromDb();
   }
-  if (existsSync(statePath())) {
+  if (useDiskStore() && existsSync(statePath())) {
     return JSON.parse(readFileSync(statePath(), "utf8")) as ControlPlaneState;
   }
   return null;
 }
 
 export async function loadLatestReportHybrid(): Promise<ControlPlaneReport | null> {
-  if (dbEnabled()) {
-    try {
-      const fromDb = await cpDb.loadLatestReportFromDb();
-      if (fromDb) return fromDb;
-    } catch {
-      /* fall through */
-    }
+  if (useSupabaseStore() && dbEnabled()) {
+    return cpDb.loadLatestReportFromDb();
   }
-  if (existsSync(reportPath())) {
+  if (useDiskStore() && existsSync(reportPath())) {
     return JSON.parse(readFileSync(reportPath(), "utf8")) as ControlPlaneReport;
   }
   return null;
 }
 
 export async function loadInterventionsHybrid(): Promise<HumanIntervention[]> {
-  if (dbEnabled()) {
-    try {
-      const fromDb = await cpDb.loadLatestInterventionsFromDb();
-      if (fromDb.length) return fromDb;
-    } catch {
-      /* fall through */
-    }
+  if (useSupabaseStore() && dbEnabled()) {
+    const fromDb = await cpDb.loadLatestInterventionsFromDb();
+    if (fromDb.length) return fromDb;
+    return [];
   }
-  if (existsSync(interventionsPath())) {
+  if (useDiskStore() && existsSync(interventionsPath())) {
     const raw = JSON.parse(readFileSync(interventionsPath(), "utf8")) as { interventions?: HumanIntervention[] };
     return raw.interventions ?? [];
   }
   return [];
+}
+
+export async function persistLiveInterventions(params: {
+  interventions: HumanIntervention[];
+  briefingHash: string;
+  briefingGeneratedAt: string;
+  generatedAt: string;
+}): Promise<void> {
+  requireSupabaseWrite("persistLiveInterventions");
+  if (dbEnabled()) {
+    await cpDb.saveLiveInterventionsToDb(params);
+  }
+  if (exportDiskCacheEnabled()) {
+    writeFileSync(
+      interventionsPath(),
+      JSON.stringify(
+        {
+          generated_at: params.generatedAt,
+          briefing_hash: params.briefingHash,
+          briefing_generated_at: params.briefingGeneratedAt,
+          interventions: params.interventions,
+        },
+        null,
+        2,
+      ) + "\n",
+      "utf8",
+    );
+  }
 }
 
 export function runIdFromOutputPath(outputPath: string): string {

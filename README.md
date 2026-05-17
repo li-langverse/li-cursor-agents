@@ -28,20 +28,38 @@ npm run repo-workflow -- agent-kit-rollout --dry-run
 
 Manual steps: `prepare` → edit clone → `commit-pr` (documented in `prompts/repo-workflow-tools.md`).
 
-## Quick start
+## Machine setup (recommended once)
+
+Configures absolute paths, **local CI instead of GitHub Actions**, slim Docker image, and sensible supervisor limits for one Mac:
+
+```bash
+npm run setup    # writes .env keys, builds li-local-ci/node:22, runs doctor
+npm run agents:keep
+```
+
+Defaults (override in `.env`): `LI_USE_LOCAL_CI=1`, `LI_LOCAL_CI_SWEEP_LIMIT=2`, `LI_SUPERVISOR_MAX_TASKS=2`, **Supabase on** (`LI_STACK_SKIP_SUPABASE=0`; needs Docker).
+
+## Quick start (full local stack)
+
+```bash
+npm run setup
+cp .env.example .env          # if setup did not create it; add CURSOR_API_KEY
+npm run stack                 # ensure Supabase + dashboard + supervisor (LI_STACK_SKIP_SUPABASE=1 for disk-only)
+```
+
+## Quick start (agents only)
 
 ```bash
 npm ci
 ./scripts/sync-prompts.sh   # from ../benchmarks/.cursor/automations
 npm run build
 
-# CI / local without API key
-export CURSOR_MOCK=1
-npm run agent -- --agent gap_explorer
-
-# Real SDK run (local dev)
-export CURSOR_API_KEY="..."
+# Real SDK (default) — put CURSOR_API_KEY in .env
+cp .env.example .env
 npm run agent -- --agent pr_reviewer --benchmarks ../benchmarks
+
+# Mock only for CI / explicit dry-run
+npm run agent -- --agent gap_explorer --mock
 ```
 
 ## Architecture
@@ -109,7 +127,7 @@ Covers: heap caps → preflight → task queue → agent runs → report/interve
 | Var | Purpose |
 |-----|---------|
 | `CURSOR_API_KEY` | Real SDK (from [Cursor dashboard](https://cursor.com/dashboard) integrations) |
-| `CURSOR_MOCK=1` | Force mock |
+| `CURSOR_MOCK=1` | Mock backend (npm test / `--mock` only) |
 | `BENCHMARKS_ROOT` | Path to `li-langverse/benchmarks` for preflight |
 | `CURSOR_MODEL` | Default `default` (Cursor **Auto**); pin e.g. `gpt-5-mini` if needed |
 | `LI_E2E_SDK=1` | Run live SDK e2e tests |
@@ -147,18 +165,15 @@ npm run dashboard
 
 | Button | Action |
 |--------|--------|
-| **Start supervisor** | Background loop: preflight → dispatch agents (fire-and-forget in-process) |
-| **Stop supervisor** | Halt the loop |
-| **Run all agents** | Spawn every leaf agent as a separate process now (parallel) |
-| **Stop all runs** | Kill active agent processes + stop supervisor |
-| **One tick** | Single supervisor pass |
+| **Supervisor mode** | Continuous loop: preflight → up to 3 agents per tick (sequential). Click again to stop. |
+| **Run all (parallel)** | Stops supervisor if on, then spawns every leaf agent in its own process at once. |
 
 Each **leaf/root** card has **Start** / **Stop** / **Resume**. Stop kills a running process and excludes the agent until Resume.
 
 ```bash
 # CLI alternative (no dashboard)
 export BENCHMARKS_ROOT=../benchmarks
-CURSOR_MOCK=1 npm run supervisor -- --benchmarks ../benchmarks
+npm run agents:keep   # dashboard + supervisor (cursor-sdk if .env has key)
 ./scripts/start-control-plane.sh --mock
 ```
 
