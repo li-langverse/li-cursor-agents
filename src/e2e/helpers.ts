@@ -24,6 +24,8 @@ export function setupE2eEnv(variant: "v1" | "v2" = "v1"): E2eEnv {
     E2E_BRIEFING_VARIANT: process.env.E2E_BRIEFING_VARIANT,
     BENCHMARKS_ROOT: process.env.BENCHMARKS_ROOT,
     CURSOR_MOCK: process.env.CURSOR_MOCK,
+    LI_CONTROL_PLANE_STORE: process.env.LI_CONTROL_PLANE_STORE,
+    LI_SWARM_MERGE_RECOMMENDATIONS: process.env.LI_SWARM_MERGE_RECOMMENDATIONS,
   };
 
   process.env.LI_CONTROL_PLANE_DIR = controlPlaneDir;
@@ -31,6 +33,8 @@ export function setupE2eEnv(variant: "v1" | "v2" = "v1"): E2eEnv {
   process.env.LI_CURSOR_AGENTS_ROOT = pkg;
   process.env.E2E_BRIEFING_VARIANT = variant;
   process.env.BENCHMARKS_ROOT = benchmarksRoot;
+  process.env.LI_CONTROL_PLANE_STORE = "disk";
+  process.env.LI_SWARM_MERGE_RECOMMENDATIONS = "0";
   if (process.env.LI_E2E_SDK === "1" || process.env.LI_E2E_SDK === "true") {
     delete process.env.CURSOR_MOCK;
   } else {

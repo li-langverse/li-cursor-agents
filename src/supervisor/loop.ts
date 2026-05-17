@@ -27,6 +27,7 @@ import {
   evaluateNextMerge,
 } from "../merge/auto-merge-gate.js";
 import { runLocalCiSweepForMergeAgents } from "../local-ci/sweep.js";
+import { enrichBriefingObject } from "../briefing/enrich-briefing-file.js";
 import { runPreflight, resolveBenchmarksRoot } from "../preflight.js";
 import type { AgentRunResult, PreflightBundle } from "../types.js";
 import type { ControlPlaneState, HumanIntervention, QueuedAgentTask } from "../control-plane/types.js";
@@ -69,6 +70,10 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
   const benchmarksRoot = resolveBenchmarksRoot(options.benchmarksRoot);
   const preflight: PreflightBundle = runPreflight(benchmarksRoot, options.skipSlowPreflight !== false);
   let briefing = preflight.briefing;
+  if (briefing && typeof briefing === "object") {
+    briefing = await enrichBriefingObject(briefing as Record<string, unknown>);
+    preflight.briefing = briefing;
+  }
   let briefingHash = hashBriefing(briefing);
   state.last_preflight_at = preflight.generated_at;
   state.last_briefing_hash = briefingHash;

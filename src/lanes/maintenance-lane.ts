@@ -2,6 +2,7 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
 import { enrichBriefingObject } from "../briefing/enrich-briefing-file.js";
+import { failHandoffsMissingNorthStar } from "../handoffs/handoff-hygiene.js";
 import { resolveBenchmarksRoot, runPreflight } from "../preflight.js";
 import { loadLaneState, saveLaneState } from "./lane-state.js";
 
@@ -24,6 +25,12 @@ export async function maintenanceLaneTick(options?: {
   const benchmarksRoot = resolveBenchmarksRoot(options?.benchmarksRoot);
   if (!benchmarksRoot) {
     return { ok: false, skip_reason: "BENCHMARKS_ROOT not found" };
+  }
+
+  const failedHandoffs = await failHandoffsMissingNorthStar();
+  if (failedHandoffs.length > 0) {
+    // eslint-disable-next-line no-console
+    console.error(`maintenance-lane: failed ${failedHandoffs.length} handoff(s) missing north_star_fit`);
   }
 
   const preflight = runPreflight(benchmarksRoot, options?.skipSlowPreflight !== false);

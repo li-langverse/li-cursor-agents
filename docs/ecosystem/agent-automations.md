@@ -28,3 +28,5 @@ Cloud Automations can mirror the same agent prompts under `benchmarks/.cursor/au
 Production audits (`plan-completion-audit`, `ecosystem-explorer`) stay in **benchmarks** / **lic** repos; GHA here only refreshes what local lanes read from `data/latest/`.
 
 **benchmarks** `scripts/agent-briefing.py` calls `li-cursor-agents` `briefing:enrich` when `LI_CURSOR_AGENTS_ROOT` is built (`dist/cli/enrich-briefing.js`). **benchmarks** workflow `swarm-audit-refresh.yml` handles `repository_dispatch` type `swarm-audit-refresh` from `swarm-audit-cron.yml`.
+
+Supervisor ticks call `enrichBriefingObject` so `recommended_agents` includes swarm lane priorities (`package_architect`, `code_implementer`, eligible research goals). Implement lane prompts include full `config/goal-scaffolds/*.md` content.

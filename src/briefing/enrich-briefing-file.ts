@@ -2,14 +2,17 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { enrichBriefingWithScorecards } from "./swarm-scorecard.js";
 import { auditHandoffsNorthStar } from "../handoffs/handoff-audit.js";
+import { mergeSwarmRecommendations } from "./swarm-recommendations.js";
+import { mergeHandoffsIntoImplementationQueue } from "../preflight/implementation-queue-handoffs.js";
 
 export async function enrichBriefingObject(
   briefing: Record<string, unknown> | null,
 ): Promise<Record<string, unknown>> {
   const enriched = await enrichBriefingWithScorecards(briefing);
   enriched.handoff_audit = await auditHandoffsNorthStar();
+  enriched.implementation_queue = await mergeHandoffsIntoImplementationQueue(enriched);
   enriched.swarm_enriched_at = new Date().toISOString();
-  return enriched;
+  return mergeSwarmRecommendations(enriched);
 }
 
 export interface EnrichBriefingFileResult {

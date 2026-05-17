@@ -5,6 +5,7 @@ import {
   validateNorthStarFit,
 } from "../handoffs/placement-validator.js";
 import { buildPendingHandoffsBlock } from "../handoffs/prompt-blocks.js";
+import { buildGoalScaffoldBlock } from "../handoffs/goal-scaffold-prompt.js";
 import { withGlobalSdkSessionLock } from "../backends/sdk-session-lock.js";
 import { resolveBenchmarksRoot } from "../preflight.js";
 import { agentsPackageRoot, runAgent, shouldUseMock } from "../runner.js";
@@ -21,6 +22,7 @@ export interface ImplementLaneTickResult {
 }
 
 function handoffInstruction(h: AgentHandoff): string {
+  const scaffold = buildGoalScaffoldBlock(h);
   return [
     "## Implement handoff",
     "",
@@ -30,6 +32,7 @@ function handoffInstruction(h: AgentHandoff): string {
     "",
     buildPendingHandoffsBlock("code_implementer", [h]),
     "",
+    scaffold,
     "```json",
     JSON.stringify(h.work, null, 2),
     "```",

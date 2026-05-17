@@ -36,6 +36,15 @@ export const REPO_WORKFLOW_AGENT_IDS = new Set([
 /** Numerics agents must cite tests/bench evidence in output or PR body. */
 export const NUMERICS_EVIDENCE_AGENT_IDS = new Set(["numerics_researcher", "autoresearch", "bench_improver"]);
 
+/** Research-lane agents must cite north_star_fit when describing handoffs. */
+export const RESEARCH_HANDOFF_AGENT_IDS = new Set([
+  "goal_researcher",
+  "proof_gap_researcher",
+  "stdlib_researcher",
+  "numerics_researcher",
+  "gap_explorer",
+]);
+
 const BENCH_EVIDENCE_RE =
   /(?:li-tests\/|benchmarks\/|docs\/numerics\/|bench(?:mark)?[_\s-]?(?:id|row)|manifest\.toml|threshold_ratio|pure_li|horner_|tier[- ]?\d)/i;
 const DASHBOARD_BENCH_RE = /li-langverse\.github\.io\/benchmarks/i;
@@ -138,6 +147,14 @@ export function auditRunCompletion(input: AuditRunCompletionInput): AgentRunComp
     !TRUSTED_APPROVED_RE.test(outputText)
   ) {
     gaps.push("trusted.lean touched without trusted-change-approved in deliverable");
+  }
+
+  if (
+    RESEARCH_HANDOFF_AGENT_IDS.has(agentId) &&
+    /\bhandoff\b/i.test(outputText) &&
+    !/north_star_fit/i.test(outputText)
+  ) {
+    gaps.push("research output mentions handoff but omits north_star_fit (domain + PH/pillar)");
   }
 
   if (hasDeliverableSection(outputText)) {
