@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Swarm handoffs + research sessions** — Supabase migration `20260517150000_swarm_handoffs_sessions.sql`; disk fallback `data/handoffs/pending.jsonl`; `src/handoffs/handoff-store.ts`, `src/research-sessions/session-store.ts`.
+- **Agents** — `package_architect` (plan), `goal_researcher`, `proof_gap_researcher`, `stdlib_researcher`; prompts under `prompts/`; heap coordinator mapping in `src/heap/coordinators.ts`.
+- **Prompt wiring** — `config/swarm-mandate.md`, `src/preflight/swarm-context.ts`, `src/agents/sdk-mode.ts` (plan/debug prefixes); pending handoffs + session continuation in `buildUserMessage`.
+- **Implement git rhythm** — post-hook `openPr=false` for `code_implementer`/`bug_fixer` unless `LI_REPO_WORKFLOW_OPEN_PR=1` (`src/repo-workflow/post-hook.ts`).
+
 ### Fixed
 
 - Operational logs (`keep-agents.log`, supervisor subprocess) prefix ISO-8601 timestamps; `src/agent-log.ts`, `scripts/test-log-timestamps.mjs` regression.

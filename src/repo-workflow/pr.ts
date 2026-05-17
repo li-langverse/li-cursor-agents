@@ -13,6 +13,8 @@ export function commitPushOpenPr(
     prBody: string;
     dryRun?: boolean;
     skipPush?: boolean;
+    /** When false, commit (and push if enabled) but do not run `gh pr create`. */
+    openPr?: boolean;
     /** When true, assume `git add` already ran (e.g. workspace sweeper safe paths). */
     skipGitAdd?: boolean;
   },
@@ -87,6 +89,16 @@ export function commitPushOpenPr(
       pushed: false,
       branch,
       error: push.stderr || "git push failed",
+    };
+  }
+
+  if (options.openPr === false) {
+    return {
+      ok: true,
+      committed: true,
+      pushed: true,
+      branch,
+      skip_reason: "openPr=false (commit+push only)",
     };
   }
 

@@ -109,6 +109,9 @@ export function buildImplementationQueueInstruction(queue: ImplementationQueue):
       `| ${i + 1} | ${w.kind ?? "—"} | ${w.repo ?? "—"} | ${(w.reason ?? w.title ?? "").slice(0, 80)} |`,
     );
   });
-  lines.push("", "Implement **at most 2** items; post-hook opens PR when workspace is dirty.");
+  lines.push(
+    "",
+    "Implement **at most 2** items. Post-hook commits+pushes each run; set `LI_REPO_WORKFLOW_OPEN_PR=1` to open the PR when done.",
+  );
   return lines.join("\n");
 }

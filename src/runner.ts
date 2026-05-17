@@ -14,7 +14,9 @@ import {
   buildAgentKitMaintainerInstruction,
   refreshAgentKitAudit,
 } from "./preflight/agent-kit-sync.js";
+import { buildSwarmPromptBlocks } from "./preflight/swarm-context.js";
 import { buildUserMessage, runPreflight, resolveBenchmarksRoot } from "./preflight.js";
+import { resolveCursorSdkMode, sdkModeSystemPrefix } from "./agents/sdk-mode.js";
 import {
   formatRolloutDigest,
   rolloutAgentKitPrs,
@@ -223,7 +225,11 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
     }
   }
 
-  const userMessage = buildUserMessage(definition.id, preflight, extra);
+  const swarmBlocks = await buildSwarmPromptBlocks(
+    definition.id,
+    preflight.briefing ?? preflight,
+  );
+  const userMessage = buildUserMessage(definition.id, preflight, extra, swarmBlocks);
   const backend = mock
     ? new MockBackend()
     : new (await import("./backends/cursor-sdk-backend.js")).CursorSdkBackend();

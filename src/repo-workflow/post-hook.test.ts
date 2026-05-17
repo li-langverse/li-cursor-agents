@@ -6,6 +6,7 @@ import { getAgent } from "../agents/registry.js";
 import {
   applyPostHookToRunResult,
   commitPushOpenPrAfterAgentRun,
+  shouldOpenPrAfterRun,
 } from "./post-hook.js";
 import { runCmd } from "./git.js";
 import { beginRepoWorkflowSession } from "./workspace-session.js";
@@ -87,6 +88,17 @@ test("post-hook skips clean workspace", () => {
   });
   assert.equal(push.skipped, true);
   assert.match(push.skip_reason ?? "", /no uncommitted/i);
+});
+
+test("shouldOpenPrAfterRun defers PR for implement agents unless env set", () => {
+  const prev = process.env.LI_REPO_WORKFLOW_OPEN_PR;
+  delete process.env.LI_REPO_WORKFLOW_OPEN_PR;
+  assert.equal(shouldOpenPrAfterRun("code_implementer"), false);
+  assert.equal(shouldOpenPrAfterRun("docs_maintainer"), true);
+  process.env.LI_REPO_WORKFLOW_OPEN_PR = "1";
+  assert.equal(shouldOpenPrAfterRun("code_implementer"), true);
+  if (prev === undefined) delete process.env.LI_REPO_WORKFLOW_OPEN_PR;
+  else process.env.LI_REPO_WORKFLOW_OPEN_PR = prev;
 });
 
 test("applyPostHookToRunResult appends PR URL to completion", () => {

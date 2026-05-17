@@ -89,6 +89,7 @@ export function buildUserMessage(
   definitionId: string,
   preflight: PreflightBundle,
   extra?: string,
+  swarmBlocks?: string,
 ): string {
   const isMerger = definitionId === "pr_merger";
   const mergePlan = mergePlanFromBriefing(preflight.briefing);
@@ -100,6 +101,10 @@ export function buildUserMessage(
     "Follow `org_roadmap` pillars and `master_plan_url` — proof → easy → fast.",
     "",
   ];
+
+  if (swarmBlocks?.trim()) {
+    lines.push(swarmBlocks.trim(), "");
+  }
 
   if (isMerger) {
     lines.push(buildPrMergerInstruction(mergePlan), "");

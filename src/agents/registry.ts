@@ -33,6 +33,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     skills: ["audit-plan-completion"],
     needsWeb: false,
     preflightKeys: ["plan_audit", "briefing"],
+    cursorSdkMode: "plan",
   },
   {
     id: "gap_explorer",
@@ -53,6 +54,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     skills: ["explore-li-ecosystem", "audit-plan-completion"],
     needsWeb: true,
     preflightKeys: ["plan_audit", "explorer", "issue_triage", "briefing"],
+    cursorSdkMode: "plan",
   },
   {
     id: "code_implementer",
@@ -65,6 +67,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     preflightKeys: ["plan_audit", "explorer", "ci_bug_triage", "briefing"],
     repoWorkflow: true,
     guaranteedPush: true,
+    cursorSdkMode: "agent",
   },
   {
     id: "bug_fixer",
@@ -77,6 +80,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     preflightKeys: ["ci_bug_triage", "pr_program", "briefing"],
     repoWorkflow: true,
     guaranteedPush: true,
+    cursorSdkMode: "debug",
   },
   {
     id: "security_auditor",
@@ -99,6 +103,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     skills: ["plan-feature-from-issue"],
     needsWeb: false,
     preflightKeys: ["issue_triage", "briefing"],
+    cursorSdkMode: "plan",
   },
   {
     id: "pr_branch_opener",
@@ -196,6 +201,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     preflightKeys: ["org_ci_audit", "ecosystem_audit", "briefing"],
     repoWorkflow: true,
     guaranteedPush: true,
+    cursorSdkMode: "debug",
   },
   {
     id: "agent_kit_maintainer",
@@ -219,6 +225,50 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     needsWeb: false,
     preflightKeys: ["workspace_dirty_sweep", "briefing"],
     workspaceSweep: true,
+  },
+  {
+    id: "package_architect",
+    name: "Package architect",
+    description: "Semantic placement: extend existing package vs create monorepo/official PKG.",
+    category: "governance",
+    promptFile: "package-architect.md",
+    skills: ["create-li-package", "explore-li-ecosystem"],
+    needsWeb: false,
+    preflightKeys: ["explorer", "briefing"],
+    cursorSdkMode: "plan",
+  },
+  {
+    id: "goal_researcher",
+    name: "Goal researcher",
+    description: "Domain goal-directed research (simulation, game, AI, web, CAD).",
+    category: "ecosystem",
+    promptFile: "goal-researcher.md",
+    skills: ["explore-li-ecosystem"],
+    needsWeb: true,
+    preflightKeys: ["briefing"],
+    cursorSdkMode: "agent",
+  },
+  {
+    id: "proof_gap_researcher",
+    name: "Proof gap researcher",
+    description: "Hunts provability holes, G-* gaps, external trust boundaries.",
+    category: "governance",
+    promptFile: "proof-gap-researcher.md",
+    skills: ["li-ecosystem-discipline"],
+    needsWeb: false,
+    preflightKeys: ["plan_audit", "briefing"],
+    cursorSdkMode: "agent",
+  },
+  {
+    id: "stdlib_researcher",
+    name: "Stdlib researcher",
+    description: "Deep std + li-std-* audit; packages to build vs improve.",
+    category: "ecosystem",
+    promptFile: "stdlib-researcher.md",
+    skills: ["explore-li-ecosystem"],
+    needsWeb: true,
+    preflightKeys: ["explorer", "briefing"],
+    cursorSdkMode: "agent",
   },
 ];
 

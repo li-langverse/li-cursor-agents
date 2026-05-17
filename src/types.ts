@@ -22,7 +22,11 @@ export type AgentId =
   | "docs_maintainer"
   | "ci_maintainer"
   | "agent_kit_maintainer"
-  | "workspace_sweeper";
+  | "workspace_sweeper"
+  | "package_architect"
+  | "goal_researcher"
+  | "proof_gap_researcher"
+  | "stdlib_researcher";
 
 /** @deprecated Briefing/fixtures may still use legacy ids — resolved in registry. */
 export type LegacyAgentId =
@@ -55,6 +59,8 @@ export interface AgentDefinition {
   guaranteedPush?: boolean;
   /** Deterministic sibling-repo sweep (commit/push/PR/restart) — no isolated clone. */
   workspaceSweep?: boolean;
+  /** Cursor SDK interaction mode (plan / debug / agent / ask). */
+  cursorSdkMode?: "agent" | "plan" | "debug" | "ask";
 }
 
 export interface PreflightBundle {

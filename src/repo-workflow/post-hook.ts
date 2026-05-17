@@ -14,6 +14,15 @@ export interface PostHookPushResult extends CommitPushPrResult {
   repo: string;
 }
 
+const IMPLEMENT_RHYTHM_AGENTS = new Set(["code_implementer", "bug_fixer"]);
+
+/** Implement agents commit+push each run; open PR only when explicitly enabled. */
+export function shouldOpenPrAfterRun(agentId: string): boolean {
+  if (!IMPLEMENT_RHYTHM_AGENTS.has(agentId)) return true;
+  const v = process.env.LI_REPO_WORKFLOW_OPEN_PR?.trim().toLowerCase();
+  return v === "1" || v === "true" || v === "on_complete";
+}
+
 export function formatPushDigest(push: PostHookPushResult): string {
   const lines = ["", "## Repo workflow push (post-hook)", ""];
   if (push.pr_url) lines.push(`- **PR:** ${push.pr_url}`);
@@ -75,6 +84,7 @@ export function commitPushOpenPrAfterAgentRun(
     prBody: body,
     dryRun,
     skipPush,
+    openPr: shouldOpenPrAfterRun(definition.id),
   });
 
   return {
