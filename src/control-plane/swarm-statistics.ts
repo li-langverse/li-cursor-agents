@@ -286,10 +286,20 @@ function aggregateRuns(runs: RunCatalogEntry[]): Omit<
   };
 }
 
-export async function buildSwarmStatistics(runLimit = 400): Promise<SwarmStatistics> {
+export interface BuildSwarmStatisticsOptions {
+  runLimit?: number;
+  /** Skip `gh search` (blocks ~20s); use runs + briefing artifacts only. */
+  skipGh?: boolean;
+}
+
+export async function buildSwarmStatistics(
+  runLimit = 400,
+  options: BuildSwarmStatisticsOptions = {},
+): Promise<SwarmStatistics> {
   const notes: string[] = [];
   const benchmarksRoot = resolveBenchmarksRoot();
-  const runs = await listRunsMerged(runLimit);
+  const limit = options.runLimit ?? runLimit;
+  const runs = await listRunsMerged(limit);
   const agg = aggregateRuns(runs);
 
   const persisted = loadPersisted();
@@ -307,10 +317,18 @@ export async function buildSwarmStatistics(runLimit = 400): Promise<SwarmStatist
     if (!persisted.merged_pr_keys.includes(k)) persisted.merged_pr_keys.push(k);
   }
 
-  const gh = fetchMergedViaGh();
-  if (gh.note) notes.push(gh.note);
-  for (const k of gh.keys) {
-    if (!persisted.merged_pr_keys.includes(k)) persisted.merged_pr_keys.push(k);
+  const skipGh =
+    options.skipGh === true ||
+    process.env.LI_SWARM_STATS_SKIP_GH === "1" ||
+    process.env.LI_SWARM_STATS_SKIP_GH === "true";
+  if (!skipGh) {
+    const gh = fetchMergedViaGh();
+    if (gh.note) notes.push(gh.note);
+    for (const k of gh.keys) {
+      if (!persisted.merged_pr_keys.includes(k)) persisted.merged_pr_keys.push(k);
+    }
+  } else {
+    notes.push("gh merge search skipped (dashboard fast path — use ?refresh=1 for full gh sweep)");
   }
 
   savePersisted(persisted);

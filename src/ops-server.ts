@@ -38,6 +38,7 @@ import { assertStoreReady, configuredStore, dataStoreLabel, dbEnabled } from "./
 import type { ControlPlaneReport, ControlPlaneState } from "./control-plane/types.js";
 import { resolveBenchmarksRoot } from "./preflight.js";
 import type { AgentId } from "./types.js";
+import type { SwarmStatistics } from "./control-plane/swarm-statistics.js";
 
 const MIME: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -47,6 +48,27 @@ const MIME: Record<string, string> = {
 
 export function defaultOpsPort(): number {
   return Number(process.env.LI_AGENTS_OPS_PORT ?? process.env.LI_AGENT_DASHBOARD_PORT ?? 9477);
+}
+
+let statisticsCache: { at: number; stats: SwarmStatistics } | null = null;
+const STATS_CACHE_MS = Number(process.env.LI_STATISTICS_CACHE_MS ?? 45_000);
+
+async function getSwarmStatisticsForApi(
+  url: URL,
+): Promise<SwarmStatistics> {
+  const refresh = url.searchParams.get("refresh") === "1";
+  const includeGh = url.searchParams.get("gh") === "1";
+  const now = Date.now();
+  if (!refresh && statisticsCache && now - statisticsCache.at < STATS_CACHE_MS) {
+    return statisticsCache.stats;
+  }
+  const limit = Math.min(800, Math.max(50, Number(url.searchParams.get("runs") ?? 200)));
+  const stats = await buildSwarmStatistics(limit, {
+    runLimit: limit,
+    skipGh: !includeGh,
+  });
+  statisticsCache = { at: now, stats };
+  return stats;
 }
 
 export function startOpsServer(port: number): ReturnType<typeof createServer> {
@@ -223,8 +245,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
   }
 
   if (url.pathname === "/api/statistics" && req.method === "GET") {
-    const limit = Math.min(800, Math.max(50, Number(url.searchParams.get("runs") ?? 400)));
-    const stats = await buildSwarmStatistics(limit);
+    const stats = await getSwarmStatisticsForApi(url);
     json(res, 200, { statistics: stats, store });
     return;
   }

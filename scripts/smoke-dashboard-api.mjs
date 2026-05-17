@@ -2,17 +2,24 @@
 /** Smoke-test dashboard drilldown APIs. Usage: node scripts/smoke-dashboard-api.mjs [port] */
 const port = Number(process.argv[2] || process.env.LI_AGENTS_OPS_PORT || 9477);
 const base = `http://127.0.0.1:${port}`;
+const FETCH_MS = Number(process.env.LI_SMOKE_FETCH_MS ?? 25_000);
 
-async function get(path) {
-  const res = await fetch(`${base}${path}`, { cache: "no-store" });
-  const text = await res.text();
-  let body;
+async function get(path, { method = "GET", timeoutMs = FETCH_MS } = {}) {
+  const ac = new AbortController();
+  const t = setTimeout(() => ac.abort(), timeoutMs);
   try {
-    body = JSON.parse(text);
-  } catch {
-    body = text.slice(0, 80);
+    const res = await fetch(`${base}${path}`, { cache: "no-store", method, signal: ac.signal });
+    const text = await res.text();
+    let body;
+    try {
+      body = JSON.parse(text);
+    } catch {
+      body = text.slice(0, 80);
+    }
+    return { path, status: res.status, body };
+  } finally {
+    clearTimeout(t);
   }
-  return { path, status: res.status, body };
 }
 
 const paths = [
@@ -27,18 +34,40 @@ const paths = [
   "/api/queue",
   "/api/statistics",
   "/",
+  "/index.html",
   "/app.js",
 ];
 
 let failed = 0;
+let statsBody = null;
 for (const p of paths) {
-  const r = await get(p);
-  const ok = r.status === 200;
-  if (!ok) failed++;
-  console.log(`${ok ? "OK" : "FAIL"} ${r.status} ${p}`);
+  try {
+    const r = await get(p);
+    const ok = r.status === 200;
+    if (!ok) failed++;
+    console.log(`${ok ? "OK" : "FAIL"} ${r.status} ${p}`);
+    if (p === "/api/statistics" && ok && r.body?.statistics) {
+      statsBody = r.body.statistics;
+      const s = statsBody;
+      console.log(
+        `     → runs=${s.runs_scanned} actions=${s.actions_taken} prs_open=${s.prs_open_now}`,
+      );
+    }
+    if (p === "/index.html" && ok) {
+      const htmlRes = await fetch(`${base}/index.html`, { cache: "no-store" });
+      const html = await htmlRes.text();
+      const hasStats =
+        html.includes('data-view="statistics"') && html.includes('id="view-statistics"');
+      console.log(`     → statistics UI ${hasStats ? "present" : "MISSING"}`);
+      if (!hasStats) failed++;
+    }
+  } catch (e) {
+    failed++;
+    console.log(`FAIL fetch ${p}: ${e.message}`);
+  }
 }
 
-const runs = await get("/api/runs");
+const runs = await get("/api/runs").catch((e) => ({ status: 0, body: {}, path: "/api/runs", error: e }));
 const list = runs.body?.runs ?? [];
 if (list.length) {
   const runId = list[0].run_id;
@@ -48,43 +77,46 @@ if (list.length) {
     `/api/agents/${encodeURIComponent(agentId)}/detail`,
     `/api/agents/gap_explorer/detail`,
   ]) {
-    const r = await get(p);
-    const ok = r.status === 200;
-    if (!ok) failed++;
-    console.log(`${ok ? "OK" : "FAIL"} ${r.status} ${p}`);
-    if (p.includes("/detail") && ok) {
-      console.log(`     → agent=${r.body.agent?.id} status=${r.body.status} runs=${r.body.runs?.length}`);
-    }
-    if (p.includes("/runs/") && ok) {
-      console.log(`     → output ${(r.body.output_preview ?? "").length} chars`);
+    try {
+      const r = await get(p);
+      const ok = r.status === 200;
+      if (!ok) failed++;
+      console.log(`${ok ? "OK" : "FAIL"} ${r.status} ${p}`);
+      if (p.includes("/detail") && ok) {
+        console.log(`     → agent=${r.body.agent?.id} status=${r.body.status} runs=${r.body.runs?.length}`);
+      }
+      if (p.includes("/runs/") && ok) {
+        console.log(`     → output ${(r.body.output_preview ?? "").length} chars`);
+      }
+    } catch (e) {
+      failed++;
+      console.log(`FAIL fetch ${p}: ${e.message}`);
     }
   }
 } else {
-  console.log("WARN no runs on disk — run supervisor tick first");
+  console.log("WARN no runs — run supervisor tick first");
 }
-
-const bad = await get("/api/agents/__invalid__/detail");
-console.log(`${bad.status === 404 ? "OK" : "FAIL"} ${bad.status} /api/agents/__invalid__/detail (expect 404)`);
-if (bad.status !== 404) failed++;
 
 try {
-  const ac = new AbortController();
-  const t = setTimeout(() => ac.abort(), 8000);
-  const tick = await fetch(`${base}/api/tick`, { method: "POST", signal: ac.signal });
-  clearTimeout(t);
-  const tickJson = await tick.json();
-  console.log(`${tick.ok ? "OK" : "FAIL"} ${tick.status} POST /api/tick`);
-  if (tick.ok) console.log(`     → executed=${tickJson.tick?.tasksExecuted}`);
+  const bad = await get("/api/agents/__invalid__/detail");
+  console.log(`${bad.status === 404 ? "OK" : "FAIL"} ${bad.status} /api/agents/__invalid__/detail (expect 404)`);
+  if (bad.status !== 404) failed++;
 } catch (e) {
-  console.log(`WARN POST /api/tick: ${e.message} (preflight can be slow — drilldown GETs are what matter)`);
+  failed++;
+  console.log(`FAIL invalid agent detail: ${e.message}`);
 }
 
-const stats = await get("/api/statistics");
-if (stats.status === 200 && stats.body?.statistics) {
-  const s = stats.body.statistics;
-  console.log(
-    `     → statistics runs=${s.runs_scanned} actions=${s.actions_taken} prs_open=${s.prs_open_now}`,
-  );
+try {
+  const tick = await get("/api/tick", { method: "POST", timeoutMs: 8_000 });
+  console.log(`${tick.status === 200 ? "OK" : "WARN"} ${tick.status} POST /api/tick`);
+  if (tick.status === 200) console.log(`     → executed=${tick.body?.tick?.tasksExecuted}`);
+} catch (e) {
+  console.log(`WARN POST /api/tick: ${e.message} (preflight can be slow)`);
+}
+
+if (!statsBody) {
+  console.log("FAIL /api/statistics did not return statistics payload");
+  failed++;
 }
 
 process.exit(failed ? 1 : 0);
