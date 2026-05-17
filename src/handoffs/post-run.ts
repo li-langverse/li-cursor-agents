@@ -8,7 +8,7 @@ import {
   markResearchRunFailed,
 } from "../research-sessions/session-lifecycle.js";
 import { loadResearchGoals, northStarFitForGoal } from "../research-goals/load-goals.js";
-import { enqueueImplementationFromResearch } from "./implementation-from-research.js";
+import { enqueueImplementationHandoff } from "./implementation-handoff.js";
 import { runIdFromOutputPath } from "../db/persist.js";
 import type { AgentId, AgentRunResult } from "../types.js";
 
@@ -91,13 +91,13 @@ export async function applyResearchPostRun(result: AgentRunResult, briefingHash?
         briefingHash,
         runId,
       );
-      await enqueueImplementationFromResearch(
-        result.agentId,
-        session.goal_id,
-        session.session_id,
+      await enqueueImplementationHandoff({
+        fromAgent: result.agentId,
+        goalId: session.goal_id,
+        sessionId: session.session_id,
         briefingHash,
-        runId,
-      );
+        sourceRunId: runId,
+      });
     }
   }
 }
