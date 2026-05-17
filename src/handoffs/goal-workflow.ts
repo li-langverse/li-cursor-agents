@@ -27,6 +27,31 @@ export function resolveGoalImplementationRepo(handoff: AgentHandoff): string | u
   return GOAL_IMPLEMENTATION_REPO;
 }
 
+export function buildGoalPrTitle(handoff: AgentHandoff): string {
+  const gid = handoff.research_goal_id ?? "goal";
+  return `feat(${gid}): v1 scaffold implementation (proof-first)`;
+}
+
+export function buildGoalPrBody(handoff: AgentHandoff): string {
+  const gid = handoff.research_goal_id ?? "unknown";
+  const session = handoff.research_session_id ?? "—";
+  const paths = GOAL_LIC_PATHS[gid] ?? [];
+  return [
+    "<!-- li-agent goal_implementation -->",
+    "## Summary",
+    "",
+    `Implement v1 scope for research goal \`${gid}\` per goal scaffold.`,
+    "",
+    "## Agent deliverable",
+    "",
+    `- Research session: \`${session}\``,
+    `- Handoff: \`${handoff.handoff_id}\``,
+    `- Allowed paths: ${paths.map((p) => `\`${p}\``).join(", ") || "(see scaffold)"}`,
+    "- [x] Proof-first: contracts on new `proc`s; no `sorry` / new `trusted.lean`",
+    "- [ ] merge-approved (human after review)",
+  ].join("\n");
+}
+
 export function buildGoalWorkflowExtra(handoff: AgentHandoff): string {
   if (!isGoalImplementationHandoff(handoff)) return "";
   const gid = handoff.research_goal_id ?? "unknown";

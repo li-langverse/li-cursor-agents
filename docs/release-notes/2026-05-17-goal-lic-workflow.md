@@ -2,7 +2,7 @@
 
 ## Summary
 
-`code_implementer` goal handoffs (`goal_implementation` / `game_engine_ux` / `cad_fundamentals`) clone **lic** via `workflowRepo` instead of default **li-demo**, with path allowlists in the implement prompt.
+`code_implementer` goal handoffs clone **lic** via `workflowRepo`, with path allowlists, goal PR templates, `fixtures/lic-workflow` for mock runs, and `repo: lic` on briefing implementation_queue rows.
 
 ## Agent continuation
 
@@ -17,7 +17,11 @@
 - `src/handoffs/goal-workflow.test.ts`
 - `src/types.ts` — `AgentRunOptions.workflowRepo`
 - `src/runner.ts` — pass `repo` to `beginRepoWorkflowSession`
-- `src/lanes/implement-lane.ts` — workflow extra + `workflowRepo` on `runAgent`
+- `src/lanes/implement-lane.ts` — workflow extra, `workflowRepo`, goal PR env for post-hook
+- `fixtures/lic-workflow/` — mock lic clone
+- `src/repo-workflow/workspace-session.ts` — `prepareFixtureLicClone`
+- `src/preflight/implementation-queue-handoffs.ts` — `repo` on swarm handoff queue items
+- `src/e2e/goal-lic-workflow.e2e.ts`
 - lic: `docs/ecosystem/game-engine-ux.md`, `docs/ecosystem/cad-fundamentals.md`
 
 ## Not changed

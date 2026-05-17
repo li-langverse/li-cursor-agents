@@ -7,6 +7,8 @@ import {
 import { buildPendingHandoffsBlock } from "../handoffs/prompt-blocks.js";
 import { buildGoalScaffoldBlock } from "../handoffs/goal-scaffold-prompt.js";
 import {
+  buildGoalPrBody,
+  buildGoalPrTitle,
   buildGoalWorkflowExtra,
   resolveGoalImplementationRepo,
 } from "../handoffs/goal-workflow.js";
@@ -95,17 +97,34 @@ export async function implementLaneTick(options?: {
   const benchmarksRoot = resolveBenchmarksRoot(options?.benchmarksRoot);
   const packageRoot = agentsPackageRoot();
   const mock = options?.mock ?? shouldUseMock(false);
-  const result = await withGlobalSdkSessionLock(() =>
-    runAgent({
-      agentId: target.agentId,
-      cwd: benchmarksRoot ?? packageRoot,
-      benchmarksRoot,
-      mock: Boolean(mock),
-      dryRun: Boolean(options?.dryRun),
-      workflowRepo: resolveGoalImplementationRepo(target.handoff),
-      extraInstruction: handoffInstruction(target.handoff),
-    }),
-  );
+  const workflowRepo = resolveGoalImplementationRepo(target.handoff);
+  const prevPrTitle = process.env.LI_REPO_WORKFLOW_PR_TITLE;
+  const prevPrBody = process.env.LI_REPO_WORKFLOW_PR_BODY;
+  if (workflowRepo) {
+    process.env.LI_REPO_WORKFLOW_PR_TITLE = buildGoalPrTitle(target.handoff);
+    process.env.LI_REPO_WORKFLOW_PR_BODY = buildGoalPrBody(target.handoff);
+  }
+  let result;
+  try {
+    result = await withGlobalSdkSessionLock(() =>
+      runAgent({
+        agentId: target.agentId,
+        cwd: benchmarksRoot ?? packageRoot,
+        benchmarksRoot,
+        mock: Boolean(mock),
+        dryRun: Boolean(options?.dryRun),
+        workflowRepo,
+        extraInstruction: handoffInstruction(target.handoff),
+      }),
+    );
+  } finally {
+    if (workflowRepo) {
+      if (prevPrTitle === undefined) delete process.env.LI_REPO_WORKFLOW_PR_TITLE;
+      else process.env.LI_REPO_WORKFLOW_PR_TITLE = prevPrTitle;
+      if (prevPrBody === undefined) delete process.env.LI_REPO_WORKFLOW_PR_BODY;
+      else process.env.LI_REPO_WORKFLOW_PR_BODY = prevPrBody;
+    }
+  }
 
   if (result.status === "finished" && target.agentId === "code_implementer") {
     await updateHandoff(target.handoff.handoff_id, {

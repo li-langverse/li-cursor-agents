@@ -1,4 +1,5 @@
 import { listHandoffs } from "../handoffs/handoff-store.js";
+import { resolveGoalImplementationRepo } from "../handoffs/goal-workflow.js";
 import { handoffReadyForImplement } from "../handoffs/placement-validator.js";
 import type { ImplementationQueue, WorkQueueItem } from "./implementation-queue.js";
 
@@ -20,11 +21,15 @@ export async function mergeHandoffsIntoImplementationQueue(
     if (!handoffReadyForImplement(h)) continue;
     const id = `handoff:${h.handoff_id}`;
     if (items.some((w) => w.reason === id)) continue;
+    const repo =
+      (typeof h.work?.target_repo === "string" && h.work.target_repo) ||
+      resolveGoalImplementationRepo(h);
     items.push({
       kind: "swarm_handoff",
       reason: id,
       title: String(h.work?.summary ?? h.research_goal_id ?? h.handoff_id),
       ph_id: h.research_goal_id,
+      ...(repo ? { repo } : {}),
     });
   }
   if (items.length > base.work_queue.length) sources.add("agent_handoffs");

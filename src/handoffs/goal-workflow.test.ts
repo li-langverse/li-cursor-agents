@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   GOAL_IMPLEMENTATION_REPO,
+  buildGoalPrTitle,
   buildGoalWorkflowExtra,
   isGoalImplementationHandoff,
   resolveGoalImplementationRepo,
@@ -38,6 +39,15 @@ test("resolveGoalImplementationRepo returns undefined for generic implement hand
     work: { kind: "package_slice" },
   });
   assert.equal(resolveGoalImplementationRepo(h), undefined);
+});
+
+test("buildGoalPrTitle includes research goal id", () => {
+  const h = handoff({
+    handoff_id: "d",
+    research_goal_id: "game_engine_ux",
+    work: { kind: "goal_implementation" },
+  });
+  assert.match(buildGoalPrTitle(h), /game_engine_ux/);
 });
 
 test("buildGoalWorkflowExtra lists lic paths for cad_fundamentals", () => {

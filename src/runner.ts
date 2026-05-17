@@ -100,6 +100,7 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
       repo: options.workflowRepo,
       dryRun: options.dryRun,
       skipPush: mock || options.dryRun || process.env.LI_REPO_WORKFLOW_SKIP_PUSH === "1",
+      useFixture: mock,
     });
     if (workflowSession.ok) {
       workCwd = workflowSession.cloneDir;

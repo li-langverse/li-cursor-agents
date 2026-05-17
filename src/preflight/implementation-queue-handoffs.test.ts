@@ -16,8 +16,11 @@ test("mergeHandoffsIntoImplementationQueue includes ready implement handoffs", a
     from_agent: "goal_researcher",
     to_agents: ["code_implementer"],
     status: "pending",
+    research_goal_id: "cad_fundamentals",
     north_star_fit: "CAD/geometry — kernels, packages, and Li std gaps",
     work: {
+      kind: "goal_implementation",
+      target_repo: "lic",
       implementation_from_research: true,
       goal_scaffold_path: "config/goal-scaffolds/cad_fundamentals.md",
     },
@@ -25,5 +28,7 @@ test("mergeHandoffsIntoImplementationQueue includes ready implement handoffs", a
 
   const q = await mergeHandoffsIntoImplementationQueue({ implementation_queue: { work_queue: [], sources: [] } });
   assert.ok(q.sources.includes("agent_handoffs"));
-  assert.ok(q.work_queue.some((w) => w.kind === "swarm_handoff"));
+  const row = q.work_queue.find((w) => w.kind === "swarm_handoff");
+  assert.ok(row);
+  assert.equal(row!.repo, "lic");
 });

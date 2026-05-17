@@ -6,6 +6,7 @@ import { agentsPackageRoot } from "../runner.js";
 import { createHandoff, listHandoffs } from "./handoff-store.js";
 import { loadResearchGoals, northStarFitForGoal } from "../research-goals/load-goals.js";
 import type { AgentHandoff } from "./types.js";
+import { GOAL_IMPLEMENTATION_REPO } from "./goal-workflow.js";
 
 export function goalScaffoldPath(goalId: string): string {
   return join(agentsPackageRoot(), "config", "goal-scaffolds", `${goalId}.md`);
@@ -67,6 +68,7 @@ export async function enqueueImplementationHandoff(options: {
     source_run_id: options.sourceRunId,
     work: {
       kind: "goal_implementation",
+      target_repo: GOAL_IMPLEMENTATION_REPO,
       implementation_from_research: true,
       summary: `Implement v1 scaffold for goal ${options.goalId}`,
       goal_scaffold_path: `config/goal-scaffolds/${options.goalId}.md`,
