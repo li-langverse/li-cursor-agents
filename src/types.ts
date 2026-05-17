@@ -9,6 +9,7 @@ export type AgentId =
   | "gap_explorer"
   | "implementation_gaps"
   | "issue_planner"
+  | "pr_branch_opener"
   | "pr_alignment"
   | "pr_reviewer"
   | "pr_merger"

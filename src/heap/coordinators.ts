@@ -26,7 +26,7 @@ export const COORDINATOR_REGISTRY: CoordinatorDefinition[] = [
     id: "coord_pull_requests",
     name: "PR coordinator",
     description: "Alignment → review → merge when gates pass.",
-    leafAgents: ["pr_alignment", "pr_reviewer", "pr_merger"],
+    leafAgents: ["pr_branch_opener", "pr_alignment", "pr_reviewer", "pr_merger"],
     priority: 10,
     promptFile: "coord-pull-requests.md",
   },

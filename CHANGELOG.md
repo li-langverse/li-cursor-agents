@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **`pr_branch_opener`** agent — opens PRs for remote branches without an open pull request (`pr-branch-hygiene.py` preflight).
+- **`pr_branch_hygiene`** preflight instructions for `pr_alignment` to close superseded/outdated PRs (`safe_now` rows).
+
 ### Fixed
 
 - Supervisor cooldown: do not re-dispatch recommended agents when heap queue skipped tasks on cooldown (`src/supervisor/loop.ts`); cooldown treats terminal run statuses (`src/heap/task-queue.ts`).

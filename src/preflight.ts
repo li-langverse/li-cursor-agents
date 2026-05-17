@@ -4,6 +4,11 @@ import { join } from "node:path";
 import type { PreflightBundle } from "./types.js";
 import { getAgent } from "./agents/registry.js";
 import { buildPrMergerInstruction, mergePlanFromBriefing } from "./preflight/merge-queue.js";
+import {
+  buildPrAlignmentCloseInstruction,
+  buildPrBranchOpenerInstruction,
+  prHygieneFromBriefing,
+} from "./preflight/pr-hygiene.js";
 
 function hasBriefingScript(root: string): boolean {
   return existsSync(join(root, "scripts", "agent-briefing.py"));
@@ -91,6 +96,21 @@ export function buildUserMessage(
 
   if (isMerger) {
     lines.push(buildPrMergerInstruction(mergePlan), "");
+  }
+
+  const hygiene = prHygieneFromBriefing(preflight.briefing);
+  if (definitionId === "pr_branch_opener") {
+    lines.push(buildPrBranchOpenerInstruction(hygiene), "");
+  } else if (definitionId === "pr_alignment") {
+    lines.push(
+      buildPrAlignmentCloseInstruction(
+        hygiene,
+        preflight.briefing && typeof preflight.briefing === "object"
+          ? (preflight.briefing as Record<string, unknown>).merge_plan as Record<string, unknown>
+          : null,
+      ),
+      "",
+    );
   }
 
   lines.push(

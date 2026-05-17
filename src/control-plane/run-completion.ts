@@ -23,6 +23,7 @@ export const REPO_WORKFLOW_AGENT_IDS = new Set([
   "agent_kit_maintainer",
   "ci_maintainer",
   "docs_maintainer",
+  "pr_branch_opener",
   "bench_improver",
   "autoresearch",
   "implementation_gaps",
