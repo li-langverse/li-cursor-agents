@@ -13,6 +13,7 @@ import { loadState, saveState } from "./state.js";
 import type { ActiveAgentRun, AgentRunLifecycle, ControlPlaneState } from "./types.js";
 import type { AgentId } from "../types.js";
 import { runHandoffPhasedSwarm } from "../lanes/run-handoff-phases.js";
+import { resolveSpawnWorkflowRepo } from "../handoffs/resolve-spawn-workflow-repo.js";
 
 const activeRuns = new Map<string, ActiveAgentRun>();
 const childByRunId = new Map<string, ChildProcess>();
@@ -135,6 +136,7 @@ function clearRun(runId: string): void {
 export function spawnAgentRun(
   agentId: AgentId,
   reason = "dashboard manual start",
+  options?: { workflowRepo?: string },
 ): { ok: true; run: ActiveAgentRun } | { ok: false; error: string } {
   const state = loadState();
   if ((state.stopped_agents ?? []).includes(agentId)) {
@@ -153,6 +155,7 @@ export function spawnAgentRun(
   const args = ["--agent", agentId];
   if (mock) args.push("--mock");
   if (benchmarksRoot) args.push("--benchmarks", benchmarksRoot);
+  if (options?.workflowRepo) args.push("--workflow-repo", options.workflowRepo);
 
   const child = spawn(process.execPath, [cli, ...args], {
     cwd: benchmarksRoot ?? packageRoot,
@@ -364,7 +367,9 @@ export async function runAllAgentsNow(): Promise<{
       skipped.push({ agent: agentId, reason: "stopped" });
       continue;
     }
-    const result = spawnAgentRun(agentId, "swarm run-all");
+    const workflowRepo =
+      agentId === "code_implementer" ? await resolveSpawnWorkflowRepo(agentId) : undefined;
+    const result = spawnAgentRun(agentId, "swarm run-all", { workflowRepo });
     if (result.ok) spawned.push(result.run);
     else skipped.push({ agent: agentId, reason: result.error });
   }

@@ -12,6 +12,7 @@ function parseArgs(argv: string[]) {
   let list = false;
   let cwd = process.cwd(); // SDK working tree (often benchmarks); prompts use package root
   let benchmarksRoot: string | undefined;
+  let workflowRepo: string | undefined;
 
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -21,12 +22,13 @@ function parseArgs(argv: string[]) {
     else if (a === "--agent" || a === "-a") agent = argv[++i] as AgentId;
     else if (a === "--cwd") cwd = argv[++i];
     else if (a === "--benchmarks") benchmarksRoot = argv[++i];
+    else if (a === "--workflow-repo") workflowRepo = argv[++i];
     else if (a === "--help" || a === "-h") {
       printHelp();
       process.exit(0);
     }
   }
-  return { agent, mock, dryRun, list, cwd, benchmarksRoot };
+  return { agent, mock, dryRun, list, cwd, benchmarksRoot, workflowRepo };
 }
 
 function printHelp() {
@@ -69,6 +71,7 @@ async function main() {
     benchmarksRoot: args.benchmarksRoot,
     mock: args.mock,
     dryRun: args.dryRun,
+    workflowRepo: args.workflowRepo,
   });
 
   console.log(JSON.stringify(result, null, 2));

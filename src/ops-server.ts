@@ -16,6 +16,7 @@ import {
   stopAllActiveRuns,
   stopSupervisorLoop,
 } from "./control-plane/runtime.js";
+import { resolveSpawnWorkflowRepo } from "./handoffs/resolve-spawn-workflow-repo.js";
 import { sortedCoordinators } from "./heap/coordinators.js";
 import { agentsPackageRoot, agentBackendLabel } from "./runner.js";
 import { resolveCursorApiKey } from "./env.js";
@@ -481,13 +482,14 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       json(res, 404, { error: "unknown agent" });
       return;
     }
-    const result = spawnAgentRun(agentId, "dashboard start");
+    const workflowRepo = await resolveSpawnWorkflowRepo(agentId);
+    const result = spawnAgentRun(agentId, "dashboard start", { workflowRepo });
     if (!result.ok) {
       json(res, 409, { error: result.error });
       return;
     }
     const startState = await loadStateForApi();
-    json(res, 200, { ok: true, run: result.run, runtime: runtimeSnapshot(startState) });
+    json(res, 200, { ok: true, run: result.run, workflowRepo, runtime: runtimeSnapshot(startState) });
     return;
   }
 
