@@ -19,6 +19,9 @@ import {
 import { sortedCoordinators } from "./heap/coordinators.js";
 import { agentsPackageRoot } from "./runner.js";
 import { interventionsPath, reportPath, statePath } from "./control-plane/paths.js";
+import { readJson } from "./control-plane/read-json.js";
+import { getAgentDetail, getRunDetail, listRunsFromDisk } from "./control-plane/runs-catalog.js";
+import { listActiveRuns } from "./control-plane/runtime.js";
 import { loadState } from "./control-plane/state.js";
 import { resolveBenchmarksRoot } from "./preflight.js";
 import type { AgentId } from "./types.js";
@@ -124,6 +127,41 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     return;
   }
 
+  if (url.pathname === "/api/runs" && req.method === "GET") {
+    json(res, 200, {
+      runs: listRunsFromDisk(60),
+      active: listActiveRuns(),
+    });
+    return;
+  }
+
+  const runDetailMatch = url.pathname.match(/^\/api\/runs\/([^/]+)$/);
+  if (runDetailMatch && req.method === "GET") {
+    const detail = getRunDetail(decodeURIComponent(runDetailMatch[1]));
+    if (!detail) {
+      json(res, 404, { error: "run not found" });
+      return;
+    }
+    json(res, 200, detail);
+    return;
+  }
+
+  const agentDetailMatch = url.pathname.match(/^\/api\/agents\/([^/]+)\/detail$/);
+  if (agentDetailMatch && req.method === "GET") {
+    const agentId = resolveAgentId(agentDetailMatch[1]);
+    if (!agentId) {
+      json(res, 404, { error: "unknown agent" });
+      return;
+    }
+    const detail = getAgentDetail(agentId);
+    if (!detail) {
+      json(res, 404, { error: "agent not found" });
+      return;
+    }
+    json(res, 200, detail);
+    return;
+  }
+
   if (url.pathname === "/api/tick" && req.method === "POST") {
     const tick = await runOneTick();
     json(res, 200, {
@@ -218,11 +256,6 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
 
 function resolveAgentId(raw: string): AgentId | undefined {
   return canonicalAgentId(decodeURIComponent(raw));
-}
-
-function readJson(path: string): unknown {
-  if (!existsSync(path)) return null;
-  return JSON.parse(readFileSync(path, "utf8"));
 }
 
 function serveStatic(pathname: string, webRoot: string, res: ServerResponse): void {

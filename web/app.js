@@ -1,277 +1,29 @@
-const $ = (sel) => document.querySelector(sel);
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+
+const ui = {
+  view: "overview",
+  agentFilter: "all",
+  agentSearch: "",
+  selectedAgentId: null,
+  selectedRunId: null,
+  data: null,
+};
+
+const VIEW_META = {
+  overview: { title: "Overview", subtitle: "Swarm status at a glance" },
+  agents: { title: "Agents", subtitle: "Click a row for live status and run output" },
+  heap: { title: "Heap plan", subtitle: "Coordinator routing and briefing queue" },
+  interventions: { title: "Interventions", subtitle: "Human action required" },
+};
 
 async function fetchJson(path, options) {
   const res = await fetch(path, { cache: "no-store", ...options });
-  if (!res.ok) throw new Error(`${path} ${res.status}`);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `${path} ${res.status}`);
+  }
   return res.json();
-}
-
-function sevClass(i) {
-  const s = i.severity ?? "medium";
-  if (s === "critical" || s === "P0") return "severity-p0";
-  if (s === "high" || s === "P1") return "severity-p1";
-  return "severity-p2";
-}
-
-function renderInterventions(report) {
-  const list = $("#interventions");
-  const items = report?.interventions ?? [];
-  if (!items.length) {
-    list.innerHTML =
-      '<li class="empty">No interventions — supervisor can run automated agents.</li>';
-    return;
-  }
-  list.innerHTML = items
-    .map(
-      (i) => `
-    <li class="intervention ${sevClass(i)}">
-      <h4>${esc(i.title)}</h4>
-      <p>${esc(i.detail)}</p>
-      <p class="action">${esc(i.action ?? "")}</p>
-      ${(i.links ?? [])
-        .map((u) => `<a href="${escAttr(u)}" target="_blank" rel="noopener">${esc(u)}</a>`)
-        .join(" ")}
-    </li>`,
-    )
-    .join("");
-}
-
-function renderRecommended(report) {
-  const list = $("#queue");
-  const rec = report?.recommended_agents ?? [];
-  if (!rec.length) {
-    list.innerHTML = '<li class="empty">No recommended agents in briefing</li>';
-    return;
-  }
-  list.innerHTML = rec
-    .map((r) => `<li><strong>${esc(r.agent)}</strong> — ${esc(r.reason)}</li>`)
-    .join("");
-}
-
-function renderRuns(report) {
-  const list = $("#runs");
-  const runs = report?.recent_runs ?? [];
-  if (!runs.length) {
-    list.innerHTML = '<li class="empty">No runs yet</li>';
-    return;
-  }
-  list.innerHTML = runs
-    .map(
-      (r) =>
-        `<li class="run-row"><strong>${esc(r.agentId)}</strong> ${esc(r.status)} · ${esc(r.backend)}</li>`,
-    )
-    .join("");
-}
-
-function roleBadge(role) {
-  const labels = { root: "root", coordinator: "coordinator", leaf: "leaf agent" };
-  return `<span class="badge role role-${escAttr(role)}" title="${escAttr(labels[role] ?? role)}">${esc(labels[role] ?? role)}</span>`;
-}
-
-function webBadge(needsWeb) {
-  if (!needsWeb) return "";
-  return `<span class="badge web" title="Requires Cursor web search in production">web search</span>`;
-}
-
-function agentCard(entry, activeSet, runtime) {
-  const active = activeSet?.has(entry.id);
-  const stopped = runtime?.stopped_agents?.includes(entry.id);
-  const running = (runtime?.active_runs ?? []).find(
-    (r) => r.agent_id === entry.id && r.status === "running",
-  );
-  let stateClass = "";
-  if (stopped) stateClass = " agent-card-stopped";
-  else if (running) stateClass = " agent-card-running";
-  else if (active) stateClass = " agent-card-active";
-
-  const manages =
-    entry.manages?.length &&
-    `<p class="manages">Manages: ${entry.manages.map((id) => `<code>${esc(id)}</code>`).join(" ")}</p>`;
-  const parent = entry.coordinator
-    ? `<p class="parent-coord">Coordinator: <code>${esc(entry.coordinator)}</code></p>`
-    : "";
-
-  const canControl = entry.role === "leaf" || entry.role === "root";
-  const controls = canControl
-    ? `<div class="agent-actions">
-        <button type="button" class="btn-small primary" data-action="start" data-agent="${escAttr(entry.id)}" ${running ? "disabled" : ""}>Start</button>
-        <button type="button" class="btn-small danger" data-action="stop" data-agent="${escAttr(entry.id)}">Stop</button>
-        ${stopped ? `<button type="button" class="btn-small" data-action="resume" data-agent="${escAttr(entry.id)}">Resume</button>` : ""}
-      </div>`
-    : "";
-
-  const statusBadges = [
-    active ? '<span class="badge active-run">queued this briefing</span>' : "",
-    running ? '<span class="badge running">running</span>' : "",
-    stopped ? '<span class="badge stopped">stopped</span>' : "",
-  ].join("");
-
-  return `
-    <article class="agent-card${stateClass}" data-agent-id="${escAttr(entry.id)}" data-role="${escAttr(entry.role)}" data-category="${escAttr(entry.category)}">
-      <header>
-        <code class="agent-id">${esc(entry.id)}</code>
-        ${roleBadge(entry.role)}
-        ${webBadge(entry.needsWeb)}
-        ${statusBadges}
-      </header>
-      <h4>${esc(entry.name)}</h4>
-      <p>${esc(entry.description)}</p>
-      ${parent}
-      ${manages || ""}
-      <p class="skills">${esc((entry.skills ?? []).join(", ") || "—")}</p>
-      ${controls}
-    </article>`;
-}
-
-function renderRoster(rosterPayload, report, runtime) {
-  const root = $("#roster");
-  const entries = rosterPayload?.roster ?? rosterPayload?.agents ?? [];
-  const summary = rosterPayload?.total ?? entries.length;
-
-  const activeIds = new Set();
-  const hp = report?.heap_plan;
-  if (hp?.flat_tasks) {
-    for (const t of hp.flat_tasks) activeIds.add(t.agent);
-  }
-  for (const r of report?.recommended_agents ?? []) activeIds.add(r.agent);
-
-  if (!entries.length) {
-    root.innerHTML = '<p class="empty">No agents in registry</p>';
-    return;
-  }
-
-  const byRole = { root: [], coordinator: [], leaf: [] };
-  for (const e of entries) {
-    const bucket = byRole[e.role] ?? byRole.leaf;
-    bucket.push(e);
-  }
-
-  const sections = [
-    ["Root orchestrator", byRole.root],
-    ["Sub-coordinators (heap)", byRole.coordinator],
-    ["Leaf agents", byRole.leaf],
-  ];
-
-  root.innerHTML = `
-    <p class="roster-summary">${summary} agents in swarm (${rosterPayload?.coordinators ?? 0} coordinators, ${rosterPayload?.leaf_agents ?? 0} leaf). <span class="muted">“web search” = needs live web in production, not “missing from dashboard”.</span></p>
-    ${sections
-      .map(
-        ([title, list]) => `
-      <h3 class="roster-section-title">${esc(title)} <span class="count">(${list.length})</span></h3>
-      <div class="roster-section-grid">${list.map((e) => agentCard(e, activeIds, runtime)).join("")}</div>`,
-      )
-      .join("")}`;
-}
-
-function renderHeap(report, rosterPayload) {
-  const root = $("#heap-layers");
-  const hp = report?.heap_plan;
-  const activeIds = new Set((hp?.flat_tasks ?? []).map((t) => t.agent));
-
-  const coordinators = rosterPayload?.coordinator_registry ?? [];
-  const fullTree = rosterPayload?.roster?.filter((r) => r.role === "coordinator") ?? [];
-
-  if (!fullTree.length && !hp?.layers?.length) {
-    root.innerHTML = '<p class="empty">No heap_plan — run agent-briefing.py in benchmarks</p>';
-    return;
-  }
-
-  const layersById = new Map((hp?.layers ?? []).map((l) => [l.coordinator, l]));
-
-  root.innerHTML = fullTree
-    .map((coord) => {
-      const layer = layersById.get(coord.id);
-      const briefingAgents = layer?.agents ?? [];
-      const allLeaves = coord.manages ?? [];
-      const leafRows = allLeaves
-        .map((agentId) => {
-          const inBriefing = briefingAgents.some((a) => a.agent === agentId);
-          const active = activeIds.has(agentId);
-          const reason = briefingAgents.find((a) => a.agent === agentId)?.reason;
-          const flags = [
-            active ? '<span class="badge active-run">active</span>' : "",
-            inBriefing && !active ? '<span class="badge">in plan</span>' : "",
-            !inBriefing ? '<span class="badge idle-leaf">standby</span>' : "",
-          ].join(" ");
-          return `<li class="${active ? "heap-active" : ""}"><strong>${esc(agentId)}</strong> ${flags}${reason ? ` — ${esc(reason)}` : ""}</li>`;
-        })
-        .join("");
-      return `
-    <div class="heap-layer">
-      <h4>${esc(coord.name)} <code>${esc(coord.id)}</code> <span class="count">${allLeaves.length} agents</span></h4>
-      <p class="heap-desc">${esc(coord.description)}</p>
-      <ul>${leafRows}</ul>
-    </div>`;
-    })
-    .join("");
-}
-
-function renderRoadmap(report) {
-  const el = $("#roadmap-meta");
-  const r = report?.org_roadmap;
-  if (!r) {
-    el.innerHTML = "<dt>Roadmap</dt><dd>—</dd>";
-    return;
-  }
-  const rows = [
-    ["Pillars", (r.pillars ?? []).join(", ")],
-    ["Current PH", r.current_ph ?? "—"],
-    ["Open plan items", String(r.master_plan_open_items ?? "—")],
-    ["Vision", r.vision_url ?? "—"],
-  ];
-  el.innerHTML = rows.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join("");
-}
-
-function renderMeta(report, status, rosterPayload) {
-  const sup = report?.supervisor ?? {};
-  const st = status?.state ?? {};
-  const rt = status?.runtime ?? {};
-  const rows = [
-    ["Status", sup.status ?? st.supervisor_status ?? "—"],
-    ["Supervisor loop", rt.supervisor_loop_running ? "running" : "stopped"],
-    ["Active processes", String(rt.active_run_count ?? 0)],
-    ["Stopped agents", (rt.stopped_agents ?? []).join(", ") || "—"],
-    ["Briefing hash", report?.briefing_hash ?? st.last_briefing_hash ?? "—"],
-    ["Swarm size", String(rosterPayload?.total ?? "—")],
-    ["Runs total", String(sup.runs_total ?? st.runs_total ?? 0)],
-    ["Tasks this tick", String(sup.tasks_executed_this_tick ?? 0)],
-    ["Skipped cooldown", String(sup.tasks_skipped_cooldown ?? 0)],
-    ["Interventions", String(report?.interventions?.length ?? 0)],
-  ];
-  $("#supervisor-meta").innerHTML = rows
-    .map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`)
-    .join("");
-  const pill = $("#status-pill");
-  let label = sup.status ?? st.supervisor_status ?? "idle";
-  if (rt.supervisor_loop_running) label = "supervisor loop";
-  else if ((rt.active_run_count ?? 0) > 0) label = "agents running";
-  pill.textContent = label;
-  pill.className = `pill ${
-    rt.supervisor_loop_running || label === "running_agent" || label === "agents running"
-      ? "running"
-      : label
-  }`;
-}
-
-function renderActiveRuns(runtime, report) {
-  const list = $("#runs");
-  const active = runtime?.active_runs ?? [];
-  const recent = report?.recent_runs ?? [];
-  const rows = [
-    ...active.map(
-      (r) =>
-        `<li class="run-row run-live"><strong>${esc(r.agent_id)}</strong> ${esc(r.status)} · pid ${esc(r.pid)} <button type="button" class="btn-small danger" data-action="cancel-run" data-run-id="${escAttr(r.run_id)}">Kill</button></li>`,
-    ),
-    ...recent.map(
-      (r) =>
-        `<li class="run-row"><strong>${esc(r.agentId)}</strong> ${esc(r.status)} · ${esc(r.backend)}</li>`,
-    ),
-  ];
-  if (!rows.length) {
-    list.innerHTML = '<li class="empty">No runs yet</li>';
-    return;
-  }
-  list.innerHTML = rows.join("");
 }
 
 function esc(s) {
@@ -285,26 +37,459 @@ function escAttr(s) {
   return esc(s).replace(/"/g, "&quot;");
 }
 
+function formatTime(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  const now = Date.now();
+  const diff = now - d.getTime();
+  if (diff < 60_000) return "just now";
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`;
+  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`;
+  return d.toLocaleString();
+}
+
+function statusLabel(status) {
+  const labels = {
+    running: "Running",
+    queued: "Queued",
+    stopped: "Stopped",
+    idle: "Idle",
+    cooldown: "Cooldown",
+    finished: "Finished",
+    error: "Error",
+    cancelled: "Cancelled",
+  };
+  return labels[status] ?? status;
+}
+
+function statusDot(status) {
+  return `<span class="status-dot ${escAttr(status)}"></span>${esc(statusLabel(status))}`;
+}
+
+function agentStatusMap(roster, report, runtime) {
+  const map = new Map();
+  const activeRuns = runtime?.active_runs ?? [];
+  const stopped = new Set(runtime?.stopped_agents ?? []);
+  const rec = new Map((report?.recommended_agents ?? []).map((r) => [r.agent, r.reason]));
+  const heapTasks = new Map(
+    (report?.heap_plan?.flat_tasks ?? []).map((t) => [t.agent, { reason: t.reason, coord: t.coordinator }]),
+  );
+  const recentByAgent = new Map();
+  for (const r of report?.recent_runs ?? []) {
+    if (!recentByAgent.has(r.agentId)) recentByAgent.set(r.agentId, r);
+  }
+
+  for (const entry of roster?.roster ?? []) {
+    if (entry.role === "coordinator") continue;
+    let status = "idle";
+    if (stopped.has(entry.id)) status = "stopped";
+    else if (activeRuns.some((r) => r.agent_id === entry.id && r.status === "running")) status = "running";
+    else if (rec.has(entry.id) || heapTasks.has(entry.id)) status = "queued";
+
+    map.set(entry.id, {
+      status,
+      reason: rec.get(entry.id) ?? heapTasks.get(entry.id)?.reason,
+      coordinator: entry.coordinator ?? heapTasks.get(entry.id)?.coord,
+      lastRun: recentByAgent.get(entry.id),
+      activeRun: activeRuns.find((r) => r.agent_id === entry.id && r.status === "running"),
+      entry,
+    });
+  }
+  return map;
+}
+
+async function loadDashboard() {
+  const [report, status, roster, runsPayload] = await Promise.all([
+    fetchJson("/api/report").catch(() => ({})),
+    fetchJson("/api/status"),
+    fetchJson("/api/agents"),
+    fetchJson("/api/runs").catch(() => ({ runs: [], active: [] })),
+  ]);
+  const runtime = status?.runtime ?? roster?.runtime;
+  ui.data = { report, status, roster, runtime, runsPayload };
+  return ui.data;
+}
+
+function renderSidebar() {
+  const { report, status, runtime, roster } = ui.data;
+  const rt = runtime ?? {};
+  const interventions = report?.interventions?.length ?? 0;
+  const countEl = $("#nav-intervention-count");
+  if (interventions > 0) {
+    countEl.textContent = String(interventions);
+    countEl.classList.remove("hidden");
+  } else {
+    countEl.classList.add("hidden");
+  }
+
+  $("#sidebar-stats").innerHTML = `
+    <dl>
+      <dt>Supervisor</dt><dd>${rt.supervisor_loop_running ? "loop on" : "loop off"}</dd>
+      <dt>Live processes</dt><dd>${rt.active_run_count ?? 0}</dd>
+      <dt>Swarm</dt><dd>${roster?.total ?? "—"} agents</dd>
+      <dt>Briefing</dt><dd title="${escAttr(report?.briefing_hash ?? "")}">${esc((report?.briefing_hash ?? "—").slice(0, 12))}</dd>
+    </dl>`;
+
+  const sup = report?.supervisor ?? {};
+  const st = status?.state ?? {};
+  const pill = $("#status-pill");
+  let label = sup.status ?? st.supervisor_status ?? "idle";
+  if (rt.supervisor_loop_running) label = "supervisor on";
+  else if ((rt.active_run_count ?? 0) > 0) label = "agents running";
+  pill.textContent = label;
+  pill.className = `pill ${label.includes("running") || label.includes("on") ? "running" : "idle"}`;
+}
+
+function renderStatCards() {
+  const { report, runtime, roster, runsPayload } = ui.data;
+  const statusMap = agentStatusMap(roster, report, runtime);
+  let running = 0;
+  let queued = 0;
+  let stopped = 0;
+  for (const v of statusMap.values()) {
+    if (v.status === "running") running++;
+    if (v.status === "queued") queued++;
+    if (v.status === "stopped") stopped++;
+  }
+  const interventions = report?.interventions?.length ?? 0;
+  const runs = runsPayload?.runs?.length ?? 0;
+
+  $("#stat-cards").innerHTML = `
+    <div class="stat-card accent"><div class="label">Running</div><div class="value">${running}</div></div>
+    <div class="stat-card"><div class="label">Queued</div><div class="value">${queued}</div></div>
+    <div class="stat-card"><div class="label">Stopped</div><div class="value">${stopped}</div></div>
+    <div class="stat-card"><div class="label">Interventions</div><div class="value">${interventions}</div></div>
+    <div class="stat-card"><div class="label">Run artifacts</div><div class="value">${runs}</div></div>`;
+}
+
+function renderLiveActivity() {
+  const { report, runtime, runsPayload } = ui.data;
+  const feed = $("#live-activity");
+  const items = [];
+
+  for (const r of runtime?.active_runs ?? []) {
+    items.push({
+      t: r.started_at,
+      html: `<strong>${esc(r.agent_id)}</strong> running <span class="mono">pid ${esc(r.pid)}</span> — ${esc(r.reason ?? "")}`,
+    });
+  }
+  for (const r of runsPayload?.runs?.slice(0, 8) ?? []) {
+    items.push({
+      t: r.started_at,
+      html: `<strong>${esc(r.agent_id)}</strong> ${esc(r.status)} <span class="time">${formatTime(r.started_at)}</span>`,
+    });
+  }
+  for (const i of (report?.interventions ?? []).slice(0, 3)) {
+    items.push({
+      t: i.created_at,
+      html: `<span class="badge">${esc(i.severity)}</span> ${esc(i.title)}`,
+    });
+  }
+
+  items.sort((a, b) => new Date(b.t || 0) - new Date(a.t || 0));
+
+  if (!items.length) {
+    feed.innerHTML = '<li class="empty">No live activity — start supervisor or an agent.</li>';
+    return;
+  }
+  feed.innerHTML = items.map((x) => `<li>${x.html}</li>`).join("");
+}
+
+function renderQueue() {
+  const rec = ui.data.report?.recommended_agents ?? [];
+  const el = $("#queue");
+  if (!rec.length) {
+    el.innerHTML = '<li class="empty">No recommended agents in briefing</li>';
+    return;
+  }
+  el.innerHTML = rec
+    .map(
+      (r) =>
+        `<li><button type="button" class="linkish" data-open-agent="${escAttr(r.agent)}"><strong>${esc(r.agent)}</strong></button> — ${esc(r.reason)}</li>`,
+    )
+    .join("");
+}
+
+function renderRunsTable() {
+  const { runsPayload } = ui.data;
+  const tbody = $("#runs-table-body");
+  const runs = runsPayload?.runs ?? [];
+  if (!runs.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="empty">No runs yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML = runs
+    .slice(0, 20)
+    .map(
+      (r) => `
+    <tr data-open-run="${escAttr(r.run_id)}" data-agent="${escAttr(r.agent_id)}">
+      <td class="mono">${esc(r.agent_id)}</td>
+      <td>${statusDot(r.live ? "running" : r.status)}</td>
+      <td>${esc(formatTime(r.started_at))}</td>
+      <td class="preview">${esc((r.output_preview ?? "").replace(/\s+/g, " ").slice(0, 80))}</td>
+    </tr>`,
+    )
+    .join("");
+}
+
+function renderAgentsTable() {
+  const { roster, report, runtime } = ui.data;
+  const statusMap = agentStatusMap(roster, report, runtime);
+  const q = ui.agentSearch.trim().toLowerCase();
+  const tbody = $("#agents-table-body");
+  const rows = [];
+
+  for (const [id, info] of statusMap) {
+    if (ui.agentFilter !== "all" && info.status !== ui.agentFilter) continue;
+    const e = info.entry;
+    const hay = `${id} ${e.name} ${e.description} ${info.reason ?? ""}`.toLowerCase();
+    if (q && !hay.includes(q)) continue;
+    const last = info.lastRun;
+    rows.push({ id, info, e });
+  }
+
+  rows.sort((a, b) => {
+    const order = { running: 0, queued: 1, cooldown: 2, idle: 3, stopped: 4 };
+    return (order[a.info.status] ?? 9) - (order[b.info.status] ?? 9);
+  });
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">No agents match filter</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows
+    .map(
+      ({ id, info, e }) => `
+    <tr data-agent-id="${escAttr(id)}" class="${ui.selectedAgentId === id ? "selected" : ""}">
+      <td><span class="mono">${esc(id)}</span><br><span style="color:var(--muted);font-size:0.8rem">${esc(e.name)}</span></td>
+      <td>${statusDot(info.status)}</td>
+      <td class="mono">${esc(info.coordinator ?? "—")}</td>
+      <td>${esc((info.reason ?? "—").slice(0, 72))}</td>
+      <td>${info.lastRun ? `${esc(statusLabel(info.lastRun.status))} · ${formatTime(info.lastRun.finished_at ?? info.lastRun.started_at)}` : "—"}</td>
+      <td><button type="button" class="btn ghost sm" data-open-agent="${escAttr(id)}">Details</button></td>
+    </tr>`,
+    )
+    .join("");
+}
+
+function renderInterventions() {
+  const items = ui.data.report?.interventions ?? [];
+  const list = $("#interventions");
+  if (!items.length) {
+    list.innerHTML = '<li class="empty">No interventions — automated agents can proceed.</li>';
+    return;
+  }
+  const sev = (i) => {
+    const s = i.severity ?? "medium";
+    if (s === "critical" || s === "P0") return "severity-p0";
+    if (s === "high" || s === "P1") return "severity-p1";
+    return "severity-p2";
+  };
+  list.innerHTML = items
+    .map(
+      (i) => `
+    <li class="intervention ${sev(i)}">
+      <h4>${esc(i.title)}</h4>
+      <p>${esc(i.detail)}</p>
+      <p>${esc(i.action ?? "")}</p>
+    </li>`,
+    )
+    .join("");
+}
+
+function renderHeap() {
+  const { report, roster } = ui.data;
+  const root = $("#heap-layers");
+  const hp = report?.heap_plan;
+  const fullTree = roster?.roster?.filter((r) => r.role === "coordinator") ?? [];
+  const layersById = new Map((hp?.layers ?? []).map((l) => [l.coordinator, l]));
+
+  if (!fullTree.length) {
+    root.innerHTML = '<p class="empty">Run agent-briefing.py in benchmarks</p>';
+    return;
+  }
+
+  root.innerHTML = fullTree
+    .map((coord) => {
+      const layer = layersById.get(coord.id);
+      const briefingAgents = layer?.agents ?? [];
+      const leaves = coord.manages ?? [];
+      const rows = leaves
+        .map((agentId) => {
+          const inPlan = briefingAgents.find((a) => a.agent === agentId);
+          return `<li>
+            <button type="button" class="linkish" data-open-agent="${escAttr(agentId)}">${esc(agentId)}</button>
+            ${inPlan ? ` — ${esc(inPlan.reason)}` : ' <span style="color:var(--muted)">standby</span>'}
+          </li>`;
+        })
+        .join("");
+      return `
+      <div class="heap-layer">
+        <h4>${esc(coord.name)} <code>${esc(coord.id)}</code></h4>
+        <ul>${rows}</ul>
+      </div>`;
+    })
+    .join("");
+
+  const r = report?.org_roadmap;
+  const el = $("#roadmap-meta");
+  if (!r) {
+    el.innerHTML = "";
+    return;
+  }
+  el.innerHTML = [
+    ["Pillars", (r.pillars ?? []).join(", ")],
+    ["Current PH", r.current_ph ?? "—"],
+    ["Open items", String(r.master_plan_open_items ?? "—")],
+  ]
+    .map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`)
+    .join("");
+}
+
+function setView(name) {
+  ui.view = name;
+  const meta = VIEW_META[name] ?? VIEW_META.overview;
+  $("#view-title").textContent = meta.title;
+  $("#view-subtitle").textContent = meta.subtitle;
+  $$(".nav-item").forEach((btn) => btn.classList.toggle("active", btn.dataset.view === name));
+  $$(".view").forEach((v) => {
+    const on = v.id === `view-${name}`;
+    v.hidden = !on;
+    v.classList.toggle("active", on);
+  });
+}
+
+async function openAgentDrawer(agentId) {
+  ui.selectedAgentId = agentId;
+  const drawer = $("#agent-drawer");
+  const backdrop = $("#backdrop");
+  drawer.hidden = false;
+  backdrop.hidden = false;
+  $("#drawer-agent-body").innerHTML = '<p class="empty">Loading…</p>';
+
+  try {
+    const detail = await fetchJson(`/api/agents/${encodeURIComponent(agentId)}/detail`);
+    renderAgentDrawer(detail);
+    if (ui.view === "agents") renderAgentsTable();
+  } catch (e) {
+    $("#drawer-agent-body").innerHTML = `<p class="empty">${esc(e.message)}</p>`;
+  }
+}
+
+function renderAgentDrawer(d) {
+  const a = d.agent;
+  $("#drawer-agent-header").innerHTML = `
+    <div>
+      <h2><code>${esc(a.id)}</code></h2>
+      <p class="sub">${esc(a.name)} · ${statusDot(d.status)}</p>
+    </div>`;
+
+  const runsHtml = (d.runs ?? [])
+    .map(
+      (r) => `
+    <li class="${r.live ? "live" : ""}" data-open-run="${escAttr(r.run_id)}">
+      <strong>${esc(statusLabel(r.live ? "running" : r.status))}</strong>
+      <span class="time">${formatTime(r.started_at)}</span>
+      ${r.reason ? `<br><span style="color:var(--muted)">${esc(r.reason)}</span>` : ""}
+    </li>`,
+    )
+    .join("");
+
+  const tasksHtml = (d.recent_tasks ?? [])
+    .map(
+      (t) =>
+        `<li>${esc(formatTime(t.finished_at))} — ${esc(t.status)} <span class="mono">${esc(t.reason?.slice(0, 60) ?? "")}</span></li>`,
+    )
+    .join("");
+
+  $("#drawer-agent-body").innerHTML = `
+    <div class="drawer-section">
+      <h3>Current task</h3>
+      <div class="task-reason">${esc(d.recommended_reason ?? "Not in this briefing queue")}</div>
+      ${d.heap_coordinator ? `<p style="margin-top:0.5rem;font-size:0.85rem;color:var(--muted)">Coordinator: <code>${esc(d.heap_coordinator)}</code></p>` : ""}
+    </div>
+    ${
+      d.active_run
+        ? `<div class="drawer-section"><h3>Live process</h3>
+      <p>PID ${esc(d.active_run.pid)} · started ${formatTime(d.active_run.started_at)}</p>
+      <button type="button" class="btn danger sm" data-kill-run="${escAttr(d.active_run.run_id)}">Kill process</button></div>`
+        : ""
+    }
+    <div class="drawer-section">
+      <h3>Controls</h3>
+      <div class="drawer-actions">
+        <button type="button" class="btn primary sm" data-action="start" data-agent="${escAttr(a.id)}">Start</button>
+        <button type="button" class="btn danger sm" data-action="stop" data-agent="${escAttr(a.id)}">Stop</button>
+        ${d.stopped ? `<button type="button" class="btn ghost sm" data-action="resume" data-agent="${escAttr(a.id)}">Resume</button>` : ""}
+      </div>
+    </div>
+    <div class="drawer-section">
+      <h3>Run history</h3>
+      <ul class="run-list">${runsHtml || '<li class="empty">No runs recorded</li>'}</ul>
+    </div>
+    ${
+      tasksHtml
+        ? `<div class="drawer-section"><h3>Supervisor history</h3><ul class="simple-list">${tasksHtml}</ul></div>`
+        : ""
+    }
+    <div class="drawer-section">
+      <h3>About</h3>
+      <p style="font-size:0.88rem;color:var(--muted)">${esc(a.description)}</p>
+      <p style="font-size:0.8rem;margin-top:0.5rem">Prompt: <code>prompts/${esc(a.promptFile)}</code></p>
+      ${a.needsWeb ? '<span class="badge web">needs web search</span>' : ""}
+    </div>`;
+}
+
+async function openRunDrawer(runId) {
+  ui.selectedRunId = runId;
+  const drawer = $("#run-drawer");
+  drawer.hidden = false;
+  $("#drawer-run-output").textContent = "Loading…";
+  try {
+    const detail = await fetchJson(`/api/runs/${encodeURIComponent(runId)}`);
+    $("#drawer-run-header").innerHTML = `
+      <div>
+        <h2><code>${esc(detail.agent_id)}</code></h2>
+        <p class="sub">${esc(statusLabel(detail.live ? "running" : detail.status))} · ${formatTime(detail.started_at)}</p>
+      </div>`;
+    $("#drawer-run-output").textContent = detail.output_preview ?? "(empty output)";
+  } catch (e) {
+    $("#drawer-run-output").textContent = e.message;
+  }
+}
+
+function closeDrawers() {
+  $("#agent-drawer").hidden = true;
+  $("#run-drawer").hidden = true;
+  $("#backdrop").hidden = true;
+  ui.selectedAgentId = null;
+  ui.selectedRunId = null;
+  renderAgentsTable();
+}
+
 async function refresh() {
   try {
-    const [report, status, roster] = await Promise.all([
-      fetchJson("/api/report"),
-      fetchJson("/api/status"),
-      fetchJson("/api/agents"),
-    ]);
-    renderInterventions(report);
-    renderRecommended(report);
-    const runtime = status?.runtime ?? roster?.runtime;
-    renderActiveRuns(runtime, report);
-    renderHeap(report, roster);
-    renderRoadmap(report);
-    renderRoster(roster, report, runtime);
-    renderMeta(report, status, roster);
-    $("#updated").textContent = `Updated ${new Date().toLocaleTimeString()}`;
+    await loadDashboard();
+    renderSidebar();
+    renderStatCards();
+    renderLiveActivity();
+    renderQueue();
+    renderRunsTable();
+    renderAgentsTable();
+    renderInterventions();
+    renderHeap();
+    $("#updated").textContent = new Date().toLocaleTimeString();
+    if (ui.selectedAgentId) {
+      try {
+        const detail = await fetchJson(`/api/agents/${encodeURIComponent(ui.selectedAgentId)}/detail`);
+        renderAgentDrawer(detail);
+      } catch {
+        /* drawer may close */
+      }
+    }
   } catch (e) {
     $("#status-pill").textContent = "offline";
-    $("#interventions").innerHTML =
-      '<li class="empty">Run <code>npm run dashboard</code> and <code>npm run supervisor</code></li>';
     console.error(e);
   }
 }
@@ -315,66 +500,94 @@ async function postControl(path, button) {
     await fetchJson(path, { method: "POST" });
     await refresh();
   } catch (e) {
-    console.error(e);
-    alert(e instanceof Error ? e.message : String(e));
+    alert(e.message);
   } finally {
     if (button) button.disabled = false;
   }
 }
 
+async function agentAction(action, agentId) {
+  const path =
+    action === "start"
+      ? `/api/agents/${agentId}/start`
+      : action === "stop"
+        ? `/api/agents/${agentId}/stop`
+        : `/api/agents/${agentId}/resume`;
+  await fetchJson(path, { method: "POST" });
+  await refresh();
+  if (ui.selectedAgentId === agentId) {
+    const detail = await fetchJson(`/api/agents/${encodeURIComponent(agentId)}/detail`);
+    renderAgentDrawer(detail);
+  }
+}
+
+$$(".nav-item").forEach((btn) => {
+  btn.addEventListener("click", () => setView(btn.dataset.view));
+});
+
+$$("#agent-filters .chip").forEach((chip) => {
+  chip.addEventListener("click", () => {
+    $$("#agent-filters .chip").forEach((c) => c.classList.remove("active"));
+    chip.classList.add("active");
+    ui.agentFilter = chip.dataset.filter;
+    renderAgentsTable();
+  });
+});
+
+$("#agent-search").addEventListener("input", (ev) => {
+  ui.agentSearch = ev.target.value;
+  renderAgentsTable();
+});
+
 $("#refresh").addEventListener("click", refresh);
 $("#tick").addEventListener("click", () => postControl("/api/tick", $("#tick")));
-$("#supervisor-start").addEventListener("click", () =>
-  postControl("/api/supervisor/start", $("#supervisor-start")),
-);
-$("#supervisor-stop").addEventListener("click", () =>
-  postControl("/api/supervisor/stop", $("#supervisor-stop")),
-);
-$("#swarm-run-all").addEventListener("click", () =>
-  postControl("/api/swarm/run-all", $("#swarm-run-all")),
-);
-$("#swarm-stop-all").addEventListener("click", () =>
-  postControl("/api/swarm/stop-all", $("#swarm-stop-all")),
-);
+$("#supervisor-start").addEventListener("click", () => postControl("/api/supervisor/start", $("#supervisor-start")));
+$("#supervisor-stop").addEventListener("click", () => postControl("/api/supervisor/stop", $("#supervisor-stop")));
+$("#swarm-run-all").addEventListener("click", () => postControl("/api/swarm/run-all", $("#swarm-run-all")));
+$("#swarm-stop-all").addEventListener("click", () => postControl("/api/swarm/stop-all", $("#swarm-stop-all")));
 
-$("#roster").addEventListener("click", async (ev) => {
-  const btn = ev.target.closest("[data-action]");
-  if (!btn || btn.disabled) return;
-  const action = btn.getAttribute("data-action");
-  const agent = btn.getAttribute("data-agent");
-  const runId = btn.getAttribute("data-run-id");
-  btn.disabled = true;
-  try {
-    if (action === "start" && agent) await fetchJson(`/api/agents/${agent}/start`, { method: "POST" });
-    else if (action === "stop" && agent)
-      await fetchJson(`/api/agents/${agent}/stop`, { method: "POST" });
-    else if (action === "resume" && agent)
-      await fetchJson(`/api/agents/${agent}/resume`, { method: "POST" });
-    else if (action === "cancel-run" && runId)
-      await fetchJson(`/api/runs/${runId}/cancel`, { method: "POST" });
+$("#backdrop").addEventListener("click", closeDrawers);
+$$(".drawer-close").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    if (btn.dataset.close === "run") $("#run-drawer").hidden = true;
+    else closeDrawers();
+  });
+});
+
+document.body.addEventListener("click", async (ev) => {
+  const openAgent = ev.target.closest("[data-open-agent]");
+  if (openAgent) {
+    ev.preventDefault();
+    await openAgentDrawer(openAgent.dataset.openAgent);
+    return;
+  }
+  const openRun = ev.target.closest("[data-open-run]");
+  if (openRun) {
+    ev.preventDefault();
+    await openRunDrawer(openRun.dataset.openRun);
+    return;
+  }
+  const row = ev.target.closest("tr[data-agent-id]");
+  if (row && !ev.target.closest("button")) {
+    await openAgentDrawer(row.dataset.agentId);
+    return;
+  }
+  const actionBtn = ev.target.closest("[data-action]");
+  if (actionBtn?.dataset.agent) {
+    try {
+      await agentAction(actionBtn.dataset.action, actionBtn.dataset.agent);
+    } catch (e) {
+      alert(e.message);
+    }
+    return;
+  }
+  const kill = ev.target.closest("[data-kill-run]");
+  if (kill) {
+    await fetchJson(`/api/runs/${kill.dataset.killRun}/cancel`, { method: "POST" });
     await refresh();
-  } catch (e) {
-    console.error(e);
-    alert(e instanceof Error ? e.message : String(e));
-  } finally {
-    btn.disabled = false;
   }
 });
 
-$("#runs").addEventListener("click", async (ev) => {
-  const btn = ev.target.closest('[data-action="cancel-run"]');
-  if (!btn) return;
-  const runId = btn.getAttribute("data-run-id");
-  btn.disabled = true;
-  try {
-    await fetchJson(`/api/runs/${runId}/cancel`, { method: "POST" });
-    await refresh();
-  } catch (e) {
-    console.error(e);
-  } finally {
-    btn.disabled = false;
-  }
-});
-
+setView("overview");
 refresh();
-setInterval(refresh, 5_000);
+setInterval(refresh, 4_000);
