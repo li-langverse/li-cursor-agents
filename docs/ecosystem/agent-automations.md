@@ -14,6 +14,16 @@ Dashboard footer toggles **Research lane** / **Implement lane**; **Run all (hand
 
 Env: `LI_SWARM_HANDOFF_PHASES=0` restores legacy parallel spawn for run-all.
 
+### Goal implementation → `lic`
+
+| Env | Effect |
+|-----|--------|
+| _(automatic)_ | `goal_implementation` handoffs (`game_engine_ux`, `cad_fundamentals`) clone **lic** via `workflowRepo` |
+| `LI_REPO_WORKFLOW_OPEN_PR=1` | `code_implementer` opens PR after commit+push (default: push only) |
+| `LI_BENCHMARKS_DISPATCH_TOKEN` | `gh` token to dispatch `swarm-audit-refresh` on **benchmarks** |
+| `LI_BENCHMARKS_DISPATCH_ON_MAINTENANCE=1` | Maintenance lane tick also dispatches benchmarks refresh |
+| `npm run swarm:dispatch-benchmarks` | Manual `repository_dispatch` (use `--dry-run` to verify token path) |
+
 ## Optional Cursor Automations
 
 Cloud Automations can mirror the same agent prompts under `benchmarks/.cursor/automations/` when budget allows. Lanes remain the source of truth for handoffs and sessions (`agent_handoffs`, `research_sessions`).

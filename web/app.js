@@ -623,7 +623,7 @@ function renderSwarmHandoffsPanel() {
   if (tbody) {
     const open = handoffs.filter((h) => h.status !== "done" && h.status !== "failed");
     if (!open.length) {
-      tbody.innerHTML = '<tr><td colspan="5" class="empty">No open handoffs</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="6" class="empty">No open handoffs</td></tr>';
     } else {
       tbody.innerHTML = open
         .map((h) => {
@@ -633,6 +633,7 @@ function renderSwarmHandoffsPanel() {
             <td><span class="badge">${esc(h.status)}</span></td>
             <td>${esc(to)}</td>
             <td>${esc(h.research_goal_id ?? "—")}</td>
+            <td class="mono">${esc(h.workflow_repo ?? "—")}</td>
             <td title="${escAttr(h.north_star_fit ?? "")}">${esc(fit || "—")}${fit.length < (h.north_star_fit?.length ?? 0) ? "…" : ""}</td>
             <td class="time">${formatTime(h.updated_at)}</td>
           </tr>`;
@@ -659,7 +660,7 @@ function renderSwarmHandoffsPanel() {
 }
 
 
-function renderLiveActivity() {() {
+function renderLiveActivity() {
   const { report, runtime, runsPayload } = ui.data;
   const feed = $("#live-activity");
   const items = [];

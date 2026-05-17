@@ -16,6 +16,7 @@ import {
   stopAllActiveRuns,
   stopSupervisorLoop,
 } from "./control-plane/runtime.js";
+import { resolveGoalImplementationRepo } from "./handoffs/goal-workflow.js";
 import { resolveSpawnWorkflowRepo } from "./handoffs/resolve-spawn-workflow-repo.js";
 import { sortedCoordinators } from "./heap/coordinators.js";
 import { agentsPackageRoot, agentBackendLabel } from "./runner.js";
@@ -320,7 +321,13 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
           : (statusParam as import("./handoffs/types.js").HandoffStatus))
       : undefined;
     const handoffs = await listHandoffs({ status, toAgent, limit });
-    json(res, 200, { handoffs, store, count: handoffs.length });
+    const enriched = handoffs.map((h) => ({
+      ...h,
+      workflow_repo:
+        resolveGoalImplementationRepo(h) ??
+        (typeof h.work?.target_repo === "string" ? h.work.target_repo : undefined),
+    }));
+    json(res, 200, { handoffs: enriched, store, count: enriched.length });
     return;
   }
 

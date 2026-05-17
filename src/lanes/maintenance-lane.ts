@@ -4,12 +4,14 @@ import { agentsPackageRoot } from "../runner.js";
 import { enrichBriefingObject } from "../briefing/enrich-briefing-file.js";
 import { failHandoffsMissingNorthStar } from "../handoffs/handoff-hygiene.js";
 import { resolveBenchmarksRoot, runPreflight } from "../preflight.js";
+import { dispatchSwarmAuditRefresh } from "../benchmarks/dispatch-swarm-audit.js";
 import { loadLaneState, saveLaneState } from "./lane-state.js";
 
 export interface MaintenanceLaneTickResult {
   ok: boolean;
   briefing_path?: string;
   skip_reason?: string;
+  benchmarks_dispatch?: { ok: boolean; skipped?: boolean; skip_reason?: string; error?: string };
 }
 
 /** Refresh briefing snapshot + scorecards without spawning an LLM agent. */
@@ -57,7 +59,21 @@ export async function maintenanceLaneTick(options?: {
   next.last_maintenance_tick_at = new Date().toISOString();
   saveLaneState(next);
 
-  return { ok: true, briefing_path: briefingPath };
+  let benchmarks_dispatch: MaintenanceLaneTickResult["benchmarks_dispatch"];
+  if (process.env.LI_BENCHMARKS_DISPATCH_ON_MAINTENANCE === "1") {
+    benchmarks_dispatch = dispatchSwarmAuditRefresh({
+      source: "maintenance-lane",
+    });
+    if (benchmarks_dispatch.skipped) {
+      // eslint-disable-next-line no-console
+      console.error(`maintenance-lane: benchmarks dispatch skipped — ${benchmarks_dispatch.skip_reason}`);
+    } else if (!benchmarks_dispatch.ok) {
+      // eslint-disable-next-line no-console
+      console.error(`maintenance-lane: benchmarks dispatch failed — ${benchmarks_dispatch.error}`);
+    }
+  }
+
+  return { ok: true, briefing_path: briefingPath, benchmarks_dispatch };
 }
 
 export function maintenanceLaneIntervalMs(): number {
