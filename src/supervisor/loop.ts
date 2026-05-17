@@ -275,13 +275,13 @@ export async function runSupervisorLoop(
     `Loop running (mock=${options.mock}, interval=${Math.round(options.intervalMs / 1000)}s)`,
     { once: options.once, force: options.force },
   );
+  const forceFirst =
+    options.forceFirstTick !== false || process.env.LI_SUPERVISOR_FORCE_FIRST_TICK === "1";
   let tickIndex = 0;
   for (;;) {
     if (signal?.aborted) break;
     const tickOptions =
-      tickIndex === 0 && options.forceFirstTick !== false
-        ? { ...options, force: true }
-        : options;
+      tickIndex === 0 && forceFirst ? { ...options, force: true } : options;
     const tick = await supervisorTick(tickOptions);
     tickIndex += 1;
     const msg = [

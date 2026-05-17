@@ -16,6 +16,7 @@ const activeRuns = new Map<string, ActiveAgentRun>();
 const childByRunId = new Map<string, ChildProcess>();
 let supervisorAbort: AbortController | null = null;
 let supervisorLoopPromise: Promise<void> | null = null;
+let supervisorChild: ChildProcess | null = null;
 
 export function defaultSupervisorOptions(overrides?: Partial<SupervisorOptions>): SupervisorOptions {
   return {
@@ -58,7 +59,53 @@ export function completeSupervisorRun(runId: string, status: AgentRunLifecycle):
 }
 
 export function isSupervisorLoopRunning(): boolean {
+  if (supervisorChild) {
+    return supervisorChild.exitCode === null && !supervisorChild.killed;
+  }
   return supervisorAbort !== null && !supervisorAbort.signal.aborted;
+}
+
+function supervisorRunsAsSubprocess(): boolean {
+  return process.env.LI_SUPERVISOR_IN_PROCESS !== "1";
+}
+
+function spawnSupervisorChild(options: SupervisorOptions): ChildProcess {
+  const packageRoot = agentsPackageRoot();
+  const benchmarksRoot = resolveBenchmarksRoot(options.benchmarksRoot);
+  const cli = join(packageRoot, "dist/cli/supervisor.js");
+  const args: string[] = [];
+  if (benchmarksRoot) args.push("--benchmarks", benchmarksRoot);
+  if (options.mock) args.push("--mock");
+  args.push("--interval-ms", String(options.intervalMs));
+  args.push("--cooldown-ms", String(options.cooldownMs));
+  args.push("--max-tasks", String(options.maxTasksPerTick));
+
+  const child = spawn(process.execPath, [cli, ...args], {
+    cwd: benchmarksRoot ?? packageRoot,
+    env: {
+      ...process.env,
+      LI_SUPERVISOR_FORCE_FIRST_TICK: "1",
+      LI_AGENTS_COOLDOWN_MS: String(options.cooldownMs),
+      LI_SUPERVISOR_INTERVAL_MS: String(options.intervalMs),
+      LI_SUPERVISOR_MAX_TASKS: String(options.maxTasksPerTick),
+    },
+    stdio: "inherit",
+    detached: false,
+  });
+
+  child.on("exit", (code, signal) => {
+    supervisorChild = null;
+    const s = loadState();
+    s.supervisor_loop_running = false;
+    s.supervisor_loop_started_at = undefined;
+    saveState(s);
+    pushSupervisorActivity(
+      "info",
+      `Supervisor process exited (code=${code ?? "?"} signal=${signal ?? ""})`,
+    );
+  });
+
+  return child;
 }
 
 export function runtimeSnapshot(state: ControlPlaneState) {
@@ -201,10 +248,19 @@ export async function startSupervisorLoop(
   saveState(state);
 
   const options = defaultSupervisorOptions(overrides);
+
+  if (supervisorRunsAsSubprocess()) {
+    supervisorChild = spawnSupervisorChild(options);
+    const pid = supervisorChild.pid ?? 0;
+    const message = `Supervisor started (pid ${pid}, mock=${options.mock}, interval=${Math.round(options.intervalMs / 1000)}s) — agents run in background process`;
+    pushSupervisorActivity("info", message, { pid, subprocess: true });
+    return { started: true, message, started_at: startedAt, options };
+  }
+
   supervisorAbort = new AbortController();
   const signal = supervisorAbort.signal;
 
-  const message = `Supervisor loop started (mock=${options.mock}, interval=${Math.round(options.intervalMs / 1000)}s, max ${options.maxTasksPerTick} agents/tick)`;
+  const message = `Supervisor loop started in-process (mock=${options.mock}, interval=${Math.round(options.intervalMs / 1000)}s, max ${options.maxTasksPerTick} agents/tick)`;
   pushSupervisorActivity("info", message, {
     mock: options.mock,
     interval_ms: options.intervalMs,
@@ -236,6 +292,22 @@ export async function stopSupervisorLoop(): Promise<{ stopped: boolean; message:
     return { stopped: false, message };
   }
   pushSupervisorActivity("info", "Stopping supervisor loop…");
+  if (supervisorChild) {
+    try {
+      supervisorChild.kill("SIGTERM");
+      setTimeout(() => {
+        if (supervisorChild && !supervisorChild.killed) supervisorChild.kill("SIGKILL");
+      }, 5_000);
+    } catch {
+      /* dead */
+    }
+    supervisorChild = null;
+    const state = loadState();
+    state.supervisor_loop_running = false;
+    state.supervisor_loop_started_at = undefined;
+    saveState(state);
+    return { stopped: true, message: "Supervisor process stopped" };
+  }
   supervisorAbort?.abort();
   if (supervisorLoopPromise) {
     await supervisorLoopPromise.catch(() => undefined);

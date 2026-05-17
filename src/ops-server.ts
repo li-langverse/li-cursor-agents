@@ -80,6 +80,8 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
       void startSupervisorLoop({ forceFirstTick: true }).then((r) => {
         console.error(`[dashboard] auto-start supervisor: ${r.message}`);
       });
+    } else {
+      console.error("[dashboard] Start loop from footer or: LI_AUTO_START_SUPERVISOR=1 npm run dashboard");
     }
   });
   return server;
