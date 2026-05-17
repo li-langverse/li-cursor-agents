@@ -1,16 +1,11 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
+import { resolveLocalCiRoot } from "../env.js";
 
 const MERGE_CI_AGENTS = new Set(["pr_merger", "pr_reviewer", "pr_alignment"]);
 
-export function resolveLocalCiRoot(): string | undefined {
-  const env = process.env.LI_LOCAL_CI_ROOT;
-  if (env && existsSync(join(env, "bin/li-local-ci"))) return env;
-  const sibling = join(process.cwd(), "..", "li-local-ci");
-  if (existsSync(join(sibling, "bin/li-local-ci"))) return sibling;
-  return undefined;
-}
+export { resolveLocalCiRoot };
 
 export interface LocalCiSweepResult {
   ok: boolean;

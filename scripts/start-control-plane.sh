@@ -2,12 +2,12 @@
 # Local always-on supervisor + web dashboard (two processes).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-export BENCHMARKS_ROOT="${BENCHMARKS_ROOT:-$ROOT/../benchmarks}"
-GITHUB_ENV="${LI_GITHUB_ENV:-$ROOT/../.env.github}"
-if [[ -f "$GITHUB_ENV" ]]; then
+# shellcheck source=env.defaults.sh
+source "$ROOT/scripts/env.defaults.sh"
+if [[ -f "$LI_GITHUB_ENV" ]]; then
   set -a
   # shellcheck source=/dev/null
-  source "$GITHUB_ENV"
+  source "$LI_GITHUB_ENV"
   set +a
   export GH_TOKEN GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
 fi

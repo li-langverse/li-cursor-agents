@@ -6,20 +6,14 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 mkdir -p logs
 
+# shellcheck source=env.defaults.sh
+source "$ROOT/scripts/env.defaults.sh"
 if [[ -f "$ROOT/.env" ]]; then set -a; source "$ROOT/.env"; set +a; fi
-GITHUB_ENV="${LI_GITHUB_ENV:-$ROOT/../.env.github}"
-if [[ -f "$GITHUB_ENV" ]]; then set -a; source "$GITHUB_ENV"; set +a; fi
+if [[ -f "$LI_GITHUB_ENV" ]]; then set -a; source "$LI_GITHUB_ENV"; set +a; fi
+export GH_TOKEN GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
 # Production stack uses Cursor SDK; tests set CURSOR_MOCK=1 explicitly.
 unset CURSOR_MOCK
-
-export BENCHMARKS_ROOT="${BENCHMARKS_ROOT:-$ROOT/../benchmarks}"
-export LI_CURSOR_AGENTS_ROOT="$ROOT"
 export LI_AUTO_START_SUPERVISOR=1
-# Dashboard spawns supervisor as child process (does not block HTTP)
-export LI_SUPERVISOR_INTERVAL_MS="${LI_SUPERVISOR_INTERVAL_MS:-120000}"
-export LI_AGENTS_COOLDOWN_MS="${LI_AGENTS_COOLDOWN_MS:-300000}"
-export LI_SUPERVISOR_MAX_TASKS="${LI_SUPERVISOR_MAX_TASKS:-3}"
-export LI_AGENT_DASHBOARD_PORT="${LI_AGENT_DASHBOARD_PORT:-9477}"
 
 if [[ "${LI_KEEP_AGENTS_RESTART:-}" != "0" ]]; then
   if lsof -ti ":${LI_AGENT_DASHBOARD_PORT}" >/dev/null 2>&1; then
@@ -52,12 +46,20 @@ fi
 echo "Starting dashboard + auto-supervisor (log: logs/keep-agents.log)"
 nohup env \
   BENCHMARKS_ROOT="$BENCHMARKS_ROOT" \
+  LI_LOCAL_CI_ROOT="$LI_LOCAL_CI_ROOT" \
+  LI_USE_LOCAL_CI="$LI_USE_LOCAL_CI" \
+  LI_LOCAL_CI_SWEEP_LIMIT="$LI_LOCAL_CI_SWEEP_LIMIT" \
+  LI_LOCAL_CI_PRUNE="$LI_LOCAL_CI_PRUNE" \
+  LI_LOCAL_CI_SKIP_GH="$LI_LOCAL_CI_SKIP_GH" \
   LI_CURSOR_AGENTS_ROOT="$ROOT" \
   LI_AUTO_START_SUPERVISOR=1 \
   LI_SUPERVISOR_INTERVAL_MS="$LI_SUPERVISOR_INTERVAL_MS" \
   LI_AGENTS_COOLDOWN_MS="$LI_AGENTS_COOLDOWN_MS" \
   LI_SUPERVISOR_MAX_TASKS="$LI_SUPERVISOR_MAX_TASKS" \
   LI_AGENT_DASHBOARD_PORT="$PORT" \
+  GH_TOKEN="${GH_TOKEN:-}" \
+  GITHUB_TOKEN="${GITHUB_TOKEN:-}" \
+  CURSOR_API_KEY="${CURSOR_API_KEY:-}" \
   node "$ROOT/dist/cli/serve-dashboard.js" --port "$PORT" \
   >>"$ROOT/logs/keep-agents.log" 2>&1 &
 echo $! >"$ROOT/logs/keep-agents.pid"
