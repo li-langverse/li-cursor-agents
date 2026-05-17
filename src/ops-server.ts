@@ -96,8 +96,14 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       state,
       state_path: statePath(),
       benchmarks_root: resolveBenchmarksRoot(),
-      runtime,
+      runtime: {
+        ...runtime,
+        store: dbEnabled() ? "supabase" : "disk",
+        db_enabled: dbEnabled(),
+        current_supervisor_agent: state.current_supervisor_agent ?? null,
+      },
       supervisor_loop_running: isSupervisorLoopRunning(),
+      store: dbEnabled() ? "supabase" : "disk",
     });
     return;
   }

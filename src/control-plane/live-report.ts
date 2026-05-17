@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { hashBriefing } from "./briefing-hash.js";
 import { loadRecentRunSummaries } from "./build-report.js";
+import { dbEnabled } from "../db/client.js";
 import { scanInterventions, defaultCoordPath } from "./interventions.js";
 import { readJson } from "./read-json.js";
 import { reportPath } from "./paths.js";
@@ -65,10 +66,12 @@ export function buildLiveReport(stored: ControlPlaneReport | null): ControlPlane
     agent_incomplete_runs: briefing.agent_incomplete_runs as ControlPlaneReport["agent_incomplete_runs"],
     agent_pr_deliverable_failures:
       briefing.agent_pr_deliverable_failures as ControlPlaneReport["agent_pr_deliverable_failures"],
-    recent_runs: (() => {
-      const runs = loadRecentRunSummaries(12);
-      return runs.length ? runs : stored.recent_runs;
-    })(),
+    recent_runs: dbEnabled()
+      ? stored.recent_runs
+      : (() => {
+          const runs = loadRecentRunSummaries(12);
+          return runs.length ? runs : stored.recent_runs;
+        })(),
     supervisor: stored.supervisor,
     stale_warning:
       path && stored.generated_at

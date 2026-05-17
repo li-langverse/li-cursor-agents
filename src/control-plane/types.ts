@@ -63,6 +63,8 @@ export interface ControlPlaneState {
   last_briefing_hash: string;
   last_preflight_at: string;
   supervisor_status: "idle" | "running_agent" | "waiting";
+  /** Agent currently executing inside supervisor tick (in-process, not a child pid). */
+  current_supervisor_agent?: AgentId;
   /** Background supervisor loop started from dashboard (fire-and-forget). */
   supervisor_loop_running?: boolean;
   /** Agents excluded from supervisor + swarm run until resumed. */

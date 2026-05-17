@@ -260,13 +260,15 @@ export async function getAgentDetail(agentId: AgentId) {
   const heapTask = flatTasks.find((t) => t.agent === agentId);
   const recentTasks = cpState.recent_tasks.filter((t) => t.agentId === agentId).slice(-8).reverse();
   const activeRun = listActiveRuns().find((r) => r.agent_id === agentId && r.status === "running");
+  const supervisorRunning =
+    cpState.supervisor_status === "running_agent" && cpState.current_supervisor_agent === agentId;
   const stopped = (cpState.stopped_agents ?? []).includes(agentId);
   const runs = await listRunsForAgent(agentId, 12);
   const history = await getAgentRunHistory(agentId, 50);
 
   let status: "running" | "stopped" | "queued" | "idle" | "cooldown" = "idle";
   if (stopped) status = "stopped";
-  else if (activeRun) status = "running";
+  else if (activeRun || supervisorRunning) status = "running";
   else if (rec || heapTask) status = "queued";
   else if (recentTasks.length && recentTasks[0].status === "finished") {
     const finishedAt = new Date(recentTasks[0].finished_at).getTime();

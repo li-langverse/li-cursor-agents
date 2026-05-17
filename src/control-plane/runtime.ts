@@ -36,6 +36,25 @@ export function listActiveRuns(): ActiveAgentRun[] {
   );
 }
 
+/** Track in-process supervisor runs (same map as spawnAgentRun child processes). */
+export function registerSupervisorRun(agentId: AgentId, reason: string): string {
+  const runId = `${agentId}-supervisor-${Date.now()}`;
+  activeRuns.set(runId, {
+    run_id: runId,
+    agent_id: agentId,
+    pid: process.pid,
+    started_at: new Date().toISOString(),
+    status: "running",
+    reason,
+  });
+  return runId;
+}
+
+export function completeSupervisorRun(runId: string, status: AgentRunLifecycle): void {
+  setRunStatus(runId, status);
+  setTimeout(() => clearRun(runId), 30_000);
+}
+
 export function isSupervisorLoopRunning(): boolean {
   return supervisorAbort !== null && !supervisorAbort.signal.aborted;
 }

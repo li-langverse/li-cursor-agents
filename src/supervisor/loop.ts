@@ -12,6 +12,7 @@ import { loadState, pruneRecentTasks, saveState } from "../control-plane/state.j
 import { buildHeapPlan, parseOrgRoadmapFromBriefing } from "../heap/plan.js";
 import { buildHeapTaskQueue } from "../heap/task-queue.js";
 import { recordTaskRun, shouldSkipDispatch } from "../control-plane/task-queue.js";
+import { completeSupervisorRun, registerSupervisorRun } from "../control-plane/runtime.js";
 import {
   buildAgentKitMaintainerInstruction,
   refreshAgentKitAudit,
@@ -105,7 +106,9 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
 
     for (const task of tasks) {
       state.supervisor_status = "running_agent";
+      state.current_supervisor_agent = task.agentId;
       saveState(state);
+      const supervisorRunId = registerSupervisorRun(task.agentId, task.reason);
       try {
         let extraInstruction: string | undefined;
         if (task.agentId === "pr_merger") {
@@ -129,10 +132,19 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
         await persistRunMeta(task, result, briefingHash);
         recordTaskRun(state, task, briefingHash, result.status);
         tasksExecuted += 1;
+        completeSupervisorRun(
+          supervisorRunId,
+          result.status === "error"
+            ? "error"
+            : result.status === "cancelled"
+              ? "cancelled"
+              : "finished",
+        );
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         state.last_error = msg;
         recordTaskRun(state, task, briefingHash, "error");
+        completeSupervisorRun(supervisorRunId, "error");
         interventions.push({
           id: `agent_error:${task.agentId}`,
           kind: "agent_error",
@@ -143,6 +155,10 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
           links: [],
           created_at: new Date().toISOString(),
         });
+      } finally {
+        if (state.current_supervisor_agent === task.agentId) {
+          state.current_supervisor_agent = undefined;
+        }
       }
     }
   }
@@ -150,6 +166,7 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
   const pruneAgeMs = Math.max(options.cooldownMs * 2, 86_400_000);
   pruneRecentTasks(state, 80, pruneAgeMs);
   state.supervisor_status = "idle";
+  state.current_supervisor_agent = undefined;
   saveState(state);
 
   const recentRuns =

@@ -75,15 +75,19 @@ function statusDot(status) {
   return `<span class="status-dot ${escAttr(status)}"></span>${esc(statusLabel(status))}`;
 }
 
-function agentStatusMap(roster, report, runtime) {
+function agentStatusMap(roster, report, runtime, statusPayload) {
   const map = new Map();
   const activeRuns = runtime?.active_runs ?? [];
   const stopped = new Set(runtime?.stopped_agents ?? []);
+  const currentSupervisor = runtime?.current_supervisor_agent ?? statusPayload?.state?.current_supervisor_agent;
   const rec = new Map((report?.recommended_agents ?? []).map((r) => [r.agent, r.reason]));
   const heapTasks = new Map(
     (report?.heap_plan?.flat_tasks ?? []).map((t) => [t.agent, { reason: t.reason, coord: t.coordinator }]),
   );
   const recentByAgent = new Map();
+  for (const t of statusPayload?.state?.recent_tasks ?? []) {
+    if (!recentByAgent.has(t.agentId)) recentByAgent.set(t.agentId, t);
+  }
   for (const r of report?.recent_runs ?? []) {
     if (!recentByAgent.has(r.agentId)) recentByAgent.set(r.agentId, r);
   }
@@ -91,16 +95,22 @@ function agentStatusMap(roster, report, runtime) {
   for (const entry of roster?.roster ?? []) {
     if (entry.role === "coordinator") continue;
     let status = "idle";
+    const activeRun = activeRuns.find((r) => r.agent_id === entry.id && r.status === "running");
     if (stopped.has(entry.id)) status = "stopped";
-    else if (activeRuns.some((r) => r.agent_id === entry.id && r.status === "running")) status = "running";
+    else if (activeRun || currentSupervisor === entry.id) status = "running";
     else if (rec.has(entry.id) || heapTasks.has(entry.id)) status = "queued";
+    else {
+      const last = recentByAgent.get(entry.id);
+      const finishedAt = last?.finished_at ? new Date(last.finished_at).getTime() : 0;
+      if (last?.status === "finished" && finishedAt && Date.now() - finishedAt < 1_800_000) status = "cooldown";
+    }
 
     map.set(entry.id, {
       status,
       reason: rec.get(entry.id) ?? heapTasks.get(entry.id)?.reason,
       coordinator: entry.coordinator ?? heapTasks.get(entry.id)?.coord,
       lastRun: recentByAgent.get(entry.id),
-      activeRun: activeRuns.find((r) => r.agent_id === entry.id && r.status === "running"),
+      activeRun: activeRun ?? null,
       entry,
     });
   }
@@ -131,10 +141,12 @@ function renderSidebar() {
     countEl.classList.add("hidden");
   }
 
+  const store = rt.store ?? status?.store ?? "disk";
   $("#sidebar-stats").innerHTML = `
     <dl>
+      <dt>Data store</dt><dd title="History in Supabase; live runs in this process">${esc(store)}</dd>
       <dt>Supervisor</dt><dd>${rt.supervisor_loop_running ? "loop on" : "loop off"}</dd>
-      <dt>Live processes</dt><dd>${rt.active_run_count ?? 0}</dd>
+      <dt>Running now</dt><dd>${rt.active_run_count ?? 0}</dd>
       <dt>Swarm</dt><dd>${roster?.total ?? "—"} agents</dd>
       <dt>Briefing</dt><dd title="${escAttr(report?.briefing_hash ?? "")}">${esc((report?.briefing_hash ?? "—").slice(0, 12))}</dd>
     </dl>`;
@@ -143,22 +155,27 @@ function renderSidebar() {
   const st = status?.state ?? {};
   const pill = $("#status-pill");
   let label = sup.status ?? st.supervisor_status ?? "idle";
-  if (rt.supervisor_loop_running) label = "supervisor on";
+  if (rt.current_supervisor_agent) label = `running ${rt.current_supervisor_agent}`;
+  else if (rt.supervisor_loop_running) label = "supervisor on";
   else if ((rt.active_run_count ?? 0) > 0) label = "agents running";
   pill.textContent = label;
   pill.className = `pill ${label.includes("running") || label.includes("on") ? "running" : "idle"}`;
 }
 
 function renderStatCards() {
-  const { report, runtime, roster, runsPayload } = ui.data;
-  const statusMap = agentStatusMap(roster, report, runtime);
+  const { report, runtime, roster, runsPayload, status } = ui.data;
+  const statusMap = agentStatusMap(roster, report, runtime, status);
   let running = 0;
   let queued = 0;
   let stopped = 0;
+  let idle = 0;
+  let cooldown = 0;
   for (const v of statusMap.values()) {
     if (v.status === "running") running++;
     if (v.status === "queued") queued++;
     if (v.status === "stopped") stopped++;
+    if (v.status === "idle") idle++;
+    if (v.status === "cooldown") cooldown++;
   }
   const interventions = report?.interventions?.length ?? 0;
   const runs = runsPayload?.runs?.length ?? 0;
@@ -168,12 +185,13 @@ function renderStatCards() {
     (gaps?.agent_prs_blocked ?? 0) +
     (gaps?.numerics_without_evidence ?? 0);
 
-  $("#stat-cards").innerHTML = `
+    $("#stat-cards").innerHTML = `
     <div class="stat-card accent"><div class="label">Running</div><div class="value">${running}</div></div>
+    <div class="stat-card"><div class="label">Idle</div><div class="value">${idle}</div></div>
+    <div class="stat-card"><div class="label">Cooldown</div><div class="value">${cooldown}</div></div>
     <div class="stat-card"><div class="label">Queued</div><div class="value">${queued}</div></div>
     <div class="stat-card"><div class="label">Stopped</div><div class="value">${stopped}</div></div>
-    <div class="stat-card"><div class="label">Interventions</div><div class="value">${interventions}</div></div>
-    <div class="stat-card"><div class="label">Run artifacts</div><div class="value">${runs}</div></div>`;
+    <div class="stat-card"><div class="label">Interventions</div><div class="value">${interventions}</div></div>`;
 }
 
 function renderLiveActivity() {
@@ -247,8 +265,8 @@ function renderRunsTable() {
 }
 
 function renderAgentsTable() {
-  const { roster, report, runtime } = ui.data;
-  const statusMap = agentStatusMap(roster, report, runtime);
+  const { roster, report, runtime, status } = ui.data;
+  const statusMap = agentStatusMap(roster, report, runtime, status);
   const q = ui.agentSearch.trim().toLowerCase();
   const tbody = $("#agents-table-body");
   const rows = [];
@@ -280,7 +298,13 @@ function renderAgentsTable() {
       <td>${statusDot(info.status)}</td>
       <td class="mono">${esc(info.coordinator ?? "—")}</td>
       <td>${esc((info.reason ?? "—").slice(0, 72))}</td>
-      <td>${info.lastRun ? `${esc(statusLabel(info.lastRun.status))} · ${formatTime(info.lastRun.finished_at ?? info.lastRun.started_at)}` : "—"}</td>
+      <td>${
+        info.status === "running"
+          ? "now"
+          : info.lastRun
+            ? `${esc(statusLabel(info.lastRun.status ?? "finished"))} · ${formatTime(info.lastRun.finished_at ?? info.lastRun.started_at)}`
+            : "—"
+      }</td>
       <td><button type="button" class="btn ghost sm" data-open-agent="${escAttr(id)}">Details</button></td>
     </tr>`,
     )
