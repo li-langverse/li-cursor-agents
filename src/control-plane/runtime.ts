@@ -7,6 +7,7 @@ import { buildHeapTaskQueue } from "../heap/task-queue.js";
 import { hashBriefing } from "./briefing-hash.js";
 import type { SupervisorOptions } from "../supervisor/loop.js";
 import { runSupervisorLoop, supervisorTick } from "../supervisor/loop.js";
+import { pushSupervisorActivity } from "./supervisor-activity.js";
 import { loadState, saveState } from "./state.js";
 import type { ActiveAgentRun, AgentRunLifecycle, ControlPlaneState } from "./types.js";
 import type { AgentId } from "../types.js";
@@ -60,8 +61,10 @@ export function isSupervisorLoopRunning(): boolean {
 }
 
 export function runtimeSnapshot(state: ControlPlaneState) {
+  const loopRunning = isSupervisorLoopRunning() || Boolean(state.supervisor_loop_running);
   return {
-    supervisor_loop_running: isSupervisorLoopRunning() || Boolean(state.supervisor_loop_running),
+    supervisor_loop_running: loopRunning,
+    supervisor_loop_started_at: loopRunning ? (state.supervisor_loop_started_at ?? null) : null,
     stopped_agents: state.stopped_agents ?? [],
     current_supervisor_agent: state.current_supervisor_agent ?? null,
     active_runs: listActiveRuns(),
@@ -177,18 +180,36 @@ export function cancelRun(runId: string): boolean {
 
 export async function startSupervisorLoop(
   overrides?: Partial<SupervisorOptions>,
-): Promise<{ started: boolean; already_running?: boolean }> {
+): Promise<{
+  started: boolean;
+  already_running?: boolean;
+  message: string;
+  started_at?: string;
+  options?: SupervisorOptions;
+}> {
   if (isSupervisorLoopRunning()) {
-    return { started: false, already_running: true };
+    const msg = "Supervisor loop is already running";
+    pushSupervisorActivity("warn", msg);
+    return { started: false, already_running: true, message: msg };
   }
 
   const state = loadState();
+  const startedAt = new Date().toISOString();
   state.supervisor_loop_running = true;
+  state.supervisor_loop_started_at = startedAt;
   saveState(state);
 
   const options = defaultSupervisorOptions(overrides);
   supervisorAbort = new AbortController();
   const signal = supervisorAbort.signal;
+
+  const message = `Supervisor loop started (mock=${options.mock}, interval=${Math.round(options.intervalMs / 1000)}s, max ${options.maxTasksPerTick} agents/tick)`;
+  pushSupervisorActivity("info", message, {
+    mock: options.mock,
+    interval_ms: options.intervalMs,
+    cooldown_ms: options.cooldownMs,
+    max_tasks_per_tick: options.maxTasksPerTick,
+  });
 
   supervisorLoopPromise = (async () => {
     try {
@@ -196,23 +217,33 @@ export async function startSupervisorLoop(
     } finally {
       const s = loadState();
       s.supervisor_loop_running = false;
+      s.supervisor_loop_started_at = undefined;
       saveState(s);
       supervisorAbort = null;
       supervisorLoopPromise = null;
+      pushSupervisorActivity("info", "Supervisor loop stopped");
     }
   })();
 
-  return { started: true };
+  return { started: true, message, started_at: startedAt, options };
 }
 
-export async function stopSupervisorLoop(): Promise<void> {
+export async function stopSupervisorLoop(): Promise<{ stopped: boolean; message: string }> {
+  if (!isSupervisorLoopRunning()) {
+    const message = "Supervisor loop was not running";
+    pushSupervisorActivity("warn", message);
+    return { stopped: false, message };
+  }
+  pushSupervisorActivity("info", "Stopping supervisor loop…");
   supervisorAbort?.abort();
   if (supervisorLoopPromise) {
     await supervisorLoopPromise.catch(() => undefined);
   }
   const state = loadState();
   state.supervisor_loop_running = false;
+  state.supervisor_loop_started_at = undefined;
   saveState(state);
+  return { stopped: true, message: "Supervisor loop stopped" };
 }
 
 /** Fire-and-forget: spawn every leaf agent once (parallel processes). */

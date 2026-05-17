@@ -8,6 +8,8 @@ const ui = {
   selectedAgentId: null,
   selectedRunId: null,
   data: null,
+  pollMs: 4000,
+  toastTimer: null,
 };
 
 const VIEW_META = {
@@ -118,15 +120,26 @@ function agentStatusMap(roster, report, runtime, statusPayload) {
 }
 
 async function loadDashboard() {
-  const [report, status, roster, runsPayload] = await Promise.all([
+  const [report, status, roster, runsPayload, supervisorActivity] = await Promise.all([
     fetchJson("/api/report").catch(() => ({})),
     fetchJson("/api/status"),
     fetchJson("/api/agents"),
     fetchJson("/api/runs").catch(() => ({ runs: [], active: [] })),
+    fetchJson("/api/supervisor/activity").catch(() => ({ entries: [], loop_running: false })),
   ]);
   const runtime = status?.runtime ?? roster?.runtime;
-  ui.data = { report, status, roster, runtime, runsPayload };
+  ui.data = { report, status, roster, runtime, runsPayload, supervisorActivity };
   return ui.data;
+}
+
+function showToast(message, kind = "info") {
+  const el = $("#toast");
+  if (!el) return;
+  el.textContent = message;
+  el.className = `toast toast-${kind}`;
+  el.classList.remove("hidden");
+  if (ui.toastTimer) clearTimeout(ui.toastTimer);
+  ui.toastTimer = setTimeout(() => el.classList.add("hidden"), 8000);
 }
 
 function renderSidebar() {
@@ -142,10 +155,13 @@ function renderSidebar() {
   }
 
   const store = rt.store ?? status?.store ?? "disk";
+  const loopOn = Boolean(rt.supervisor_loop_running);
+  const loopStarted = rt.supervisor_loop_started_at ?? st.supervisor_loop_started_at;
   $("#sidebar-stats").innerHTML = `
     <dl>
       <dt>Data store</dt><dd title="History in Supabase; live runs in this process">${esc(store)}</dd>
-      <dt>Supervisor</dt><dd>${rt.supervisor_loop_running ? "loop on" : "loop off"}</dd>
+      <dt>Supervisor</dt><dd class="${loopOn ? "text-ok" : ""}">${loopOn ? "● loop on" : "○ loop off"}</dd>
+      <dt>Loop since</dt><dd>${loopOn && loopStarted ? formatTime(loopStarted) : "—"}</dd>
       <dt>Running now</dt><dd>${rt.active_run_count ?? 0}</dd>
       <dt>Swarm</dt><dd>${roster?.total ?? "—"} agents</dd>
       <dt>Briefing</dt><dd title="${escAttr(report?.briefing_hash ?? "")}">${esc((report?.briefing_hash ?? "—").slice(0, 12))}</dd>
@@ -160,6 +176,56 @@ function renderSidebar() {
   else if ((rt.active_run_count ?? 0) > 0) label = "agents running";
   pill.textContent = label;
   pill.className = `pill ${label.includes("running") || label.includes("on") ? "running" : "idle"}`;
+  renderFooterControls(loopOn);
+}
+
+function renderFooterControls(loopOn) {
+  const startBtn = $("#supervisor-start");
+  const stopBtn = $("#supervisor-stop");
+  if (startBtn) {
+    startBtn.disabled = loopOn;
+    startBtn.textContent = loopOn ? "Loop running" : "Start loop";
+    startBtn.classList.toggle("active", loopOn);
+  }
+  if (stopBtn) {
+    stopBtn.disabled = !loopOn;
+  }
+}
+
+function renderSupervisorActivity() {
+  const { supervisorActivity, runtime, status } = ui.data ?? {};
+  const rt = runtime ?? {};
+  const loopOn = Boolean(rt.supervisor_loop_running ?? supervisorActivity?.loop_running);
+  const badge = $("#supervisor-loop-badge");
+  const meta = $("#supervisor-loop-meta");
+  const feed = $("#supervisor-activity");
+  if (!feed) return;
+
+  if (badge) {
+    badge.classList.toggle("hidden", !loopOn);
+    badge.textContent = loopOn ? "loop on" : "loop off";
+  }
+  if (meta) {
+    const started = rt.supervisor_loop_started_at ?? supervisorActivity?.started_at;
+    const lastTick = status?.state?.last_tick_at;
+    if (loopOn) {
+      meta.textContent = `Running since ${formatTime(started)} · last tick ${lastTick ? formatTime(lastTick) : "pending…"}`;
+    } else {
+      meta.textContent = "Start loop from the footer to run agents continuously.";
+    }
+  }
+
+  const entries = supervisorActivity?.entries ?? [];
+  if (!entries.length) {
+    feed.innerHTML = `<li class="empty">${loopOn ? "Waiting for first tick…" : "No supervisor events yet."}</li>`;
+    return;
+  }
+  feed.innerHTML = entries
+    .map((e) => {
+      const cls = e.level === "error" ? "severity-p0" : e.level === "warn" ? "severity-p1" : "";
+      return `<li class="${cls}"><span class="time">${formatTime(e.at)}</span> <span class="badge">${esc(e.level)}</span> ${esc(e.message)}</li>`;
+    })
+    .join("");
 }
 
 function renderStatCards() {
@@ -597,6 +663,7 @@ async function refresh() {
   try {
     await loadDashboard();
     renderSidebar();
+    renderSupervisorActivity();
     renderStatCards();
     renderLiveActivity();
     renderQueue();
@@ -619,15 +686,25 @@ async function refresh() {
   }
 }
 
-async function postControl(path, button) {
+async function postControl(path, button, { label } = {}) {
   if (button) button.disabled = true;
+  const prevText = button?.textContent;
+  if (button && label) button.textContent = `${label}…`;
   try {
-    await fetchJson(path, { method: "POST" });
+    const body = await fetchJson(path, { method: "POST" });
+    const msg = body.message ?? (body.started ? "Supervisor loop started" : body.stopped ? "Supervisor stopped" : "OK");
+    showToast(msg, body.already_running ? "warn" : body.started === false && body.stopped === false ? "warn" : "ok");
+    ui.pollMs = body.runtime?.supervisor_loop_running ? 2000 : 4000;
+    schedulePoll();
     await refresh();
   } catch (e) {
+    showToast(e.message, "error");
     alert(e.message);
   } finally {
-    if (button) button.disabled = false;
+    if (button) {
+      button.disabled = false;
+      if (prevText) button.textContent = prevText;
+    }
   }
 }
 
@@ -668,9 +745,13 @@ $("#refresh").addEventListener("click", refresh);
 $("#refresh-briefing").addEventListener("click", () =>
   postControl("/api/briefing/refresh", $("#refresh-briefing")),
 );
-$("#tick").addEventListener("click", () => postControl("/api/tick", $("#tick")));
-$("#supervisor-start").addEventListener("click", () => postControl("/api/supervisor/start", $("#supervisor-start")));
-$("#supervisor-stop").addEventListener("click", () => postControl("/api/supervisor/stop", $("#supervisor-stop")));
+$("#tick").addEventListener("click", () => postControl("/api/tick", $("#tick"), { label: "Tick" }));
+$("#supervisor-start").addEventListener("click", () =>
+  postControl("/api/supervisor/start", $("#supervisor-start"), { label: "Starting" }),
+);
+$("#supervisor-stop").addEventListener("click", () =>
+  postControl("/api/supervisor/stop", $("#supervisor-stop"), { label: "Stopping" }),
+);
 $("#swarm-run-all").addEventListener("click", () => postControl("/api/swarm/run-all", $("#swarm-run-all")));
 $("#swarm-stop-all").addEventListener("click", () => postControl("/api/swarm/stop-all", $("#swarm-stop-all")));
 
@@ -716,6 +797,12 @@ document.body.addEventListener("click", async (ev) => {
   }
 });
 
+let pollHandle = null;
+function schedulePoll() {
+  if (pollHandle) clearInterval(pollHandle);
+  pollHandle = setInterval(refresh, ui.pollMs);
+}
+
 setView("overview");
 refresh();
-setInterval(refresh, 4_000);
+schedulePoll();

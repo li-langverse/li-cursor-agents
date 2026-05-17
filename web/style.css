@@ -879,6 +879,53 @@ footer.footer-controls {
   margin: 0 0 0.5rem;
 }
 
+.toast {
+  max-width: 28rem;
+  padding: 0.45rem 0.75rem;
+  margin-right: 0.5rem;
+  font-size: 0.85rem;
+  border-radius: 8px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+
+.toast-ok {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.toast-warn {
+  border-color: #c9a227;
+}
+
+.toast-error {
+  border-color: #c44;
+}
+
+.toast.hidden {
+  display: none;
+}
+
+.text-ok {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.supervisor-panel .badge {
+  margin-left: 0.35rem;
+  vertical-align: middle;
+}
+
+.supervisor-feed .time {
+  color: var(--muted);
+  font-size: 0.78rem;
+  margin-right: 0.35rem;
+}
+
+.footer-controls .btn.active {
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
 @media (max-width: 900px) {
   .app-shell {
     flex-direction: column;

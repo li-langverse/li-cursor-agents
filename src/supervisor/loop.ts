@@ -11,6 +11,7 @@ import { ensureControlPlaneDirs } from "../control-plane/paths.js";
 import { loadState, pruneRecentTasks, saveState } from "../control-plane/state.js";
 import { buildHeapPlan, parseOrgRoadmapFromBriefing } from "../heap/plan.js";
 import { buildHeapTaskQueue } from "../heap/task-queue.js";
+import { pushSupervisorActivity } from "../control-plane/supervisor-activity.js";
 import { recordTaskRun, shouldSkipDispatch } from "../control-plane/task-queue.js";
 import { completeSupervisorRun, registerSupervisorRun } from "../control-plane/runtime.js";
 import {
@@ -234,6 +235,11 @@ export async function runSupervisorLoop(
   options: SupervisorOptions,
   signal?: AbortSignal,
 ): Promise<void> {
+  pushSupervisorActivity(
+    "info",
+    `Loop running (mock=${options.mock}, interval=${Math.round(options.intervalMs / 1000)}s)`,
+    { once: options.once, force: options.force },
+  );
   for (;;) {
     if (signal?.aborted) break;
     const tick = await supervisorTick(options);
@@ -247,6 +253,12 @@ export async function runSupervisorLoop(
       .filter(Boolean)
       .join(" ");
     console.error(`[supervisor] ${msg}`);
+    pushSupervisorActivity("tick", msg, {
+      tasks_executed: tick.tasksExecuted,
+      skipped_cooldown: tick.tasksSkippedCooldown,
+      interventions: tick.interventions,
+      skipped_unchanged_briefing: tick.skippedUnchangedBriefing,
+    });
 
     if (options.once) break;
     if (signal?.aborted) break;

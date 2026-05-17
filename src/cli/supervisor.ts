@@ -34,8 +34,14 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   if (process.env.CURSOR_MOCK === "1") args.mock = true;
 
+  const benchmarks = resolveBenchmarksRoot(args.benchmarksRoot);
+  console.error(
+    `[supervisor] CLI starting — mock=${args.mock} once=${args.once} interval=${args.intervalMs}ms cooldown=${args.cooldownMs}ms benchmarks=${benchmarks ?? "(none)"}`,
+  );
+  console.error("[supervisor] Press Ctrl+C to stop. Tick lines appear below as [supervisor] tick: …");
+
   await runSupervisorLoop({
-    benchmarksRoot: resolveBenchmarksRoot(args.benchmarksRoot),
+    benchmarksRoot: benchmarks,
     mock: args.mock,
     once: args.once,
     force: args.force,

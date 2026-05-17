@@ -31,6 +31,7 @@
             <p id="view-subtitle" class="view-subtitle">Swarm status at a glance</p>
           </div>
           <div class="topbar-right">
+            <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
             <span id="status-pill" class="pill idle">loading</span>
             <span id="updated" class="updated"></span>
             <button type="button" id="refresh-briefing" class="btn ghost sm" title="Re-run agent-briefing.py">Refresh briefing</button>
@@ -44,6 +45,11 @@
             <div class="panel" id="gaps-panel" hidden>
               <h2>Implementation &amp; deliverable gaps</h2>
               <ul id="gaps-list" class="simple-list"></ul>
+            </div>
+            <div class="panel supervisor-panel">
+              <h2>Supervisor log <span id="supervisor-loop-badge" class="badge hidden">loop on</span></h2>
+              <p id="supervisor-loop-meta" class="hint">Start loop from the footer to run agents continuously.</p>
+              <ul id="supervisor-activity" class="activity-feed supervisor-feed"></ul>
             </div>
             <div class="split-panels">
               <div class="panel">

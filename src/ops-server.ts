@@ -29,6 +29,7 @@ import {
   listRunsMerged,
 } from "./control-plane/runs-catalog.js";
 import { listActiveRuns } from "./control-plane/runtime.js";
+import { listSupervisorActivity } from "./control-plane/supervisor-activity.js";
 import { hydrateStateFromDb, loadState } from "./control-plane/state.js";
 import { dbEnabled } from "./db/client.js";
 import type { ControlPlaneReport } from "./control-plane/types.js";
@@ -108,6 +109,15 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
 
   if (url.pathname === "/api/runtime") {
     json(res, 200, runtime);
+    return;
+  }
+
+  if (url.pathname === "/api/supervisor/activity") {
+    json(res, 200, {
+      loop_running: isSupervisorLoopRunning(),
+      started_at: state.supervisor_loop_started_at ?? null,
+      entries: listSupervisorActivity(40),
+    });
     return;
   }
 
@@ -233,13 +243,23 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
 
   if (url.pathname === "/api/supervisor/start" && req.method === "POST") {
     const result = await startSupervisorLoop();
-    json(res, 200, { ok: true, ...result, runtime: runtimeSnapshot(loadState()) });
+    json(res, 200, {
+      ok: result.started || result.already_running,
+      ...result,
+      runtime: runtimeSnapshot(loadState()),
+      activity: listSupervisorActivity(5),
+    });
     return;
   }
 
   if (url.pathname === "/api/supervisor/stop" && req.method === "POST") {
-    await stopSupervisorLoop();
-    json(res, 200, { ok: true, runtime: runtimeSnapshot(loadState()) });
+    const stopped = await stopSupervisorLoop();
+    json(res, 200, {
+      ok: true,
+      ...stopped,
+      runtime: runtimeSnapshot(loadState()),
+      activity: listSupervisorActivity(5),
+    });
     return;
   }
 
@@ -250,7 +270,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
   }
 
   if (url.pathname === "/api/swarm/stop-all" && req.method === "POST") {
-    await stopSupervisorLoop();
+    void stopSupervisorLoop();
     const killed = await stopAllActiveRuns();
     json(res, 200, { ok: true, killed, runtime: runtimeSnapshot(loadState()) });
     return;

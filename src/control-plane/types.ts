@@ -67,6 +67,8 @@ export interface ControlPlaneState {
   current_supervisor_agent?: AgentId;
   /** Background supervisor loop started from dashboard (fire-and-forget). */
   supervisor_loop_running?: boolean;
+  /** ISO timestamp when the current loop session started. */
+  supervisor_loop_started_at?: string;
   /** Agents excluded from supervisor + swarm run until resumed. */
   stopped_agents?: AgentId[];
   recent_tasks: RecentTaskRecord[];

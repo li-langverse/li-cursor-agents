@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- Supervisor loop feedback: in-memory activity log (`GET /api/supervisor/activity`), CLI startup banner, dashboard toast + supervisor log panel + footer button states.
 - Local Supabase control-plane store: `supabase/migrations/20260517120000_control_plane.sql`, `supabase/config.toml`, `src/db/*`.
 - APIs: `GET /api/agents/:id/history`, DB-first `/api/runs` and run detail.
 - Backfill: `scripts/backfill-control-plane-db.mjs`, `npm run db:backfill`.

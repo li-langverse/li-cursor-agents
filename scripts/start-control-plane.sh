@@ -22,4 +22,6 @@ trap 'kill "$DASH_PID" 2>/dev/null || true' EXIT
 
 echo "Dashboard: http://127.0.0.1:${LI_AGENT_DASHBOARD_PORT:-9477}/"
 echo "Supervisor: mock=$CURSOR_MOCK (set CURSOR_API_KEY + unset CURSOR_MOCK for real agents)"
+echo "Supervisor loop starting in this terminal — watch for [supervisor] info/tick lines."
+echo "Or use the dashboard footer: Start loop / Stop loop."
 npm run supervisor -- --benchmarks "$BENCHMARKS_ROOT" "$@"

@@ -174,6 +174,35 @@ describe("dashboard drilldown API e2e", () => {
     }
   });
 
+  test("POST supervisor start returns feedback and activity log", async () => {
+    if (!server) {
+      env = setupE2eEnv("v1");
+      server = startOpsServer(0);
+      await new Promise((r) => setTimeout(r, 150));
+    }
+    const port = opsPort(server);
+
+    const startRes = await httpPostJson(port, "/api/supervisor/start");
+    assert.equal(startRes.status, 200);
+    const body = startRes.body as {
+      started?: boolean;
+      message?: string;
+      runtime?: { supervisor_loop_running?: boolean };
+    };
+    assert.equal(body.started, true);
+    assert.ok(body.message?.includes("started"));
+    assert.equal(body.runtime?.supervisor_loop_running, true);
+
+    const activity = await httpGetJson(port, "/api/supervisor/activity");
+    assert.equal(activity.status, 200);
+    const act = activity.body as { loop_running?: boolean; entries?: Array<{ message: string }> };
+    assert.equal(act.loop_running, true);
+    assert.ok(act.entries?.some((e) => e.message.includes("started")));
+
+    const stopRes = await httpPostJson(port, "/api/supervisor/stop");
+    assert.equal(stopRes.status, 200);
+  });
+
   test("POST control endpoints respond", async () => {
     if (!server) {
       env = setupE2eEnv("v1");
