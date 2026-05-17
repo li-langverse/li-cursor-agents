@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Swarm statistics** on Overview: actions taken (tool calls), file edits, lines added/deleted, PRs opened/merged/open, packages created — `GET /api/statistics`, persisted counters in `data/control-plane/swarm-stats.json`.
+
 ### Changed
 
 - Interventions recomputed from fresh `agent-briefing.json`, filtered to open PRs only, persisted to `interventions_latest` (Supabase) + disk; auto-refresh briefing when older than 20m (throttled).

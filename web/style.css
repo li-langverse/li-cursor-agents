@@ -245,6 +245,14 @@ body {
   margin-bottom: 1rem;
 }
 
+.swarm-stat-cards {
+  margin-bottom: 0;
+}
+
+#swarm-stats-panel h2 {
+  margin-bottom: 0.35rem;
+}
+
 .stat-card {
   background: var(--panel);
   border: 1px solid var(--border);

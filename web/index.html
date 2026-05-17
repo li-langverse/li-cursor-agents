@@ -45,6 +45,11 @@
           <section id="view-overview" class="view active" aria-label="Overview">
             <div id="backend-banner" class="backend-banner hidden" role="alert" aria-live="polite"></div>
             <div class="stat-cards" id="stat-cards"></div>
+            <div class="panel" id="swarm-stats-panel">
+              <h2>Swarm statistics</h2>
+              <p class="hint" id="swarm-stats-meta">Aggregated from agent run traces, briefing, and GitHub (agent PRs).</p>
+              <div class="stat-cards swarm-stat-cards" id="swarm-stat-cards"></div>
+            </div>
             <div class="panel" id="gaps-panel" hidden>
               <h2>Implementation &amp; deliverable gaps</h2>
               <ul id="gaps-list" class="simple-list"></ul>

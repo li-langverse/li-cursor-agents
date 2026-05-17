@@ -32,6 +32,7 @@ import {
 } from "./control-plane/runs-catalog.js";
 import { listActiveRuns } from "./control-plane/runtime.js";
 import { listSupervisorActivity } from "./control-plane/supervisor-activity.js";
+import { buildSwarmStatistics } from "./control-plane/swarm-statistics.js";
 import { hydrateStateFromDb, loadState, reloadStateFromDiskIfNewer } from "./control-plane/state.js";
 import { dbEnabled } from "./db/client.js";
 import type { ControlPlaneReport } from "./control-plane/types.js";
@@ -214,6 +215,13 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       items: await listRecentActivity(limit),
       store: dbEnabled() ? "supabase" : "disk",
     });
+    return;
+  }
+
+  if (url.pathname === "/api/statistics" && req.method === "GET") {
+    const limit = Math.min(800, Math.max(50, Number(url.searchParams.get("runs") ?? 400)));
+    const stats = await buildSwarmStatistics(limit);
+    json(res, 200, { statistics: stats, store: dbEnabled() ? "supabase" : "disk" });
     return;
   }
 

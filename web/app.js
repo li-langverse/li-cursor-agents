@@ -176,7 +176,7 @@ function agentStatusMap(roster, report, runtime, statusPayload) {
 }
 
 async function loadDashboard() {
-  const [report, status, roster, runsPayload, supervisorActivity, activityPayload, interventionsPayload] =
+  const [report, status, roster, runsPayload, supervisorActivity, activityPayload, interventionsPayload, statisticsPayload] =
     await Promise.all([
       fetchJson("/api/report").catch(() => ({})),
       fetchJson("/api/status"),
@@ -185,6 +185,7 @@ async function loadDashboard() {
       fetchJson("/api/supervisor/activity").catch(() => ({ entries: [], loop_running: false })),
       fetchJson("/api/activity/recent?limit=25").catch(() => ({ items: [] })),
       fetchJson("/api/interventions").catch(() => ({ interventions: [] })),
+      fetchJson("/api/statistics").catch(() => ({ statistics: null })),
     ]);
   const runtime = status?.runtime ?? roster?.runtime;
   ui.data = {
@@ -196,8 +197,50 @@ async function loadDashboard() {
     supervisorActivity,
     activityPayload,
     interventionsPayload,
+    statisticsPayload,
   };
   return ui.data;
+}
+
+function fmtNum(n) {
+  if (n == null || Number.isNaN(n)) return "—";
+  return Number(n).toLocaleString();
+}
+
+function renderSwarmStatistics() {
+  const s = ui.data?.statisticsPayload?.statistics;
+  const meta = $("#swarm-stats-meta");
+  const cards = $("#swarm-stat-cards");
+  if (!cards) return;
+  if (!s) {
+    cards.innerHTML = '<p class="empty">Statistics unavailable — refresh briefing and ensure runs are logged.</p>';
+    if (meta) meta.textContent = "No statistics yet.";
+    return;
+  }
+  const runsNote = s.runs_scanned ? `${s.runs_scanned} runs scanned` : "";
+  const briefingNote = s.briefing_generated_at ? `Briefing ${s.briefing_generated_at}` : "";
+  if (meta) {
+    meta.textContent = [runsNote, briefingNote, s.notes?.[0]].filter(Boolean).join(" · ") || "Swarm output metrics.";
+  }
+  const items = [
+    { label: "Actions taken", value: fmtNum(s.actions_taken), hint: "tool calls in traces", accent: true },
+    { label: "File edits", value: fmtNum(s.file_edits), hint: "write/edit/delete in traces" },
+    { label: "Lines added", value: fmtNum(s.lines_added), hint: "from SDK edit results" },
+    { label: "Lines deleted", value: fmtNum(s.lines_deleted), hint: "from SDK edit results" },
+    { label: "PRs opened", value: fmtNum(s.prs_opened), hint: "unique PR URLs in run outputs" },
+    { label: "PRs open now", value: fmtNum(s.prs_open_now), hint: "latest briefing all_open" },
+    { label: "PRs merged", value: fmtNum(s.prs_merged), hint: "agent merges (runs + gh + history)" },
+    { label: "Packages created", value: fmtNum(s.packages_created), hint: "packages/* writes in traces" },
+  ];
+  cards.innerHTML = items
+    .map(
+      (it) => `
+    <div class="stat-card${it.accent ? " accent" : ""}" title="${escAttr(it.hint)}">
+      <div class="label">${esc(it.label)}</div>
+      <div class="value">${esc(it.value)}</div>
+    </div>`,
+    )
+    .join("");
 }
 
 function drillKey(runId, section) {
@@ -898,6 +941,7 @@ async function refresh() {
     renderAgentBackendUi();
     renderSupervisorActivity();
     renderStatCards();
+    renderSwarmStatistics();
     renderLiveActivity();
     renderQueue();
     renderRunsTable();
