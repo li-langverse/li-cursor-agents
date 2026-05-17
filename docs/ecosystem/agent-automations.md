@@ -17,6 +17,11 @@ Env: `LI_SWARM_HANDOFF_PHASES=0` restores legacy parallel spawn for run-all.
 
 Cloud Automations can mirror the same agent prompts under `benchmarks/.cursor/automations/` when budget allows. Lanes remain the source of truth for handoffs and sessions (`agent_handoffs`, `research_sessions`).
 
-## Optional GHA cron
+## GHA cron (this repo)
 
-See `.github/workflows/` (when added) for scheduled `agent-briefing.py` without LLM cost.
+| Workflow | Schedule | What runs |
+|----------|----------|-----------|
+| `swarm-maintenance-cron.yml` | Every 12h + dispatch | Fixture `agent-briefing.py` + `agents:maintenance-lane --once` (scorecards, no LLM) |
+| `swarm-audit-cron.yml` | Weekly Mon 09:00 UTC + dispatch | Handoff/heap unit tests + briefing key check; optional `LI_BENCHMARKS_DISPATCH_TOKEN` → benchmarks repo |
+
+Production audits (`plan-completion-audit`, `ecosystem-explorer`) stay in **benchmarks** / **lic** repos; GHA here only refreshes what local lanes read from `data/latest/`.

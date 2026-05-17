@@ -162,12 +162,20 @@ npm run dashboard
 # → http://127.0.0.1:9477/
 ```
 
+**Async lanes (footer):**
+
+| Button | Action |
+|--------|--------|
+| **Research lane** | Goal-directed research (session-first); `npm run agents:research-lane` |
+| **Implement lane** | Handoff gate: `package_architect` → `code_implementer`; `npm run agents:implement-lane` |
+| **Run all (handoff)** | One tick each: research → implement (set `LI_SWARM_HANDOFF_PHASES=0` for legacy parallel spawn) |
+
 **Dashboard controls (footer):**
 
 | Button | Action |
 |--------|--------|
 | **Supervisor mode** | Continuous loop: preflight → up to 3 agents per tick (sequential). Click again to stop. |
-| **Run all (parallel)** | Stops supervisor if on, then spawns every leaf agent in its own process at once. |
+| **Run all (handoff)** | Phased handoffs (see above). |
 
 Each **leaf/root** card has **Start** / **Stop** / **Resume**. Stop kills a running process and excludes the agent until Resume.
 

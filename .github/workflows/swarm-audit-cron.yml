@@ -1,0 +1,67 @@
+# Weekly deterministic audit smoke + optional dispatch to benchmarks repo (no LLM in this workflow).
+name: Swarm audit
+
+on:
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+    inputs:
+      dispatch_benchmarks:
+        description: Dispatch li-langverse/benchmarks ecosystem refresh (requires secret)
+        type: boolean
+        default: false
+
+jobs:
+  audit-smoke:
+    runs-on: ubuntu-24.04
+    env:
+      CURSOR_MOCK: "1"
+      LI_CONTROL_PLANE_STORE: disk
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install, build, test handoff path
+        run: |
+          npm ci
+          npm run build
+          node --test dist/handoffs/*.test.js dist/briefing/*.test.js dist/lanes/*.test.js
+          node --test dist/e2e/async-handoff.e2e.js dist/e2e/heap.e2e.js
+
+      - name: Fixture briefing + heap plan
+        run: python3 fixtures/e2e-benchmarks/scripts/agent-briefing.py
+
+      - name: Verify scorecard keys in briefing
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("fixtures/e2e-benchmarks/data/latest/agent-briefing.json")
+          d = json.loads(p.read_text())
+          for key in ("swarm_scorecard", "research_goals_status", "heap_plan"):
+              assert key in d, f"missing {key}"
+          print("ok:", list(d.keys())[:8], "...")
+          PY
+
+  dispatch-benchmarks:
+    needs: audit-smoke
+    if: github.event_name == 'workflow_dispatch' && inputs.dispatch_benchmarks == true
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Dispatch benchmarks ecosystem refresh
+        env:
+          GH_TOKEN: ${{ secrets.LI_BENCHMARKS_DISPATCH_TOKEN }}
+        run: |
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "LI_BENCHMARKS_DISPATCH_TOKEN not set — skip"
+            exit 0
+          fi
+          gh api repos/li-langverse/benchmarks/dispatches \
+            -f event_type=swarm-audit-refresh \
+            -f client_payload[ref]="${{ github.sha }}" \
+            -f client_payload[source]=li-cursor-agents \
+            -f client_payload[run_url]="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

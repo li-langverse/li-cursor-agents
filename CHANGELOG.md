@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **GHA swarm cron** — `.github/workflows/swarm-maintenance-cron.yml` (12h briefing/scorecard refresh, no LLM); `swarm-audit-cron.yml` (weekly handoff smoke + optional benchmarks dispatch).
 - **Dashboard lane API** — `/api/lanes`, start/stop research & implement loops, per-lane ticks; footer toggles in `web/app.js`.
 - **Briefing scorecards** — `swarm_scorecard`, `research_goals_status`, `provability_scorecard` via `src/briefing/swarm-scorecard.ts` + maintenance lane refresh.
 - **`li-ecosystem-context` MCP** — `record_placement_decision`, `list_pending_handoffs`, research session tools (`src/mcp/li-ecosystem-context-mcp.ts`).
