@@ -14,6 +14,10 @@ const ui = {
 
 const VIEW_META = {
   overview: { title: "Overview", subtitle: "Swarm status at a glance" },
+  activity: {
+    title: "Activity",
+    subtitle: "Recent runs — prompts, outputs, and actions taken",
+  },
   agents: { title: "Agents", subtitle: "Click a row for live status and run output" },
   heap: { title: "Heap plan", subtitle: "Coordinator routing and briefing queue" },
   interventions: { title: "Interventions", subtitle: "Human action required" },
@@ -120,16 +124,115 @@ function agentStatusMap(roster, report, runtime, statusPayload) {
 }
 
 async function loadDashboard() {
-  const [report, status, roster, runsPayload, supervisorActivity] = await Promise.all([
+  const [report, status, roster, runsPayload, supervisorActivity, activityPayload] = await Promise.all([
     fetchJson("/api/report").catch(() => ({})),
     fetchJson("/api/status"),
     fetchJson("/api/agents"),
     fetchJson("/api/runs").catch(() => ({ runs: [], active: [] })),
     fetchJson("/api/supervisor/activity").catch(() => ({ entries: [], loop_running: false })),
+    fetchJson("/api/activity/recent?limit=25").catch(() => ({ items: [] })),
   ]);
   const runtime = status?.runtime ?? roster?.runtime;
-  ui.data = { report, status, roster, runtime, runsPayload, supervisorActivity };
+  ui.data = { report, status, roster, runtime, runsPayload, supervisorActivity, activityPayload };
   return ui.data;
+}
+
+function renderActionDrilldowns(item, { compact = false } = {}) {
+  const input = item.run_input;
+  const trace = item.run_trace;
+  const edits = trace?.file_edits ?? [];
+  const toolSteps = (trace?.steps ?? []).filter((s) => s.type === "toolCall");
+  const outputText = trace?.assistant_text ?? item.output_snippet ?? item.output_preview ?? "";
+  const thinking = trace?.thinking_text ?? item.thinking_preview ?? "";
+
+  const inputBlock = input
+    ? `${compact ? "" : `<details><summary>System prompt</summary><pre class="trace-pre">${esc(input.system_prompt)}</pre></details>`}
+       <pre class="trace-pre">${esc(input.user_message)}</pre>`
+    : `<p class="empty">No input recorded for this run.</p>`;
+
+  const outputBlock = outputText
+    ? `<pre class="trace-pre">${esc(outputText)}</pre>`
+    : `<p class="empty">No assistant output recorded.</p>`;
+
+  const actionsParts = [];
+  if (edits.length) {
+    actionsParts.push(`<h5>File edits (${edits.length})</h5><ul class="simple-list">${edits
+      .map((f) => `<li><code>${esc(f.path)}</code> · ${esc(f.tool)}${f.ok === false ? " · failed" : ""}</li>`)
+      .join("")}</ul>`);
+  }
+  if (toolSteps.length) {
+    actionsParts.push(`<h5>Tool calls (${toolSteps.length})</h5><ul class="simple-list">${toolSteps
+      .map((s) => {
+        const m = s.message ?? {};
+        const target = m.args?.path ?? m.args?.command ?? m.type ?? "tool";
+        return `<li><code>${esc(m.type ?? "tool")}</code> ${esc(String(target).slice(0, 140))}</li>`;
+      })
+      .join("")}</ul>`);
+  }
+  const actionsBlock = actionsParts.length
+    ? actionsParts.join("")
+    : `<p class="empty">No file edits or tool calls recorded.</p>`;
+
+  return `
+    <div class="action-drilldowns">
+      <details ${input ? "open" : ""}>
+        <summary>Input prompt</summary>
+        ${input ? `<p class="trace-meta">${esc(input.backend)} · <code>${esc(input.cwd)}</code></p>` : ""}
+        ${inputBlock}
+      </details>
+      ${thinking && !compact ? `<details><summary>Thinking</summary><pre class="trace-pre">${esc(thinking)}</pre></details>` : ""}
+      <details>
+        <summary>Output</summary>
+        ${outputBlock}
+      </details>
+      <details>
+        <summary>Actions taken</summary>
+        ${actionsBlock}
+      </details>
+    </div>`;
+}
+
+function renderActivityCard(item, { compact = false } = {}) {
+  const status = item.live ? "running" : item.status;
+  const preview = item.prompt_preview || item.output_snippet || item.summary || "—";
+  return `
+    <article class="action-card ${compact ? "compact" : ""}" data-run-id="${escAttr(item.run_id)}">
+      <header class="action-card-head">
+        <div class="action-card-title">
+          <code>${esc(item.agent_id)}</code>
+          <span class="status-pill sm ${escAttr(status)}">${esc(statusLabel(status))}</span>
+          <span class="time">${formatTime(item.started_at)}</span>
+        </div>
+        <span class="action-chips">${esc(item.action_summary ?? "—")}</span>
+      </header>
+      ${compact ? `<p class="action-preview">${esc(preview)}</p>` : ""}
+      ${renderActionDrilldowns(item, { compact })}
+      <footer class="action-card-foot">
+        <button type="button" class="btn ghost sm" data-open-run="${escAttr(item.run_id)}">Full trace →</button>
+      </footer>
+    </article>`;
+}
+
+function renderActivityFeed() {
+  const items = ui.data?.activityPayload?.items ?? [];
+  const feed = $("#activity-feed");
+  if (!feed) return;
+  if (!items.length) {
+    feed.innerHTML = '<p class="empty">No agent runs yet — start the supervisor or run an agent.</p>';
+    return;
+  }
+  feed.innerHTML = items.map((item) => renderActivityCard(item)).join("");
+}
+
+function renderOverviewActivityTeaser() {
+  const feed = $("#overview-activity-feed");
+  if (!feed) return;
+  const items = (ui.data?.activityPayload?.items ?? []).slice(0, 4);
+  if (!items.length) {
+    feed.innerHTML = '<p class="empty">No recorded runs with prompts or traces yet.</p>';
+    return;
+  }
+  feed.innerHTML = items.map((item) => renderActivityCard(item, { compact: true })).join("");
 }
 
 function showToast(message, kind = "info") {
@@ -668,6 +771,8 @@ async function refresh() {
     renderLiveActivity();
     renderQueue();
     renderRunsTable();
+    renderOverviewActivityTeaser();
+    renderActivityFeed();
     renderAgentsTable();
     renderInterventions();
     renderHeap();
@@ -741,6 +846,7 @@ $("#agent-search").addEventListener("input", (ev) => {
   renderAgentsTable();
 });
 
+$("#goto-activity")?.addEventListener("click", () => setView("activity"));
 $("#refresh").addEventListener("click", refresh);
 $("#refresh-briefing").addEventListener("click", () =>
   postControl("/api/briefing/refresh", $("#refresh-briefing")),

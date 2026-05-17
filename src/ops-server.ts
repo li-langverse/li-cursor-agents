@@ -26,6 +26,7 @@ import {
   getAgentDetail,
   getAgentRunHistory,
   getRunDetail,
+  listRecentActivity,
   listRunsMerged,
 } from "./control-plane/runs-catalog.js";
 import { listActiveRuns } from "./control-plane/runtime.js";
@@ -184,6 +185,15 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     const hp = (report as Record<string, unknown> | null)?.heap_plan ?? null;
     const org = (report as Record<string, unknown> | null)?.org_roadmap ?? null;
     json(res, 200, { heap_plan: hp, org_roadmap: org });
+    return;
+  }
+
+  if (url.pathname === "/api/activity/recent") {
+    const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit") ?? 25)));
+    json(res, 200, {
+      items: await listRecentActivity(limit),
+      store: dbEnabled() ? "supabase" : "disk",
+    });
     return;
   }
 

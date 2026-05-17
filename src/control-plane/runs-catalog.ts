@@ -17,7 +17,10 @@ import {
   type AgentRunHistoryRow,
 } from "../db/runs.js";
 import type { AgentRunInputRecord, AgentRunTrace } from "../agent-run-trace.js";
+import { listToActivityItems, type ActivityListItem } from "./activity-summary.js";
 import type { AgentId } from "../types.js";
+
+export type { ActivityListItem } from "./activity-summary.js";
 
 export interface RunCatalogEntry {
   run_id: string;
@@ -135,6 +138,12 @@ export async function listRunsMerged(limit = 80): Promise<RunCatalogEntry[]> {
     }
   }
   return listRunsFromDisk(limit);
+}
+
+/** Recent agent runs with prompt/output/action summaries for the Activity overview. */
+export async function listRecentActivity(limit = 30): Promise<ActivityListItem[]> {
+  const runs = await listRunsMerged(limit);
+  return listToActivityItems(runs);
 }
 
 function readPreview(path: string, maxChars: number): string {

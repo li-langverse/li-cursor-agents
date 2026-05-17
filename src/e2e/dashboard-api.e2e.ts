@@ -119,6 +119,22 @@ describe("dashboard drilldown API e2e", () => {
     assert.ok(trace.run_input?.user_message, "run_input on detail");
     assert.ok((trace.run_trace?.steps?.length ?? 0) >= 1, "run_trace on detail");
 
+    const recentActivity = await httpGetJson(port, "/api/activity/recent?limit=10");
+    assert.equal(recentActivity.status, 200);
+    const actBody = recentActivity.body as {
+      items?: Array<{
+        run_id: string;
+        action_summary: string;
+        prompt_preview?: string;
+        has_trace?: boolean;
+      }>;
+    };
+    assert.ok(actBody.items && actBody.items.length >= 1, "activity recent list");
+    const firstItem = actBody.items![0];
+    assert.equal(firstItem.run_id, firstRun.run_id);
+    assert.ok(typeof firstItem.action_summary === "string");
+    assert.ok(firstItem.has_trace || firstItem.prompt_preview, "activity summaries");
+
     const agentId = firstRun.agent_id;
     const agentDetailRes = await httpGetJson(
       port,
