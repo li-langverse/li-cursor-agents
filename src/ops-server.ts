@@ -40,6 +40,19 @@ import type { ControlPlaneReport, ControlPlaneState } from "./control-plane/type
 import { resolveBenchmarksRoot } from "./preflight.js";
 import type { AgentId } from "./types.js";
 import type { SwarmStatistics } from "./control-plane/swarm-statistics.js";
+import { buildSwarmScorecard } from "./briefing/swarm-scorecard.js";
+import { researchLaneTick } from "./lanes/research-lane.js";
+import { implementLaneTick } from "./lanes/implement-lane.js";
+import { maintenanceLaneTick } from "./lanes/maintenance-lane.js";
+import {
+  laneRuntimeSnapshot,
+  startImplementLaneLoop,
+  startResearchLaneLoop,
+  stopImplementLaneLoop,
+  stopResearchLaneLoop,
+  updateLaneFlags,
+} from "./lanes/lane-runtime.js";
+import { loadLaneState } from "./lanes/lane-state.js";
 
 const MIME: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -151,7 +164,80 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       store,
       agent_backend: agentBackendLabel(),
       sdk_ready: agentBackendLabel() === "cursor-sdk" && Boolean(resolveCursorApiKey()),
+      lanes: {
+        ...laneRuntimeSnapshot(loadLaneState()),
+        scorecard: await buildSwarmScorecard(),
+      },
     });
+    return;
+  }
+
+  if (url.pathname === "/api/lanes" && req.method === "GET") {
+    json(res, 200, {
+      state: loadLaneState(),
+      runtime: laneRuntimeSnapshot(),
+      scorecard: await buildSwarmScorecard(),
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/lanes/config" && req.method === "POST") {
+    const body = await readJsonBody(req);
+    const patch: Partial<ReturnType<typeof loadLaneState>> = {};
+    if (body.research_lane_enabled !== undefined) {
+      patch.research_lane_enabled = Boolean(body.research_lane_enabled);
+    }
+    if (body.implement_lane_enabled !== undefined) {
+      patch.implement_lane_enabled = Boolean(body.implement_lane_enabled);
+    }
+    const next = updateLaneFlags(patch);
+    json(res, 200, { ok: true, state: next, runtime: laneRuntimeSnapshot(next) });
+    return;
+  }
+
+  if (url.pathname === "/api/lanes/research/start" && req.method === "POST") {
+    const mock = process.env.CURSOR_MOCK === "1";
+    const r = startResearchLaneLoop({ mock });
+    json(res, 200, { ok: r.started, ...r, runtime: laneRuntimeSnapshot() });
+    return;
+  }
+
+  if (url.pathname === "/api/lanes/research/stop" && req.method === "POST") {
+    const r = stopResearchLaneLoop();
+    json(res, 200, { ok: r.stopped, ...r, runtime: laneRuntimeSnapshot() });
+    return;
+  }
+
+  if (url.pathname === "/api/lanes/implement/start" && req.method === "POST") {
+    const mock = process.env.CURSOR_MOCK === "1";
+    const r = startImplementLaneLoop({ mock });
+    json(res, 200, { ok: r.started, ...r, runtime: laneRuntimeSnapshot() });
+    return;
+  }
+
+  if (url.pathname === "/api/lanes/implement/stop" && req.method === "POST") {
+    const r = stopImplementLaneLoop();
+    json(res, 200, { ok: r.stopped, ...r, runtime: laneRuntimeSnapshot() });
+    return;
+  }
+
+  if (url.pathname === "/api/lanes/research/tick" && req.method === "POST") {
+    const mock = process.env.CURSOR_MOCK === "1" || url.searchParams.get("mock") === "1";
+    const tick = await researchLaneTick({ mock });
+    json(res, 200, { ok: true, tick, runtime: laneRuntimeSnapshot() });
+    return;
+  }
+
+  if (url.pathname === "/api/lanes/implement/tick" && req.method === "POST") {
+    const mock = process.env.CURSOR_MOCK === "1" || url.searchParams.get("mock") === "1";
+    const tick = await implementLaneTick({ mock });
+    json(res, 200, { ok: true, tick, runtime: laneRuntimeSnapshot() });
+    return;
+  }
+
+  if (url.pathname === "/api/lanes/maintenance/tick" && req.method === "POST") {
+    const tick = await maintenanceLaneTick();
+    json(res, 200, { ok: tick.ok, tick, runtime: laneRuntimeSnapshot() });
     return;
   }
 
@@ -432,6 +518,14 @@ function serveStatic(pathname: string, webRoot: string, res: ServerResponse): vo
   }
   res.writeHead(200, { "Content-Type": MIME[extname(full)] ?? "text/plain", "Cache-Control": "no-store" });
   res.end(readFileSync(full));
+}
+
+async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown>> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) chunks.push(chunk as Buffer);
+  const raw = Buffer.concat(chunks).toString("utf8").trim();
+  if (!raw) return {};
+  return JSON.parse(raw) as Record<string, unknown>;
 }
 
 function corsPreflight(res: ServerResponse): void {

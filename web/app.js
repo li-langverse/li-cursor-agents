@@ -195,9 +195,11 @@ async function loadDashboard() {
       fetchJson("/api/statistics").catch(() => ({ statistics: null })),
     ]);
   const runtime = status?.runtime ?? roster?.runtime;
+  const lanes = status?.lanes ?? runtime?.lanes;
   ui.data = {
     report: { ...report, interventions: interventionsPayload.interventions ?? report.interventions },
     status,
+    lanes,
     roster,
     runtime,
     runsPayload,
@@ -467,6 +469,9 @@ function renderSidebar() {
 function renderFooterControls(loopOn, activeRunCount = 0) {
   const sup = $("#mode-supervisor");
   const par = $("#mode-parallel");
+  const res = $("#mode-research-lane");
+  const imp = $("#mode-implement-lane");
+  const lanes = laneInfo();
   if (sup) {
     if (loopOn) {
       sup.textContent = "Stop supervisor";
@@ -476,16 +481,30 @@ function renderFooterControls(loopOn, activeRunCount = 0) {
       sup.className = "btn primary sm";
     }
   }
+  if (res) {
+    if (lanes.research_lane_running) {
+      res.textContent = "Stop research lane";
+      res.className = "btn danger sm active";
+    } else {
+      res.textContent = "Research lane";
+      res.className = "btn ghost sm";
+    }
+  }
+  if (imp) {
+    if (lanes.implement_lane_running) {
+      imp.textContent = "Stop implement lane";
+      imp.className = "btn danger sm active";
+    } else {
+      imp.textContent = "Implement lane";
+      imp.className = "btn ghost sm";
+    }
+  }
   if (par) {
     par.disabled = loopOn;
     par.title = loopOn
-      ? "Stop supervisor mode before running all agents in parallel"
-      : "Spawn every leaf agent in parallel (one process each)";
-    if (!loopOn && activeRunCount > 0) {
-      par.textContent = `Run all (parallel) · ${activeRunCount} running`;
-    } else {
-      par.textContent = "Run all (parallel)";
-    }
+      ? "Stop supervisor mode before handoff phased run"
+      : "Research → placement → implement (one tick each)";
+    par.textContent = loopOn ? "Run all (handoff)" : "Run all (handoff)";
   }
 }
 
@@ -550,7 +569,7 @@ function renderStatCards() {
 
   $("#stat-cards").innerHTML = `
     <div class="stat-card accent"><div class="label">Running</div><div class="value">${running}</div></div>
-    <div class="stat-card" title="In briefing heap — supervisor runs a few per tick"><div class="label">Recommended</div><div class="value">${recommended}</div></div>
+    <div class="stat-card"><div class="label">Queued</div><div class="value">${queued}</div></div>
     <div class="stat-card"><div class="label">Stopped</div><div class="value">${stopped}</div></div>
     <div class="stat-card"><div class="label">Interventions</div><div class="value">${interventions}</div></div>
     <div class="stat-card"><div class="label">Run artifacts</div><div class="value">${runs}</div></div>`;
@@ -1075,7 +1094,29 @@ $("#mode-parallel")?.addEventListener("click", async () => {
   if (ui.data?.runtime?.supervisor_loop_running) {
     await fetchJson("/api/supervisor/stop", { method: "POST" });
   }
-  await postControl("/api/swarm/run-all", btn, { label: "Spawning" });
+  await postControl("/api/swarm/run-all", btn, { label: "Handoff phases" });
+});
+
+function laneInfo() {
+  return ui.data?.lanes ?? ui.data?.status?.lanes ?? {};
+}
+
+$("#mode-research-lane")?.addEventListener("click", async () => {
+  const lanes = laneInfo();
+  const btn = $("#mode-research-lane");
+  const path = lanes.research_lane_running
+    ? "/api/lanes/research/stop"
+    : "/api/lanes/research/start";
+  await postControl(path, btn, { label: lanes.research_lane_running ? "Stopping" : "Starting" });
+});
+
+$("#mode-implement-lane")?.addEventListener("click", async () => {
+  const lanes = laneInfo();
+  const btn = $("#mode-implement-lane");
+  const path = lanes.implement_lane_running
+    ? "/api/lanes/implement/stop"
+    : "/api/lanes/implement/start";
+  await postControl(path, btn, { label: lanes.implement_lane_running ? "Stopping" : "Starting" });
 });
 
 $("#backdrop").addEventListener("click", closeDrawers);

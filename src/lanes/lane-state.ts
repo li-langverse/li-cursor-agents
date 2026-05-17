@@ -7,6 +7,7 @@ export interface LaneStateFile {
   implement_lane_enabled: boolean;
   last_research_tick_at?: string;
   last_implement_tick_at?: string;
+  last_maintenance_tick_at?: string;
   goal_last_run_at: Record<string, string>;
 }
 

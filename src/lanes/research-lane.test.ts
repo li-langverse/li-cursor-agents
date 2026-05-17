@@ -7,13 +7,17 @@ import { pickResearchLaneTarget, researchLaneTick } from "./research-lane.js";
 import { loadLaneState, saveLaneState } from "./lane-state.js";
 
 test("pickResearchLaneTarget returns highest-priority goal when no session", async () => {
+  const sessionsDir = join(agentsPackageRoot(), "data", "research-sessions");
+  rmSync(sessionsDir, { recursive: true, force: true });
   const state = loadLaneState();
   state.goal_last_run_at = {};
   saveLaneState(state);
   const target = await pickResearchLaneTarget();
   assert.ok(target);
   assert.ok(target.agentId);
-  assert.ok(target.extra.includes("Research"));
+  assert.ok(
+    target.extra.includes("Research goal") || target.extra.includes("Continue session"),
+  );
 });
 
 test("researchLaneTick mock run completes", async () => {

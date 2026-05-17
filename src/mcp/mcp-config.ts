@@ -12,6 +12,7 @@ import { agentsPackageRoot } from "../runner.js";
 import { dbEnabled } from "../db/client.js";
 
 export const CONTROL_PLANE_DB_MCP_ID = "li-control-plane-db";
+export const ECOSYSTEM_CONTEXT_MCP_ID = "li-ecosystem-context";
 
 export function controlPlaneDbMcpEntryPath(): string {
   const root = agentsPackageRoot();
@@ -22,12 +23,44 @@ export function controlPlaneDbMcpEntryPath(): string {
   return built;
 }
 
+export function ecosystemContextMcpEntryPath(): string {
+  const root = agentsPackageRoot();
+  const built = join(root, "dist", "mcp", "li-ecosystem-context-mcp.js");
+  if (!existsSync(built)) {
+    throw new Error(`Missing ${built} — run npm run build`);
+  }
+  return built;
+}
+
+function buildEcosystemContextMcpServer(root: string): McpServerConfig {
+  return {
+    type: "stdio",
+    command: process.execPath,
+    args: [ecosystemContextMcpEntryPath()],
+    cwd: root,
+    env: {
+      LI_CURSOR_AGENTS_ROOT: root,
+      LI_CONTROL_PLANE_STORE: process.env.LI_CONTROL_PLANE_STORE ?? "disk",
+    },
+  };
+}
+
 /** MCP server config for Cursor SDK when Supabase store is active. */
 export function buildControlPlaneDbMcpServers(): Record<string, McpServerConfig> | undefined {
-  if (process.env.LI_CONTROL_PLANE_DB_MCP === "0") return undefined;
-  if (!dbEnabled() && process.env.LI_CONTROL_PLANE_DB_MCP !== "1") return undefined;
-
   const root = agentsPackageRoot();
+  const servers: Record<string, McpServerConfig> = {};
+
+  if (process.env.LI_ECOSYSTEM_CONTEXT_MCP !== "0") {
+    servers[ECOSYSTEM_CONTEXT_MCP_ID] = buildEcosystemContextMcpServer(root);
+  }
+
+  if (process.env.LI_CONTROL_PLANE_DB_MCP === "0") {
+    return Object.keys(servers).length ? servers : undefined;
+  }
+  if (!dbEnabled() && process.env.LI_CONTROL_PLANE_DB_MCP !== "1") {
+    return Object.keys(servers).length ? servers : undefined;
+  }
+
   const script = controlPlaneDbMcpEntryPath();
 
   const env: Record<string, string> = {};
@@ -55,13 +88,13 @@ export function buildControlPlaneDbMcpServers(): Record<string, McpServerConfig>
     env.SUPABASE_DB_URL = "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
   }
 
-  return {
-    [CONTROL_PLANE_DB_MCP_ID]: {
-      type: "stdio",
-      command: process.execPath,
-      args: [script],
-      cwd: root,
-      env,
-    },
+  servers[CONTROL_PLANE_DB_MCP_ID] = {
+    type: "stdio",
+    command: process.execPath,
+    args: [script],
+    cwd: root,
+    env,
   };
+
+  return servers;
 }

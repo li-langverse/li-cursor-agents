@@ -12,6 +12,7 @@ import { pushSupervisorActivity } from "./supervisor-activity.js";
 import { loadState, saveState } from "./state.js";
 import type { ActiveAgentRun, AgentRunLifecycle, ControlPlaneState } from "./types.js";
 import type { AgentId } from "../types.js";
+import { runHandoffPhasedSwarm } from "../lanes/run-handoff-phases.js";
 
 const activeRuns = new Map<string, ActiveAgentRun>();
 const childByRunId = new Map<string, ChildProcess>();
@@ -321,11 +322,18 @@ export async function stopSupervisorLoop(): Promise<{ stopped: boolean; message:
   return { stopped: true, message: "Supervisor loop stopped" };
 }
 
-/** Fire-and-forget: spawn every leaf agent once (parallel processes). */
+/** Fire-and-forget: handoff phases or parallel leaf spawns. */
 export async function runAllAgentsNow(): Promise<{
   spawned: ActiveAgentRun[];
   skipped: Array<{ agent: AgentId; reason: string }>;
+  handoff_phases?: Awaited<ReturnType<typeof runHandoffPhasedSwarm>>;
 }> {
+  if (process.env.LI_SWARM_HANDOFF_PHASES !== "0") {
+    const mock = shouldUseMock(false);
+    const phases = await runHandoffPhasedSwarm({ mock });
+    return { spawned: [], skipped: [], handoff_phases: phases };
+  }
+
   const options = defaultSupervisorOptions({ once: true, force: true });
   const benchmarksRoot = options.benchmarksRoot;
   const preflight = runPreflight(benchmarksRoot, options.skipSlowPreflight !== false);

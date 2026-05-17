@@ -35,6 +35,30 @@ def main() -> int:
 
     rec = data.get("recommended_agents") or []
     data["heap_plan"] = build_heap_plan(rec)
+    data.setdefault("implementation_queue", {"work_queue": [], "sources": []})
+    data["swarm_scorecard"] = {
+        "pending_handoffs": 0,
+        "pending_placement": 0,
+        "ready_to_implement": 0,
+        "by_domain": {"ecosystem": 1},
+        "active_research_session": None,
+        "research_lane_enabled": True,
+        "implement_lane_enabled": True,
+    }
+    data["research_goals_status"] = [
+        {
+            "goal_id": "provability_holes",
+            "title": "Proof gaps (fixture)",
+            "agent": "proof_gap_researcher",
+            "priority": 9,
+            "eligible": True,
+        }
+    ]
+    data["provability_scorecard"] = {
+        "open_plan_findings": 0,
+        "provability_goal_priority": 9,
+        "trigger_goal_id": "provability_holes",
+    }
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
     print(f"wrote {OUT} from {NAME} (+ heap)")

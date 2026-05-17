@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Dashboard lane API** — `/api/lanes`, start/stop research & implement loops, per-lane ticks; footer toggles in `web/app.js`.
+- **Briefing scorecards** — `swarm_scorecard`, `research_goals_status`, `provability_scorecard` via `src/briefing/swarm-scorecard.ts` + maintenance lane refresh.
+- **`li-ecosystem-context` MCP** — `record_placement_decision`, `list_pending_handoffs`, research session tools (`src/mcp/li-ecosystem-context-mcp.ts`).
+- **Handoff phased run-all** — `LI_SWARM_HANDOFF_PHASES` (default on) uses research → implement ticks instead of parallel spawn.
+- **Maintenance lane** — `npm run agents:maintenance-lane` refreshes briefing without LLM.
 - **Research + implement lanes** — `src/lanes/research-lane.ts`, `implement-lane.ts`; `npm run agents:research-lane` / `agents:implement-lane`; session-first scheduling; placement gate via `package_architect`.
 - **`config/research-goals.yaml`** + `src/research-goals/load-goals.ts` — goal priority, cadence, agent mapping.
 - **Post-run swarm effects** — `src/handoffs/post-run.ts` advances research sessions, creates cycle handoffs, parses architect placement JSON.
