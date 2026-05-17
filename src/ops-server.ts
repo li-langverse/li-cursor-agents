@@ -33,9 +33,9 @@ import {
 import { listActiveRuns } from "./control-plane/runtime.js";
 import { listSupervisorActivity } from "./control-plane/supervisor-activity.js";
 import { buildSwarmStatistics } from "./control-plane/swarm-statistics.js";
-import { hydrateStateFromDb, loadState, reloadStateFromDiskIfNewer } from "./control-plane/state.js";
-import { dbEnabled } from "./db/client.js";
-import type { ControlPlaneReport } from "./control-plane/types.js";
+import { hydrateStateFromDb, loadState, reloadStateIfNewer } from "./control-plane/state.js";
+import { assertStoreReady, configuredStore, dataStoreLabel, dbEnabled } from "./db/client.js";
+import type { ControlPlaneReport, ControlPlaneState } from "./control-plane/types.js";
 import { resolveBenchmarksRoot } from "./preflight.js";
 import type { AgentId } from "./types.js";
 
@@ -50,9 +50,9 @@ export function defaultOpsPort(): number {
 }
 
 export function startOpsServer(port: number): ReturnType<typeof createServer> {
+  assertStoreReady();
   const packageRoot = agentsPackageRoot();
   const webRoot = join(packageRoot, "web");
-
   const server = createServer(async (req, res) => {
     try {
       const url = new URL(req.url ?? "/", "http://127.0.0.1");
@@ -100,15 +100,16 @@ async function liveReportPayload(): Promise<ControlPlaneReport | { error: string
   return report ?? { error: "no report — run supervisor or start swarm" };
 }
 
-function loadStateForApi(): ReturnType<typeof loadState> {
+async function loadStateForApi(): Promise<ControlPlaneState> {
   if (isSupervisorLoopRunning()) {
-    return reloadStateFromDiskIfNewer();
+    return reloadStateIfNewer();
   }
   return loadState();
 }
 
 async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const state = loadStateForApi();
+  const state = await loadStateForApi();
+  const store = dataStoreLabel();
   const runtime = runtimeSnapshot(state);
 
   // Fast paths — avoid loadLiveReportAsync on every poll (blocks dashboard).
@@ -119,12 +120,13 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       benchmarks_root: resolveBenchmarksRoot(),
       runtime: {
         ...runtime,
-        store: dbEnabled() ? "supabase" : "disk",
+        store,
         db_enabled: dbEnabled(),
+        control_plane_store: configuredStore(),
         current_supervisor_agent: state.current_supervisor_agent ?? null,
       },
       supervisor_loop_running: isSupervisorLoopRunning(),
-      store: dbEnabled() ? "supabase" : "disk",
+      store,
       agent_backend: agentBackendLabel(),
       sdk_ready: agentBackendLabel() === "cursor-sdk" && Boolean(resolveCursorApiKey()),
     });
@@ -215,7 +217,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     const limit = Math.min(50, Math.max(1, Number(url.searchParams.get("limit") ?? 25)));
     json(res, 200, {
       items: await listRecentActivity(limit),
-      store: dbEnabled() ? "supabase" : "disk",
+      store,
     });
     return;
   }
@@ -223,7 +225,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
   if (url.pathname === "/api/statistics" && req.method === "GET") {
     const limit = Math.min(800, Math.max(50, Number(url.searchParams.get("runs") ?? 400)));
     const stats = await buildSwarmStatistics(limit);
-    json(res, 200, { statistics: stats, store: dbEnabled() ? "supabase" : "disk" });
+    json(res, 200, { statistics: stats, store });
     return;
   }
 
@@ -231,7 +233,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     json(res, 200, {
       runs: await listRunsMerged(60),
       active: listActiveRuns(),
-      store: dbEnabled() ? "supabase" : "disk",
+      store,
     });
     return;
   }
@@ -278,11 +280,12 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
 
   if (url.pathname === "/api/tick" && req.method === "POST") {
     const tick = await runOneTick();
+    const tickState = await loadStateForApi();
     json(res, 200, {
       ok: true,
       tick,
-      state: loadStateForApi(),
-      runtime: runtimeSnapshot(loadStateForApi()),
+      state: tickState,
+      runtime: runtimeSnapshot(tickState),
       report: readJson(reportPath()),
     });
     return;
@@ -296,11 +299,12 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     const message =
       result.message +
       (result.started ? " — first tick runs agents immediately (check Supervisor log)." : "");
+    const loopState = await loadStateForApi();
     json(res, 200, {
       ok: result.started || result.already_running,
       ...result,
       message,
-      runtime: runtimeSnapshot(loadStateForApi()),
+      runtime: runtimeSnapshot(loopState),
       activity: listSupervisorActivity(8),
     });
     return;
@@ -308,10 +312,11 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
 
   if (url.pathname === "/api/supervisor/stop" && req.method === "POST") {
     const stopped = await stopSupervisorLoop();
+    const stopState = await loadStateForApi();
     json(res, 200, {
       ok: true,
       ...stopped,
-      runtime: runtimeSnapshot(loadStateForApi()),
+      runtime: runtimeSnapshot(stopState),
       activity: listSupervisorActivity(5),
     });
     return;
@@ -319,14 +324,16 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
 
   if (url.pathname === "/api/swarm/run-all" && req.method === "POST") {
     const result = await runAllAgentsNow();
-    json(res, 200, { ok: true, ...result, runtime: runtimeSnapshot(loadStateForApi()) });
+    const swarmState = await loadStateForApi();
+    json(res, 200, { ok: true, ...result, runtime: runtimeSnapshot(swarmState) });
     return;
   }
 
   if (url.pathname === "/api/swarm/stop-all" && req.method === "POST") {
     void stopSupervisorLoop();
     const killed = await stopAllActiveRuns();
-    json(res, 200, { ok: true, killed, runtime: runtimeSnapshot(loadStateForApi()) });
+    const haltState = await loadStateForApi();
+    json(res, 200, { ok: true, killed, runtime: runtimeSnapshot(haltState) });
     return;
   }
 
@@ -342,7 +349,8 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       json(res, 409, { error: result.error });
       return;
     }
-    json(res, 200, { ok: true, run: result.run, runtime: runtimeSnapshot(loadStateForApi()) });
+    const startState = await loadStateForApi();
+    json(res, 200, { ok: true, run: result.run, runtime: runtimeSnapshot(startState) });
     return;
   }
 
@@ -373,7 +381,8 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
   const runCancel = url.pathname.match(/^\/api\/runs\/([^/]+)\/cancel$/);
   if (runCancel && req.method === "POST") {
     const ok = cancelRun(runCancel[1]);
-    json(res, ok ? 200 : 404, { ok, runtime: runtimeSnapshot(loadStateForApi()) });
+    const cancelState = await loadStateForApi();
+    json(res, ok ? 200 : 404, { ok, runtime: runtimeSnapshot(cancelState) });
     return;
   }
 

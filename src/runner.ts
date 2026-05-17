@@ -3,7 +3,6 @@ import { readFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getAgent } from "./agents/registry.js";
-import { CursorSdkBackend } from "./backends/cursor-sdk-backend.js";
 import { MockBackend } from "./backends/mock-backend.js";
 import { buildMockTrace, buildRunInput } from "./agent-run-trace.js";
 import { resolveCursorApiKey } from "./env.js";
@@ -132,7 +131,7 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
             cwd: workCwd,
           }),
         },
-        { definition, rolloutPrUrls: prUrls },
+        { definition, rolloutPrUrls: prUrls, preflight },
       );
       await persistAgentRun({ run: finalized, rolloutRows: rollout });
       return finalized;
@@ -140,7 +139,9 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
   }
 
   const userMessage = buildUserMessage(definition.id, preflight, extra);
-  const backend = mock ? new MockBackend() : new CursorSdkBackend();
+  const backend = mock
+    ? new MockBackend()
+    : new (await import("./backends/cursor-sdk-backend.js")).CursorSdkBackend();
   const briefingHash =
     preflight.briefing && typeof preflight.briefing === "object"
       ? hashBriefing(preflight.briefing)
@@ -162,10 +163,29 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
     mock,
   });
 
-  const result = await backend.run(definition, systemPrompt, userMessage, { ...options, cwd: workCwd });
+  let result: AgentRunResult;
+  try {
+    result = await backend.run(definition, systemPrompt, userMessage, { ...options, cwd: workCwd });
+  } catch (err) {
+    const outputPath = join(runsDir(), `${definition.id}-${Date.now()}.md`);
+    result = {
+      agentId: definition.id,
+      backend: mock ? "mock" : "cursor-sdk",
+      status: "error",
+      durationMs: 0,
+      outputPath,
+      outputText: "",
+      error: err instanceof Error ? err.message : String(err),
+      errorDetail:
+        err instanceof Error
+          ? { name: err.name, message: err.message, stack: err.stack }
+          : { message: String(err) },
+      runInput,
+    };
+  }
   const finalized = finalizeAgentRun(
     { ...result, runInput: result.runInput ?? runInput },
-    { definition },
+    { definition, preflight },
   );
   await persistAgentRun({ run: finalized });
   return finalized;

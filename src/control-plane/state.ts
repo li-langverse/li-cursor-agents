@@ -1,7 +1,8 @@
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { statePath } from "./paths.js";
 import { DEFAULT_STATE, type ControlPlaneState } from "./types.js";
 import { loadControlPlaneStateHybrid, persistControlPlaneState } from "../db/persist.js";
+import { dbEnabled, useDiskStore, useSupabaseStore } from "../db/client.js";
 
 let memoryState: ControlPlaneState | null = null;
 
@@ -29,7 +30,19 @@ function readStateFromDisk(): ControlPlaneState | null {
   }
 }
 
-/** Merge disk state when the supervisor child (or CLI) wrote a newer snapshot. */
+/** Reload newest state from Supabase (supervisor loop) or legacy disk export. */
+export async function reloadStateIfNewer(): Promise<ControlPlaneState> {
+  if (useSupabaseStore()) {
+    const fromDb = await loadControlPlaneStateHybrid();
+    if (fromDb && (!memoryState || (fromDb.updated_at ?? "") >= (memoryState.updated_at ?? ""))) {
+      memoryState = fromDb;
+    }
+    return memoryState ?? { ...DEFAULT_STATE };
+  }
+  return reloadStateFromDiskIfNewer();
+}
+
+/** Disk store: reload state.json when supervisor wrote a newer snapshot. */
 export function reloadStateFromDiskIfNewer(): ControlPlaneState {
   const disk = readStateFromDisk();
   if (!disk) return memoryState ?? { ...DEFAULT_STATE };
@@ -40,6 +53,9 @@ export function reloadStateFromDiskIfNewer(): ControlPlaneState {
 }
 
 export function loadState(): ControlPlaneState {
+  if (useSupabaseStore()) {
+    return memoryState ?? { ...DEFAULT_STATE };
+  }
   const disk = readStateFromDisk();
   if (disk && (!memoryState || (disk.updated_at ?? "") >= (memoryState.updated_at ?? ""))) {
     memoryState = disk;

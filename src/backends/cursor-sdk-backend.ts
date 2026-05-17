@@ -1,6 +1,5 @@
-import { writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { Agent } from "@cursor/sdk";
+import { errorDetailFromUnknown } from "../agent-output-format.js";
 import { createTraceCollector } from "../agent-run-trace.js";
 import { runsDir } from "../control-plane/paths.js";
 import { resolveCursorApiKey, resolveCursorModelId } from "../env.js";
@@ -35,21 +34,24 @@ export class CursorSdkBackend implements AgentBackend {
 
     const apiKey = options.apiKey ?? resolveCursorApiKey();
     if (!apiKey) {
-      throw new Error(
+      const err = new Error(
         "Cursor API key required (set CURSOR_API_KEY, CURSOR_SDK_KEY, or CURSOR_SDK; use --mock for CI)",
       );
+      return failResult(definition.id, outputPath, start, err);
     }
 
     const modelId = options.modelId ?? resolveCursorModelId();
     const fullPrompt = `${systemPrompt}\n\n---\n\n${userMessage}`;
 
-    const agent = await Agent.create({
-      apiKey,
-      model: { id: modelId },
-      local: { cwd: options.cwd },
-    });
-
+    let agent: Awaited<ReturnType<typeof import("@cursor/sdk").Agent.create>> | null = null;
     try {
+      const { Agent } = await import("@cursor/sdk");
+      agent = await Agent.create({
+        apiKey,
+        model: { id: modelId },
+        local: { cwd: options.cwd },
+      });
+
       const chunks: string[] = [];
       const collector = createTraceCollector();
       const run = await agent.send(fullPrompt, {
@@ -64,21 +66,42 @@ export class CursorSdkBackend implements AgentBackend {
       const text =
         result.result ?? (chunks.join("") || `(no text; status=${result.status})`);
       const trace = collector.finalize(text);
-
-      writeFileSync(outputPath, text, "utf8");
+      const ok = result.status === "finished";
 
       return {
         agentId: definition.id,
         backend: "cursor-sdk",
-        status: result.status === "finished" ? "finished" : "error",
+        status: ok ? "finished" : "error",
         durationMs: Date.now() - start,
         outputText: text,
         outputPath,
-        error: result.status !== "finished" ? `run status: ${result.status}` : undefined,
+        error: ok ? undefined : `SDK run status: ${result.status}`,
+        errorDetail: ok ? undefined : errorDetailFromUnknown(new Error(`SDK run status: ${result.status}`)),
         trace,
       };
+    } catch (err) {
+      return failResult(definition.id, outputPath, start, err);
     } finally {
-      agent.close();
+      agent?.close();
     }
   }
+}
+
+function failResult(
+  agentId: string,
+  outputPath: string,
+  start: number,
+  err: unknown,
+): AgentRunResult {
+  const detail = errorDetailFromUnknown(err);
+  return {
+    agentId,
+    backend: "cursor-sdk",
+    status: "error",
+    durationMs: Date.now() - start,
+    outputPath,
+    outputText: "",
+    error: detail.message,
+    errorDetail: detail,
+  };
 }

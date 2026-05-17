@@ -63,5 +63,7 @@ export LI_AUTO_START_SUPERVISOR="${LI_AUTO_START_SUPERVISOR:-1}"
 # Prefer host lic CI (brew llvm) over 2GB docker image
 export LI_LOCAL_CI_LIC_MODE="${LI_LOCAL_CI_LIC_MODE:-host}"
 
-# Stack: Supabase is the default primary store (Docker required). Opt out with LI_STACK_SKIP_SUPABASE=1
+# Control-plane store: supabase (default, Docker) or disk (JSON under data/)
+export LI_CONTROL_PLANE_STORE="${LI_CONTROL_PLANE_STORE:-supabase}"
+# Legacy alias for disk: LI_STACK_SKIP_SUPABASE=1
 export LI_STACK_SKIP_SUPABASE="${LI_STACK_SKIP_SUPABASE:-0}"

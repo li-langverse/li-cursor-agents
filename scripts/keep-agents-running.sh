@@ -29,8 +29,13 @@ export GH_TOKEN GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
 unset CURSOR_MOCK
 export LI_AUTO_START_SUPERVISOR=1
 
-if [[ "${LI_STACK_SKIP_SUPABASE:-}" != "1" ]]; then
-  "$ROOT/scripts/ensure-supabase.sh" || echo "WARN: Supabase not ready — dashboard will use disk cache" >&2
+_store="${LI_CONTROL_PLANE_STORE:-supabase}"
+[[ "${LI_STACK_SKIP_SUPABASE:-}" == "1" ]] && _store="disk"
+if [[ "$_store" == "supabase" ]]; then
+  "$ROOT/scripts/ensure-supabase.sh" || {
+    echo "ERROR: LI_CONTROL_PLANE_STORE=supabase but Supabase failed (Docker?). Use LI_CONTROL_PLANE_STORE=disk or fix: npm run db:ensure" >&2
+    exit 1
+  }
 fi
 if [[ -f "$ROOT/.env.supabase" ]]; then
   set -a

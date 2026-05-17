@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Supervisor cooldown: do not re-dispatch recommended agents when heap queue skipped tasks on cooldown (`src/supervisor/loop.ts`); cooldown treats terminal run statuses (`src/heap/task-queue.ts`).
+- Native `sqlite3` / arch mismatch: `scripts/ensure-native-modules.sh` rebuilds for host Node before `agents:keep`.
+
+### Added
+
+- `LI_CONTROL_PLANE_STORE=supabase|disk` (default supabase); `assertStoreReady()` at stack start; single-store persist path in `src/db/persist.ts`.
+- `src/agent-output-format.ts` — structured agent markdown (metadata, preflight, deliverable, error + stack).
+
 ### Added
 - `scripts/ensure-supabase.sh` + `npm run db:ensure`: start local Supabase, apply migrations, write `.env.supabase` with JWT keys (CLI 2.53 does not print service role).
 - Supabase is the **default** primary store (`LI_STACK_SKIP_SUPABASE=0`); `agents:keep` and `npm run setup` call ensure automatically.

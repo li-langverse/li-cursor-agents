@@ -7,6 +7,7 @@ import { tmpdir } from "node:os";
 test("reloadStateFromDiskIfNewer picks up child-written state", async () => {
   const dir = mkdtempSync(join(tmpdir(), "li-cp-state-"));
   process.env.LI_CONTROL_PLANE_DIR = dir;
+  process.env.LI_CONTROL_PLANE_STORE = "disk";
   process.env.LI_EXPORT_DISK_CACHE = "1";
 
   writeFileSync(
@@ -48,5 +49,6 @@ test("reloadStateFromDiskIfNewer picks up child-written state", async () => {
   assert.equal(loadState().runs_total, 5);
 
   delete process.env.LI_CONTROL_PLANE_DIR;
+  delete process.env.LI_CONTROL_PLANE_STORE;
   delete process.env.LI_EXPORT_DISK_CACHE;
 });

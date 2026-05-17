@@ -80,7 +80,8 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
     maxTasks: options.maxTasksPerTick,
   });
 
-  if (tasks.length === 0) {
+  // Do not re-queue recommended agents when heap skipped them on cooldown.
+  if (tasks.length === 0 && skippedCooldown === 0) {
     const recommended = extractRecommended(briefing);
     const stopped = new Set(state.stopped_agents ?? []);
     for (const r of recommended) {

@@ -17,6 +17,18 @@ Verify **open plans** and PH trackers against the repo — not implementation.
 3. File up to **3** issues: label `plan-needed` or `master-plan-gap` with PH-/G- ids.
 4. Post a short digest (no code changes unless typo in plan doc).
 
+## Output format (required)
+
+Use these markdown sections in order (the dashboard parses them):
+
+1. **Executive summary** — ≤8 bullets
+2. **Tracker review** — open PH / master-plan rows with file or test evidence
+3. **Provability / G-*** — gaps from `provability-gaps.md` when present
+4. **Recommended issues** — up to 3, with labels `plan-needed` or `master-plan-gap` and PH-/G- ids
+5. **Deferred** — what you intentionally did not do
+
+On failure, include **Error** with message and any stack trace from tools.
+
 ## Do not
 
 - Implement features (`plan-approved` required for code agents).

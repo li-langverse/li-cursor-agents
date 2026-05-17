@@ -85,6 +85,10 @@ if command -v docker >/dev/null 2>&1 && command -v supabase >/dev/null 2>&1; the
   fi
 fi
 
+li_resolve_env_paths "$ROOT"
+upsert_env BENCHMARKS_ROOT "$BENCHMARKS_ROOT"
+upsert_env LI_LOCAL_CI_ROOT "$LI_LOCAL_CI_ROOT"
+
 if command -v docker >/dev/null 2>&1; then
   echo "==> li-local-ci: slim node image (for quick Docker tests)"
   if [[ -x "$LI_LOCAL_CI_ROOT/scripts/build-images.sh" ]]; then

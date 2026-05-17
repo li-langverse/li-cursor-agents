@@ -7,7 +7,7 @@ import { listActiveRuns } from "./runtime.js";
 import { loadState } from "./state.js";
 import { readJson } from "./read-json.js";
 import { reportPath } from "./paths.js";
-import { dbEnabled } from "../db/client.js";
+import { dbEnabled, useDiskStore, useSupabaseStore } from "../db/client.js";
 import {
   getRunById,
   getRunEvents,
@@ -129,13 +129,10 @@ export function listRunsFromDisk(limit = 80): RunCatalogEntry[] {
 }
 
 export async function listRunsMerged(limit = 80): Promise<RunCatalogEntry[]> {
-  if (dbEnabled()) {
-    try {
-      const fromDb = await listRunsGlobal(limit);
-      if (fromDb.length) return fromDb.map(historyRowToCatalog);
-    } catch {
-      /* disk */
-    }
+  if (useSupabaseStore()) {
+    if (!dbEnabled()) return [];
+    const fromDb = await listRunsGlobal(limit);
+    return fromDb.map(historyRowToCatalog);
   }
   return listRunsFromDisk(limit);
 }
@@ -171,23 +168,20 @@ export async function getRunDetail(runId: string): Promise<RunCatalogEntry | nul
     };
   }
 
-  if (dbEnabled()) {
-    try {
-      const row = await getRunById(runId);
-      if (row) {
-        const entry = historyRowToCatalog(row);
-        if (row.output_md) entry.output_preview = row.output_md;
-        entry.run_input = row.run_input ?? undefined;
-        entry.run_trace = row.run_trace ?? undefined;
-        entry.trace_events = await getRunEvents(runId);
-        const rollouts = await getRolloutsForRun(runId);
-        const prFromRollout = rollouts.map((r) => r.pr_url).filter((u): u is string => Boolean(u));
-        if (prFromRollout.length && !entry.pr_urls?.length) entry.pr_urls = prFromRollout;
-        return entry;
-      }
-    } catch {
-      /* disk */
+  if (useSupabaseStore() && dbEnabled()) {
+    const row = await getRunById(runId);
+    if (row) {
+      const entry = historyRowToCatalog(row);
+      if (row.output_md) entry.output_preview = row.output_md;
+      entry.run_input = row.run_input ?? undefined;
+      entry.run_trace = row.run_trace ?? undefined;
+      entry.trace_events = await getRunEvents(runId);
+      const rollouts = await getRolloutsForRun(runId);
+      const prFromRollout = rollouts.map((r) => r.pr_url).filter((u): u is string => Boolean(u));
+      if (prFromRollout.length && !entry.pr_urls?.length) entry.pr_urls = prFromRollout;
+      return entry;
     }
+    return null;
   }
 
   const dir = runsDir();
@@ -216,16 +210,12 @@ export async function getRunDetail(runId: string): Promise<RunCatalogEntry | nul
 }
 
 export async function listRunsForAgent(agentId: string, limit = 15): Promise<RunCatalogEntry[]> {
-  let disk: RunCatalogEntry[] = [];
-  if (dbEnabled()) {
-    try {
-      const fromDb = await listAgentRunHistory(agentId, limit);
-      if (fromDb.length) disk = fromDb.map(historyRowToCatalog);
-    } catch {
-      disk = listRunsFromDisk(200).filter((r) => r.agent_id === agentId);
-    }
+  let history: RunCatalogEntry[] = [];
+  if (useSupabaseStore() && dbEnabled()) {
+    const fromDb = await listAgentRunHistory(agentId, limit);
+    history = fromDb.map(historyRowToCatalog);
   } else {
-    disk = listRunsFromDisk(200).filter((r) => r.agent_id === agentId);
+    history = listRunsFromDisk(200).filter((r) => r.agent_id === agentId);
   }
 
   const live = listActiveRuns()
@@ -244,20 +234,16 @@ export async function listRunsForAgent(agentId: string, limit = 15): Promise<Run
       }),
     );
   const seen = new Set(live.map((r) => r.run_id));
-  const merged = [...live, ...disk.filter((r) => !seen.has(r.run_id))];
+  const merged = [...live, ...history.filter((r) => !seen.has(r.run_id))];
   return merged.slice(0, limit);
 }
 
 export async function getAgentRunHistory(agentId: string, limit = 50): Promise<AgentRunHistoryRow[]> {
-  if (dbEnabled()) {
-    try {
-      return await listAgentRunHistory(agentId, limit);
-    } catch {
-      /* fall through */
-    }
+  if (useSupabaseStore() && dbEnabled()) {
+    return listAgentRunHistory(agentId, limit);
   }
-  const disk = await listRunsForAgent(agentId, limit);
-  return disk.map(
+  const fromDisk = await listRunsForAgent(agentId, limit);
+  return fromDisk.map(
     (r): AgentRunHistoryRow => ({
       run_id: r.run_id,
       agent_id: r.agent_id,
