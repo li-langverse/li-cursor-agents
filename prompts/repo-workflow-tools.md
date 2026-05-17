@@ -42,6 +42,16 @@ cd li-cursor-agents
 
 `agent-pr-deliverable-gate.py` and `pr-merge-gate.py` fail PRs missing `## Agent deliverable` with at least one `- [x]`. Label `agent-incomplete` blocks merge until the agent finishes.
 
+## Guaranteed push (post-hook)
+
+For `docs_maintainer`, `ci_maintainer`, and numerics agents (`bench_improver`, `numerics_researcher`, `autoresearch`):
+
+1. The runner prepares an isolated workspace (`li-demo` for docs/CI by default, `lic` for numerics).
+2. Edit files in that clone during your run.
+3. After you finish, the **supervisor post-hook** runs `commit` → `push` → `gh pr create` if the workspace is dirty (requires `GH_TOKEN`).
+
+Skip push in tests: `LI_REPO_WORKFLOW_SKIP_PUSH=1`. Fixture tests: `LI_REPO_WORKFLOW_USE_FIXTURE=1` (local `fixtures/li-demo-workflow`).
+
 ## Rules
 
 - Feature branch only; **never** push to `main` / `dev` / `master`

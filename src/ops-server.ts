@@ -33,11 +33,13 @@ import {
 import { listActiveRuns } from "./control-plane/runtime.js";
 import { listSupervisorActivity } from "./control-plane/supervisor-activity.js";
 import { buildSwarmStatistics } from "./control-plane/swarm-statistics.js";
-import { hydrateStateFromDb, loadState, reloadStateIfNewer } from "./control-plane/state.js";
+import { agentLog } from "./agent-log.js";
+import { hydrateStateFromDb, loadState, loadStateForApi } from "./control-plane/state.js";
 import { assertStoreReady, configuredStore, dataStoreLabel, dbEnabled } from "./db/client.js";
 import type { ControlPlaneReport, ControlPlaneState } from "./control-plane/types.js";
 import { resolveBenchmarksRoot } from "./preflight.js";
 import type { AgentId } from "./types.js";
+import type { SwarmStatistics } from "./control-plane/swarm-statistics.js";
 
 const MIME: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -47,6 +49,27 @@ const MIME: Record<string, string> = {
 
 export function defaultOpsPort(): number {
   return Number(process.env.LI_AGENTS_OPS_PORT ?? process.env.LI_AGENT_DASHBOARD_PORT ?? 9477);
+}
+
+let statisticsCache: { at: number; stats: SwarmStatistics } | null = null;
+const STATS_CACHE_MS = Number(process.env.LI_STATISTICS_CACHE_MS ?? 45_000);
+
+async function getSwarmStatisticsForApi(
+  url: URL,
+): Promise<SwarmStatistics> {
+  const refresh = url.searchParams.get("refresh") === "1";
+  const includeGh = url.searchParams.get("gh") === "1";
+  const now = Date.now();
+  if (!refresh && statisticsCache && now - statisticsCache.at < STATS_CACHE_MS) {
+    return statisticsCache.stats;
+  }
+  const limit = Math.min(800, Math.max(50, Number(url.searchParams.get("runs") ?? 200)));
+  const stats = await buildSwarmStatistics(limit, {
+    runLimit: limit,
+    skipGh: !includeGh,
+  });
+  statisticsCache = { at: now, stats };
+  return stats;
 }
 
 export function startOpsServer(port: number): ReturnType<typeof createServer> {
@@ -75,21 +98,27 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
     const p = typeof addr === "object" && addr ? addr.port : port;
     const backend = agentBackendLabel();
     const keyOk = Boolean(resolveCursorApiKey());
-    console.error(`Agent dashboard: http://127.0.0.1:${p}/`);
-    console.error(
-      `[dashboard] Agent backend: ${backend}${backend === "cursor-sdk" && !keyOk ? " (missing CURSOR_API_KEY — add to .env)" : ""}`,
+    agentLog("dashboard", "info", `Agent dashboard: http://127.0.0.1:${p}/`);
+    agentLog(
+      "dashboard",
+      "info",
+      `Agent backend: ${backend}${backend === "cursor-sdk" && !keyOk ? " (missing CURSOR_API_KEY — add to .env)" : ""}`,
     );
     if (dbEnabled()) {
       void hydrateStateFromDb().catch((err) => {
-        console.error("[db] hydrate state:", err instanceof Error ? err.message : err);
+        agentLog("db", "ERROR", `hydrate state: ${err instanceof Error ? err.message : err}`);
       });
     }
     if (process.env.LI_AUTO_START_SUPERVISOR === "1" || process.env.LI_AUTO_START_SUPERVISOR === "true") {
       void startSupervisorLoop({ forceFirstTick: true }).then((r) => {
-        console.error(`[dashboard] auto-start supervisor: ${r.message}`);
+        agentLog("dashboard", "info", `auto-start supervisor: ${r.message}`);
       });
     } else {
-      console.error("[dashboard] Start loop from footer or: LI_AUTO_START_SUPERVISOR=1 npm run dashboard");
+      agentLog(
+        "dashboard",
+        "info",
+        "Start loop from footer or: LI_AUTO_START_SUPERVISOR=1 npm run dashboard",
+      );
     }
   });
   return server;
@@ -100,15 +129,8 @@ async function liveReportPayload(): Promise<ControlPlaneReport | { error: string
   return report ?? { error: "no report — run supervisor or start swarm" };
 }
 
-async function loadStateForApi(): Promise<ControlPlaneState> {
-  if (isSupervisorLoopRunning()) {
-    return reloadStateIfNewer();
-  }
-  return loadState();
-}
-
 async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const state = await loadStateForApi();
+  const state = isSupervisorLoopRunning() ? loadStateForApi() : loadState();
   const store = dataStoreLabel();
   const runtime = runtimeSnapshot(state);
 
@@ -223,8 +245,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
   }
 
   if (url.pathname === "/api/statistics" && req.method === "GET") {
-    const limit = Math.min(800, Math.max(50, Number(url.searchParams.get("runs") ?? 400)));
-    const stats = await buildSwarmStatistics(limit);
+    const stats = await getSwarmStatisticsForApi(url);
     json(res, 200, { statistics: stats, store });
     return;
   }

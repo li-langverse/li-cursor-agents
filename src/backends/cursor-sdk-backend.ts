@@ -3,6 +3,7 @@ import { errorDetailFromUnknown } from "../agent-output-format.js";
 import { createTraceCollector } from "../agent-run-trace.js";
 import { runsDir } from "../control-plane/paths.js";
 import { resolveCursorApiKey, resolveCursorModelId } from "../env.js";
+import { buildControlPlaneDbMcpServers } from "../mcp/mcp-config.js";
 import type { AgentBackend, AgentDefinition, AgentRunOptions, AgentRunResult } from "../types.js";
 
 export class CursorSdkBackend implements AgentBackend {
@@ -46,10 +47,12 @@ export class CursorSdkBackend implements AgentBackend {
     let agent: Awaited<ReturnType<typeof import("@cursor/sdk").Agent.create>> | null = null;
     try {
       const { Agent } = await import("@cursor/sdk");
+      const mcpServers = buildControlPlaneDbMcpServers();
       agent = await Agent.create({
         apiKey,
         model: { id: modelId },
         local: { cwd: options.cwd },
+        ...(mcpServers ? { mcpServers } : {}),
       });
 
       const chunks: string[] = [];

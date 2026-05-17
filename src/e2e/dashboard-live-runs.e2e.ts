@@ -142,7 +142,7 @@ describe("dashboard live runs and trace e2e", () => {
       runs: unknown[];
       history: Array<{ run_id: string; summary?: string }>;
     };
-    assert.ok(["idle", "cooldown", "queued"].includes(ad.status), `post-run status: ${ad.status}`);
+    assert.ok(["idle", "cooldown", "recommended"].includes(ad.status), `post-run status: ${ad.status}`);
     assert.ok(ad.runs.length >= 1, "agent detail runs list");
     assert.ok(ad.history.length >= 1, "agent history trace");
 

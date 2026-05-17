@@ -73,13 +73,23 @@ _env_file="$_ensure_root/.env.supabase"
 
 _log "==> Supabase: wrote $_env_file"
 
-# Quick auth check against REST
+# Wait for PostgREST (supervisor persist uses REST, not Postgres 54322)
 _sr="$(echo "$_out" | grep '^SUPABASE_SERVICE_ROLE_KEY=' | cut -d= -f2-)"
 if [[ -n "$_sr" ]]; then
-  _code="$(curl -sf -o /dev/null -w "%{http_code}" \
-    -H "apikey: $_sr" -H "Authorization: Bearer $_sr" \
-    "${API_URL}/rest/v1/" 2>/dev/null || echo "000")"
-  if [[ "$_code" != "200" ]]; then
-    echo "WARN: Supabase REST probe returned HTTP $_code (check Docker / supabase start)" >&2
+  _ready=0
+  for _i in $(seq 1 30); do
+    _code="$(curl -sf -o /dev/null -w "%{http_code}" \
+      -H "apikey: $_sr" -H "Authorization: Bearer $_sr" \
+      "${API_URL}/rest/v1/" 2>/dev/null || echo "000")"
+    if [[ "$_code" == "200" ]]; then
+      _ready=1
+      break
+    fi
+    sleep 1
+  done
+  if [[ "$_ready" != "1" ]]; then
+    echo "ERROR: Supabase REST not ready after 30s (HTTP ${_code:-000}) — npm run db:probe" >&2
+    exit 1
   fi
+  _log "==> Supabase: REST ready at ${API_URL}"
 fi

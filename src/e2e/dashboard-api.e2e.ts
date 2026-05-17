@@ -3,7 +3,8 @@
  */
 import { test, describe, after } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { Server } from "node:http";
 import { get, request } from "node:http";
 import { supervisorTick } from "../supervisor/loop.js";
@@ -101,6 +102,17 @@ describe("dashboard drilldown API e2e", () => {
     const status = statusRes.body as { state?: { runs_total: number } };
     assert.ok((status.state?.runs_total ?? 0) >= 1);
 
+    const statsRes = await httpGetJson(port, "/api/statistics");
+    assert.equal(statsRes.status, 200);
+    const statsBody = statsRes.body as { statistics?: Record<string, unknown> };
+    const stats = statsBody.statistics;
+    assert.ok(stats && typeof stats === "object", "statistics payload");
+    assert.ok(typeof stats.generated_at === "string");
+    assert.ok(typeof stats.actions_taken === "number");
+    assert.ok(typeof stats.prs_opened === "number");
+    assert.ok(typeof stats.agent_prs_open_now === "number");
+    assert.ok(Array.isArray(stats.notes));
+
     const runsRes = await httpGetJson(port, "/api/runs");
     assert.equal(runsRes.status, 200);
     const runsPayload = runsRes.body as { runs?: Array<{ run_id: string; agent_id: string }> };
@@ -178,6 +190,13 @@ describe("dashboard drilldown API e2e", () => {
       await new Promise((r) => setTimeout(r, 150));
     }
     const port = opsPort(server);
+
+    const indexPath = join(process.cwd(), "web", "index.html");
+    assert.ok(existsSync(indexPath), "web/index.html on disk");
+    const indexHtml = readFileSync(indexPath, "utf8");
+    assert.ok(indexHtml.includes('data-view="statistics"'), "Statistics nav");
+    assert.ok(indexHtml.includes('id="view-statistics"'), "Statistics view section");
+    assert.ok(indexHtml.includes('id="swarm-stat-cards"'), "Statistics stat cards mount");
 
     for (const path of ["/", "/index.html", "/app.js", "/style.css"]) {
       const res = await new Promise<{ status: number; type: string }>((resolve, reject) => {

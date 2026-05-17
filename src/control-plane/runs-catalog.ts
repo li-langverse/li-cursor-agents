@@ -3,8 +3,8 @@ import { join } from "node:path";
 import { getAgent } from "../agents/registry.js";
 import { coordinatorForLeaf } from "../heap/coordinators.js";
 import { runsDir } from "./paths.js";
-import { listActiveRuns } from "./runtime.js";
-import { loadState } from "./state.js";
+import { isSupervisorLoopRunning, listActiveRuns } from "./runtime.js";
+import { loadState, loadStateForApi } from "./state.js";
 import { readJson } from "./read-json.js";
 import { reportPath } from "./paths.js";
 import { dbEnabled, useDiskStore, useSupabaseStore } from "../db/client.js";
@@ -267,7 +267,7 @@ export async function getAgentDetail(agentId: AgentId) {
   const def = getAgent(agentId);
   if (!def) return null;
 
-  const cpState = loadState();
+  const cpState = isSupervisorLoopRunning() ? loadStateForApi() : loadState();
   const report = readJson(reportPath()) as Record<string, unknown> | null;
   const recommended = (report?.recommended_agents as Array<{ agent: string; reason: string }>) ?? [];
   const rec = recommended.find((r) => r.agent === agentId);
@@ -283,14 +283,13 @@ export async function getAgentDetail(agentId: AgentId) {
   const runs = await listRunsForAgent(agentId, 12);
   const history = await getAgentRunHistory(agentId, 50);
 
-  let status: "running" | "stopped" | "queued" | "idle" | "cooldown" = "idle";
+  let status: "running" | "stopped" | "recommended" | "idle" | "cooldown" = "idle";
   if (stopped) status = "stopped";
   else if (activeRun || supervisorRunning) status = "running";
-  else if (rec || heapTask) status = "queued";
   else if (recentTasks.length && recentTasks[0].status === "finished") {
     const finishedAt = new Date(recentTasks[0].finished_at).getTime();
     if (Date.now() - finishedAt < 3_600_000) status = "cooldown";
-  }
+  } else if (rec || heapTask) status = "recommended";
 
   return {
     agent: {

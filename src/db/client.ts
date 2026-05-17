@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { normalizeSupabaseApiUrl } from "./supabase-url.js";
 
 let client: SupabaseClient | null = null;
 
@@ -53,13 +54,18 @@ function supabaseKey(): string | undefined {
   );
 }
 
+export function resetSupabaseClient(): void {
+  client = null;
+}
+
 export function getSupabase(): SupabaseClient {
   assertStoreReady();
   if (!dbEnabled()) {
     throw new Error("Supabase not configured (set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY)");
   }
   if (!client) {
-    client = createClient(process.env.SUPABASE_URL!, supabaseKey()!, {
+    const url = normalizeSupabaseApiUrl(process.env.SUPABASE_URL!);
+    client = createClient(url, supabaseKey()!, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
   }

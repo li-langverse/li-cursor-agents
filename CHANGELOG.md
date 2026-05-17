@@ -8,6 +8,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Operational logs (`keep-agents.log`, supervisor subprocess) prefix ISO-8601 timestamps; `src/agent-log.ts`, `scripts/test-log-timestamps.mjs` regression.
+- Supabase persist `fetch failed`: retry transient REST errors, serialize state upserts, normalize `localhost` → `127.0.0.1`, wait for PostgREST in `ensure-supabase.sh`, `db:probe` checks REST not only Postgres (`src/db/supabase-retry.ts`, `rest-health.ts`, `persist.ts`).
+- Dashboard agent status: **Recommended** (briefing/heap) vs misleading **Queued**; cooldown wins over recommended; supervisor subprocess state mirrored to `data/control-plane/state.json` for parent reload when Supabase persist fails (`src/control-plane/state.ts`, `web/app.js`).
+
+### Added
+- **Control-plane DB exploration for agents** — MCP server `li-control-plane-db` (`list_control_plane_tables`, `describe_table`, `query_control_plane_db`) wired into Cursor SDK when Supabase is enabled; skill `explore-control-plane-db`; `npm run db:probe`.
+- **`workspace_sweeper` agent** — fallback safety: scan sibling clones for uncommitted work, safe `commit`/`push`/`gh pr create`, document test commands, restart dashboard via `keep-agents-running.sh` (`src/repo-workflow/workspace-sweep.ts`, `npm run workspace:sweep`).
+
+### Added
+
+- **`bug_fixer`**, **`security_auditor`**, **`code_implementer`** agents — CI/bug queue, CWE catalog audit, implements gaps with guaranteed push (`repo-workflow` post-hook).
+- **Local CI PR comments** — after `local-ci-sweep`, posts `<!-- li-agent local-ci -->` on PRs when GHA is missing/red (`src/local-ci/pr-comment.ts`).
+- **Guaranteed push post-hook** — `docs_maintainer`, `ci_maintainer`, numerics agents auto `commit`/`push`/`gh pr create` after run when isolated workspace is dirty (`src/repo-workflow/post-hook.ts`); tests use `fixtures/li-demo-workflow` + `LI_REPO_WORKFLOW_USE_FIXTURE=1`.
+- **`pr_branch_opener`** agent — opens PRs for remote branches without an open pull request (`pr-branch-hygiene.py` preflight).
+- **`pr_branch_hygiene`** preflight instructions for `pr_alignment` to close superseded/outdated PRs (`safe_now` rows).
+
+### Fixed
+
 - Supervisor cooldown: do not re-dispatch recommended agents when heap queue skipped tasks on cooldown (`src/supervisor/loop.ts`); cooldown treats terminal run statuses (`src/heap/task-queue.ts`).
 - Native `sqlite3` / arch mismatch: `scripts/ensure-native-modules.sh` rebuilds for host Node before `agents:keep`.
 

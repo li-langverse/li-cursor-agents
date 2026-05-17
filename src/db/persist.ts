@@ -36,15 +36,29 @@ export async function persistAgentRun(input: runsDb.PersistRunInput): Promise<vo
   }
 }
 
+let statePersistTail: Promise<void> = Promise.resolve();
+let coalescedState: ControlPlaneState | null = null;
+
+async function flushCoalescedState(): Promise<void> {
+  while (coalescedState) {
+    const snapshot = coalescedState;
+    coalescedState = null;
+    requireSupabaseWrite("persistControlPlaneState");
+    if (dbEnabled()) {
+      await cpDb.saveControlPlaneStateToDb(snapshot);
+    }
+    if (exportDiskCacheEnabled()) {
+      snapshot.updated_at = new Date().toISOString();
+      writeFileSync(statePath(), JSON.stringify(snapshot, null, 2) + "\n", "utf8");
+    }
+  }
+}
+
+/** Serialize state upserts (latest wins) to avoid REST races during supervisor ticks. */
 export async function persistControlPlaneState(state: ControlPlaneState): Promise<void> {
-  requireSupabaseWrite("persistControlPlaneState");
-  if (dbEnabled()) {
-    await cpDb.saveControlPlaneStateToDb(state);
-  }
-  if (exportDiskCacheEnabled()) {
-    state.updated_at = new Date().toISOString();
-    writeFileSync(statePath(), JSON.stringify(state, null, 2) + "\n", "utf8");
-  }
+  coalescedState = state;
+  statePersistTail = statePersistTail.then(flushCoalescedState);
+  await statePersistTail;
 }
 
 export async function persistReport(report: ControlPlaneReport, interventions: HumanIntervention[]): Promise<void> {

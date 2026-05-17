@@ -3,7 +3,18 @@ import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import type { PreflightBundle } from "./types.js";
 import { getAgent } from "./agents/registry.js";
+import { dbEnabled } from "./db/client.js";
+import { schemaMarkdown } from "./db/schema-catalog.js";
 import { buildPrMergerInstruction, mergePlanFromBriefing } from "./preflight/merge-queue.js";
+import {
+  buildPrAlignmentCloseInstruction,
+  buildPrBranchOpenerInstruction,
+  prHygieneFromBriefing,
+} from "./preflight/pr-hygiene.js";
+import {
+  buildImplementationQueue,
+  buildImplementationQueueInstruction,
+} from "./preflight/implementation-queue.js";
 
 function hasBriefingScript(root: string): boolean {
   return existsSync(join(root, "scripts", "agent-briefing.py"));
@@ -93,6 +104,34 @@ export function buildUserMessage(
     lines.push(buildPrMergerInstruction(mergePlan), "");
   }
 
+  const hygiene = prHygieneFromBriefing(preflight.briefing);
+  if (definitionId === "pr_branch_opener") {
+    lines.push(buildPrBranchOpenerInstruction(hygiene), "");
+  } else if (definitionId === "pr_alignment") {
+    lines.push(
+      buildPrAlignmentCloseInstruction(
+        hygiene,
+        preflight.briefing && typeof preflight.briefing === "object"
+          ? (preflight.briefing as Record<string, unknown>).merge_plan as Record<string, unknown>
+          : null,
+      ),
+      "",
+    );
+  }
+
+  if (dbEnabled()) {
+    lines.push(
+      "## Control-plane database (MCP)",
+      "MCP server **`li-control-plane-db`** is attached. Use tools:",
+      "- `list_control_plane_tables` — schema overview",
+      "- `describe_table` — column types",
+      "- `query_control_plane_db` — read-only SQL (`SELECT` / `WITH` / `EXPLAIN` only)",
+      "",
+      schemaMarkdown(),
+      "",
+    );
+  }
+
   lines.push(
     "## Preflight JSON (deterministic scripts — already ran)",
     "```json",
@@ -119,7 +158,13 @@ export function buildUserMessage(
     );
   }
 
-  if (definitionId === "agent_kit_maintainer") {
+  if (definitionId === "workspace_sweeper") {
+    lines.push(
+      "Deterministic sweep may already have run (see **Additional instruction** / sweep digest).",
+      "- Focus on failed pushes, repos over max sweep limit, and confirming test commands.",
+      "- Env: `LI_WORKSPACE_SWEEP_MAX_REPOS`, `LI_WORKSPACE_SWEEP_RUN_TESTS=1`, `GH_TOKEN` for push/PR.",
+    );
+  } else if (definitionId === "agent_kit_maintainer") {
     lines.push(
       "Follow the system prompt and **Agent-kit sync** section above.",
       "- File sync may already be done by the control plane; focus on **git branch, commit, push, open PR** per dirty repo.",

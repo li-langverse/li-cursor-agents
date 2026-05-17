@@ -52,3 +52,50 @@ test("reloadStateFromDiskIfNewer picks up child-written state", async () => {
   delete process.env.LI_CONTROL_PLANE_STORE;
   delete process.env.LI_EXPORT_DISK_CACHE;
 });
+
+test("reloadStateIfNewer merges supervisor IPC mirror when store=supabase", async () => {
+  const dir = mkdtempSync(join(tmpdir(), "li-cp-supabase-mirror-"));
+  process.env.LI_CONTROL_PLANE_DIR = dir;
+  process.env.LI_CONTROL_PLANE_STORE = "supabase";
+  delete process.env.SUPABASE_URL;
+
+  const { reloadStateIfNewer } = await import("./state.js");
+
+  writeFileSync(
+    join(dir, "state.json"),
+    JSON.stringify({
+      version: 1,
+      updated_at: "2026-01-01T00:00:00.000Z",
+      last_briefing_hash: "",
+      last_preflight_at: "",
+      supervisor_status: "running_agent",
+      current_supervisor_agent: "gap_explorer",
+      recent_tasks: [],
+      runs_total: 0,
+      last_tick_at: "2026-01-01T00:00:00.000Z",
+    }),
+    "utf8",
+  );
+
+  writeFileSync(
+    join(dir, "state.json"),
+    JSON.stringify({
+      version: 1,
+      updated_at: "2026-01-02T00:00:00.000Z",
+      last_briefing_hash: "new",
+      last_preflight_at: "",
+      supervisor_status: "running_agent",
+      current_supervisor_agent: "bench_improver",
+      recent_tasks: [],
+      runs_total: 1,
+      last_tick_at: "2026-01-02T00:01:00.000Z",
+    }),
+    "utf8",
+  );
+
+  const reloaded = await reloadStateIfNewer();
+  assert.equal(reloaded.current_supervisor_agent, "bench_improver");
+
+  delete process.env.LI_CONTROL_PLANE_DIR;
+  delete process.env.LI_CONTROL_PLANE_STORE;
+});

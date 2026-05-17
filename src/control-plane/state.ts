@@ -1,6 +1,7 @@
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, writeFileSync } from "node:fs";
 import { statePath } from "./paths.js";
 import { DEFAULT_STATE, type ControlPlaneState } from "./types.js";
+import { agentLog } from "../agent-log.js";
 import { loadControlPlaneStateHybrid, persistControlPlaneState } from "../db/persist.js";
 import { dbEnabled, useDiskStore, useSupabaseStore } from "../db/client.js";
 
@@ -33,9 +34,19 @@ function readStateFromDisk(): ControlPlaneState | null {
 /** Reload newest state from Supabase (supervisor loop) or legacy disk export. */
 export async function reloadStateIfNewer(): Promise<ControlPlaneState> {
   if (useSupabaseStore()) {
-    const fromDb = await loadControlPlaneStateHybrid();
+    let fromDb: ControlPlaneState | null = null;
+    try {
+      fromDb = await loadControlPlaneStateHybrid();
+    } catch (err) {
+      agentLog("control-plane", "ERROR", `reload state from db failed: ${err}`);
+    }
     if (fromDb && (!memoryState || (fromDb.updated_at ?? "") >= (memoryState.updated_at ?? ""))) {
       memoryState = fromDb;
+    }
+    // Supervisor subprocess mirrors state.json for IPC when store=supabase.
+    const disk = readStateFromDisk();
+    if (disk && (!memoryState || (disk.updated_at ?? "") >= (memoryState.updated_at ?? ""))) {
+      memoryState = disk;
     }
     return memoryState ?? { ...DEFAULT_STATE };
   }
@@ -50,6 +61,19 @@ export function reloadStateFromDiskIfNewer(): ControlPlaneState {
     memoryState = disk;
   }
   return memoryState;
+}
+
+/**
+ * Hot path for dashboard API polls while supervisor subprocess runs.
+ * Prefer IPC mirror (state.json) — never block polls on PostgREST.
+ */
+export function loadStateForApi(): ControlPlaneState {
+  if (useSupabaseStore() && dbEnabled()) {
+    void reloadStateIfNewer().catch((err) => {
+      agentLog("control-plane", "ERROR", `background state reload failed: ${err}`);
+    });
+  }
+  return reloadStateFromDiskIfNewer();
 }
 
 export function loadState(): ControlPlaneState {
@@ -69,10 +93,23 @@ export function loadState(): ControlPlaneState {
   return { ...DEFAULT_STATE };
 }
 
+/** Mirror state for dashboard ↔ supervisor subprocess when primary store is Supabase. */
+function mirrorStateForSupervisorIpc(state: ControlPlaneState): void {
+  if (!useSupabaseStore()) return;
+  try {
+    writeFileSync(statePath(), JSON.stringify(state, null, 2) + "\n", "utf8");
+  } catch (err) {
+    agentLog("control-plane", "ERROR", `mirror state.json failed: ${err}`);
+  }
+}
+
 export function saveState(state: ControlPlaneState): void {
   state.updated_at = new Date().toISOString();
   memoryState = state;
-  void persistControlPlaneState(state);
+  mirrorStateForSupervisorIpc(state);
+  void persistControlPlaneState(state).catch((err) => {
+    agentLog("control-plane", "ERROR", `persist state failed: ${err}`);
+  });
 }
 
 export function pruneRecentTasks(state: ControlPlaneState, maxEntries: number, maxAgeMs: number): void {

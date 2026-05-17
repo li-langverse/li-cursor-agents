@@ -33,6 +33,7 @@ export function finalizeAgentRun(
     rolloutPrUrls?: string[];
     definition?: AgentDefinition | null;
     preflight?: PreflightBundle;
+    extraEvidence?: string[];
   },
 ): AgentRunResult {
   const definition = options?.definition ?? getAgent(result.agentId);
@@ -47,6 +48,9 @@ export function finalizeAgentRun(
     mock: result.backend === "mock",
     rolloutPrUrls: options?.rolloutPrUrls,
   });
+  if (options?.extraEvidence?.length) {
+    completion.evidence = [...new Set([...completion.evidence, ...options.extraEvidence])];
+  }
 
   let status = result.status;
   if (status === "finished" && completion.premature) {

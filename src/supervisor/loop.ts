@@ -132,7 +132,12 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
     });
   }
 
-  if (benchmarksRoot && tasks.some((t) => ["pr_merger", "pr_reviewer", "pr_alignment"].includes(t.agentId))) {
+  if (
+    benchmarksRoot &&
+    tasks.some((t) =>
+      ["pr_merger", "pr_reviewer", "pr_alignment", "bug_fixer"].includes(t.agentId),
+    )
+  ) {
     const sweep = runLocalCiSweepForMergeAgents(
       benchmarksRoot,
       tasks.map((t) => t.agentId),
@@ -318,7 +323,6 @@ export async function runSupervisorLoop(
     ]
       .filter(Boolean)
       .join(" ");
-    console.error(`[supervisor] ${msg}`);
     pushSupervisorActivity("tick", msg, {
       tasks_executed: tick.tasksExecuted,
       skipped_cooldown: tick.tasksSkippedCooldown,

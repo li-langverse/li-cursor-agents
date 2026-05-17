@@ -26,7 +26,8 @@ Read `recommended_agents` and each artifact in `data/latest/*.json`.
 |--------------------|----------|
 | `missing_std_modules`, HPC gaps | **gap_explorer** (+ web on `web_search_queries`) |
 | Plan audit findings | **plan_verifier** + **implementation_gaps** |
-| Open PRs, alignment risk | **pr_alignment** |
+| Branches pushed, no PR | **pr_branch_opener** |
+| Open PRs, alignment / close superseded | **pr_alignment** |
 | CI-green PRs, standards review | **pr_reviewer** (max 3 PRs) |
 | `merge-approved` + gate ready | **pr_merger** (one merge, re-plan) |
 | Red benches (shared kernel) | **numerics_researcher** + **bench_improver** |

@@ -20,7 +20,20 @@ import {
   rolloutAgentKitPrs,
   rolloutNeedsLlmFollowUp,
 } from "./repo-workflow/agent-kit-rollout.js";
+import {
+  applyPostHookToRunResult,
+  commitPushOpenPrAfterAgentRun,
+} from "./repo-workflow/post-hook.js";
+import {
+  formatWorkspaceSweepReport,
+  runWorkspaceDirtySweep,
+} from "./repo-workflow/workspace-sweep.js";
+import {
+  agentUsesGuaranteedPush,
+  beginRepoWorkflowSession,
+} from "./repo-workflow/workspace-session.js";
 import type { AgentRunOptions, AgentRunResult } from "./types.js";
+import type { RepoWorkflowSession } from "./repo-workflow/workspace-session.js";
 
 /** li-cursor-agents package root (where prompts/ lives). */
 export function agentsPackageRoot(): string {
@@ -74,10 +87,82 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
   if (definition.repoWorkflow) {
     systemPrompt += `\n\n---\n\n${loadPrompt(packageRoot, "repo-workflow-tools.md")}`;
   }
-  const workCwd = options.cwd || packageRoot;
-
+  let workCwd = options.cwd || packageRoot;
   const mock = shouldUseMock(options.mock);
+  let workflowSession: RepoWorkflowSession | undefined;
+
+  if (agentUsesGuaranteedPush(definition)) {
+    workflowSession = beginRepoWorkflowSession({
+      agentId: definition.id,
+      dryRun: options.dryRun,
+      skipPush: mock || options.dryRun || process.env.LI_REPO_WORKFLOW_SKIP_PUSH === "1",
+    });
+    if (workflowSession.ok) {
+      workCwd = workflowSession.cloneDir;
+    }
+  }
+
   let extra = options.extraInstruction;
+
+  if (definition.workspaceSweep) {
+    const start = Date.now();
+    const sweep = await runWorkspaceDirtySweep({
+      benchmarksRoot,
+      dryRun: mock || options.dryRun,
+      skipPush: mock || options.dryRun || process.env.LI_REPO_WORKFLOW_SKIP_PUSH === "1",
+      runTests: process.env.LI_WORKSPACE_SWEEP_RUN_TESTS === "1",
+      restart: process.env.LI_WORKSPACE_SWEEP_RESTART !== "0",
+      agentId: definition.id,
+    });
+    const text = formatWorkspaceSweepReport(sweep);
+    const outputPath = join(runsDir(), `${definition.id}-${Date.now()}.md`);
+    writeFileSync(outputPath, text, "utf8");
+    const prUrls = sweep.sweeps.map((s) => s.push.pr_url).filter((u): u is string => Boolean(u));
+    const forceLlm = process.env.LI_WORKSPACE_SWEEP_FORCE_LLM === "1";
+    const needsFollowUp = sweep.sweeps.some((s) => !s.push.ok && !s.push.skipped) || sweep.dirty_found > sweep.sweeps.length;
+    if (!forceLlm && !needsFollowUp) {
+      const base = {
+        agentId: definition.id,
+        backend: (mock ? "mock" : "cursor-sdk") as "mock" | "cursor-sdk",
+        status: "finished" as const,
+        durationMs: Date.now() - start,
+        outputText: text,
+        outputPath,
+      };
+      const sweepInput = buildRunInput({
+        agentId: definition.id,
+        backend: mock ? "mock" : "cursor-sdk",
+        systemPrompt,
+        userMessage: text,
+        cwd: workCwd,
+        benchmarksRoot,
+        briefingPath: preflight.briefing_path,
+        briefingHash:
+          preflight.briefing && typeof preflight.briefing === "object"
+            ? hashBriefing(preflight.briefing)
+            : undefined,
+        preflightGeneratedAt: preflight.generated_at,
+        dryRun: options.dryRun,
+        mock,
+      });
+      const finalized = finalizeAgentRun(
+        {
+          ...base,
+          runInput: sweepInput,
+          trace: buildMockTrace({
+            definitionId: definition.id,
+            assistantText: text,
+            userMessage: sweepInput.user_message,
+            cwd: workCwd,
+          }),
+        },
+        { definition, rolloutPrUrls: prUrls, preflight, extraEvidence: ["workspace_sweep"] },
+      );
+      await persistAgentRun({ run: finalized });
+      return finalized;
+    }
+    extra = [text, extra].filter(Boolean).join("\n\n");
+  }
 
   if (definition.id === "agent_kit_maintainer" && benchmarksRoot && preflight.briefing) {
     const rollout = rolloutAgentKitPrs(benchmarksRoot, preflight.briefing, {
@@ -183,10 +268,31 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
       runInput,
     };
   }
+  let rolloutPrUrls: string[] | undefined;
+  const extraEvidence: string[] = [];
+  if (
+    workflowSession?.ok &&
+    agentUsesGuaranteedPush(definition) &&
+    result.status !== "cancelled"
+  ) {
+    const push = commitPushOpenPrAfterAgentRun(workflowSession, definition, {
+      ...result,
+      runInput: result.runInput ?? runInput,
+    });
+    result = applyPostHookToRunResult(
+      { ...result, runInput: result.runInput ?? runInput },
+      push,
+    );
+    if (push.pr_url) rolloutPrUrls = [push.pr_url];
+    if (push.committed) extraEvidence.push("post_hook_committed");
+    if (push.pushed) extraEvidence.push("post_hook_pushed");
+  }
+
   const finalized = finalizeAgentRun(
     { ...result, runInput: result.runInput ?? runInput },
-    { definition, preflight },
+    { definition, rolloutPrUrls, preflight, extraEvidence },
   );
+
   await persistAgentRun({ run: finalized });
   return finalized;
 }

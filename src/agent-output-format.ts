@@ -127,8 +127,13 @@ export function buildMockDeliverable(
       return buildPlanVerifierMockBody(briefing);
     case "implementation_gaps":
       return buildImplementationGapsMockBody(briefing);
+    case "code_implementer":
+    case "bug_fixer":
+    case "security_auditor":
+      return buildImplementationGapsMockBody(briefing);
     case "pr_merger":
       return buildPrMergerMockBody(briefing);
+    case "pr_branch_opener":
     case "pr_alignment":
     case "pr_reviewer":
       return buildPrReviewMockBody(definition.id, briefing);
@@ -152,7 +157,12 @@ function buildPreflightContextSection(agentId: string, briefing: unknown): strin
   if (agentId === "plan_verifier" || agentId === "implementation_gaps") {
     return buildPlanAuditSection(b);
   }
-  if (agentId === "pr_alignment" || agentId === "pr_reviewer" || agentId === "pr_merger") {
+  if (
+    agentId === "pr_branch_opener" ||
+    agentId === "pr_alignment" ||
+    agentId === "pr_reviewer" ||
+    agentId === "pr_merger"
+  ) {
     return buildMergePlanSection(b);
   }
   if (agentId === "gap_explorer") {

@@ -25,6 +25,10 @@ const VIEW_META = {
   },
   agents: { title: "Agents", subtitle: "Click a row for live status and run output" },
   heap: { title: "Heap plan", subtitle: "Coordinator routing and briefing queue" },
+  statistics: {
+    title: "Statistics",
+    subtitle: "Swarm output metrics — actions, edits, PRs, packages",
+  },
   interventions: { title: "Interventions", subtitle: "Human action required" },
 };
 
@@ -62,7 +66,8 @@ function formatTime(iso) {
 function statusLabel(status) {
   const labels = {
     running: "Running",
-    queued: "Queued",
+    recommended: "Recommended",
+    queued: "Recommended", // legacy key
     stopped: "Stopped",
     idle: "Idle",
     cooldown: "Cooldown",
@@ -156,11 +161,13 @@ function agentStatusMap(roster, report, runtime, statusPayload) {
     const activeRun = activeRuns.find((r) => r.agent_id === entry.id && r.status === "running");
     if (stopped.has(entry.id)) status = "stopped";
     else if (activeRun || currentSupervisor === entry.id) status = "running";
-    else if (rec.has(entry.id) || heapTasks.has(entry.id)) status = "queued";
     else {
       const last = recentByAgent.get(entry.id);
       const finishedAt = last?.finished_at ? new Date(last.finished_at).getTime() : 0;
-      if (last?.status === "finished" && finishedAt && Date.now() - finishedAt < 1_800_000) status = "cooldown";
+      const onCooldown =
+        last?.status === "finished" && finishedAt && Date.now() - finishedAt < 1_800_000;
+      if (onCooldown) status = "cooldown";
+      else if (rec.has(entry.id) || heapTasks.has(entry.id)) status = "recommended";
     }
 
     map.set(entry.id, {
@@ -211,16 +218,23 @@ function renderSwarmStatistics() {
   const s = ui.data?.statisticsPayload?.statistics;
   const meta = $("#swarm-stats-meta");
   const cards = $("#swarm-stat-cards");
+  const notesEl = $("#swarm-stats-notes");
   if (!cards) return;
   if (!s) {
     cards.innerHTML = '<p class="empty">Statistics unavailable — refresh briefing and ensure runs are logged.</p>';
     if (meta) meta.textContent = "No statistics yet.";
+    if (notesEl) {
+      notesEl.innerHTML = "";
+      notesEl.classList.add("hidden");
+    }
     return;
   }
   const runsNote = s.runs_scanned ? `${s.runs_scanned} runs scanned` : "";
   const briefingNote = s.briefing_generated_at ? `Briefing ${s.briefing_generated_at}` : "";
+  const generatedNote = s.generated_at ? `Updated ${s.generated_at}` : "";
   if (meta) {
-    meta.textContent = [runsNote, briefingNote, s.notes?.[0]].filter(Boolean).join(" · ") || "Swarm output metrics.";
+    meta.textContent =
+      [runsNote, briefingNote, generatedNote].filter(Boolean).join(" · ") || "Swarm output metrics.";
   }
   const items = [
     { label: "Actions taken", value: fmtNum(s.actions_taken), hint: "tool calls in traces", accent: true },
@@ -229,6 +243,11 @@ function renderSwarmStatistics() {
     { label: "Lines deleted", value: fmtNum(s.lines_deleted), hint: "from SDK edit results" },
     { label: "PRs opened", value: fmtNum(s.prs_opened), hint: "unique PR URLs in run outputs" },
     { label: "PRs open now", value: fmtNum(s.prs_open_now), hint: "latest briefing all_open" },
+    {
+      label: "Agent PRs open",
+      value: fmtNum(s.agent_prs_open_now),
+      hint: "agent-tagged PRs in deliverable gate",
+    },
     { label: "PRs merged", value: fmtNum(s.prs_merged), hint: "agent merges (runs + gh + history)" },
     { label: "Packages created", value: fmtNum(s.packages_created), hint: "packages/* writes in traces" },
   ];
@@ -241,6 +260,17 @@ function renderSwarmStatistics() {
     </div>`,
     )
     .join("");
+
+  const notes = (s.notes ?? []).filter(Boolean);
+  if (notesEl) {
+    if (notes.length) {
+      notesEl.classList.remove("hidden");
+      notesEl.innerHTML = notes.map((n) => `<li>${esc(n)}</li>`).join("");
+    } else {
+      notesEl.classList.add("hidden");
+      notesEl.innerHTML = "";
+    }
+  }
 }
 
 function drillKey(runId, section) {
@@ -499,13 +529,13 @@ function renderStatCards() {
   const { report, runtime, roster, runsPayload, status } = ui.data;
   const statusMap = agentStatusMap(roster, report, runtime, status);
   let running = 0;
-  let queued = 0;
+  let recommended = 0;
   let stopped = 0;
   let idle = 0;
   let cooldown = 0;
   for (const v of statusMap.values()) {
     if (v.status === "running") running++;
-    if (v.status === "queued") queued++;
+    if (v.status === "recommended" || v.status === "queued") recommended++;
     if (v.status === "stopped") stopped++;
     if (v.status === "idle") idle++;
     if (v.status === "cooldown") cooldown++;
@@ -520,7 +550,7 @@ function renderStatCards() {
 
   $("#stat-cards").innerHTML = `
     <div class="stat-card accent"><div class="label">Running</div><div class="value">${running}</div></div>
-    <div class="stat-card"><div class="label">Queued</div><div class="value">${queued}</div></div>
+    <div class="stat-card" title="In briefing heap — supervisor runs a few per tick"><div class="label">Recommended</div><div class="value">${recommended}</div></div>
     <div class="stat-card"><div class="label">Stopped</div><div class="value">${stopped}</div></div>
     <div class="stat-card"><div class="label">Interventions</div><div class="value">${interventions}</div></div>
     <div class="stat-card"><div class="label">Run artifacts</div><div class="value">${runs}</div></div>`;
@@ -614,7 +644,7 @@ function renderAgentsTable() {
   }
 
   rows.sort((a, b) => {
-    const order = { running: 0, queued: 1, cooldown: 2, idle: 3, stopped: 4 };
+    const order = { running: 0, recommended: 1, queued: 1, cooldown: 2, idle: 3, stopped: 4 };
     return (order[a.info.status] ?? 9) - (order[b.info.status] ?? 9);
   });
 

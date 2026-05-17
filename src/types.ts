@@ -8,7 +8,11 @@ export type AgentId =
   | "plan_verifier"
   | "gap_explorer"
   | "implementation_gaps"
+  | "code_implementer"
+  | "bug_fixer"
+  | "security_auditor"
   | "issue_planner"
+  | "pr_branch_opener"
   | "pr_alignment"
   | "pr_reviewer"
   | "pr_merger"
@@ -17,7 +21,8 @@ export type AgentId =
   | "bench_improver"
   | "docs_maintainer"
   | "ci_maintainer"
-  | "agent_kit_maintainer";
+  | "agent_kit_maintainer"
+  | "workspace_sweeper";
 
 /** @deprecated Briefing/fixtures may still use legacy ids — resolved in registry. */
 export type LegacyAgentId =
@@ -29,6 +34,7 @@ export type LegacyAgentId =
 export type AgentCategory =
   | "orchestration"
   | "governance"
+  | "security"
   | "ecosystem"
   | "pull_requests"
   | "numerics"
@@ -45,6 +51,10 @@ export interface AgentDefinition {
   preflightKeys: string[];
   /** May use isolated clone → commit → push → PR via repo-workflow CLI. */
   repoWorkflow?: boolean;
+  /** Supervisor post-hook runs commitPushOpenPr when workspace is dirty after run. */
+  guaranteedPush?: boolean;
+  /** Deterministic sibling-repo sweep (commit/push/PR/restart) — no isolated clone. */
+  workspaceSweep?: boolean;
 }
 
 export interface PreflightBundle {

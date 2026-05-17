@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { loadRuntimeEnv } from "../env.js";
 loadRuntimeEnv();
+import { agentLog } from "../agent-log.js";
 import { agentBackendLabel, shouldUseMock } from "../runner.js";
 import { runSupervisorLoop } from "../supervisor/loop.js";
 import { resolveBenchmarksRoot } from "../preflight.js";
@@ -36,10 +37,12 @@ async function main() {
   const mock = shouldUseMock(args.mock);
 
   const benchmarks = resolveBenchmarksRoot(args.benchmarksRoot);
-  console.error(
-    `[supervisor] CLI starting — backend=${agentBackendLabel(mock)} once=${args.once} interval=${args.intervalMs}ms cooldown=${args.cooldownMs}ms benchmarks=${benchmarks ?? "(none)"}`,
+  agentLog(
+    "supervisor",
+    "info",
+    `CLI starting — backend=${agentBackendLabel(mock)} once=${args.once} interval=${args.intervalMs}ms cooldown=${args.cooldownMs}ms benchmarks=${benchmarks ?? "(none)"}`,
   );
-  console.error("[supervisor] Press Ctrl+C to stop. Tick lines appear below as [supervisor] tick: …");
+  agentLog("supervisor", "info", "Press Ctrl+C to stop. Tick lines appear below as timestamped [supervisor] tick: …");
 
   await runSupervisorLoop({
     benchmarksRoot: benchmarks,

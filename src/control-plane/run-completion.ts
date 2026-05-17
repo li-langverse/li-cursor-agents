@@ -20,12 +20,16 @@ const CHECKED_ITEM_RE = /-\s*\[x\]/gi;
 
 /** Agents that must open a PR or document explicit skip when editing code. */
 export const REPO_WORKFLOW_AGENT_IDS = new Set([
+  "workspace_sweeper",
   "agent_kit_maintainer",
   "ci_maintainer",
   "docs_maintainer",
+  "pr_branch_opener",
+  "code_implementer",
+  "bug_fixer",
+  "security_auditor",
   "bench_improver",
   "autoresearch",
-  "implementation_gaps",
 ]);
 
 /** Numerics agents must cite tests/bench evidence in output or PR body. */
