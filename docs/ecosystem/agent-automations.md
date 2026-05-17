@@ -1,5 +1,24 @@
 # Li cursor agents — dual-mode scheduling
 
+## Async swarm (default for `keep-agents`)
+
+No supervisor tick queue. On dashboard start (`LI_AUTO_START_ASYNC_SWARM=1`):
+
+| Loop | Role |
+|------|------|
+| Research lane | Goal-directed research (continuous) |
+| Implement lane | Architect + `code_implementer` handoffs |
+| Maintenance lane | Briefing enrich + scorecards (no LLM) |
+| Agent worker pool | All other registry agents on staggered intervals (parallel loops; SDK lock serializes runs) |
+
+```bash
+npm run agents:async-swarm          # foreground (Ctrl+C stops)
+./scripts/keep-agents-running.sh   # dashboard + async swarm in background
+curl -X POST http://127.0.0.1:9477/api/async-swarm/stop
+```
+
+Env: `LI_ASYNC_AGENT_INTERVAL_MS` (default 180000), `LI_AUTO_START_SUPERVISOR=1` to use legacy supervisor instead.
+
 ## Local SDK lanes (default for development)
 
 | Lane | Command | Role |

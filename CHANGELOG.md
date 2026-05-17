@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Async swarm mode** — `LI_AUTO_START_ASYNC_SWARM=1`: research + implement + maintenance lane loops plus parallel per-agent worker pool (no supervisor); `npm run agents:async-swarm`, `/api/async-swarm/start|stop`.
 - **Benchmarks dispatch** — `src/benchmarks/dispatch-swarm-audit.ts`, `npm run swarm:dispatch-benchmarks`; optional `LI_BENCHMARKS_DISPATCH_ON_MAINTENANCE=1`.
 - **Handoffs API** — `/api/handoffs` includes `workflow_repo`; dashboard Repo column; fix `renderLiveActivity` typo.
 - **Goal → lic workflow** — `src/handoffs/goal-workflow.ts`; `workflowRepo` on `runAgent`; implement lane routes `goal_implementation` to **lic** with path allowlists; goal PR title/body; `fixtures/lic-workflow`; mock `useFixture`; implementation queue `repo: lic`; lic v1 docs `docs/ecosystem/game-engine-ux.md`, `cad-fundamentals.md`.

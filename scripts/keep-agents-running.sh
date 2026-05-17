@@ -27,7 +27,8 @@ if [[ -f "$LI_GITHUB_ENV" ]]; then set -a; source "$LI_GITHUB_ENV"; set +a; fi
 export GH_TOKEN GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
 # Production stack uses Cursor SDK; tests set CURSOR_MOCK=1 explicitly.
 unset CURSOR_MOCK
-export LI_AUTO_START_SUPERVISOR=1
+export LI_AUTO_START_SUPERVISOR=0
+export LI_AUTO_START_ASYNC_SWARM=1
 
 _store="${LI_CONTROL_PLANE_STORE:-supabase}"
 [[ "${LI_STACK_SKIP_SUPABASE:-}" == "1" ]] && _store="disk"
@@ -51,6 +52,7 @@ if [[ "${LI_KEEP_AGENTS_RESTART:-}" != "0" ]]; then
     sleep 1
   fi
   pkill -f "dist/cli/supervisor.js" 2>/dev/null || true
+  pkill -f "dist/cli/async-swarm.js" 2>/dev/null || true
   pkill -f "dist/cli/serve-dashboard.js" 2>/dev/null || true
   sleep 1
 fi
@@ -61,19 +63,19 @@ npm run build >/dev/null 2>&1
 PORT="$LI_AGENT_DASHBOARD_PORT"
 if curl -sf "http://127.0.0.1:${PORT}/api/status" >/dev/null 2>&1; then
   RT=$(curl -sf "http://127.0.0.1:${PORT}/api/runtime" || echo "{}")
-  if echo "$RT" | grep -q '"supervisor_loop_running":true'; then
-    echo "Supervisor loop already running on :${PORT}"
+  if echo "$RT" | grep -q '"async_swarm_running":true'; then
+    echo "Async swarm already running on :${PORT}"
     echo "Dashboard: http://127.0.0.1:${PORT}/"
     exit 0
   fi
-  echo "Dashboard up — starting supervisor loop via API"
-  curl -sf -X POST "http://127.0.0.1:${PORT}/api/supervisor/start" -H "Content-Type: application/json" -d '{}'
+  echo "Dashboard up — starting async swarm via API"
+  curl -sf -X POST "http://127.0.0.1:${PORT}/api/async-swarm/start" -H "Content-Type: application/json" -d '{}'
   echo ""
   echo "Dashboard: http://127.0.0.1:${PORT}/"
   exit 0
 fi
 
-echo "Starting dashboard + auto-supervisor (log: logs/keep-agents.log)"
+echo "Starting dashboard + async swarm (no supervisor; log: logs/keep-agents.log)"
 nohup env \
   BENCHMARKS_ROOT="$BENCHMARKS_ROOT" \
   LI_LOCAL_CI_ROOT="$LI_LOCAL_CI_ROOT" \
@@ -82,7 +84,8 @@ nohup env \
   LI_LOCAL_CI_PRUNE="$LI_LOCAL_CI_PRUNE" \
   LI_LOCAL_CI_SKIP_GH="$LI_LOCAL_CI_SKIP_GH" \
   LI_CURSOR_AGENTS_ROOT="$ROOT" \
-  LI_AUTO_START_SUPERVISOR=1 \
+  LI_AUTO_START_SUPERVISOR=0 \
+  LI_AUTO_START_ASYNC_SWARM=1 \
   LI_SUPERVISOR_INTERVAL_MS="$LI_SUPERVISOR_INTERVAL_MS" \
   LI_AGENTS_COOLDOWN_MS="$LI_AGENTS_COOLDOWN_MS" \
   LI_SUPERVISOR_MAX_TASKS="$LI_SUPERVISOR_MAX_TASKS" \

@@ -12,6 +12,7 @@ import { pushSupervisorActivity } from "./supervisor-activity.js";
 import { loadState, saveState } from "./state.js";
 import type { ActiveAgentRun, AgentRunLifecycle, ControlPlaneState } from "./types.js";
 import type { AgentId } from "../types.js";
+import { asyncSwarmSnapshot } from "../async-swarm/async-swarm-state.js";
 import { runHandoffPhasedSwarm } from "../lanes/run-handoff-phases.js";
 import { resolveSpawnWorkflowRepo } from "../handoffs/resolve-spawn-workflow-repo.js";
 
@@ -120,6 +121,7 @@ export function runtimeSnapshot(state: ControlPlaneState) {
     current_supervisor_agent: state.current_supervisor_agent ?? null,
     active_runs: listActiveRuns(),
     active_run_count: activeRuns.size,
+    ...asyncSwarmSnapshot(),
   };
 }
 

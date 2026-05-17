@@ -16,6 +16,7 @@ import {
   stopAllActiveRuns,
   stopSupervisorLoop,
 } from "./control-plane/runtime.js";
+import { startAsyncSwarm, stopAsyncSwarm } from "./async-swarm/async-swarm-runtime.js";
 import { resolveGoalImplementationRepo } from "./handoffs/goal-workflow.js";
 import { resolveSpawnWorkflowRepo } from "./handoffs/resolve-spawn-workflow-repo.js";
 import { sortedCoordinators } from "./heap/coordinators.js";
@@ -125,7 +126,11 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
         agentLog("db", "ERROR", `hydrate state: ${err instanceof Error ? err.message : err}`);
       });
     }
-    if (process.env.LI_AUTO_START_SUPERVISOR === "1" || process.env.LI_AUTO_START_SUPERVISOR === "true") {
+    if (process.env.LI_AUTO_START_ASYNC_SWARM === "1" || process.env.LI_AUTO_START_ASYNC_SWARM === "true") {
+      void startAsyncSwarm({ stopSupervisor: true }).then((r) => {
+        agentLog("dashboard", "info", `auto-start async swarm: ${r.message}`);
+      });
+    } else if (process.env.LI_AUTO_START_SUPERVISOR === "1" || process.env.LI_AUTO_START_SUPERVISOR === "true") {
       void startSupervisorLoop({ forceFirstTick: true }).then((r) => {
         agentLog("dashboard", "info", `auto-start supervisor: ${r.message}`);
       });
@@ -133,7 +138,7 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
       agentLog(
         "dashboard",
         "info",
-        "Start loop from footer or: LI_AUTO_START_SUPERVISOR=1 npm run dashboard",
+        "Start async swarm: LI_AUTO_START_ASYNC_SWARM=1 or supervisor: LI_AUTO_START_SUPERVISOR=1",
       );
     }
   });
@@ -164,6 +169,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
         current_supervisor_agent: state.current_supervisor_agent ?? null,
       },
       supervisor_loop_running: isSupervisorLoopRunning(),
+      async_swarm_running: runtime.async_swarm_running ?? false,
       store,
       agent_backend: agentBackendLabel(),
       sdk_ready: agentBackendLabel() === "cursor-sdk" && Boolean(resolveCursorApiKey()),
@@ -437,6 +443,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
   }
 
   if (url.pathname === "/api/supervisor/start" && req.method === "POST") {
+    await stopAsyncSwarm();
     const result = await startSupervisorLoop({
       forceFirstTick: true,
       force: false,
@@ -474,8 +481,24 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     return;
   }
 
+  if (url.pathname === "/api/async-swarm/start" && req.method === "POST") {
+    const mock = process.env.CURSOR_MOCK === "1";
+    const result = await startAsyncSwarm({ mock, stopSupervisor: true });
+    const st = await loadStateForApi();
+    json(res, 200, { ok: result.started, ...result, runtime: runtimeSnapshot(st) });
+    return;
+  }
+
+  if (url.pathname === "/api/async-swarm/stop" && req.method === "POST") {
+    const result = await stopAsyncSwarm();
+    const st = await loadStateForApi();
+    json(res, 200, { ok: result.stopped, ...result, runtime: runtimeSnapshot(st) });
+    return;
+  }
+
   if (url.pathname === "/api/swarm/stop-all" && req.method === "POST") {
     void stopSupervisorLoop();
+    void stopAsyncSwarm();
     const killed = await stopAllActiveRuns();
     const haltState = await loadStateForApi();
     json(res, 200, { ok: true, killed, runtime: runtimeSnapshot(haltState) });
