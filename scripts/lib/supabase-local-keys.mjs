@@ -24,3 +24,6 @@ const apiUrl = process.env.SUPABASE_URL?.trim() || "http://127.0.0.1:54321";
 console.log(`SUPABASE_URL=${apiUrl}`);
 console.log(`SUPABASE_ANON_KEY=${signJwt("anon")}`);
 console.log(`SUPABASE_SERVICE_ROLE_KEY=${signJwt("service_role")}`);
+const dbPort = process.env.SUPABASE_DB_PORT?.trim() || "54322";
+const dbPass = process.env.SUPABASE_DB_PASSWORD?.trim() || "postgres";
+console.log(`SUPABASE_DB_URL=postgresql://postgres:${dbPass}@127.0.0.1:${dbPort}/postgres`);

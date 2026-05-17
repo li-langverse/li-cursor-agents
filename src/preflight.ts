@@ -3,6 +3,8 @@ import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import type { PreflightBundle } from "./types.js";
 import { getAgent } from "./agents/registry.js";
+import { dbEnabled } from "./db/client.js";
+import { schemaMarkdown } from "./db/schema-catalog.js";
 import { buildPrMergerInstruction, mergePlanFromBriefing } from "./preflight/merge-queue.js";
 import {
   buildPrAlignmentCloseInstruction,
@@ -113,6 +115,19 @@ export function buildUserMessage(
           ? (preflight.briefing as Record<string, unknown>).merge_plan as Record<string, unknown>
           : null,
       ),
+      "",
+    );
+  }
+
+  if (dbEnabled()) {
+    lines.push(
+      "## Control-plane database (MCP)",
+      "MCP server **`li-control-plane-db`** is attached. Use tools:",
+      "- `list_control_plane_tables` — schema overview",
+      "- `describe_table` — column types",
+      "- `query_control_plane_db` — read-only SQL (`SELECT` / `WITH` / `EXPLAIN` only)",
+      "",
+      schemaMarkdown(),
       "",
     );
   }

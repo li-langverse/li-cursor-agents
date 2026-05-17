@@ -83,8 +83,22 @@ export function resolveLocalCiRoot(): string | undefined {
 }
 
 /** Cursor + local .env + GitHub (for dashboard / supervisor / agent children). */
+export function loadSupabaseEnv(): void {
+  const pkg = packageRoot();
+  for (const name of [".env.supabase"]) {
+    const path = join(pkg, name);
+    if (existsSync(path)) applyEnvFile(path);
+  }
+  if (!process.env.SUPABASE_DB_URL?.trim()) {
+    process.env.SUPABASE_DB_URL =
+      process.env.DATABASE_URL?.trim() ||
+      "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+  }
+}
+
 export function loadRuntimeEnv(): void {
   loadDotEnv();
+  loadSupabaseEnv();
   loadGithubEnv();
   const localCi = resolveLocalCiRoot();
   if (localCi) process.env.LI_LOCAL_CI_ROOT = localCi;

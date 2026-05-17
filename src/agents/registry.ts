@@ -20,7 +20,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     description: "Routes work from briefing; weekly ecosystem sweep.",
     category: "orchestration",
     promptFile: "agent-orchestrator.md",
-    skills: [],
+    skills: ["explore-control-plane-db"],
     needsWeb: false,
     preflightKeys: ["briefing"],
   },
