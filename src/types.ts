@@ -40,6 +40,8 @@ export interface AgentDefinition {
   skills: string[];
   needsWeb: boolean;
   preflightKeys: string[];
+  /** May use isolated clone → commit → push → PR via repo-workflow CLI. */
+  repoWorkflow?: boolean;
 }
 
 export interface PreflightBundle {
@@ -60,14 +62,25 @@ export interface AgentRunOptions {
   extraInstruction?: string;
 }
 
+export interface AgentRunCompletionMeta {
+  complete: boolean;
+  premature: boolean;
+  pr_urls: string[];
+  deliverable_checked: boolean;
+  skip_reason?: string;
+  gaps: string[];
+  evidence: string[];
+}
+
 export interface AgentRunResult {
   agentId: string;
   backend: "cursor-sdk" | "mock";
-  status: "finished" | "error" | "cancelled" | "dry-run";
+  status: "finished" | "error" | "cancelled" | "dry-run" | "incomplete";
   durationMs: number;
   outputText?: string;
   outputPath: string;
   error?: string;
+  completion?: AgentRunCompletionMeta;
 }
 
 export interface AgentBackend {

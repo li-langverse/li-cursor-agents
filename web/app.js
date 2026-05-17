@@ -58,8 +58,17 @@ function statusLabel(status) {
     finished: "Finished",
     error: "Error",
     cancelled: "Cancelled",
+    incomplete: "Incomplete",
   };
   return labels[status] ?? status;
+}
+
+function briefingGaps(report) {
+  return (
+    report?.agent_deliverable_gaps ??
+    report?.preflight?.briefing?.agent_deliverable_gaps ??
+    null
+  );
 }
 
 function statusDot(status) {
@@ -153,6 +162,11 @@ function renderStatCards() {
   }
   const interventions = report?.interventions?.length ?? 0;
   const runs = runsPayload?.runs?.length ?? 0;
+  const gaps = briefingGaps(report);
+  const gapTotal =
+    (gaps?.incomplete_runs ?? 0) +
+    (gaps?.agent_prs_blocked ?? 0) +
+    (gaps?.numerics_without_evidence ?? 0);
 
   $("#stat-cards").innerHTML = `
     <div class="stat-card accent"><div class="label">Running</div><div class="value">${running}</div></div>
@@ -274,10 +288,15 @@ function renderAgentsTable() {
 }
 
 function renderInterventions() {
-  const items = ui.data.report?.interventions ?? [];
+  const report = ui.data.report;
+  const items = report?.interventions ?? [];
   const list = $("#interventions");
+  const staleNote =
+    report?.briefing_generated_at && report?.generated_at
+      ? `<p class="hint">Interventions from briefing <strong>${esc(report.briefing_generated_at)}</strong> (live; supervisor snapshot was ${esc(String(report.generated_at).slice(0, 19))}).</p>`
+      : "";
   if (!items.length) {
-    list.innerHTML = '<li class="empty">No interventions — automated agents can proceed.</li>';
+    list.innerHTML = `${staleNote}<li class="empty">No interventions — automated agents can proceed.</li>`;
     return;
   }
   const sev = (i) => {
@@ -286,16 +305,24 @@ function renderInterventions() {
     if (s === "high" || s === "P1") return "severity-p1";
     return "severity-p2";
   };
-  list.innerHTML = items
-    .map(
-      (i) => `
+  list.innerHTML =
+    staleNote +
+    items
+      .map(
+        (i) => `
     <li class="intervention ${sev(i)}">
       <h4>${esc(i.title)}</h4>
       <p>${esc(i.detail)}</p>
       <p>${esc(i.action ?? "")}</p>
+      ${(i.links ?? [])
+        .map(
+          (u) =>
+            `<p><a href="${escAttr(u)}" target="_blank" rel="noopener">${esc(u)}</a> — open to confirm state (closed PRs drop off after briefing refresh)</p>`,
+        )
+        .join("")}
     </li>`,
-    )
-    .join("");
+      )
+      .join("");
 }
 
 function renderHeap() {
@@ -385,15 +412,35 @@ function renderAgentDrawer(d) {
       <p class="sub">${esc(a.name)} · ${statusDot(d.status)}</p>
     </div>`;
 
-  const runsHtml = (d.runs ?? [])
-    .map(
-      (r) => `
-    <li class="${r.live ? "live" : ""}" data-open-run="${escAttr(r.run_id)}">
-      <strong>${esc(statusLabel(r.live ? "running" : r.status))}</strong>
-      <span class="time">${formatTime(r.started_at)}</span>
-      ${r.reason ? `<br><span style="color:var(--muted)">${esc(r.reason)}</span>` : ""}
-    </li>`,
-    )
+  const timeline = (d.history?.length ? d.history : d.runs) ?? [];
+  const runsHtml = timeline
+    .map((r) => {
+      const status = r.live ? "running" : r.status;
+      const premature = r.premature || r.completion?.premature;
+      const prs = r.pr_urls?.length ? r.pr_urls : r.completion?.pr_urls;
+      const summary = r.summary || r.output_preview?.slice(0, 120);
+      return `
+    <li class="run-timeline-item ${r.live ? "live" : ""} ${premature ? "premature" : ""}" data-open-run="${escAttr(r.run_id)}">
+      <div class="run-timeline-row">
+        <span class="run-timeline-dot ${escAttr(status)}"></span>
+        <div class="run-timeline-body">
+          <div class="run-timeline-head">
+            <strong>${esc(statusLabel(status))}</strong>
+            ${premature ? '<span class="badge warn">premature</span>' : ""}
+            ${status === "incomplete" ? '<span class="badge warn">incomplete</span>' : ""}
+            <span class="time">${formatTime(r.started_at)}</span>
+          </div>
+          ${summary ? `<p class="run-timeline-summary">${esc(summary)}</p>` : ""}
+          ${r.reason ? `<p class="run-timeline-reason">${esc(r.reason)}</p>` : ""}
+          ${
+            prs?.length
+              ? `<p class="run-timeline-prs">${prs.map((u) => `<a href="${escAttr(u)}" target="_blank" rel="noopener">PR</a>`).join(" · ")}</p>`
+              : ""
+          }
+        </div>
+      </div>
+    </li>`;
+    })
     .join("");
 
   const tasksHtml = (d.recent_tasks ?? [])
@@ -426,7 +473,7 @@ function renderAgentDrawer(d) {
     </div>
     <div class="drawer-section">
       <h3>Run history</h3>
-      <ul class="run-list">${runsHtml || '<li class="empty">No runs recorded</li>'}</ul>
+      <ul class="run-list run-timeline">${runsHtml || '<li class="empty">No runs recorded</li>'}</ul>
     </div>
     ${
       tasksHtml
@@ -453,7 +500,17 @@ async function openRunDrawer(runId) {
         <h2><code>${esc(detail.agent_id)}</code></h2>
         <p class="sub">${esc(statusLabel(detail.live ? "running" : detail.status))} · ${formatTime(detail.started_at)}</p>
       </div>`;
-    $("#drawer-run-output").textContent = detail.output_preview ?? "(empty output)";
+    const prBlock =
+      detail.pr_urls?.length ?
+        `\n\nPRs:\n${detail.pr_urls.map((u) => u).join("\n")}`
+      : "";
+    const comp = detail.completion;
+    const compBlock =
+      comp ?
+        `\n\nCompletion: complete=${comp.complete} premature=${comp.premature}${comp.gaps?.length ? `\nGaps: ${comp.gaps.join("; ")}` : ""}`
+      : "";
+    $("#drawer-run-output").textContent =
+      (detail.output_preview ?? "(empty output)") + prBlock + compBlock;
   } catch (e) {
     $("#drawer-run-output").textContent = e.message;
   }
@@ -540,6 +597,9 @@ $("#agent-search").addEventListener("input", (ev) => {
 });
 
 $("#refresh").addEventListener("click", refresh);
+$("#refresh-briefing").addEventListener("click", () =>
+  postControl("/api/briefing/refresh", $("#refresh-briefing")),
+);
 $("#tick").addEventListener("click", () => postControl("/api/tick", $("#tick")));
 $("#supervisor-start").addEventListener("click", () => postControl("/api/supervisor/start", $("#supervisor-start")));
 $("#supervisor-stop").addEventListener("click", () => postControl("/api/supervisor/stop", $("#supervisor-stop")));

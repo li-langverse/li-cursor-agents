@@ -41,6 +41,9 @@ export function scanInterventions(
   out.push(...mergeInterventions(b));
   out.push(...needsPlan(b));
   out.push(...redBenchmarks(b));
+  out.push(...agentIncompleteRuns(b));
+  out.push(...implementationGaps(b));
+  out.push(...agentDeliverablePrGaps(b));
   out.push(...coordinationConflicts(options.coordPath));
 
   if (!resolveCursorApiKey() && (options.pendingWebAgents?.length ?? 0) > 0) {
@@ -58,10 +61,31 @@ export function scanInterventions(
   return dedupeInterventions(out);
 }
 
+/** Audits that exit 1 when work exists — routed to platform agents, not human preflight fixes. */
+const AGENT_OWNED_PREFLIGHT = new Set(["org_agent_kit_audit", "org_ci_audit"]);
+
+function preflightOwnedByAgent(b: Record<string, unknown>, name: string): boolean {
+  if (name === "org_agent_kit_audit") {
+    const audit = b.org_agent_kit_audit as Record<string, unknown> | undefined;
+    const needing = audit?.repos_needing_sync;
+    return Array.isArray(needing) && needing.length > 0;
+  }
+  if (name === "org_ci_audit") {
+    const audit = b.org_ci_audit as Record<string, unknown> | undefined;
+    const missing = audit?.repos_missing_ci;
+    return Array.isArray(missing) && missing.length > 0;
+  }
+  return false;
+}
+
 function preflightFailures(b: Record<string, unknown>): HumanIntervention[] {
   const runs = b.preflight_runs as Record<string, { exit_code?: number; skipped?: boolean }> | undefined;
   if (!runs) return [];
-  const failed = Object.entries(runs).filter(([, v]) => v && !v.skipped && (v.exit_code ?? 0) !== 0);
+  const failed = Object.entries(runs).filter(([name, v]) => {
+    if (!v || v.skipped || (v.exit_code ?? 0) === 0) return false;
+    if (AGENT_OWNED_PREFLIGHT.has(name) && preflightOwnedByAgent(b, name)) return false;
+    return true;
+  });
   return failed.map(([name]) =>
     item(
       "preflight_failed",
@@ -156,6 +180,63 @@ function needsPlan(b: Record<string, unknown>): HumanIntervention[] {
       "Run issue-feature-planner agent or write plan docs; approve scope before coding.",
     ),
   ];
+}
+
+function agentIncompleteRuns(b: Record<string, unknown>): HumanIntervention[] {
+  const rows = b.agent_incomplete_runs as Array<{ agent_id: string; run_id: string; gaps: string[] }> | undefined;
+  if (!rows?.length) return [];
+  const summary = rows
+    .slice(0, 5)
+    .map((r) => `${r.agent_id} (${r.gaps[0] ?? "incomplete"})`)
+    .join("; ");
+  return [
+    item(
+      "agent_incomplete",
+      "high",
+      `${rows.length} agent run(s) ended prematurely`,
+      summary,
+      "Re-run agent or complete PR + deliverable checklist; do not add merge-approved until gate passes.",
+    ),
+  ];
+}
+
+function implementationGaps(b: Record<string, unknown>): HumanIntervention[] {
+  const gaps = b.agent_deliverable_gaps as Record<string, unknown> | undefined;
+  if (!gaps) return [];
+  const plan = (gaps.plan_open_items as number) ?? 0;
+  const incomplete = (gaps.incomplete_runs as number) ?? 0;
+  const prs = (gaps.agent_prs_blocked as number) ?? 0;
+  const numerics = (gaps.numerics_without_evidence as number) ?? 0;
+  if (plan + incomplete + prs + numerics === 0) return [];
+  const parts: string[] = [];
+  if (plan > 0) parts.push(`${plan} plan tracker items open`);
+  if (incomplete > 0) parts.push(`${incomplete} incomplete agent runs`);
+  if (prs > 0) parts.push(`${prs} agent PR(s) blocked on deliverable gate`);
+  if (numerics > 0) parts.push(`${numerics} numerics/autoresearch without test evidence`);
+  return [
+    item(
+      "implementation_gap",
+      "medium",
+      "Desired vs implemented gaps in briefing",
+      parts.join("; "),
+      "Run implementation_gaps, numerics_researcher, or autoresearch; fix PR deliverable sections before merge.",
+    ),
+  ];
+}
+
+function agentDeliverablePrGaps(b: Record<string, unknown>): HumanIntervention[] {
+  const prs = b.agent_pr_deliverable_failures as Array<{ repo: string; number: number; url: string; blockers: string[] }> | undefined;
+  if (!prs?.length) return [];
+  return prs.slice(0, 6).map((p) =>
+    item(
+      "implementation_gap",
+      "high",
+      `Agent PR not merge-ready: ${p.repo}#${p.number}`,
+      (p.blockers ?? []).join("; ") || "missing Agent deliverable / test evidence",
+      "Update PR body with ## Agent deliverable checklist; add tests/bench proof for numerics PRs.",
+      p.url ? [p.url] : [],
+    ),
+  );
 }
 
 function redBenchmarks(b: Record<string, unknown>): HumanIntervention[] {

@@ -64,7 +64,14 @@ OUT.write_text(json.dumps(data, indent=2))
         mock: true,
         dryRun: false,
       });
-      assert.equal(result.status, "finished", def.id);
+      if (def.repoWorkflow) {
+        assert.ok(
+          result.status === "finished" || result.status === "incomplete",
+          `${def.id}: ${result.status}`,
+        );
+      } else {
+        assert.equal(result.status, "finished", def.id);
+      }
       assert.equal(result.agentId, def.id);
       assert.ok(result.outputPath.endsWith(".md"));
     });

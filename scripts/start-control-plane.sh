@@ -4,6 +4,14 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 export BENCHMARKS_ROOT="${BENCHMARKS_ROOT:-$ROOT/../benchmarks}"
 export CURSOR_MOCK="${CURSOR_MOCK:-1}"
+GITHUB_ENV="${LI_GITHUB_ENV:-$ROOT/../.env.github}"
+if [[ -f "$GITHUB_ENV" ]]; then
+  set -a
+  # shellcheck source=/dev/null
+  source "$GITHUB_ENV"
+  set +a
+  export GH_TOKEN GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
+fi
 
 cd "$ROOT"
 npm run build

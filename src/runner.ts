@@ -1,10 +1,23 @@
+import { writeFileSync } from "node:fs";
 import { readFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getAgent } from "./agents/registry.js";
 import { CursorSdkBackend } from "./backends/cursor-sdk-backend.js";
 import { MockBackend } from "./backends/mock-backend.js";
+import { finalizeAgentRun } from "./control-plane/finalize-run.js";
+import { persistAgentRun } from "./db/persist.js";
+import { runsDir } from "./control-plane/paths.js";
+import {
+  buildAgentKitMaintainerInstruction,
+  refreshAgentKitAudit,
+} from "./preflight/agent-kit-sync.js";
 import { buildUserMessage, runPreflight, resolveBenchmarksRoot } from "./preflight.js";
+import {
+  formatRolloutDigest,
+  rolloutAgentKitPrs,
+  rolloutNeedsLlmFollowUp,
+} from "./repo-workflow/agent-kit-rollout.js";
 import type { AgentRunOptions, AgentRunResult } from "./types.js";
 
 /** li-cursor-agents package root (where prompts/ lives). */
@@ -41,12 +54,51 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
   const packageRoot = agentsPackageRoot();
   const benchmarksRoot = resolveBenchmarksRoot(options.benchmarksRoot);
   const preflight = runPreflight(benchmarksRoot, true);
-  const systemPrompt = loadPrompt(packageRoot, definition.promptFile);
+  let systemPrompt = loadPrompt(packageRoot, definition.promptFile);
+  if (definition.repoWorkflow) {
+    systemPrompt += `\n\n---\n\n${loadPrompt(packageRoot, "repo-workflow-tools.md")}`;
+  }
   const workCwd = options.cwd || packageRoot;
-  const userMessage = buildUserMessage(definition.id, preflight, options.extraInstruction);
 
   const mock = shouldUseMock(options.mock);
+  let extra = options.extraInstruction;
+
+  if (definition.id === "agent_kit_maintainer" && benchmarksRoot && preflight.briefing) {
+    const rollout = rolloutAgentKitPrs(benchmarksRoot, preflight.briefing, {
+      dryRun: mock || options.dryRun,
+    });
+    refreshAgentKitAudit(benchmarksRoot);
+    extra = [buildAgentKitMaintainerInstruction([], preflight.briefing, rollout), extra]
+      .filter(Boolean)
+      .join("\n\n");
+
+    const forceLlm = process.env.LI_AGENT_KIT_FORCE_LLM === "1";
+    if (!forceLlm && !rolloutNeedsLlmFollowUp(rollout)) {
+      const start = Date.now();
+      const outputPath = join(runsDir(), `${definition.id}-${Date.now()}.md`);
+      const text = formatRolloutDigest(rollout);
+      writeFileSync(outputPath, text, "utf8");
+      const prUrls = rollout.map((r) => r.pr_url).filter((u): u is string => Boolean(u));
+      const base = {
+        agentId: definition.id,
+        backend: (mock ? "mock" : "cursor-sdk") as "mock" | "cursor-sdk",
+        status: "finished" as const,
+        durationMs: Date.now() - start,
+        outputText: text,
+        outputPath,
+      };
+      writeFileSync(outputPath.replace(/\.md$/, ".json"), JSON.stringify(base, null, 2) + "\n", "utf8");
+      const finalized = finalizeAgentRun(base, { definition, rolloutPrUrls: prUrls });
+      await persistAgentRun({ run: finalized, rolloutRows: rollout });
+      return finalized;
+    }
+  }
+
+  const userMessage = buildUserMessage(definition.id, preflight, extra);
   const backend = mock ? new MockBackend() : new CursorSdkBackend();
 
-  return backend.run(definition, systemPrompt, userMessage, { ...options, cwd: workCwd });
+  const result = await backend.run(definition, systemPrompt, userMessage, { ...options, cwd: workCwd });
+  const finalized = finalizeAgentRun(result, { definition });
+  await persistAgentRun({ run: finalized });
+  return finalized;
 }

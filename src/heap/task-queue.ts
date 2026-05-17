@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { AgentId } from "../types.js";
 import type { ControlPlaneState, QueuedAgentTask } from "../control-plane/types.js";
+import { agentKitBumpActive } from "../preflight/agent-kit-sync.js";
 import { buildHeapPlan, parseHeapPlanFromBriefing, type HeapPlan } from "./plan.js";
 import type { CoordinatorId } from "./coordinators.js";
 
@@ -46,12 +47,17 @@ export function buildHeapTaskQueue(
   let activeCoordinator: CoordinatorId | undefined;
 
   const stopped = new Set(state.stopped_agents ?? []);
+  const kitBump = agentKitBumpActive(briefing);
 
   for (const ht of heapPlan.flat_tasks) {
     const agentId = ht.agent;
     if (stopped.has(agentId)) continue;
     const fp = taskFingerprint(agentId, ht.reason);
-    if (wasRecentlyRun(state.recent_tasks, fp, options.briefingHash, options.cooldownMs)) {
+    const bypassCooldown = agentId === "agent_kit_maintainer" && kitBump;
+    if (
+      !bypassCooldown &&
+      wasRecentlyRun(state.recent_tasks, fp, options.briefingHash, options.cooldownMs)
+    ) {
       skippedCooldown++;
       continue;
     }

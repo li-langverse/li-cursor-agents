@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { loadDotEnv, resolveCursorApiKey } from "../env.js";
-loadDotEnv();
+import { loadRuntimeEnv, resolveCursorApiKey } from "../env.js";
+loadRuntimeEnv();
 import { AGENT_REGISTRY } from "../agents/registry.js";
 import { runAgent, shouldUseMock } from "../runner.js";
 import type { AgentId } from "../types.js";

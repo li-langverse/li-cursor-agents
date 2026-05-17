@@ -13,6 +13,8 @@ export type InterventionKind =
   | "needs_plan"
   | "ci_red"
   | "agent_error"
+  | "agent_incomplete"
+  | "implementation_gap"
   | "heap_invalid";
 
 export interface HumanIntervention {
@@ -73,6 +75,11 @@ export interface ControlPlaneState {
 
 export interface ControlPlaneReport {
   generated_at: string;
+  /** When interventions were recomputed from disk briefing (dashboard refresh). */
+  live_at?: string;
+  briefing_source?: string;
+  briefing_generated_at?: string;
+  stale_warning?: string;
   briefing_hash: string;
   preflight: PreflightBundle;
   recommended_agents: Array<{ agent: string; reason: string }>;
@@ -80,6 +87,14 @@ export interface ControlPlaneReport {
   heap_plan?: HeapPlan;
   active_coordinator?: CoordinatorId;
   interventions: HumanIntervention[];
+  agent_deliverable_gaps?: Record<string, unknown>;
+  agent_incomplete_runs?: Array<{ agent_id: string; run_id: string; gaps: string[] }>;
+  agent_pr_deliverable_failures?: Array<{
+    repo: string;
+    number: number;
+    url: string;
+    blockers: string[];
+  }>;
   recent_runs: AgentRunResult[];
   supervisor: {
     status: ControlPlaneState["supervisor_status"];

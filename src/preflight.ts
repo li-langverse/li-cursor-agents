@@ -2,6 +2,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import type { PreflightBundle } from "./types.js";
+import { getAgent } from "./agents/registry.js";
 import { buildPrMergerInstruction, mergePlanFromBriefing } from "./preflight/merge-queue.js";
 
 function hasBriefingScript(root: string): boolean {
@@ -104,10 +105,26 @@ export function buildUserMessage(
   if (isMerger) {
     lines.push(
       "Follow the system prompt and **Merge queue** section above.",
-      "- Merge **at most one** PR: `merge_plan.next_merge` only.",
+      "- Merge **at most one** PR: `merge_plan.next_merge` only when not CONFLICTING.",
+      "- Respect `repo_merge_plans` and `pair_risks` — fix conflicts before merge (preserve main + PR commits).",
       "- Use org scripts (`pr-auto-merge.py --dry-run` first); never skip ahead in `merge_sequence`.",
-      "- After merge: note PR in digest; next tick must re-run `pr-merge-queue-plan.py`.",
-      "- Produce digest: what merged (or why nothing merged), updated queue ranks, deferred PRs.",
+      "- After merge: stop; re-plan required before the next PR in the same repo.",
+      "- Produce digest: merged PR, repos needing rebase, CONFLICTING PRs, deferred overlap pairs.",
+    );
+  } else if (getAgent(definitionId)?.repoWorkflow) {
+    lines.push(
+      "Repo workflow: isolated clone under `data/workspaces/` — see **repo-workflow-tools** in system prompt.",
+      "CLI: `./scripts/agent-repo-workflow.sh prepare|commit-pr` (requires GH_TOKEN).",
+      "",
+    );
+  }
+
+  if (definitionId === "agent_kit_maintainer") {
+    lines.push(
+      "Follow the system prompt and **Agent-kit sync** section above.",
+      "- File sync may already be done by the control plane; focus on **git branch, commit, push, open PR** per dirty repo.",
+      "- Do not self-merge; `roadmap` governance PRs need a human reviewer.",
+      "- Produce digest: repos synced, PR URLs, any install failures.",
     );
   } else {
     lines.push(

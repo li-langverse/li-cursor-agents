@@ -12,6 +12,8 @@ Find **missing documentation** and implement it in the correct org repo (handboo
 
 ## Per repo
 
+Use **isolated clones** (`prompts/repo-workflow-tools.md`): `prepare` → edit docs → `commit-pr`.
+
 - `CHANGELOG.md` + `docs/release-notes/` template when user-facing
 - `AGENTS.md` / engineering standards pointers
 - Benchmark honesty labels when touching perf docs

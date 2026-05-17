@@ -133,6 +133,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     skills: ["explore-li-ecosystem"],
     needsWeb: false,
     preflightKeys: ["ecosystem_audit", "explorer", "briefing"],
+    repoWorkflow: true,
   },
   {
     id: "ci_maintainer",
@@ -143,16 +144,18 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     skills: [],
     needsWeb: false,
     preflightKeys: ["org_ci_audit", "ecosystem_audit", "briefing"],
+    repoWorkflow: true,
   },
   {
     id: "agent_kit_maintainer",
     name: "Agent-kit maintainer",
-    description: "Scan org repos for roadmap agent-kit drift; sync .cursor rules/hooks via PR.",
+    description: "Scan org repos for roadmap agent-kit drift; isolated clone, sync, open PRs.",
     category: "platform",
     promptFile: "agent-kit-maintainer.md",
     skills: ["li-ecosystem-discipline"],
     needsWeb: false,
     preflightKeys: ["org_agent_kit_audit", "ecosystem_explorer", "briefing"],
+    repoWorkflow: true,
   },
 ];
 

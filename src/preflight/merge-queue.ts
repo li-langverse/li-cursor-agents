@@ -13,6 +13,28 @@ export interface MergeQueueRow {
   order_reason?: string;
 }
 
+export interface RepoMergePlan {
+  repo: string;
+  base: string;
+  open_prs: number;
+  local_merge_order: string[];
+  safe_merge_order: string[];
+  safe_next?: string | null;
+  conflicting_with_main?: Array<{
+    number: number;
+    url: string;
+    title: string;
+    action: string;
+  }>;
+  pair_risks?: Array<{
+    merge_first: string;
+    then_rebase_and_merge: string;
+    file_overlap: number;
+    reason: string;
+  }>;
+  progress_rule?: string;
+}
+
 export interface MergeQueuePlan {
   generated_at?: string;
   vision_order?: string;
@@ -23,6 +45,14 @@ export interface MergeQueuePlan {
   merge_order?: MergeQueueRow[];
   stacks?: Array<{ merge_first: string; then: string; reason: string }>;
   redundant?: Array<{ pr_a: string; pr_b: string; suggested_action: string }>;
+  pair_risks?: Array<{
+    merge_first: string;
+    then_rebase_and_merge: string;
+    file_overlap: number;
+    reason: string;
+    resolution?: string;
+  }>;
+  repo_merge_plans?: RepoMergePlan[];
   warnings?: string[];
 }
 
@@ -94,9 +124,47 @@ export function buildPrMergerInstruction(plan: MergeQueuePlan | undefined): stri
     lines.push("");
   }
 
+  if (plan.repo_merge_plans?.length) {
+    lines.push("## Per-repo merge plans (conflicts + order)");
+    for (const rp of plan.repo_merge_plans.slice(0, 6)) {
+      lines.push(`### ${rp.repo} (base \`${rp.base}\`)`);
+      if (rp.progress_rule) lines.push(`- ${rp.progress_rule}`);
+      if (rp.safe_merge_order?.length) {
+        lines.push(`- Safe order: ${rp.safe_merge_order.join(" → ")}`);
+      }
+      for (const c of rp.conflicting_with_main ?? []) {
+        lines.push(`- **CONFLICTING** #${c.number}: ${c.action}`);
+      }
+      for (const risk of rp.pair_risks ?? []) {
+        lines.push(
+          `- Overlap ${(risk.file_overlap * 100).toFixed(0)}%: merge **${risk.merge_first}** first, then rebase **${risk.then_rebase_and_merge}**`,
+        );
+      }
+      lines.push("");
+    }
+  }
+
+  if (plan.pair_risks?.length && !plan.repo_merge_plans?.length) {
+    lines.push("**Cross-PR overlap (same repo — preserve both sides):**");
+    for (const r of plan.pair_risks.slice(0, 6)) {
+      lines.push(`- ${r.reason}`);
+    }
+    lines.push("");
+  }
+
+  lines.push(
+    "## Conflict / progress rules (mandatory)",
+    "- **Never** merge a PR with `mergeable: CONFLICTING` — integrate `origin/main` first.",
+    "- **Never** drop commits from main or from an open PR when resolving conflicts.",
+    "- After merging one PR in a repo, **re-plan**; other PRs must absorb updated main before merge.",
+    "- Stacked PRs: parent merges first; child rebases if main moved.",
+    "- Skill: `resolve-merge-conflicts` · doc: `benchmarks/docs/ecosystem/merge-conflict-resolution.md`",
+    "",
+  );
+
   if (plan.warnings?.length) {
     lines.push("**Warnings:**");
-    for (const w of plan.warnings.slice(0, 8)) lines.push(`- ${w}`);
+    for (const w of plan.warnings.slice(0, 10)) lines.push(`- ${w}`);
   }
 
   return lines.join("\n");

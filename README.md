@@ -15,6 +15,19 @@ This repo uses the same **roadmap `agent-kit/`** as lic/benchmarks (PR-only, eco
 
 Org drift audit (feeds **agent_kit_maintainer**): `python3 ../benchmarks/scripts/ensure-org-agent-kit.py --local-only`
 
+## Repo workflow (clone → PR)
+
+Platform agents (`agent_kit_maintainer`, `ci_maintainer`, `docs_maintainer`) use **isolated workspaces** under `data/workspaces/` — not your sibling checkout.
+
+Requires `GH_TOKEN` in `../.env.github` (see lic `scripts/with-github-env.sh`).
+
+```bash
+npm run repo-workflow -- agent-kit-rollout --dry-run
+./scripts/agent-repo-workflow.sh agent-kit-rollout
+```
+
+Manual steps: `prepare` → edit clone → `commit-pr` (documented in `prompts/repo-workflow-tools.md`).
+
 ## Quick start
 
 ```bash
@@ -60,7 +73,7 @@ npm run list
 | `bench_improver` | Fix red dashboard rows in lic | no |
 | `docs_maintainer` | Missing docs → implement | no |
 | `ci_maintainer` | Missing org CI workflows | no |
-| `agent_kit_maintainer` | Sync roadmap agent-kit into drifted org repos | no |
+| `agent_kit_maintainer` | Isolated clone → install agent-kit → open PRs | no |
 | `orchestrator` | Route from briefing | no |
 
 Legacy briefing ids (`ecosystem_explorer`, `plan_completion`, …) still resolve via aliases.

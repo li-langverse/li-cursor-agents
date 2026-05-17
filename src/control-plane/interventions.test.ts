@@ -38,3 +38,54 @@ test("scanInterventions detects preflight failure", () => {
   );
   assert.ok(items.some((i) => i.kind === "preflight_failed"));
 });
+
+test("scanInterventions flags agent incomplete runs", () => {
+  const items = scanInterventions(
+    {
+      agent_incomplete_runs: [{ agent_id: "ci_maintainer", run_id: "x", gaps: ["no_pr_url"] }],
+      recommended_agents: [],
+    },
+    {},
+  );
+  assert.ok(items.some((i) => i.kind === "agent_incomplete"));
+});
+
+test("scanInterventions flags numerics deliverable gaps", () => {
+  const items = scanInterventions(
+    {
+      agent_deliverable_gaps: {
+        plan_open_items: 0,
+        incomplete_runs: 0,
+        agent_prs_blocked: 1,
+        numerics_without_evidence: 1,
+      },
+      agent_pr_deliverable_failures: [
+        {
+          repo: "lic",
+          number: 99,
+          url: "https://github.com/li-langverse/lic/pull/99",
+          blockers: ["numerics_test_or_bench_evidence: missing"],
+        },
+      ],
+      recommended_agents: [],
+    },
+    {},
+  );
+  assert.ok(items.some((i) => i.kind === "implementation_gap" && i.title.includes("lic#99")));
+});
+
+test("org_agent_kit_audit exit 1 with drift is not a human preflight failure", () => {
+  const items = scanInterventions(
+    {
+      preflight_runs: { org_agent_kit_audit: { exit_code: 1 } },
+      org_agent_kit_audit: {
+        repos_needing_sync: [{ repo: "lic", status: "drift" }],
+      },
+      recommended_agents: [
+        { agent: "agent_kit_maintainer", reason: "1 repos missing or drifted agent-kit" },
+      ],
+    },
+    {},
+  );
+  assert.ok(!items.some((i) => i.kind === "preflight_failed" && i.title.includes("org_agent_kit")));
+});

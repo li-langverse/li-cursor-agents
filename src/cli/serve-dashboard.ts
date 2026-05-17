@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { loadDotEnv } from "../env.js";
-loadDotEnv();
+import { loadRuntimeEnv } from "../env.js";
+loadRuntimeEnv();
 import { defaultOpsPort, startOpsServer } from "../ops-server.js";
 
 function parsePort(argv: string[]): number {

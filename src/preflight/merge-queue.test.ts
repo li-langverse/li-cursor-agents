@@ -36,3 +36,44 @@ test("buildPrMergerInstruction names next_merge only", () => {
   assert.match(text, /lip#2/);
   assert.match(text, /Merge this PR only/);
 });
+
+test("buildPrMergerInstruction includes per-repo conflict guidance", () => {
+  const text = buildPrMergerInstruction({
+    next_merge: {
+      rank: 1,
+      repo: "lic",
+      number: 10,
+      url: "https://github.com/li-langverse/lic/pull/10",
+      title: "feat",
+    },
+    repo_merge_plans: [
+      {
+        repo: "lic",
+        base: "main",
+        open_prs: 2,
+        local_merge_order: ["lic#9", "lic#10"],
+        safe_merge_order: ["lic#9"],
+        conflicting_with_main: [
+          {
+            number: 10,
+            url: "https://github.com/li-langverse/lic/pull/10",
+            title: "feat",
+            action: "rebase onto main",
+          },
+        ],
+        pair_risks: [
+          {
+            merge_first: "lic#9",
+            then_rebase_and_merge: "lic#10",
+            file_overlap: 0.6,
+            reason: "overlap",
+          },
+        ],
+      },
+    ],
+  });
+  assert.match(text, /Per-repo merge plans/);
+  assert.match(text, /CONFLICTING/);
+  assert.match(text, /lic#9/);
+  assert.match(text, /Never.*drop commits/i);
+});

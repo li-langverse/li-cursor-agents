@@ -1,19 +1,39 @@
-import { writeFileSync } from "node:fs";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 import type { AgentRunResult, PreflightBundle } from "../types.js";
-import { interventionsPath, reportPath, runsDir } from "./paths.js";
+import { runsDir } from "./paths.js";
 import type { HeapPlan, OrgRoadmapContext } from "../heap/plan.js";
 import type { CoordinatorId } from "../heap/coordinators.js";
 import type { ControlPlaneReport, ControlPlaneState, HumanIntervention } from "./types.js";
+import { persistReport } from "../db/persist.js";
+import { dbEnabled } from "../db/client.js";
+import { listRunsGlobal } from "../db/runs.js";
 
 export function writeReport(report: ControlPlaneReport, interventions: HumanIntervention[]): void {
-  writeFileSync(reportPath(), JSON.stringify(report, null, 2) + "\n", "utf8");
-  writeFileSync(
-    interventionsPath(),
-    JSON.stringify({ generated_at: report.generated_at, interventions }, null, 2) + "\n",
-    "utf8",
-  );
+  void persistReport(report, interventions);
+}
+
+export async function loadRecentRunSummariesAsync(limit = 12): Promise<AgentRunResult[]> {
+  if (dbEnabled()) {
+    try {
+      const rows = await listRunsGlobal(limit);
+      return rows.map(
+        (r): AgentRunResult => ({
+          agentId: r.agent_id as AgentRunResult["agentId"],
+          backend: (r.backend as AgentRunResult["backend"]) ?? "mock",
+          status: r.status as AgentRunResult["status"],
+          durationMs: r.duration_ms ?? 0,
+          outputPath: r.output_path ?? "",
+          outputText: r.output_md ?? undefined,
+          error: r.error ?? undefined,
+          completion: r.completion ?? undefined,
+        }),
+      );
+    } catch {
+      /* disk fallback */
+    }
+  }
+  return loadRecentRunSummaries(limit);
 }
 
 export function loadRecentRunSummaries(limit = 12): AgentRunResult[] {

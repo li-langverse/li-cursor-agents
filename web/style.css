@@ -269,6 +269,18 @@ body {
   border-color: var(--accent-dim);
 }
 
+.stat-card.warn {
+  border-color: var(--high);
+}
+
+.stat-card.warn .value {
+  color: var(--high);
+}
+
+.status-dot.incomplete {
+  background: var(--high);
+}
+
 /* Panels */
 .panel {
   background: var(--panel);
@@ -596,6 +608,86 @@ body {
 
 .run-list li.live {
   border-color: var(--accent);
+}
+
+.run-timeline-item {
+  list-style: none;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+}
+
+.run-timeline-row {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+}
+
+.run-timeline-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 0.35rem;
+  flex-shrink: 0;
+  background: var(--muted);
+}
+
+.run-timeline-dot.running {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(91, 159, 212, 0.25);
+}
+
+.run-timeline-dot.finished {
+  background: var(--low);
+}
+
+.run-timeline-dot.error,
+.run-timeline-dot.incomplete,
+.run-timeline-dot.cancelled {
+  background: var(--critical);
+}
+
+.run-timeline-body {
+  flex: 1;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.run-timeline-item:hover .run-timeline-body {
+  border-color: var(--accent-dim);
+  background: #1e2838;
+}
+
+.run-timeline-item.premature .run-timeline-body {
+  border-color: var(--high);
+}
+
+.run-timeline-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+}
+
+.run-timeline-summary,
+.run-timeline-reason {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.run-timeline-prs a {
+  color: var(--accent);
+  font-size: 0.78rem;
+}
+
+.badge.warn {
+  background: rgba(230, 162, 60, 0.2);
+  color: var(--high);
+  font-size: 0.68rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
 }
 
 .run-output {

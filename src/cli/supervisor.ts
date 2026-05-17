@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { loadDotEnv } from "../env.js";
-loadDotEnv();
+import { loadRuntimeEnv } from "../env.js";
+loadRuntimeEnv();
 import { runSupervisorLoop } from "../supervisor/loop.js";
 import { resolveBenchmarksRoot } from "../preflight.js";
 

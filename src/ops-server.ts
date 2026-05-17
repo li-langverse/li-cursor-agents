@@ -1,4 +1,5 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
+import { spawnSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 import { join, extname } from "node:path";
 import { dashboardRosterSummary } from "./agents/dashboard-roster.js";
@@ -19,10 +20,18 @@ import {
 import { sortedCoordinators } from "./heap/coordinators.js";
 import { agentsPackageRoot } from "./runner.js";
 import { interventionsPath, reportPath, statePath } from "./control-plane/paths.js";
+import { buildLiveReport } from "./control-plane/live-report.js";
 import { readJson } from "./control-plane/read-json.js";
-import { getAgentDetail, getRunDetail, listRunsFromDisk } from "./control-plane/runs-catalog.js";
+import {
+  getAgentDetail,
+  getAgentRunHistory,
+  getRunDetail,
+  listRunsMerged,
+} from "./control-plane/runs-catalog.js";
 import { listActiveRuns } from "./control-plane/runtime.js";
-import { loadState } from "./control-plane/state.js";
+import { hydrateStateFromDb, loadState } from "./control-plane/state.js";
+import { dbEnabled } from "./db/client.js";
+import type { ControlPlaneReport } from "./control-plane/types.js";
 import { resolveBenchmarksRoot } from "./preflight.js";
 import type { AgentId } from "./types.js";
 
@@ -63,14 +72,23 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
     if (port !== 0) {
       console.error(`Agent dashboard: http://127.0.0.1:${p}/`);
     }
+    if (dbEnabled()) {
+      void hydrateStateFromDb().catch((err) => {
+        console.error("[db] hydrate state:", err instanceof Error ? err.message : err);
+      });
+    }
   });
   return server;
 }
 
+function liveReportPayload(): ControlPlaneReport | { error: string } {
+  const stored = readJson(reportPath()) as ControlPlaneReport | null;
+  return buildLiveReport(stored) ?? { error: "no report — run supervisor or start swarm" };
+}
+
 async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): Promise<void> {
   const state = loadState();
-  const report = readJson(reportPath());
-  const interventions = readJson(interventionsPath());
+  const report = liveReportPayload();
   const runtime = runtimeSnapshot(state);
 
   if (url.pathname === "/api/status" || url.pathname === "/api/state") {
@@ -90,12 +108,33 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
   }
 
   if (url.pathname === "/api/interventions") {
-    json(res, 200, interventions ?? { interventions: [] });
+    const iv = "interventions" in report ? report.interventions : [];
+    json(res, 200, { generated_at: new Date().toISOString(), interventions: iv });
     return;
   }
 
   if (url.pathname === "/api/report") {
-    json(res, 200, report ?? { error: "no report — run supervisor or start swarm" });
+    json(res, 200, report);
+    return;
+  }
+
+  if (url.pathname === "/api/briefing/refresh" && req.method === "POST") {
+    const root = resolveBenchmarksRoot();
+    if (!root) {
+      json(res, 400, { error: "BENCHMARKS_ROOT not set" });
+      return;
+    }
+    const proc = spawnSync("python3", ["scripts/agent-briefing.py"], {
+      cwd: root,
+      encoding: "utf8",
+      env: { ...process.env },
+    });
+    json(res, 200, {
+      ok: proc.status === 0,
+      exit_code: proc.status,
+      stderr: proc.stderr?.slice(-500),
+      report: liveReportPayload(),
+    });
     return;
   }
 
@@ -129,20 +168,34 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
 
   if (url.pathname === "/api/runs" && req.method === "GET") {
     json(res, 200, {
-      runs: listRunsFromDisk(60),
+      runs: await listRunsMerged(60),
       active: listActiveRuns(),
+      store: dbEnabled() ? "supabase" : "disk",
     });
     return;
   }
 
   const runDetailMatch = url.pathname.match(/^\/api\/runs\/([^/]+)$/);
   if (runDetailMatch && req.method === "GET") {
-    const detail = getRunDetail(decodeURIComponent(runDetailMatch[1]));
+    const detail = await getRunDetail(decodeURIComponent(runDetailMatch[1]));
     if (!detail) {
       json(res, 404, { error: "run not found" });
       return;
     }
     json(res, 200, detail);
+    return;
+  }
+
+  const agentHistoryMatch = url.pathname.match(/^\/api\/agents\/([^/]+)\/history$/);
+  if (agentHistoryMatch && req.method === "GET") {
+    const agentId = resolveAgentId(agentHistoryMatch[1]);
+    if (!agentId) {
+      json(res, 404, { error: "unknown agent" });
+      return;
+    }
+    const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit") ?? 50)));
+    const runs = await getAgentRunHistory(agentId, limit);
+    json(res, 200, { agent_id: agentId, runs, store: dbEnabled() ? "supabase" : "disk" });
     return;
   }
 
@@ -153,7 +206,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       json(res, 404, { error: "unknown agent" });
       return;
     }
-    const detail = getAgentDetail(agentId);
+    const detail = await getAgentDetail(agentId);
     if (!detail) {
       json(res, 404, { error: "agent not found" });
       return;

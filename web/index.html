@@ -33,13 +33,18 @@
           <div class="topbar-right">
             <span id="status-pill" class="pill idle">loading</span>
             <span id="updated" class="updated"></span>
-            <button type="button" id="refresh" class="btn ghost" title="Refresh">↻</button>
+            <button type="button" id="refresh-briefing" class="btn ghost sm" title="Re-run agent-briefing.py">Refresh briefing</button>
+            <button type="button" id="refresh" class="btn ghost" title="Refresh UI">↻</button>
           </div>
         </header>
 
         <main class="main-views">
           <section id="view-overview" class="view active" aria-label="Overview">
             <div class="stat-cards" id="stat-cards"></div>
+            <div class="panel" id="gaps-panel" hidden>
+              <h2>Implementation &amp; deliverable gaps</h2>
+              <ul id="gaps-list" class="simple-list"></ul>
+            </div>
             <div class="split-panels">
               <div class="panel">
                 <h2>Live activity</h2>
