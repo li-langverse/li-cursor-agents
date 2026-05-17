@@ -113,6 +113,16 @@ describe("dashboard drilldown API e2e", () => {
     assert.ok(typeof stats.agent_prs_open_now === "number");
     assert.ok(Array.isArray(stats.notes));
 
+    const handoffsRes = await httpGetJson(port, "/api/handoffs?limit=5");
+    assert.equal(handoffsRes.status, 200);
+    const handoffsBody = handoffsRes.body as { handoffs?: unknown[] };
+    assert.ok(Array.isArray(handoffsBody.handoffs));
+
+    const swarmRes = await httpGetJson(port, "/api/swarm/briefing");
+    assert.equal(swarmRes.status, 200);
+    const swarmBody = swarmRes.body as { scorecard?: Record<string, unknown> };
+    assert.ok(swarmBody.scorecard);
+
     const runsRes = await httpGetJson(port, "/api/runs");
     assert.equal(runsRes.status, 200);
     const runsPayload = runsRes.body as { runs?: Array<{ run_id: string; agent_id: string }> };

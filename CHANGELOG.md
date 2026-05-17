@@ -8,9 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- **Swarm recommendations** — `mergeSwarmRecommendations` from scorecard/handoff audit; supervisor enriches briefing each tick; implement lane loads goal scaffold markdown.
-- **Handoff hygiene** — maintenance lane fails handoffs missing `north_star_fit`; research completion audit for handoff digests.
-- **Implementation queue handoffs** — `implementation-queue-handoffs.ts` merges claimable `code_implementer` handoffs into briefing queue.
+- **Dashboard handoffs panel** — `/api/handoffs`, `/api/swarm/briefing`; overview scorecard + handoffs table; Refresh briefing via `maintenanceLaneTick`.
+- **Swarm recommendations** — `mergeSwarmRecommendations`, supervisor enrich tick, goal scaffold prompts, handoff hygiene (`src/briefing/swarm-recommendations.ts`, `src/handoffs/goal-scaffold-prompt.ts`).
 - **Production briefing enrich** — `npm run briefing:enrich`, `src/briefing/enrich-briefing-file.ts`, `src/handoffs/handoff-audit.ts`; benchmarks `agent-briefing.py` invokes enrich CLI; `benchmarks` workflow `swarm-audit-refresh.yml` for `repository_dispatch`.
 - **Auto-merge gate** — `src/merge/auto-merge-gate.ts` (`LI_AUTO_MERGE`, `LI_TRUSTED_MERGE_APPROVED`); wired into `preflight.ts` and `supervisor/loop.ts` for `pr_merger`.
 - **Ecosystem MCP** — `list_org_repos`, `search_repo_tree`, `describe_package` in `li-ecosystem-context-mcp.ts` + `ecosystem-briefing-tools.ts`.

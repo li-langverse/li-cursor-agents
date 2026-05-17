@@ -183,7 +183,7 @@ function agentStatusMap(roster, report, runtime, statusPayload) {
 }
 
 async function loadDashboard() {
-  const [report, status, roster, runsPayload, supervisorActivity, activityPayload, interventionsPayload, statisticsPayload] =
+  const [report, status, roster, runsPayload, supervisorActivity, activityPayload, interventionsPayload, statisticsPayload, handoffsPayload, swarmBriefingPayload] =
     await Promise.all([
       fetchJson("/api/report").catch(() => ({})),
       fetchJson("/api/status"),
@@ -193,6 +193,8 @@ async function loadDashboard() {
       fetchJson("/api/activity/recent?limit=25").catch(() => ({ items: [] })),
       fetchJson("/api/interventions").catch(() => ({ interventions: [] })),
       fetchJson("/api/statistics").catch(() => ({ statistics: null })),
+      fetchJson("/api/handoffs?limit=30").catch(() => ({ handoffs: [] })),
+      fetchJson("/api/swarm/briefing").catch(() => ({})),
     ]);
   const runtime = status?.runtime ?? roster?.runtime;
   const lanes = status?.lanes ?? runtime?.lanes;
@@ -207,6 +209,8 @@ async function loadDashboard() {
     activityPayload,
     interventionsPayload,
     statisticsPayload,
+    handoffsPayload,
+    swarmBriefingPayload,
   };
   return ui.data;
 }
@@ -567,15 +571,95 @@ function renderStatCards() {
     (gaps?.agent_prs_blocked ?? 0) +
     (gaps?.numerics_without_evidence ?? 0);
 
+  const sc = ui.data?.lanes?.scorecard ?? ui.data?.swarmBriefingPayload?.scorecard ?? {};
+
   $("#stat-cards").innerHTML = `
     <div class="stat-card accent"><div class="label">Running</div><div class="value">${running}</div></div>
-    <div class="stat-card"><div class="label">Queued</div><div class="value">${queued}</div></div>
-    <div class="stat-card"><div class="label">Stopped</div><div class="value">${stopped}</div></div>
-    <div class="stat-card"><div class="label">Interventions</div><div class="value">${interventions}</div></div>
-    <div class="stat-card"><div class="label">Run artifacts</div><div class="value">${runs}</div></div>`;
+        <div class="stat-card"><div class="label">Recommended</div><div class="value">${recommended}</div></div>
+    <div class="stat-card"><div class="label">Open handoffs</div><div class="value">${sc.pending_handoffs ?? "—"}</div></div>
+    <div class="stat-card"><div class="label">Ready implement</div><div class="value">${sc.ready_to_implement ?? "—"}</div></div>
+    <div class="stat-card"><div class="label">Interventions</div><div class="value">${interventions}</div></div>`;
 }
 
-function renderLiveActivity() {
+
+function renderSwarmHandoffsPanel() {
+  const sc = ui.data?.swarmBriefingPayload?.scorecard ?? ui.data?.lanes?.scorecard ?? {};
+  const audit = ui.data?.swarmBriefingPayload?.handoff_audit ?? {};
+  const goals = ui.data?.swarmBriefingPayload?.goals ?? ui.data?.swarmBriefingPayload?.research_goals_status ?? [];
+  const handoffs = ui.data?.handoffsPayload?.handoffs ?? [];
+  const meta = $("#swarm-handoffs-meta");
+  const session = sc.active_research_session;
+  if (meta) {
+    meta.textContent = [
+      session ? `Research: ${session}` : null,
+      audit.missing_north_star_fit?.length
+        ? `${audit.missing_north_star_fit.length} missing north_star_fit`
+        : null,
+      ui.data?.swarmBriefingPayload?.snapshot?.swarm_enriched_at
+        ? `Enriched ${ui.data.swarmBriefingPayload.snapshot.swarm_enriched_at}`
+        : null,
+    ]
+      .filter(Boolean)
+      .join(" · ") || "Scorecard and open handoffs from briefing + control-plane store.";
+  }
+
+  const row = $("#swarm-scorecard-row");
+  if (row) {
+    const items = [
+      { label: "Pending placement", value: sc.pending_placement ?? 0 },
+      { label: "Ready implement", value: sc.ready_to_implement ?? 0 },
+      { label: "Research lane", value: sc.research_lane_enabled ? "on" : "off" },
+      { label: "Implement lane", value: sc.implement_lane_enabled ? "on" : "off" },
+    ];
+    row.innerHTML = items
+      .map(
+        (it) =>
+          `<div class="stat-card"><div class="label">${esc(it.label)}</div><div class="value">${esc(String(it.value))}</div></div>`,
+      )
+      .join("");
+  }
+
+  const tbody = $("#handoffs-table-body");
+  if (tbody) {
+    const open = handoffs.filter((h) => h.status !== "done" && h.status !== "failed");
+    if (!open.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty">No open handoffs</td></tr>';
+    } else {
+      tbody.innerHTML = open
+        .map((h) => {
+          const fit = (h.north_star_fit ?? "").slice(0, 72);
+          const to = (h.to_agents ?? []).join(", ");
+          return `<tr>
+            <td><span class="badge">${esc(h.status)}</span></td>
+            <td>${esc(to)}</td>
+            <td>${esc(h.research_goal_id ?? "—")}</td>
+            <td title="${escAttr(h.north_star_fit ?? "")}">${esc(fit || "—")}${fit.length < (h.north_star_fit?.length ?? 0) ? "…" : ""}</td>
+            <td class="time">${formatTime(h.updated_at)}</td>
+          </tr>`;
+        })
+        .join("");
+    }
+  }
+
+  const goalsEl = $("#swarm-goals-list");
+  if (goalsEl) {
+    const eligible = (goals ?? []).filter((g) => g.eligible);
+    if (!eligible.length) {
+      goalsEl.innerHTML = '<li class="empty">No eligible research goals this cadence</li>';
+    } else {
+      goalsEl.innerHTML = eligible
+        .slice(0, 6)
+        .map(
+          (g) =>
+            `<li><strong>${esc(g.goal_id)}</strong> (P${g.priority}) → ${esc(g.agent)} — ${esc(g.title ?? "")}</li>`,
+        )
+        .join("");
+    }
+  }
+}
+
+
+function renderLiveActivity() {() {
   const { report, runtime, runsPayload } = ui.data;
   const feed = $("#live-activity");
   const items = [];
@@ -990,6 +1074,7 @@ async function refresh() {
     renderAgentBackendUi();
     renderSupervisorActivity();
     renderStatCards();
+    renderSwarmHandoffsPanel();
     renderSwarmStatistics();
     renderLiveActivity();
     renderQueue();
@@ -1071,6 +1156,10 @@ $("#agent-search").addEventListener("input", (ev) => {
 
 $("#goto-activity")?.addEventListener("click", () => setView("activity"));
 $("#refresh").addEventListener("click", refresh);
+$("#swarm-handoffs-refresh")?.addEventListener("click", () =>
+  postControl("/api/lanes/implement/tick", $("#swarm-handoffs-refresh"), { label: "Implement tick" }),
+);
+
 $("#refresh-briefing").addEventListener("click", () =>
   postControl("/api/briefing/refresh", $("#refresh-briefing")),
 );

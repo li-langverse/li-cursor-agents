@@ -1138,3 +1138,16 @@ footer.footer-modes {
     width: 100%;
   }
 }
+
+.swarm-scorecard-row {
+  margin-bottom: 0.75rem;
+}
+
+.compact-list {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.compact-list li {
+  margin-bottom: 0.35rem;
+}

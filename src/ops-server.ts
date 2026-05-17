@@ -1,5 +1,4 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { spawnSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 import { join, extname } from "node:path";
 import { dashboardRosterSummary } from "./agents/dashboard-roster.js";
@@ -40,7 +39,9 @@ import type { ControlPlaneReport, ControlPlaneState } from "./control-plane/type
 import { resolveBenchmarksRoot } from "./preflight.js";
 import type { AgentId } from "./types.js";
 import type { SwarmStatistics } from "./control-plane/swarm-statistics.js";
-import { buildSwarmScorecard } from "./briefing/swarm-scorecard.js";
+import { buildSwarmScorecard, buildResearchGoalsStatus } from "./briefing/swarm-scorecard.js";
+import { listHandoffs } from "./handoffs/handoff-store.js";
+import { loadSwarmBriefingSnapshot } from "./ops/swarm-briefing-snapshot.js";
 import { researchLaneTick } from "./lanes/research-lane.js";
 import { implementLaneTick } from "./lanes/implement-lane.js";
 import { maintenanceLaneTick } from "./lanes/maintenance-lane.js";
@@ -279,17 +280,46 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       json(res, 400, { error: "BENCHMARKS_ROOT not set" });
       return;
     }
-    const proc = spawnSync("python3", ["scripts/agent-briefing.py"], {
-      cwd: root,
-      encoding: "utf8",
-      env: { ...process.env },
-    });
+    const tick = await maintenanceLaneTick({ benchmarksRoot: root, skipSlowPreflight: true });
     json(res, 200, {
-      ok: proc.status === 0,
-      exit_code: proc.status,
-      stderr: proc.stderr?.slice(-500),
+      ok: tick.ok,
+      briefing_path: tick.briefing_path,
+      skip_reason: tick.skip_reason,
       report: await liveReportPayload(),
+      swarm: loadSwarmBriefingSnapshot(null),
     });
+    return;
+  }
+
+  if (url.pathname === "/api/swarm/briefing" && req.method === "GET") {
+    const report = await loadLiveReportAsync();
+    const embedded =
+      report?.preflight?.briefing && typeof report.preflight.briefing === "object"
+        ? (report.preflight.briefing as Record<string, unknown>)
+        : null;
+    const snapshot = loadSwarmBriefingSnapshot(embedded);
+    const scorecard = snapshot?.swarm_scorecard ?? (await buildSwarmScorecard());
+    json(res, 200, {
+      snapshot,
+      scorecard,
+      research_goals_status: snapshot?.research_goals_status ?? buildResearchGoalsStatus(),
+      handoff_audit: snapshot?.handoff_audit,
+      goals: buildResearchGoalsStatus(),
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/handoffs" && req.method === "GET") {
+    const statusParam = url.searchParams.get("status");
+    const toAgent = url.searchParams.get("to_agent") ?? undefined;
+    const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit") ?? 40)));
+    const status = statusParam
+      ? (statusParam.includes(",")
+          ? (statusParam.split(",") as import("./handoffs/types.js").HandoffStatus[])
+          : (statusParam as import("./handoffs/types.js").HandoffStatus))
+      : undefined;
+    const handoffs = await listHandoffs({ status, toAgent, limit });
+    json(res, 200, { handoffs, store, count: handoffs.length });
     return;
   }
 

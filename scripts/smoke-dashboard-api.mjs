@@ -33,6 +33,8 @@ const paths = [
   "/api/runtime",
   "/api/queue",
   "/api/statistics",
+  "/api/handoffs",
+  "/api/swarm/briefing",
   "/",
   "/index.html",
   "/app.js",

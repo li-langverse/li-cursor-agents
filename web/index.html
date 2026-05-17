@@ -46,6 +46,29 @@
           <section id="view-overview" class="view active" aria-label="Overview">
             <div id="backend-banner" class="backend-banner hidden" role="alert" aria-live="polite"></div>
             <div class="stat-cards" id="stat-cards"></div>
+            <div class="panel" id="swarm-handoffs-panel">
+              <div class="panel-head-row">
+                <h2>Swarm handoffs</h2>
+                <button type="button" class="btn ghost sm" id="swarm-handoffs-refresh" title="Single implement lane tick">Implement tick</button>
+              </div>
+              <p class="hint" id="swarm-handoffs-meta">Scorecard and open handoffs from briefing + control-plane store.</p>
+              <div id="swarm-scorecard-row" class="stat-cards swarm-scorecard-row"></div>
+              <div class="table-wrap">
+                <table class="data-table" id="handoffs-table">
+                  <thead>
+                    <tr>
+                      <th>Status</th>
+                      <th>To</th>
+                      <th>Goal</th>
+                      <th>north_star_fit</th>
+                      <th>Updated</th>
+                    </tr>
+                  </thead>
+                  <tbody id="handoffs-table-body"></tbody>
+                </table>
+              </div>
+              <ul id="swarm-goals-list" class="simple-list compact-list"></ul>
+            </div>
             <div class="panel" id="gaps-panel" hidden>
               <h2>Implementation &amp; deliverable gaps</h2>
               <ul id="gaps-list" class="simple-list"></ul>
