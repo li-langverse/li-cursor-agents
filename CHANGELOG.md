@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Dashboard no longer shows a frozen `last_tick_at` while the subprocess supervisor keeps ticking — reload state from disk on API poll; supervisor activity log shared via `supervisor-activity.jsonl`.
+
 ### Added
 
 - Dashboard **Activity** view and overview teaser: `GET /api/activity/recent` with prompt/output/action drill-downs; **Full trace** opens existing run drawer.

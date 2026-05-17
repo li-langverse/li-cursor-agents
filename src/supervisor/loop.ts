@@ -203,6 +203,7 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
   pruneRecentTasks(state, 80, pruneAgeMs);
   state.supervisor_status = "idle";
   state.current_supervisor_agent = undefined;
+  state.last_tick_at = new Date().toISOString();
   saveState(state);
 
   const recentRuns =

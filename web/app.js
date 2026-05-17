@@ -312,7 +312,7 @@ function renderSupervisorActivity() {
     const started = rt.supervisor_loop_started_at ?? supervisorActivity?.started_at;
     const lastTick = status?.state?.last_tick_at;
     if (loopOn) {
-      meta.textContent = `Running since ${formatTime(started)} · last tick ${lastTick ? formatTime(lastTick) : "pending…"}`;
+      meta.textContent = `Running since ${formatTime(started)} · last completed tick ${lastTick ? formatTime(lastTick) : "pending…"}`;
     } else {
       meta.textContent = "Start loop from the footer to run agents continuously.";
     }

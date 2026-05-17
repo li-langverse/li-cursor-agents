@@ -17,18 +17,40 @@ export async function hydrateStateFromDb(): Promise<void> {
   memoryState = await loadStateAsync();
 }
 
-export function loadState(): ControlPlaneState {
-  if (memoryState) return memoryState;
+function readStateFromDisk(): ControlPlaneState | null {
   const path = statePath();
-  if (!existsSync(path)) return { ...DEFAULT_STATE };
+  if (!existsSync(path)) return null;
   try {
     const raw = JSON.parse(readFileSync(path, "utf8")) as ControlPlaneState;
-    if (raw.version !== 1) return { ...DEFAULT_STATE };
-    memoryState = raw;
+    if (raw.version !== 1) return null;
     return raw;
   } catch {
-    return { ...DEFAULT_STATE };
+    return null;
   }
+}
+
+/** Merge disk state when the supervisor child (or CLI) wrote a newer snapshot. */
+export function reloadStateFromDiskIfNewer(): ControlPlaneState {
+  const disk = readStateFromDisk();
+  if (!disk) return memoryState ?? { ...DEFAULT_STATE };
+  if (!memoryState || (disk.updated_at ?? "") >= (memoryState.updated_at ?? "")) {
+    memoryState = disk;
+  }
+  return memoryState;
+}
+
+export function loadState(): ControlPlaneState {
+  const disk = readStateFromDisk();
+  if (disk && (!memoryState || (disk.updated_at ?? "") >= (memoryState.updated_at ?? ""))) {
+    memoryState = disk;
+    return memoryState;
+  }
+  if (memoryState) return memoryState;
+  if (disk) {
+    memoryState = disk;
+    return disk;
+  }
+  return { ...DEFAULT_STATE };
 }
 
 export function saveState(state: ControlPlaneState): void {

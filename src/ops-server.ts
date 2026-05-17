@@ -31,7 +31,7 @@ import {
 } from "./control-plane/runs-catalog.js";
 import { listActiveRuns } from "./control-plane/runtime.js";
 import { listSupervisorActivity } from "./control-plane/supervisor-activity.js";
-import { hydrateStateFromDb, loadState } from "./control-plane/state.js";
+import { hydrateStateFromDb, loadState, reloadStateFromDiskIfNewer } from "./control-plane/state.js";
 import { dbEnabled } from "./db/client.js";
 import type { ControlPlaneReport } from "./control-plane/types.js";
 import { resolveBenchmarksRoot } from "./preflight.js";
@@ -93,8 +93,15 @@ function liveReportPayload(): ControlPlaneReport | { error: string } {
   return buildLiveReport(stored) ?? { error: "no report — run supervisor or start swarm" };
 }
 
+function loadStateForApi(): ReturnType<typeof loadState> {
+  if (isSupervisorLoopRunning()) {
+    return reloadStateFromDiskIfNewer();
+  }
+  return loadState();
+}
+
 async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const state = loadState();
+  const state = loadStateForApi();
   const report = liveReportPayload();
   const runtime = runtimeSnapshot(state);
 
@@ -251,8 +258,8 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     json(res, 200, {
       ok: true,
       tick,
-      state: loadState(),
-      runtime: runtimeSnapshot(loadState()),
+      state: loadStateForApi(),
+      runtime: runtimeSnapshot(loadStateForApi()),
       report: readJson(reportPath()),
     });
     return;
@@ -270,7 +277,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       ok: result.started || result.already_running,
       ...result,
       message,
-      runtime: runtimeSnapshot(loadState()),
+      runtime: runtimeSnapshot(loadStateForApi()),
       activity: listSupervisorActivity(8),
     });
     return;
@@ -281,7 +288,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     json(res, 200, {
       ok: true,
       ...stopped,
-      runtime: runtimeSnapshot(loadState()),
+      runtime: runtimeSnapshot(loadStateForApi()),
       activity: listSupervisorActivity(5),
     });
     return;
@@ -289,14 +296,14 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
 
   if (url.pathname === "/api/swarm/run-all" && req.method === "POST") {
     const result = await runAllAgentsNow();
-    json(res, 200, { ok: true, ...result, runtime: runtimeSnapshot(loadState()) });
+    json(res, 200, { ok: true, ...result, runtime: runtimeSnapshot(loadStateForApi()) });
     return;
   }
 
   if (url.pathname === "/api/swarm/stop-all" && req.method === "POST") {
     void stopSupervisorLoop();
     const killed = await stopAllActiveRuns();
-    json(res, 200, { ok: true, killed, runtime: runtimeSnapshot(loadState()) });
+    json(res, 200, { ok: true, killed, runtime: runtimeSnapshot(loadStateForApi()) });
     return;
   }
 
@@ -312,7 +319,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       json(res, 409, { error: result.error });
       return;
     }
-    json(res, 200, { ok: true, run: result.run, runtime: runtimeSnapshot(loadState()) });
+    json(res, 200, { ok: true, run: result.run, runtime: runtimeSnapshot(loadStateForApi()) });
     return;
   }
 
@@ -343,7 +350,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
   const runCancel = url.pathname.match(/^\/api\/runs\/([^/]+)\/cancel$/);
   if (runCancel && req.method === "POST") {
     const ok = cancelRun(runCancel[1]);
-    json(res, ok ? 200 : 404, { ok, runtime: runtimeSnapshot(loadState()) });
+    json(res, ok ? 200 : 404, { ok, runtime: runtimeSnapshot(loadStateForApi()) });
     return;
   }
 
