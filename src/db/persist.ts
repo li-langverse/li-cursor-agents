@@ -111,6 +111,37 @@ export async function loadInterventionsHybrid(): Promise<HumanIntervention[]> {
   return [];
 }
 
+export async function persistLiveInterventions(params: {
+  interventions: HumanIntervention[];
+  briefingHash: string;
+  briefingGeneratedAt: string;
+  generatedAt: string;
+}): Promise<void> {
+  if (dbEnabled()) {
+    try {
+      await cpDb.saveLiveInterventionsToDb(params);
+    } catch (err) {
+      console.error("[db] persistLiveInterventions failed:", err instanceof Error ? err.message : err);
+    }
+  }
+  if (exportDiskCacheEnabled()) {
+    writeFileSync(
+      interventionsPath(),
+      JSON.stringify(
+        {
+          generated_at: params.generatedAt,
+          briefing_hash: params.briefingHash,
+          briefing_generated_at: params.briefingGeneratedAt,
+          interventions: params.interventions,
+        },
+        null,
+        2,
+      ) + "\n",
+      "utf8",
+    );
+  }
+}
+
 export function runIdFromOutputPath(outputPath: string): string {
   const base = outputPath.split("/").pop() ?? outputPath;
   return base.replace(/\.md$/, "");

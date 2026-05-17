@@ -104,6 +104,8 @@ function mergeInterventions(b: Record<string, unknown>): HumanIntervention[] {
 
   for (const row of rows) {
     if (!row.merge_approved) continue;
+    const mergeState = String(row.merge_state ?? row.state ?? "").toUpperCase();
+    if (mergeState === "MERGED" || mergeState === "CLOSED") continue;
     const repo = String(row.repo ?? "");
     const num = row.number;
     const url = String(row.url ?? "");

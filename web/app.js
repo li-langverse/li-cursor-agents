@@ -171,16 +171,27 @@ function agentStatusMap(roster, report, runtime, statusPayload) {
 }
 
 async function loadDashboard() {
-  const [report, status, roster, runsPayload, supervisorActivity, activityPayload] = await Promise.all([
-    fetchJson("/api/report").catch(() => ({})),
-    fetchJson("/api/status"),
-    fetchJson("/api/agents"),
-    fetchJson("/api/runs").catch(() => ({ runs: [], active: [] })),
-    fetchJson("/api/supervisor/activity").catch(() => ({ entries: [], loop_running: false })),
-    fetchJson("/api/activity/recent?limit=25").catch(() => ({ items: [] })),
-  ]);
+  const [report, status, roster, runsPayload, supervisorActivity, activityPayload, interventionsPayload] =
+    await Promise.all([
+      fetchJson("/api/report").catch(() => ({})),
+      fetchJson("/api/status"),
+      fetchJson("/api/agents"),
+      fetchJson("/api/runs").catch(() => ({ runs: [], active: [] })),
+      fetchJson("/api/supervisor/activity").catch(() => ({ entries: [], loop_running: false })),
+      fetchJson("/api/activity/recent?limit=25").catch(() => ({ items: [] })),
+      fetchJson("/api/interventions").catch(() => ({ interventions: [] })),
+    ]);
   const runtime = status?.runtime ?? roster?.runtime;
-  ui.data = { report, status, roster, runtime, runsPayload, supervisorActivity, activityPayload };
+  ui.data = {
+    report: { ...report, interventions: interventionsPayload.interventions ?? report.interventions },
+    status,
+    roster,
+    runtime,
+    runsPayload,
+    supervisorActivity,
+    activityPayload,
+    interventionsPayload,
+  };
   return ui.data;
 }
 
@@ -542,13 +553,19 @@ function renderAgentsTable() {
 }
 
 function renderInterventions() {
+  const ivPayload = ui.data.interventionsPayload ?? {};
   const report = ui.data.report;
-  const items = report?.interventions ?? [];
+  const items = ivPayload.interventions ?? report?.interventions ?? [];
   const list = $("#interventions");
-  const staleNote =
-    report?.briefing_generated_at && report?.generated_at
-      ? `<p class="hint">Interventions from briefing <strong>${esc(report.briefing_generated_at)}</strong> (live; supervisor snapshot was ${esc(String(report.generated_at).slice(0, 19))}).</p>`
-      : "";
+  const briefingAt = ivPayload.briefing_generated_at ?? report?.briefing_generated_at;
+  const liveAt = ivPayload.generated_at ?? report?.live_at;
+  let staleNote = "";
+  if (briefingAt) {
+    staleNote = `<p class="hint">Interventions from briefing <strong>${esc(briefingAt)}</strong>${liveAt ? ` · recomputed ${formatTime(liveAt)}` : ""}. Merged/closed PRs are excluded.</p>`;
+  }
+  if (ivPayload.stale_warning || report?.stale_warning) {
+    staleNote += `<p class="hint warn">${esc(ivPayload.stale_warning ?? report.stale_warning)}</p>`;
+  }
   if (!items.length) {
     list.innerHTML = `${staleNote}<li class="empty">No interventions — automated agents can proceed.</li>`;
     return;

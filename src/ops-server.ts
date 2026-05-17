@@ -21,7 +21,7 @@ import { sortedCoordinators } from "./heap/coordinators.js";
 import { agentsPackageRoot, agentBackendLabel } from "./runner.js";
 import { resolveCursorApiKey } from "./env.js";
 import { interventionsPath, reportPath, statePath } from "./control-plane/paths.js";
-import { buildLiveReport } from "./control-plane/live-report.js";
+import { loadLiveInterventionsPayload, loadLiveReportAsync } from "./control-plane/live-report.js";
 import { readJson } from "./control-plane/read-json.js";
 import {
   getAgentDetail,
@@ -94,9 +94,9 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
   return server;
 }
 
-function liveReportPayload(): ControlPlaneReport | { error: string } {
-  const stored = readJson(reportPath()) as ControlPlaneReport | null;
-  return buildLiveReport(stored) ?? { error: "no report — run supervisor or start swarm" };
+async function liveReportPayload(): Promise<ControlPlaneReport | { error: string }> {
+  const report = await loadLiveReportAsync();
+  return report ?? { error: "no report — run supervisor or start swarm" };
 }
 
 function loadStateForApi(): ReturnType<typeof loadState> {
@@ -108,7 +108,7 @@ function loadStateForApi(): ReturnType<typeof loadState> {
 
 async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): Promise<void> {
   const state = loadStateForApi();
-  const report = liveReportPayload();
+  const report = await liveReportPayload();
   const runtime = runtimeSnapshot(state);
 
   if (url.pathname === "/api/status" || url.pathname === "/api/state") {
@@ -150,8 +150,8 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
   }
 
   if (url.pathname === "/api/interventions") {
-    const iv = "interventions" in report ? report.interventions : [];
-    json(res, 200, { generated_at: new Date().toISOString(), interventions: iv });
+    const payload = await loadLiveInterventionsPayload();
+    json(res, 200, payload);
     return;
   }
 
@@ -175,7 +175,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       ok: proc.status === 0,
       exit_code: proc.status,
       stderr: proc.stderr?.slice(-500),
-      report: liveReportPayload(),
+      report: await liveReportPayload(),
     });
     return;
   }
