@@ -11,6 +11,7 @@
     "build": "tsc -p tsconfig.json",
     "agent": "node dist/cli/run-agent.js",
     "overnight": "node dist/cli/overnight-adaptive.js",
+    "dashboard": "node dist/cli/dashboard.js",
     "preflight": "node dist/cli/preflight.js",
     "list": "node dist/cli/run-agent.js --list",
     "test": "npm run build && CURSOR_MOCK=1 node --test dist/**/*.test.js",
