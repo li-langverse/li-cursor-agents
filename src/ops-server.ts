@@ -33,7 +33,7 @@ import {
 import { listActiveRuns } from "./control-plane/runtime.js";
 import { listSupervisorActivity } from "./control-plane/supervisor-activity.js";
 import { buildSwarmStatistics } from "./control-plane/swarm-statistics.js";
-import { hydrateStateFromDb, loadState, reloadStateIfNewer } from "./control-plane/state.js";
+import { hydrateStateFromDb, loadState, loadStateForApi } from "./control-plane/state.js";
 import { assertStoreReady, configuredStore, dataStoreLabel, dbEnabled } from "./db/client.js";
 import type { ControlPlaneReport, ControlPlaneState } from "./control-plane/types.js";
 import { resolveBenchmarksRoot } from "./preflight.js";
@@ -122,15 +122,8 @@ async function liveReportPayload(): Promise<ControlPlaneReport | { error: string
   return report ?? { error: "no report — run supervisor or start swarm" };
 }
 
-async function loadStateForApi(): Promise<ControlPlaneState> {
-  if (isSupervisorLoopRunning()) {
-    return reloadStateIfNewer();
-  }
-  return loadState();
-}
-
 async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const state = await loadStateForApi();
+  const state = isSupervisorLoopRunning() ? loadStateForApi() : loadState();
   const store = dataStoreLabel();
   const runtime = runtimeSnapshot(state);
 

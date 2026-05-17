@@ -62,6 +62,19 @@ export function reloadStateFromDiskIfNewer(): ControlPlaneState {
   return memoryState;
 }
 
+/**
+ * Hot path for dashboard API polls while supervisor subprocess runs.
+ * Prefer IPC mirror (state.json) — never block polls on PostgREST.
+ */
+export function loadStateForApi(): ControlPlaneState {
+  if (useSupabaseStore() && dbEnabled()) {
+    void reloadStateIfNewer().catch((err) => {
+      console.error("[control-plane] background state reload failed:", err);
+    });
+  }
+  return reloadStateFromDiskIfNewer();
+}
+
 export function loadState(): ControlPlaneState {
   if (useSupabaseStore()) {
     return memoryState ?? { ...DEFAULT_STATE };

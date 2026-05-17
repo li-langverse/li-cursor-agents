@@ -4,7 +4,7 @@ import { getAgent } from "../agents/registry.js";
 import { coordinatorForLeaf } from "../heap/coordinators.js";
 import { runsDir } from "./paths.js";
 import { isSupervisorLoopRunning, listActiveRuns } from "./runtime.js";
-import { loadState, reloadStateIfNewer } from "./state.js";
+import { loadState, loadStateForApi } from "./state.js";
 import { readJson } from "./read-json.js";
 import { reportPath } from "./paths.js";
 import { dbEnabled, useDiskStore, useSupabaseStore } from "../db/client.js";
@@ -267,7 +267,7 @@ export async function getAgentDetail(agentId: AgentId) {
   const def = getAgent(agentId);
   if (!def) return null;
 
-  const cpState = isSupervisorLoopRunning() ? await reloadStateIfNewer() : loadState();
+  const cpState = isSupervisorLoopRunning() ? loadStateForApi() : loadState();
   const report = readJson(reportPath()) as Record<string, unknown> | null;
   const recommended = (report?.recommended_agents as Array<{ agent: string; reason: string }>) ?? [];
   const rec = recommended.find((r) => r.agent === agentId);
