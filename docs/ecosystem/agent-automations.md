@@ -7,6 +7,7 @@
 | Research | `npm run agents:research-lane` | Goal-directed research; session-first |
 | Implement | `npm run agents:implement-lane` | `package_architect` → `code_implementer` handoffs |
 | Maintenance | `npm run agents:maintenance-lane -- --once` | Refresh briefing + `swarm_scorecard` (no LLM) |
+| Briefing enrich | `npm run briefing:enrich -- --benchmarks-root ../benchmarks` | Post-process `agent-briefing.json` after benchmarks preflight |
 | Supervisor | `npm run supervisor` | Heap + briefing `recommended_agents` |
 
 Dashboard footer toggles **Research lane** / **Implement lane**; **Run all (handoff)** runs one tick per phase.
@@ -25,3 +26,5 @@ Cloud Automations can mirror the same agent prompts under `benchmarks/.cursor/au
 | `swarm-audit-cron.yml` | Weekly Mon 09:00 UTC + dispatch | Handoff/heap unit tests + briefing key check; optional `LI_BENCHMARKS_DISPATCH_TOKEN` → benchmarks repo |
 
 Production audits (`plan-completion-audit`, `ecosystem-explorer`) stay in **benchmarks** / **lic** repos; GHA here only refreshes what local lanes read from `data/latest/`.
+
+**benchmarks** `scripts/agent-briefing.py` calls `li-cursor-agents` `briefing:enrich` when `LI_CURSOR_AGENTS_ROOT` is built (`dist/cli/enrich-briefing.js`). **benchmarks** workflow `swarm-audit-refresh.yml` handles `repository_dispatch` type `swarm-audit-refresh` from `swarm-audit-cron.yml`.

@@ -22,6 +22,7 @@
     "agents:research-lane": "npm run build && node dist/cli/research-lane.js",
     "agents:implement-lane": "npm run build && node dist/cli/implement-lane.js",
     "agents:maintenance-lane": "npm run build && node dist/cli/maintenance-lane.js",
+    "briefing:enrich": "npm run build && node dist/cli/enrich-briefing.js",
     "db:probe": "npm run build && node dist/cli/db-probe.js",
     "test": "npm run build && LI_CONTROL_PLANE_STORE=disk CURSOR_MOCK=1 node --test 'dist/**/*.test.js' --test 'dist/e2e/*.e2e.js' && node scripts/test-log-timestamps.mjs",
     "test:log-timestamps": "npm run build && node scripts/test-log-timestamps.mjs",

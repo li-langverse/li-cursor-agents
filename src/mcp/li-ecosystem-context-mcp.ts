@@ -169,6 +169,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
         ecosystem_explorer: full.ecosystem_explorer,
         swarm_scorecard: full.swarm_scorecard,
         research_goals_status: full.research_goals_status,
+        handoff_audit: full.handoff_audit,
         org_packages: full.org_packages,
         lic_packages: full.lic_packages,
       };

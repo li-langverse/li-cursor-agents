@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Production briefing enrich** — `npm run briefing:enrich`, `src/briefing/enrich-briefing-file.ts`, `src/handoffs/handoff-audit.ts`; benchmarks `agent-briefing.py` invokes enrich CLI; `benchmarks` workflow `swarm-audit-refresh.yml` for `repository_dispatch`.
 - **Auto-merge gate** — `src/merge/auto-merge-gate.ts` (`LI_AUTO_MERGE`, `LI_TRUSTED_MERGE_APPROVED`); wired into `preflight.ts` and `supervisor/loop.ts` for `pr_merger`.
 - **Ecosystem MCP** — `list_org_repos`, `search_repo_tree`, `describe_package` in `li-ecosystem-context-mcp.ts` + `ecosystem-briefing-tools.ts`.
 - **Research → implement handoffs** — `implementation-handoff.ts`, goal scaffolds under `config/goal-scaffolds/` for `game_engine_ux` / `cad_fundamentals`.

@@ -1,7 +1,7 @@
 import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
-import { enrichBriefingWithScorecards } from "../briefing/swarm-scorecard.js";
+import { enrichBriefingObject } from "../briefing/enrich-briefing-file.js";
 import { resolveBenchmarksRoot, runPreflight } from "../preflight.js";
 import { loadLaneState, saveLaneState } from "./lane-state.js";
 
@@ -31,7 +31,7 @@ export async function maintenanceLaneTick(options?: {
     preflight.briefing && typeof preflight.briefing === "object"
       ? (preflight.briefing as Record<string, unknown>)
       : {};
-  const enriched = await enrichBriefingWithScorecards(raw);
+  const enriched = await enrichBriefingObject(raw);
 
   const outDir = join(benchmarksRoot, "data", "latest");
   mkdirSync(outDir, { recursive: true });
