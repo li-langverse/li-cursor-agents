@@ -1,6 +1,7 @@
 import { readFileSync, existsSync, writeFileSync } from "node:fs";
 import { statePath } from "./paths.js";
 import { DEFAULT_STATE, type ControlPlaneState } from "./types.js";
+import { agentLog } from "../agent-log.js";
 import { loadControlPlaneStateHybrid, persistControlPlaneState } from "../db/persist.js";
 import { dbEnabled, useDiskStore, useSupabaseStore } from "../db/client.js";
 
@@ -37,7 +38,7 @@ export async function reloadStateIfNewer(): Promise<ControlPlaneState> {
     try {
       fromDb = await loadControlPlaneStateHybrid();
     } catch (err) {
-      console.error("[control-plane] reload state from db failed:", err);
+      agentLog("control-plane", "ERROR", `reload state from db failed: ${err}`);
     }
     if (fromDb && (!memoryState || (fromDb.updated_at ?? "") >= (memoryState.updated_at ?? ""))) {
       memoryState = fromDb;
@@ -69,7 +70,7 @@ export function reloadStateFromDiskIfNewer(): ControlPlaneState {
 export function loadStateForApi(): ControlPlaneState {
   if (useSupabaseStore() && dbEnabled()) {
     void reloadStateIfNewer().catch((err) => {
-      console.error("[control-plane] background state reload failed:", err);
+      agentLog("control-plane", "ERROR", `background state reload failed: ${err}`);
     });
   }
   return reloadStateFromDiskIfNewer();
@@ -98,7 +99,7 @@ function mirrorStateForSupervisorIpc(state: ControlPlaneState): void {
   try {
     writeFileSync(statePath(), JSON.stringify(state, null, 2) + "\n", "utf8");
   } catch (err) {
-    console.error("[control-plane] mirror state.json failed:", err);
+    agentLog("control-plane", "ERROR", `mirror state.json failed: ${err}`);
   }
 }
 
@@ -107,7 +108,7 @@ export function saveState(state: ControlPlaneState): void {
   memoryState = state;
   mirrorStateForSupervisorIpc(state);
   void persistControlPlaneState(state).catch((err) => {
-    console.error("[control-plane] persist state failed:", err);
+    agentLog("control-plane", "ERROR", `persist state failed: ${err}`);
   });
 }
 

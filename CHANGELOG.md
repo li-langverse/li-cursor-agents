@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- Operational logs (`keep-agents.log`, supervisor subprocess) prefix ISO-8601 timestamps; `src/agent-log.ts`, `scripts/test-log-timestamps.mjs` regression.
 - Supabase persist `fetch failed`: retry transient REST errors, serialize state upserts, normalize `localhost` → `127.0.0.1`, wait for PostgREST in `ensure-supabase.sh`, `db:probe` checks REST not only Postgres (`src/db/supabase-retry.ts`, `rest-health.ts`, `persist.ts`).
 - Dashboard agent status: **Recommended** (briefing/heap) vs misleading **Queued**; cooldown wins over recommended; supervisor subprocess state mirrored to `data/control-plane/state.json` for parent reload when Supabase persist fails (`src/control-plane/state.ts`, `web/app.js`).
 

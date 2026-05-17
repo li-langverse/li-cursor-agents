@@ -1,5 +1,6 @@
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { agentLog } from "../agent-log.js";
 import { controlPlaneRoot } from "./paths.js";
 
 export type SupervisorActivityLevel = "info" | "tick" | "warn" | "error";
@@ -62,8 +63,7 @@ export function pushSupervisorActivity(
   appendActivityToDisk(row);
 
   const prefix = level === "error" ? "ERROR" : level === "warn" ? "WARN" : level === "tick" ? "tick" : "info";
-  const extra = meta ? ` ${JSON.stringify(meta)}` : "";
-  console.error(`[supervisor] ${prefix}: ${message}${extra}`);
+  agentLog("supervisor", prefix, message, meta ? JSON.stringify(meta) : undefined);
 }
 
 export function listSupervisorActivity(limit = 40): SupervisorActivityEntry[] {

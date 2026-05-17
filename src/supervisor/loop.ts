@@ -323,7 +323,6 @@ export async function runSupervisorLoop(
     ]
       .filter(Boolean)
       .join(" ");
-    console.error(`[supervisor] ${msg}`);
     pushSupervisorActivity("tick", msg, {
       tasks_executed: tick.tasksExecuted,
       skipped_cooldown: tick.tasksSkippedCooldown,

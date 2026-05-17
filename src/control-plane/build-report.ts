@@ -5,13 +5,14 @@ import { runsDir } from "./paths.js";
 import type { HeapPlan, OrgRoadmapContext } from "../heap/plan.js";
 import type { CoordinatorId } from "../heap/coordinators.js";
 import type { ControlPlaneReport, ControlPlaneState, HumanIntervention } from "./types.js";
+import { agentLog } from "../agent-log.js";
 import { persistReport } from "../db/persist.js";
 import { dbEnabled, useSupabaseStore } from "../db/client.js";
 import { listRunsGlobal } from "../db/runs.js";
 
 export function writeReport(report: ControlPlaneReport, interventions: HumanIntervention[]): void {
   void persistReport(report, interventions).catch((err) => {
-    console.error("[control-plane] persist report failed:", err);
+    agentLog("control-plane", "ERROR", `persist report failed: ${err}`);
   });
 }
 
