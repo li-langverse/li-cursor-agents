@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- **Real Cursor SDK is the default** for dashboard, `agents:keep`, and supervisor; `CURSOR_MOCK=1` only in `npm test` / CI / `--mock`. Production scripts `unset CURSOR_MOCK` after loading `.env`.
+
 ### Fixed
 
 - Dashboard no longer shows a frozen `last_tick_at` while the subprocess supervisor keeps ticking — reload state from disk on API poll; supervisor activity log shared via `supervisor-activity.jsonl`.

@@ -258,11 +258,13 @@ function renderSidebar() {
   }
 
   const store = rt.store ?? status?.store ?? "disk";
+  const agentBackend = status?.agent_backend ?? rt.agent_backend ?? "cursor-sdk";
   const loopOn = Boolean(rt.supervisor_loop_running);
   const loopStarted = rt.supervisor_loop_started_at ?? st.supervisor_loop_started_at;
   $("#sidebar-stats").innerHTML = `
     <dl>
       <dt>Data store</dt><dd title="History in Supabase; live runs in this process">${esc(store)}</dd>
+      <dt>Agent backend</dt><dd class="${agentBackend === "mock" ? "text-warn" : "text-ok"}">${esc(agentBackend)}</dd>
       <dt>Supervisor</dt><dd class="${loopOn ? "text-ok" : ""}">${loopOn ? "● loop on" : "○ loop off"}</dd>
       <dt>Loop since</dt><dd>${loopOn && loopStarted ? formatTime(loopStarted) : "—"}</dd>
       <dt>Running now</dt><dd>${rt.active_run_count ?? 0}</dd>

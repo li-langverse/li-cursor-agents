@@ -28,20 +28,29 @@ npm run repo-workflow -- agent-kit-rollout --dry-run
 
 Manual steps: `prepare` → edit clone → `commit-pr` (documented in `prompts/repo-workflow-tools.md`).
 
-## Quick start
+## Quick start (full local stack)
+
+```bash
+cp .env.example .env          # SUPABASE_SERVICE_ROLE_KEY from supabase status
+# Docker running, then:
+npm run stack                 # Supabase + migrations + dashboard + supervisor
+```
+
+Disk-only (no Docker): `LI_STACK_SKIP_SUPABASE=1 npm run stack`
+
+## Quick start (agents only)
 
 ```bash
 npm ci
 ./scripts/sync-prompts.sh   # from ../benchmarks/.cursor/automations
 npm run build
 
-# CI / local without API key
-export CURSOR_MOCK=1
-npm run agent -- --agent gap_explorer
-
-# Real SDK run (local dev)
-export CURSOR_API_KEY="..."
+# Real SDK (default) — put CURSOR_API_KEY in .env
+cp .env.example .env
 npm run agent -- --agent pr_reviewer --benchmarks ../benchmarks
+
+# Mock only for CI / explicit dry-run
+npm run agent -- --agent gap_explorer --mock
 ```
 
 ## Architecture
@@ -109,7 +118,7 @@ Covers: heap caps → preflight → task queue → agent runs → report/interve
 | Var | Purpose |
 |-----|---------|
 | `CURSOR_API_KEY` | Real SDK (from [Cursor dashboard](https://cursor.com/dashboard) integrations) |
-| `CURSOR_MOCK=1` | Force mock |
+| `CURSOR_MOCK=1` | Mock backend (npm test / `--mock` only) |
 | `BENCHMARKS_ROOT` | Path to `li-langverse/benchmarks` for preflight |
 | `CURSOR_MODEL` | Default `default` (Cursor **Auto**); pin e.g. `gpt-5-mini` if needed |
 | `LI_E2E_SDK=1` | Run live SDK e2e tests |
@@ -158,7 +167,7 @@ Each **leaf/root** card has **Start** / **Stop** / **Resume**. Stop kills a runn
 ```bash
 # CLI alternative (no dashboard)
 export BENCHMARKS_ROOT=../benchmarks
-CURSOR_MOCK=1 npm run supervisor -- --benchmarks ../benchmarks
+npm run agents:keep   # dashboard + supervisor (cursor-sdk if .env has key)
 ./scripts/start-control-plane.sh --mock
 ```
 

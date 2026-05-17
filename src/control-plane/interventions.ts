@@ -53,7 +53,7 @@ export function scanInterventions(
         "high",
         "Cursor API key missing for web agents",
         `Agents pending: ${options.pendingWebAgents!.join(", ")}`,
-        "Set CURSOR_API_KEY in .env or environment, or run with CURSOR_MOCK=1 for dry runs only.",
+        "Set CURSOR_API_KEY in li-cursor-agents/.env (real SDK is the default). Use --mock only for dry runs.",
       ),
     );
   }

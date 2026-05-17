@@ -6,6 +6,7 @@ import { getAgent } from "./agents/registry.js";
 import { CursorSdkBackend } from "./backends/cursor-sdk-backend.js";
 import { MockBackend } from "./backends/mock-backend.js";
 import { buildMockTrace, buildRunInput } from "./agent-run-trace.js";
+import { resolveCursorApiKey } from "./env.js";
 import { hashBriefing } from "./control-plane/briefing-hash.js";
 import { finalizeAgentRun } from "./control-plane/finalize-run.js";
 import { persistAgentRun } from "./db/persist.js";
@@ -40,14 +41,28 @@ export function loadPrompt(repoRoot: string, promptFile: string): string {
   return readFileSync(p, "utf8");
 }
 
+/** True only for `--mock`, `CURSOR_MOCK=1` (tests/CI), or CI without an API key. */
 export function shouldUseMock(explicitMock: boolean): boolean {
   if (explicitMock) return true;
   if (process.env.CURSOR_MOCK === "1" || process.env.CURSOR_MOCK === "true") return true;
-  if (process.env.CI === "true" && !process.env.CURSOR_API_KEY) return true;
+  if (process.env.CI === "true" && !resolveCursorApiKey()) return true;
   return false;
 }
 
+export function agentBackendLabel(mock?: boolean): "mock" | "cursor-sdk" {
+  return shouldUseMock(mock ?? false) ? "mock" : "cursor-sdk";
+}
+
+export function assertRealBackendReady(explicitMock?: boolean): void {
+  if (shouldUseMock(explicitMock ?? false)) return;
+  if (resolveCursorApiKey()) return;
+  throw new Error(
+    "CURSOR_API_KEY is required for real agent runs. Add it to li-cursor-agents/.env (see .env.example). Tests use CURSOR_MOCK=1; local dry-run: --mock.",
+  );
+}
+
 export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult> {
+  assertRealBackendReady(options.mock);
   const definition = getAgent(String(options.agentId));
   if (!definition) {
     throw new Error(`Unknown agent: ${options.agentId} (see npm run agents:list)`);

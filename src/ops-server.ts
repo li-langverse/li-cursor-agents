@@ -18,7 +18,8 @@ import {
   stopSupervisorLoop,
 } from "./control-plane/runtime.js";
 import { sortedCoordinators } from "./heap/coordinators.js";
-import { agentsPackageRoot } from "./runner.js";
+import { agentsPackageRoot, agentBackendLabel } from "./runner.js";
+import { resolveCursorApiKey } from "./env.js";
 import { interventionsPath, reportPath, statePath } from "./control-plane/paths.js";
 import { buildLiveReport } from "./control-plane/live-report.js";
 import { readJson } from "./control-plane/read-json.js";
@@ -71,7 +72,12 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
   server.listen(port, "127.0.0.1", () => {
     const addr = server.address();
     const p = typeof addr === "object" && addr ? addr.port : port;
+    const backend = agentBackendLabel();
+    const keyOk = Boolean(resolveCursorApiKey());
     console.error(`Agent dashboard: http://127.0.0.1:${p}/`);
+    console.error(
+      `[dashboard] Agent backend: ${backend}${backend === "cursor-sdk" && !keyOk ? " (missing CURSOR_API_KEY — add to .env)" : ""}`,
+    );
     if (dbEnabled()) {
       void hydrateStateFromDb().catch((err) => {
         console.error("[db] hydrate state:", err instanceof Error ? err.message : err);
@@ -118,12 +124,13 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       },
       supervisor_loop_running: isSupervisorLoopRunning(),
       store: dbEnabled() ? "supabase" : "disk",
+      agent_backend: agentBackendLabel(),
     });
     return;
   }
 
   if (url.pathname === "/api/runtime") {
-    json(res, 200, runtime);
+    json(res, 200, { ...runtime, agent_backend: agentBackendLabel() });
     return;
   }
 

@@ -9,10 +9,11 @@ mkdir -p logs
 if [[ -f "$ROOT/.env" ]]; then set -a; source "$ROOT/.env"; set +a; fi
 GITHUB_ENV="${LI_GITHUB_ENV:-$ROOT/../.env.github}"
 if [[ -f "$GITHUB_ENV" ]]; then set -a; source "$GITHUB_ENV"; set +a; fi
+# Production stack uses Cursor SDK; tests set CURSOR_MOCK=1 explicitly.
+unset CURSOR_MOCK
 
 export BENCHMARKS_ROOT="${BENCHMARKS_ROOT:-$ROOT/../benchmarks}"
 export LI_CURSOR_AGENTS_ROOT="$ROOT"
-export CURSOR_MOCK="${CURSOR_MOCK:-1}"
 export LI_AUTO_START_SUPERVISOR=1
 # Dashboard spawns supervisor as child process (does not block HTTP)
 export LI_SUPERVISOR_INTERVAL_MS="${LI_SUPERVISOR_INTERVAL_MS:-120000}"
@@ -52,7 +53,6 @@ echo "Starting dashboard + auto-supervisor (log: logs/keep-agents.log)"
 nohup env \
   BENCHMARKS_ROOT="$BENCHMARKS_ROOT" \
   LI_CURSOR_AGENTS_ROOT="$ROOT" \
-  CURSOR_MOCK="$CURSOR_MOCK" \
   LI_AUTO_START_SUPERVISOR=1 \
   LI_SUPERVISOR_INTERVAL_MS="$LI_SUPERVISOR_INTERVAL_MS" \
   LI_AGENTS_COOLDOWN_MS="$LI_AGENTS_COOLDOWN_MS" \

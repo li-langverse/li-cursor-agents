@@ -2,7 +2,7 @@
 import { loadRuntimeEnv, resolveCursorApiKey } from "../env.js";
 loadRuntimeEnv();
 import { AGENT_REGISTRY } from "../agents/registry.js";
-import { runAgent, shouldUseMock } from "../runner.js";
+import { agentBackendLabel, runAgent, shouldUseMock } from "../runner.js";
 import type { AgentId } from "../types.js";
 
 function parseArgs(argv: string[]) {
@@ -30,20 +30,19 @@ function parseArgs(argv: string[]) {
 }
 
 function printHelp() {
-  console.log(`li-agent — Cursor SDK local runner (use --mock in CI)
+  console.log(`li-agent — Cursor SDK local runner (real SDK by default)
 
 Usage:
   li-agent --list
-  li-agent --agent <id> [--mock] [--dry-run]
+  li-agent --agent <id> [--dry-run]
   li-agent --agent orchestrator --benchmarks ../benchmarks
 
 Agents: ${AGENT_REGISTRY.map((a) => a.id).join(", ")}
 
 Env:
-  CURSOR_API_KEY     Real SDK (also CURSOR_SDK_KEY, CURSOR_SDK)
-  CURSOR_MOCK=1      Force mock backend
+  CURSOR_API_KEY     Required for real runs (.env or shell)
   BENCHMARKS_ROOT    Path to benchmarks repo for preflight
-  CI=true            Auto-mock when no API key
+  --mock             Dry-run mock backend (CI/tests set CURSOR_MOCK=1)
 `);
 }
 
@@ -62,8 +61,7 @@ async function main() {
     process.exit(1);
   }
 
-  const useMock = shouldUseMock(args.mock);
-  console.error(`backend: ${useMock ? "mock" : "cursor-sdk"} agent: ${args.agent}`);
+  console.error(`backend: ${agentBackendLabel(args.mock)} agent: ${args.agent}`);
 
   const result = await runAgent({
     agentId: args.agent,

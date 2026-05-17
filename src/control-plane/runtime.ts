@@ -6,6 +6,7 @@ import { resolveBenchmarksRoot, runPreflight } from "../preflight.js";
 import { buildHeapTaskQueue } from "../heap/task-queue.js";
 import { hashBriefing } from "./briefing-hash.js";
 import type { SupervisorOptions } from "../supervisor/loop.js";
+import { assertRealBackendReady, shouldUseMock } from "../runner.js";
 import { runSupervisorLoop, supervisorTick } from "../supervisor/loop.js";
 import { pushSupervisorActivity } from "./supervisor-activity.js";
 import { loadState, saveState } from "./state.js";
@@ -20,7 +21,7 @@ let supervisorChild: ChildProcess | null = null;
 
 export function defaultSupervisorOptions(overrides?: Partial<SupervisorOptions>): SupervisorOptions {
   return {
-    mock: process.env.CURSOR_MOCK === "1" || process.env.CURSOR_MOCK === "true",
+    mock: shouldUseMock(false),
     once: false,
     force: false,
     forceFirstTick: true,
@@ -145,7 +146,7 @@ export function spawnAgentRun(
 
   const packageRoot = agentsPackageRoot();
   const benchmarksRoot = resolveBenchmarksRoot();
-  const mock = defaultSupervisorOptions().mock;
+  const mock = shouldUseMock(false);
   const runId = `${agentId}-${Date.now()}`;
   const cli = join(packageRoot, "dist/cli/run-agent.js");
   const args = ["--agent", agentId];
@@ -248,6 +249,7 @@ export async function startSupervisorLoop(
   saveState(state);
 
   const options = defaultSupervisorOptions(overrides);
+  assertRealBackendReady(options.mock);
 
   if (supervisorRunsAsSubprocess()) {
     supervisorChild = spawnSupervisorChild(options);
