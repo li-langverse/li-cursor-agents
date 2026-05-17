@@ -46,6 +46,8 @@ export interface AgentDefinition {
   preflightKeys: string[];
   /** May use isolated clone → commit → push → PR via repo-workflow CLI. */
   repoWorkflow?: boolean;
+  /** Supervisor post-hook runs commitPushOpenPr when workspace is dirty after run. */
+  guaranteedPush?: boolean;
 }
 
 export interface PreflightBundle {

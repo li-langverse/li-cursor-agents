@@ -20,7 +20,16 @@ import {
   rolloutAgentKitPrs,
   rolloutNeedsLlmFollowUp,
 } from "./repo-workflow/agent-kit-rollout.js";
+import {
+  applyPostHookToRunResult,
+  commitPushOpenPrAfterAgentRun,
+} from "./repo-workflow/post-hook.js";
+import {
+  agentUsesGuaranteedPush,
+  beginRepoWorkflowSession,
+} from "./repo-workflow/workspace-session.js";
 import type { AgentRunOptions, AgentRunResult } from "./types.js";
+import type { RepoWorkflowSession } from "./repo-workflow/workspace-session.js";
 
 /** li-cursor-agents package root (where prompts/ lives). */
 export function agentsPackageRoot(): string {
@@ -74,9 +83,21 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
   if (definition.repoWorkflow) {
     systemPrompt += `\n\n---\n\n${loadPrompt(packageRoot, "repo-workflow-tools.md")}`;
   }
-  const workCwd = options.cwd || packageRoot;
-
+  let workCwd = options.cwd || packageRoot;
   const mock = shouldUseMock(options.mock);
+  let workflowSession: RepoWorkflowSession | undefined;
+
+  if (agentUsesGuaranteedPush(definition)) {
+    workflowSession = beginRepoWorkflowSession({
+      agentId: definition.id,
+      dryRun: options.dryRun,
+      skipPush: mock || options.dryRun || process.env.LI_REPO_WORKFLOW_SKIP_PUSH === "1",
+    });
+    if (workflowSession.ok) {
+      workCwd = workflowSession.cloneDir;
+    }
+  }
+
   let extra = options.extraInstruction;
 
   if (definition.id === "agent_kit_maintainer" && benchmarksRoot && preflight.briefing) {
@@ -183,10 +204,31 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
       runInput,
     };
   }
+  let rolloutPrUrls: string[] | undefined;
+  const extraEvidence: string[] = [];
+  if (
+    workflowSession?.ok &&
+    agentUsesGuaranteedPush(definition) &&
+    result.status !== "cancelled"
+  ) {
+    const push = commitPushOpenPrAfterAgentRun(workflowSession, definition, {
+      ...result,
+      runInput: result.runInput ?? runInput,
+    });
+    result = applyPostHookToRunResult(
+      { ...result, runInput: result.runInput ?? runInput },
+      push,
+    );
+    if (push.pr_url) rolloutPrUrls = [push.pr_url];
+    if (push.committed) extraEvidence.push("post_hook_committed");
+    if (push.pushed) extraEvidence.push("post_hook_pushed");
+  }
+
   const finalized = finalizeAgentRun(
     { ...result, runInput: result.runInput ?? runInput },
-    { definition, preflight },
+    { definition, rolloutPrUrls, preflight, extraEvidence },
   );
+
   await persistAgentRun({ run: finalized });
   return finalized;
 }

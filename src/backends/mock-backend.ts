@@ -1,4 +1,4 @@
-import { writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { buildMockDeliverable } from "../agent-output-format.js";
 import { buildMockTrace } from "../agent-run-trace.js";
@@ -45,6 +45,16 @@ export class MockBackend implements AgentBackend {
 
     const briefing = extractBriefing(userMessage);
     const deliverable = buildMockDeliverable(definition, briefing, userMessage);
+
+    if (definition.guaranteedPush && options.cwd) {
+      const docsDir = join(options.cwd, "docs");
+      mkdirSync(docsDir, { recursive: true });
+      writeFileSync(
+        join(docsDir, `.mock-${definition.id}-touch.md`),
+        `# mock ${definition.id}\n`,
+        "utf8",
+      );
+    }
 
     return {
       agentId: definition.id,

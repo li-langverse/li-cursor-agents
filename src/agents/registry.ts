@@ -113,6 +113,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     skills: ["research-li-numerics"],
     needsWeb: true,
     preflightKeys: ["ecosystem_audit", "explorer", "briefing"],
+    guaranteedPush: true,
   },
   {
     id: "autoresearch",
@@ -123,6 +124,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     skills: ["numerics-autoresearch", "research-li-numerics"],
     needsWeb: true,
     preflightKeys: ["ecosystem_audit", "explorer", "briefing"],
+    guaranteedPush: true,
   },
   {
     id: "bench_improver",
@@ -133,6 +135,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     skills: ["research-li-numerics", "hpc-competitive-review"],
     needsWeb: false,
     preflightKeys: ["ecosystem_audit", "briefing"],
+    guaranteedPush: true,
   },
   {
     id: "docs_maintainer",
@@ -144,6 +147,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     needsWeb: false,
     preflightKeys: ["ecosystem_audit", "explorer", "briefing"],
     repoWorkflow: true,
+    guaranteedPush: true,
   },
   {
     id: "ci_maintainer",
@@ -155,6 +159,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     needsWeb: false,
     preflightKeys: ["org_ci_audit", "ecosystem_audit", "briefing"],
     repoWorkflow: true,
+    guaranteedPush: true,
   },
   {
     id: "agent_kit_maintainer",

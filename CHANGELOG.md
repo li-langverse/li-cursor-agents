@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Guaranteed push post-hook** — `docs_maintainer`, `ci_maintainer`, numerics agents auto `commit`/`push`/`gh pr create` after run when isolated workspace is dirty (`src/repo-workflow/post-hook.ts`); tests use `fixtures/li-demo-workflow` + `LI_REPO_WORKFLOW_USE_FIXTURE=1`.
 - **`pr_branch_opener`** agent — opens PRs for remote branches without an open pull request (`pr-branch-hygiene.py` preflight).
 - **`pr_branch_hygiene`** preflight instructions for `pr_alignment` to close superseded/outdated PRs (`safe_now` rows).
 

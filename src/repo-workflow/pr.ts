@@ -18,7 +18,8 @@ export function commitPushOpenPr(
   const dryRun = options.dryRun ?? false;
   const branch = options.branch;
 
-  if (!hasGitToken() && !dryRun) {
+  const needsRemote = !dryRun && !options.skipPush;
+  if (!hasGitToken() && needsRemote) {
     return {
       ok: false,
       skipped: true,
