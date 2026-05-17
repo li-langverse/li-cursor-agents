@@ -510,6 +510,14 @@ body {
 .action-drilldowns details {
   margin-bottom: 0.35rem;
   font-size: 0.85rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0 0.35rem 0.25rem;
+}
+
+.action-drilldowns details[open] {
+  border-color: var(--border);
+  background: rgba(0, 0, 0, 0.15);
 }
 
 .action-drilldowns summary {
@@ -517,6 +525,15 @@ body {
   font-weight: 600;
   color: var(--accent);
   padding: 0.25rem 0;
+  list-style: disclosure-closed;
+}
+
+.action-drilldowns details[open] > summary {
+  list-style: disclosure-open;
+}
+
+.action-drilldowns summary::-webkit-details-marker {
+  margin-right: 0.35rem;
 }
 
 .action-drilldowns h5 {

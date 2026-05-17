@@ -10,6 +10,11 @@ const ui = {
   data: null,
   pollMs: 4000,
   toastTimer: null,
+  /** @type {Set<string>} keys runId:section — survives poll re-renders */
+  openDrilldowns: new Set(),
+  /** @type {Set<string>} user explicitly collapsed (overrides defaults) */
+  closedDrilldowns: new Set(),
+
 };
 
 const VIEW_META = {
@@ -195,7 +200,38 @@ async function loadDashboard() {
   return ui.data;
 }
 
+function drillKey(runId, section) {
+  return `${runId}:${section}`;
+}
+
+function isDrillOpen(runId, section, defaultOpen = false) {
+  const key = drillKey(runId, section);
+  if (ui.closedDrilldowns.has(key)) return false;
+  if (ui.openDrilldowns.has(key)) return true;
+  return defaultOpen;
+}
+
+function captureOpenDrilldowns(root) {
+  if (!root) return;
+  for (const el of root.querySelectorAll("details[data-drill][open]")) {
+    ui.openDrilldowns.add(el.getAttribute("data-drill"));
+  }
+}
+
+function activityItemsFingerprint(items) {
+  return items
+    .map(
+      (i) =>
+        `${i.run_id}:${i.status}:${i.live ? 1 : 0}:${i.run_trace?.steps?.length ?? 0}:${i.run_trace?.file_edits?.length ?? 0}:${(i.output_snippet ?? "").length}`,
+    )
+    .join("|");
+}
+
 function renderActionDrilldowns(item, { compact = false } = {}) {
+  const runId = item.run_id ?? "unknown";
+  const dk = (section) => escAttr(drillKey(runId, section));
+  const openAttr = (section, defaultOpen = false) => (isDrillOpen(runId, section, defaultOpen) ? " open" : "");
+
   const input = item.run_input;
   const trace = item.run_trace;
   const edits = trace?.file_edits ?? [];
@@ -233,17 +269,21 @@ function renderActionDrilldowns(item, { compact = false } = {}) {
 
   return `
     <div class="action-drilldowns">
-      <details ${input ? "open" : ""}>
+      <details data-drill="${dk("input")}"${openAttr("input", Boolean(input && !compact))}>
         <summary>Input prompt</summary>
         ${input ? `<p class="trace-meta">${esc(input.backend)} · <code>${esc(input.cwd)}</code></p>` : ""}
         ${inputBlock}
       </details>
-      ${thinking && !compact ? `<details><summary>Thinking</summary><pre class="trace-pre">${esc(thinking)}</pre></details>` : ""}
-      <details>
+      ${
+        thinking && !compact
+          ? `<details data-drill="${dk("thinking")}"${openAttr("thinking")}><summary>Thinking</summary><pre class="trace-pre">${esc(thinking)}</pre></details>`
+          : ""
+      }
+      <details data-drill="${dk("output")}"${openAttr("output")}>
         <summary>Output</summary>
         ${outputBlock}
       </details>
-      <details>
+      <details data-drill="${dk("actions")}"${openAttr("actions")}>
         <summary>Actions taken</summary>
         ${actionsBlock}
       </details>
@@ -271,26 +311,35 @@ function renderActivityCard(item, { compact = false } = {}) {
     </article>`;
 }
 
-function renderActivityFeed() {
-  const items = ui.data?.activityPayload?.items ?? [];
-  const feed = $("#activity-feed");
+function renderActionFeed(feed, items, { compact = false, emptyMessage } = {}) {
   if (!feed) return;
   if (!items.length) {
-    feed.innerHTML = '<p class="empty">No agent runs yet — start the supervisor or run an agent.</p>';
+    feed.innerHTML = `<p class="empty">${emptyMessage}</p>`;
+    delete feed.dataset.activityFp;
     return;
   }
-  feed.innerHTML = items.map((item) => renderActivityCard(item)).join("");
+  captureOpenDrilldowns(feed);
+  const fp = activityItemsFingerprint(items);
+  if (fp === feed.dataset.activityFp && feed.querySelector("[data-run-id]")) {
+    return;
+  }
+  feed.dataset.activityFp = fp;
+  feed.innerHTML = items.map((item) => renderActivityCard(item, { compact })).join("");
+}
+
+function renderActivityFeed() {
+  const items = ui.data?.activityPayload?.items ?? [];
+  renderActionFeed($("#activity-feed"), items, {
+    emptyMessage: "No agent runs yet — start the supervisor or run an agent.",
+  });
 }
 
 function renderOverviewActivityTeaser() {
-  const feed = $("#overview-activity-feed");
-  if (!feed) return;
   const items = (ui.data?.activityPayload?.items ?? []).slice(0, 4);
-  if (!items.length) {
-    feed.innerHTML = '<p class="empty">No recorded runs with prompts or traces yet.</p>';
-    return;
-  }
-  feed.innerHTML = items.map((item) => renderActivityCard(item, { compact: true })).join("");
+  renderActionFeed($("#overview-activity-feed"), items, {
+    compact: true,
+    emptyMessage: "No recorded runs with prompts or traces yet.",
+  });
 }
 
 function showToast(message, kind = "info") {
@@ -962,6 +1011,24 @@ $$(".drawer-close").forEach((btn) => {
     else closeDrawers();
   });
 });
+
+document.addEventListener(
+  "toggle",
+  (ev) => {
+    const d = ev.target;
+    if (!(d instanceof HTMLDetailsElement)) return;
+    const key = d.getAttribute("data-drill");
+    if (!key || !d.closest(".action-feed, .action-drilldowns")) return;
+    if (d.open) {
+      ui.openDrilldowns.add(key);
+      ui.closedDrilldowns.delete(key);
+    } else {
+      ui.openDrilldowns.delete(key);
+      ui.closedDrilldowns.add(key);
+    }
+  },
+  true,
+);
 
 document.body.addEventListener("click", async (ev) => {
   const openAgent = ev.target.closest("[data-open-agent]");
