@@ -69,9 +69,7 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
   server.listen(port, "127.0.0.1", () => {
     const addr = server.address();
     const p = typeof addr === "object" && addr ? addr.port : port;
-    if (port !== 0) {
-      console.error(`Agent dashboard: http://127.0.0.1:${p}/`);
-    }
+    console.error(`Agent dashboard: http://127.0.0.1:${p}/`);
     if (dbEnabled()) {
       void hydrateStateFromDb().catch((err) => {
         console.error("[db] hydrate state:", err instanceof Error ? err.message : err);

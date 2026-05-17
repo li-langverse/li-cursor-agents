@@ -63,6 +63,7 @@ export function runtimeSnapshot(state: ControlPlaneState) {
   return {
     supervisor_loop_running: isSupervisorLoopRunning() || Boolean(state.supervisor_loop_running),
     stopped_agents: state.stopped_agents ?? [],
+    current_supervisor_agent: state.current_supervisor_agent ?? null,
     active_runs: listActiveRuns(),
     active_run_count: activeRuns.size,
   };

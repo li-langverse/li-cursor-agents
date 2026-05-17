@@ -17,6 +17,10 @@ export class MockBackend implements AgentBackend {
     options: AgentRunOptions,
   ): Promise<AgentRunResult> {
     const start = Date.now();
+    const delayMs = Number(process.env.LI_MOCK_RUN_DELAY_MS ?? 0);
+    if (delayMs > 0) {
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
     const outputPath = join(runsDir(), `${definition.id}-${Date.now()}.md`);
 
     if (options.dryRun) {
