@@ -22,6 +22,7 @@
     "test:dashboard-api": "npm run build && CURSOR_MOCK=1 node --test dist/e2e/dashboard-api.e2e.js dist/e2e/dashboard-live-runs.e2e.js dist/e2e/dashboard-run-trace.e2e.js",
     "smoke:dashboard": "node scripts/smoke-dashboard-api.mjs",
     "verify:dashboard": "npm run build && node scripts/verify-dashboard-live.mjs",
+    "db:ensure": "bash scripts/ensure-supabase.sh",
     "db:backfill": "node scripts/backfill-control-plane-db.mjs",
     "test:e2e": "npm run build && CURSOR_MOCK=1 node --test dist/e2e/heap.e2e.js dist/e2e/swarm-handoff.e2e.js dist/e2e/agent-matrix.e2e.js",
     "test:e2e:sdk": "npm run build && env -u CURSOR_MOCK LI_E2E_SDK=1 node --test dist/e2e/sdk-live.e2e.js",

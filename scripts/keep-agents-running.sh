@@ -9,11 +9,22 @@ mkdir -p logs
 # shellcheck source=env.defaults.sh
 source "$ROOT/scripts/env.defaults.sh"
 if [[ -f "$ROOT/.env" ]]; then set -a; source "$ROOT/.env"; set +a; fi
+li_resolve_env_paths "$ROOT"
 if [[ -f "$LI_GITHUB_ENV" ]]; then set -a; source "$LI_GITHUB_ENV"; set +a; fi
 export GH_TOKEN GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
 # Production stack uses Cursor SDK; tests set CURSOR_MOCK=1 explicitly.
 unset CURSOR_MOCK
 export LI_AUTO_START_SUPERVISOR=1
+
+if [[ "${LI_STACK_SKIP_SUPABASE:-}" != "1" ]]; then
+  "$ROOT/scripts/ensure-supabase.sh" || echo "WARN: Supabase not ready — dashboard will use disk cache" >&2
+fi
+if [[ -f "$ROOT/.env.supabase" ]]; then
+  set -a
+  # shellcheck source=/dev/null
+  source "$ROOT/.env.supabase"
+  set +a
+fi
 
 if [[ "${LI_KEEP_AGENTS_RESTART:-}" != "0" ]]; then
   if lsof -ti ":${LI_AGENT_DASHBOARD_PORT}" >/dev/null 2>&1; then
@@ -60,6 +71,8 @@ nohup env \
   GH_TOKEN="${GH_TOKEN:-}" \
   GITHUB_TOKEN="${GITHUB_TOKEN:-}" \
   CURSOR_API_KEY="${CURSOR_API_KEY:-}" \
+  SUPABASE_URL="${SUPABASE_URL:-}" \
+  SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-}" \
   node "$ROOT/dist/cli/serve-dashboard.js" --port "$PORT" \
   >>"$ROOT/logs/keep-agents.log" 2>&1 &
 echo $! >"$ROOT/logs/keep-agents.pid"

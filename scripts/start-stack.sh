@@ -21,6 +21,7 @@ if [[ -f "$ROOT/.env" ]]; then
   source "$ROOT/.env"
   set +a
 fi
+li_resolve_env_paths "$ROOT"
 if [[ -f "$LI_GITHUB_ENV" ]]; then
   set -a
   # shellcheck source=/dev/null
@@ -31,23 +32,15 @@ fi
 
 # --- Supabase (primary store) ---
 if [[ "${LI_STACK_SKIP_SUPABASE:-}" != "1" ]]; then
-  if command -v supabase >/dev/null 2>&1 && [[ -f "$ROOT/supabase/config.toml" ]]; then
-    echo "==> Supabase: start + db reset (migrations)"
-    if supabase start && supabase db reset; then
-      echo "==> Supabase: loading credentials into shell"
-      # shellcheck disable=SC2046
-      eval "$(supabase status -o env 2>/dev/null | grep -E '^SUPABASE_' || true)"
-      export SUPABASE_URL="${SUPABASE_URL:-http://127.0.0.1:54321}"
-      if [[ -z "${SUPABASE_SERVICE_ROLE_KEY:-}" ]]; then
-        echo "WARN: SUPABASE_SERVICE_ROLE_KEY empty — run: supabase status" >&2
-        echo "      Or set it in .env (see .env.example)" >&2
-      fi
-    else
-      echo "WARN: Supabase failed (is Docker running?). Continuing with disk cache only." >&2
-      echo "      Retry with Docker, or: LI_STACK_SKIP_SUPABASE=1 $0" >&2
+  if "$ROOT/scripts/ensure-supabase.sh"; then
+    if [[ -f "$ROOT/.env.supabase" ]]; then
+      set -a
+      # shellcheck source=/dev/null
+      source "$ROOT/.env.supabase"
+      set +a
     fi
   else
-    echo "WARN: supabase CLI or supabase/config.toml missing — disk cache only" >&2
+    echo "WARN: Supabase ensure failed — disk cache only (or LI_STACK_SKIP_SUPABASE=1)" >&2
   fi
 else
   echo "==> Supabase skipped (LI_STACK_SKIP_SUPABASE=1)"

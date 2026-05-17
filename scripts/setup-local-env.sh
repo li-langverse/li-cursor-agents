@@ -53,7 +53,7 @@ upsert_env LI_LOCAL_CI_SWEEP_LIMIT "${LI_LOCAL_CI_SWEEP_LIMIT:-2}"
 upsert_env LI_LOCAL_CI_PRUNE always
 upsert_env LI_LOCAL_CI_SKIP_GH 1
 upsert_env LI_SUPERVISOR_MAX_TASKS "${LI_SUPERVISOR_MAX_TASKS:-2}"
-upsert_env LI_STACK_SKIP_SUPABASE "${LI_STACK_SKIP_SUPABASE:-1}"
+upsert_env LI_STACK_SKIP_SUPABASE "${LI_STACK_SKIP_SUPABASE:-0}"
 
 if [[ -f "$LI_GITHUB_ENV" ]]; then
   upsert_env LI_GITHUB_ENV "$LI_GITHUB_ENV"
@@ -69,6 +69,21 @@ fi
 npm install
 npm rebuild sqlite3 2>/dev/null || true
 npm run build
+
+if command -v docker >/dev/null 2>&1 && command -v supabase >/dev/null 2>&1; then
+  echo "==> Supabase (control plane primary store)"
+  if [[ "${LI_STACK_SKIP_SUPABASE:-0}" != "1" ]]; then
+    bash "$ROOT/scripts/ensure-supabase.sh" || echo "WARN: Supabase ensure failed — set LI_STACK_SKIP_SUPABASE=1 to skip" >&2
+    if [[ -f "$ROOT/.env.supabase" ]]; then
+      set -a
+      # shellcheck source=/dev/null
+      source "$ROOT/.env.supabase"
+      set +a
+      upsert_env SUPABASE_URL "${SUPABASE_URL}"
+      upsert_env SUPABASE_SERVICE_ROLE_KEY "${SUPABASE_SERVICE_ROLE_KEY}"
+    fi
+  fi
+fi
 
 if command -v docker >/dev/null 2>&1; then
   echo "==> li-local-ci: slim node image (for quick Docker tests)"

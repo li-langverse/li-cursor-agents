@@ -21,8 +21,26 @@ _abs_file() {
 }
 
 export LI_CURSOR_AGENTS_ROOT="$ROOT"
-export BENCHMARKS_ROOT="${BENCHMARKS_ROOT:-$(_abs_dir "$ROOT/../benchmarks")}"
-export LI_LOCAL_CI_ROOT="${LI_LOCAL_CI_ROOT:-$(_abs_dir "$ROOT/../li-local-ci")}"
+
+# After sourcing .env, call this so relative sibling paths still resolve correctly.
+li_resolve_env_paths() {
+  local root="${1:-$ROOT}"
+  if [[ -n "${BENCHMARKS_ROOT:-}" && "${BENCHMARKS_ROOT}" != /* ]]; then
+    export BENCHMARKS_ROOT="$(_abs_dir "$root/$BENCHMARKS_ROOT")"
+  else
+    export BENCHMARKS_ROOT="${BENCHMARKS_ROOT:-$(_abs_dir "$root/../benchmarks")}"
+  fi
+  if [[ -n "${LI_LOCAL_CI_ROOT:-}" && "${LI_LOCAL_CI_ROOT}" != /* ]]; then
+    export LI_LOCAL_CI_ROOT="$(_abs_dir "$root/$LI_LOCAL_CI_ROOT")"
+  else
+    export LI_LOCAL_CI_ROOT="${LI_LOCAL_CI_ROOT:-$(_abs_dir "$root/../li-local-ci")}"
+  fi
+  if [[ -n "${LI_GITHUB_ENV:-}" && "${LI_GITHUB_ENV}" != /* ]]; then
+    export LI_GITHUB_ENV="$(_abs_file "$root/$LI_GITHUB_ENV")"
+  fi
+}
+
+li_resolve_env_paths "$ROOT"
 export LI_GITHUB_ENV="${LI_GITHUB_ENV:-$(_abs_file "$ROOT/../.env.github")}"
 
 # Local CI instead of GitHub Actions (merge queue / pr_merger)
@@ -45,10 +63,5 @@ export LI_AUTO_START_SUPERVISOR="${LI_AUTO_START_SUPERVISOR:-1}"
 # Prefer host lic CI (brew llvm) over 2GB docker image
 export LI_LOCAL_CI_LIC_MODE="${LI_LOCAL_CI_LIC_MODE:-host}"
 
-# Stack: skip Supabase by default on low disk (set LI_STACK_USE_SUPABASE=1 to enable)
-if [[ -z "${LI_STACK_SKIP_SUPABASE+x}" ]]; then
-  avail_gb="$(df -g / 2>/dev/null | awk 'NR==2 {print $4}')"
-  if [[ -n "$avail_gb" && "$avail_gb" -lt 8 ]]; then
-    export LI_STACK_SKIP_SUPABASE=1
-  fi
-fi
+# Stack: Supabase is the default primary store (Docker required). Opt out with LI_STACK_SKIP_SUPABASE=1
+export LI_STACK_SKIP_SUPABASE="${LI_STACK_SKIP_SUPABASE:-0}"

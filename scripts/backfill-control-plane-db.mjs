@@ -4,7 +4,8 @@
  * Requires: supabase start, supabase db reset (or migrations applied), env vars set.
  *
  *   export SUPABASE_URL=http://127.0.0.1:54321
- *   export SUPABASE_SERVICE_ROLE_KEY=$(supabase status -o json | node -e "process.stdin.on('data',d=>console.log(JSON.parse(d).SERVICE_ROLE_KEY))")
+ *   npm run db:ensure   # writes .env.supabase with keys
+ *   set -a && source .env.supabase && set +a
  *   node scripts/backfill-control-plane-db.mjs
  */
 import { createClient } from "@supabase/supabase-js";

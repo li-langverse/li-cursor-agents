@@ -6,5 +6,6 @@ data/workspaces/
 data/supervisor/
 data/control-plane/
 .env
+.env.supabase
 *.log
 .DS_Store

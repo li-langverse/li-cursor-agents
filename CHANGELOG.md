@@ -7,6 +7,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- `scripts/ensure-supabase.sh` + `npm run db:ensure`: start local Supabase, apply migrations, write `.env.supabase` with JWT keys (CLI 2.53 does not print service role).
+- Supabase is the **default** primary store (`LI_STACK_SKIP_SUPABASE=0`); `agents:keep` and `npm run setup` call ensure automatically.
+
+### Changed
+- Removed auto `LI_STACK_SKIP_SUPABASE=1` on low disk; opt out explicitly when Docker is unavailable.
+
+### Added
 
 - **Local CI** — `npm run ci:local` via sibling `li-local-ci` (host); GHA workflow is `workflow_dispatch` only to save quota.
 - **Swarm statistics** on Overview: actions taken (tool calls), file edits, lines added/deleted, PRs opened/merged/open, packages created — `GET /api/statistics`, persisted counters in `data/control-plane/swarm-stats.json`.

@@ -37,15 +37,14 @@ npm run setup    # writes .env keys, builds li-local-ci/node:22, runs doctor
 npm run agents:keep
 ```
 
-Defaults (override in `.env`): `LI_USE_LOCAL_CI=1`, `LI_LOCAL_CI_SWEEP_LIMIT=2`, `LI_SUPERVISOR_MAX_TASKS=2`, `LI_STACK_SKIP_SUPABASE=1` when under 8GB disk free.
+Defaults (override in `.env`): `LI_USE_LOCAL_CI=1`, `LI_LOCAL_CI_SWEEP_LIMIT=2`, `LI_SUPERVISOR_MAX_TASKS=2`, **Supabase on** (`LI_STACK_SKIP_SUPABASE=0`; needs Docker).
 
 ## Quick start (full local stack)
 
 ```bash
 npm run setup
 cp .env.example .env          # if setup did not create it; add CURSOR_API_KEY
-# Optional Supabase (needs Docker): LI_STACK_USE_SUPABASE=1 npm run stack
-npm run stack                 # dashboard + supervisor (Supabase skipped by default on low disk)
+npm run stack                 # ensure Supabase + dashboard + supervisor (LI_STACK_SKIP_SUPABASE=1 for disk-only)
 ```
 
 ## Quick start (agents only)
