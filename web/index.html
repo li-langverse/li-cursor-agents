@@ -48,10 +48,16 @@
       </section>
     </main>
 
-    <footer>
+    <footer class="footer-controls">
       <span id="updated"></span>
-      <button type="button" id="refresh">Refresh</button>
-      <button type="button" id="tick" class="secondary">Run one tick</button>
+      <div class="footer-buttons">
+        <button type="button" id="refresh">Refresh</button>
+        <button type="button" id="supervisor-start" class="primary">Start supervisor</button>
+        <button type="button" id="supervisor-stop" class="danger">Stop supervisor</button>
+        <button type="button" id="swarm-run-all" class="primary">Run all agents</button>
+        <button type="button" id="swarm-stop-all" class="danger">Stop all runs</button>
+        <button type="button" id="tick" class="secondary">One tick</button>
+      </div>
     </footer>
     <script src="/app.js" type="module"></script>
   </body>

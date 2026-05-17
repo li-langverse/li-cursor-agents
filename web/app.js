@@ -73,32 +73,57 @@ function webBadge(needsWeb) {
   return `<span class="badge web" title="Requires Cursor web search in production">web search</span>`;
 }
 
-function agentCard(entry, activeSet) {
+function agentCard(entry, activeSet, runtime) {
   const active = activeSet?.has(entry.id);
-  const activeClass = active ? " agent-card-active" : "";
+  const stopped = runtime?.stopped_agents?.includes(entry.id);
+  const running = (runtime?.active_runs ?? []).find(
+    (r) => r.agent_id === entry.id && r.status === "running",
+  );
+  let stateClass = "";
+  if (stopped) stateClass = " agent-card-stopped";
+  else if (running) stateClass = " agent-card-running";
+  else if (active) stateClass = " agent-card-active";
+
   const manages =
     entry.manages?.length &&
     `<p class="manages">Manages: ${entry.manages.map((id) => `<code>${esc(id)}</code>`).join(" ")}</p>`;
   const parent = entry.coordinator
     ? `<p class="parent-coord">Coordinator: <code>${esc(entry.coordinator)}</code></p>`
     : "";
+
+  const canControl = entry.role === "leaf" || entry.role === "root";
+  const controls = canControl
+    ? `<div class="agent-actions">
+        <button type="button" class="btn-small primary" data-action="start" data-agent="${escAttr(entry.id)}" ${running ? "disabled" : ""}>Start</button>
+        <button type="button" class="btn-small danger" data-action="stop" data-agent="${escAttr(entry.id)}">Stop</button>
+        ${stopped ? `<button type="button" class="btn-small" data-action="resume" data-agent="${escAttr(entry.id)}">Resume</button>` : ""}
+      </div>`
+    : "";
+
+  const statusBadges = [
+    active ? '<span class="badge active-run">queued this briefing</span>' : "",
+    running ? '<span class="badge running">running</span>' : "",
+    stopped ? '<span class="badge stopped">stopped</span>' : "",
+  ].join("");
+
   return `
-    <article class="agent-card${activeClass}" data-role="${escAttr(entry.role)}" data-category="${escAttr(entry.category)}">
+    <article class="agent-card${stateClass}" data-agent-id="${escAttr(entry.id)}" data-role="${escAttr(entry.role)}" data-category="${escAttr(entry.category)}">
       <header>
         <code class="agent-id">${esc(entry.id)}</code>
         ${roleBadge(entry.role)}
         ${webBadge(entry.needsWeb)}
-        ${active ? '<span class="badge active-run">queued this briefing</span>' : ""}
+        ${statusBadges}
       </header>
       <h4>${esc(entry.name)}</h4>
       <p>${esc(entry.description)}</p>
       ${parent}
       ${manages || ""}
       <p class="skills">${esc((entry.skills ?? []).join(", ") || "—")}</p>
+      ${controls}
     </article>`;
 }
 
-function renderRoster(rosterPayload, report) {
+function renderRoster(rosterPayload, report, runtime) {
   const root = $("#roster");
   const entries = rosterPayload?.roster ?? rosterPayload?.agents ?? [];
   const summary = rosterPayload?.total ?? entries.length;
@@ -133,7 +158,7 @@ function renderRoster(rosterPayload, report) {
       .map(
         ([title, list]) => `
       <h3 class="roster-section-title">${esc(title)} <span class="count">(${list.length})</span></h3>
-      <div class="roster-section-grid">${list.map((e) => agentCard(e, activeIds)).join("")}</div>`,
+      <div class="roster-section-grid">${list.map((e) => agentCard(e, activeIds, runtime)).join("")}</div>`,
       )
       .join("")}`;
 }
@@ -200,8 +225,12 @@ function renderRoadmap(report) {
 function renderMeta(report, status, rosterPayload) {
   const sup = report?.supervisor ?? {};
   const st = status?.state ?? {};
+  const rt = status?.runtime ?? {};
   const rows = [
     ["Status", sup.status ?? st.supervisor_status ?? "—"],
+    ["Supervisor loop", rt.supervisor_loop_running ? "running" : "stopped"],
+    ["Active processes", String(rt.active_run_count ?? 0)],
+    ["Stopped agents", (rt.stopped_agents ?? []).join(", ") || "—"],
     ["Briefing hash", report?.briefing_hash ?? st.last_briefing_hash ?? "—"],
     ["Swarm size", String(rosterPayload?.total ?? "—")],
     ["Runs total", String(sup.runs_total ?? st.runs_total ?? 0)],
@@ -213,9 +242,36 @@ function renderMeta(report, status, rosterPayload) {
     .map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`)
     .join("");
   const pill = $("#status-pill");
-  const s = sup.status ?? st.supervisor_status ?? "idle";
-  pill.textContent = s;
-  pill.className = `pill ${s === "running_agent" ? "running" : s}`;
+  let label = sup.status ?? st.supervisor_status ?? "idle";
+  if (rt.supervisor_loop_running) label = "supervisor loop";
+  else if ((rt.active_run_count ?? 0) > 0) label = "agents running";
+  pill.textContent = label;
+  pill.className = `pill ${
+    rt.supervisor_loop_running || label === "running_agent" || label === "agents running"
+      ? "running"
+      : label
+  }`;
+}
+
+function renderActiveRuns(runtime, report) {
+  const list = $("#runs");
+  const active = runtime?.active_runs ?? [];
+  const recent = report?.recent_runs ?? [];
+  const rows = [
+    ...active.map(
+      (r) =>
+        `<li class="run-row run-live"><strong>${esc(r.agent_id)}</strong> ${esc(r.status)} · pid ${esc(r.pid)} <button type="button" class="btn-small danger" data-action="cancel-run" data-run-id="${escAttr(r.run_id)}">Kill</button></li>`,
+    ),
+    ...recent.map(
+      (r) =>
+        `<li class="run-row"><strong>${esc(r.agentId)}</strong> ${esc(r.status)} · ${esc(r.backend)}</li>`,
+    ),
+  ];
+  if (!rows.length) {
+    list.innerHTML = '<li class="empty">No runs yet</li>';
+    return;
+  }
+  list.innerHTML = rows.join("");
 }
 
 function esc(s) {
@@ -238,10 +294,11 @@ async function refresh() {
     ]);
     renderInterventions(report);
     renderRecommended(report);
-    renderRuns(report);
+    const runtime = status?.runtime ?? roster?.runtime;
+    renderActiveRuns(runtime, report);
     renderHeap(report, roster);
     renderRoadmap(report);
-    renderRoster(roster, report);
+    renderRoster(roster, report, runtime);
     renderMeta(report, status, roster);
     $("#updated").textContent = `Updated ${new Date().toLocaleTimeString()}`;
   } catch (e) {
@@ -252,18 +309,72 @@ async function refresh() {
   }
 }
 
-$("#refresh").addEventListener("click", refresh);
-$("#tick").addEventListener("click", async () => {
-  $("#tick").disabled = true;
+async function postControl(path, button) {
+  if (button) button.disabled = true;
   try {
-    await fetchJson("/api/tick", { method: "POST" });
+    await fetchJson(path, { method: "POST" });
+    await refresh();
+  } catch (e) {
+    console.error(e);
+    alert(e instanceof Error ? e.message : String(e));
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+$("#refresh").addEventListener("click", refresh);
+$("#tick").addEventListener("click", () => postControl("/api/tick", $("#tick")));
+$("#supervisor-start").addEventListener("click", () =>
+  postControl("/api/supervisor/start", $("#supervisor-start")),
+);
+$("#supervisor-stop").addEventListener("click", () =>
+  postControl("/api/supervisor/stop", $("#supervisor-stop")),
+);
+$("#swarm-run-all").addEventListener("click", () =>
+  postControl("/api/swarm/run-all", $("#swarm-run-all")),
+);
+$("#swarm-stop-all").addEventListener("click", () =>
+  postControl("/api/swarm/stop-all", $("#swarm-stop-all")),
+);
+
+$("#roster").addEventListener("click", async (ev) => {
+  const btn = ev.target.closest("[data-action]");
+  if (!btn || btn.disabled) return;
+  const action = btn.getAttribute("data-action");
+  const agent = btn.getAttribute("data-agent");
+  const runId = btn.getAttribute("data-run-id");
+  btn.disabled = true;
+  try {
+    if (action === "start" && agent) await fetchJson(`/api/agents/${agent}/start`, { method: "POST" });
+    else if (action === "stop" && agent)
+      await fetchJson(`/api/agents/${agent}/stop`, { method: "POST" });
+    else if (action === "resume" && agent)
+      await fetchJson(`/api/agents/${agent}/resume`, { method: "POST" });
+    else if (action === "cancel-run" && runId)
+      await fetchJson(`/api/runs/${runId}/cancel`, { method: "POST" });
+    await refresh();
+  } catch (e) {
+    console.error(e);
+    alert(e instanceof Error ? e.message : String(e));
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+$("#runs").addEventListener("click", async (ev) => {
+  const btn = ev.target.closest('[data-action="cancel-run"]');
+  if (!btn) return;
+  const runId = btn.getAttribute("data-run-id");
+  btn.disabled = true;
+  try {
+    await fetchJson(`/api/runs/${runId}/cancel`, { method: "POST" });
     await refresh();
   } catch (e) {
     console.error(e);
   } finally {
-    $("#tick").disabled = false;
+    btn.disabled = false;
   }
 });
 
 refresh();
-setInterval(refresh, 15_000);
+setInterval(refresh, 5_000);

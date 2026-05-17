@@ -45,8 +45,11 @@ export function buildHeapTaskQueue(
   let skippedCooldown = 0;
   let activeCoordinator: CoordinatorId | undefined;
 
+  const stopped = new Set(state.stopped_agents ?? []);
+
   for (const ht of heapPlan.flat_tasks) {
     const agentId = ht.agent;
+    if (stopped.has(agentId)) continue;
     const fp = taskFingerprint(agentId, ht.reason);
     if (wasRecentlyRun(state.recent_tasks, fp, options.briefingHash, options.cooldownMs)) {
       skippedCooldown++;

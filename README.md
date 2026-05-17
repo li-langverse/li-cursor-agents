@@ -124,15 +124,28 @@ Preflight writes `heap_plan` + `org_roadmap` into `agent-briefing.json` ([Agentr
 Agents run **continuously** with **no briefing cycles**: the supervisor polls preflight, dispatches only when `recommended_agents` or interventions change, and **dedupes** the same agent+reason for 6h per briefing hash.
 
 ```bash
-# Terminal 1 — dashboard (reports + human interventions)
+cd li-cursor-agents
+npm run build
 npm run dashboard
 # → http://127.0.0.1:9477/
+```
 
-# Terminal 2 — supervisor (mock for local dry-run)
+**Dashboard controls (footer):**
+
+| Button | Action |
+|--------|--------|
+| **Start supervisor** | Background loop: preflight → dispatch agents (fire-and-forget in-process) |
+| **Stop supervisor** | Halt the loop |
+| **Run all agents** | Spawn every leaf agent as a separate process now (parallel) |
+| **Stop all runs** | Kill active agent processes + stop supervisor |
+| **One tick** | Single supervisor pass |
+
+Each **leaf/root** card has **Start** / **Stop** / **Resume**. Stop kills a running process and excludes the agent until Resume.
+
+```bash
+# CLI alternative (no dashboard)
 export BENCHMARKS_ROOT=../benchmarks
 CURSOR_MOCK=1 npm run supervisor -- --benchmarks ../benchmarks
-
-# Or both:
 ./scripts/start-control-plane.sh --mock
 ```
 

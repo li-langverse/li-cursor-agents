@@ -44,12 +44,27 @@ export interface RecentTaskRecord {
   briefing_hash: string;
 }
 
+export type AgentRunLifecycle = "running" | "finished" | "error" | "cancelled";
+
+export interface ActiveAgentRun {
+  run_id: string;
+  agent_id: AgentId;
+  pid: number;
+  started_at: string;
+  status: AgentRunLifecycle;
+  reason?: string;
+}
+
 export interface ControlPlaneState {
   version: 1;
   updated_at: string;
   last_briefing_hash: string;
   last_preflight_at: string;
   supervisor_status: "idle" | "running_agent" | "waiting";
+  /** Background supervisor loop started from dashboard (fire-and-forget). */
+  supervisor_loop_running?: boolean;
+  /** Agents excluded from supervisor + swarm run until resumed. */
+  stopped_agents?: AgentId[];
   recent_tasks: RecentTaskRecord[];
   runs_total: number;
   last_tick_at: string;
@@ -81,6 +96,8 @@ export const DEFAULT_STATE: ControlPlaneState = {
   last_briefing_hash: "",
   last_preflight_at: "",
   supervisor_status: "idle",
+  supervisor_loop_running: false,
+  stopped_agents: [],
   recent_tasks: [],
   runs_total: 0,
   last_tick_at: "",

@@ -180,8 +180,30 @@ function persistRunMeta(task: QueuedAgentTask, result: AgentRunResult, briefingH
   writeFileSync(jsonPath, JSON.stringify(meta, null, 2) + "\n", "utf8");
 }
 
-export async function runSupervisorLoop(options: SupervisorOptions): Promise<void> {
+function sleepMs(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException("Supervisor stopped", "AbortError"));
+      return;
+    }
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(timer);
+        reject(new DOMException("Supervisor stopped", "AbortError"));
+      },
+      { once: true },
+    );
+  });
+}
+
+export async function runSupervisorLoop(
+  options: SupervisorOptions,
+  signal?: AbortSignal,
+): Promise<void> {
   for (;;) {
+    if (signal?.aborted) break;
     const tick = await supervisorTick(options);
     const msg = [
       `tick briefing=${tick.briefingHash}`,
@@ -195,8 +217,13 @@ export async function runSupervisorLoop(options: SupervisorOptions): Promise<voi
     console.error(`[supervisor] ${msg}`);
 
     if (options.once) break;
-    const sleepMs =
+    if (signal?.aborted) break;
+    const wait =
       tick.tasksExecuted > 0 ? Math.min(options.intervalMs, 120_000) : options.intervalMs;
-    await new Promise((r) => setTimeout(r, sleepMs));
+    try {
+      await sleepMs(wait, signal);
+    } catch {
+      break;
+    }
   }
 }

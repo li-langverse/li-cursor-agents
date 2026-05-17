@@ -363,7 +363,7 @@ h3 {
   font-style: italic;
 }
 
-footer {
+footer.footer-controls {
   position: fixed;
   bottom: 0;
   left: 0;
@@ -371,11 +371,20 @@ footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
   padding: 0.5rem 2rem;
   background: #121820ee;
   border-top: 1px solid var(--border);
   font-size: 0.85rem;
   color: var(--muted);
+  flex-wrap: wrap;
+}
+
+.footer-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
 }
 
 button {
@@ -388,6 +397,63 @@ button {
   cursor: pointer;
 }
 
-button:hover {
+button.secondary {
+  background: #243044;
+  color: var(--text);
+}
+
+button.primary {
+  background: var(--accent);
+}
+
+button.danger {
+  background: #5c2a2a;
+  color: #f5d0d0;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+button:hover:not(:disabled) {
   filter: brightness(1.08);
+}
+
+.btn-small {
+  padding: 0.2rem 0.55rem;
+  font-size: 0.75rem;
+  border-radius: 4px;
+}
+
+.agent-actions {
+  display: flex;
+  gap: 0.35rem;
+  margin-top: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.agent-card-running {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px #5b9fd433;
+}
+
+.agent-card-stopped {
+  opacity: 0.72;
+  border-color: #5c2a2a;
+}
+
+.badge.running {
+  background: #2a3d5c;
+  color: var(--accent);
+}
+
+.badge.stopped {
+  background: #3d2424;
+  color: #e8a0a0;
+}
+
+.run-live {
+  border-left: 3px solid var(--accent);
+  padding-left: 0.5rem;
 }
