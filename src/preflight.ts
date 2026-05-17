@@ -15,6 +15,7 @@ import {
   buildImplementationQueue,
   buildImplementationQueueInstruction,
 } from "./preflight/implementation-queue.js";
+import { compactBriefingForPrompt } from "./preflight/briefing-summary.js";
 
 function hasBriefingScript(root: string): boolean {
   return existsSync(join(root, "scripts", "agent-briefing.py"));
@@ -132,10 +133,17 @@ export function buildUserMessage(
     );
   }
 
+  const briefingPath =
+    preflight.briefing_path ??
+    (preflight.briefing && typeof preflight.briefing === "object"
+      ? (preflight.briefing as Record<string, unknown>).briefing_path
+      : undefined);
   lines.push(
-    "## Preflight JSON (deterministic scripts — already ran)",
+    "## Briefing (compact snapshot — scripts already ran)",
+    briefingPath ? `Full JSON on disk: \`${briefingPath}\`` : "Full JSON: `data/latest/agent-briefing.json` in benchmarks repo",
+    "Read that file with your read tool when you need PR lists, triage tables, or audit detail.",
     "```json",
-    JSON.stringify(preflight.briefing ?? preflight, null, 2).slice(0, 120_000),
+    compactBriefingForPrompt(preflight.briefing ?? preflight),
     "```",
     "",
     "## Your task",

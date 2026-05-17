@@ -37,6 +37,15 @@ export interface AgentRunTraceEvent {
   payload: unknown;
 }
 
+export interface SdkAttemptTraceMeta {
+  attempt: number;
+  force: boolean;
+  durationMs: number;
+  toolCalls: number;
+  status: string;
+  runId?: string;
+}
+
 export interface AgentRunTrace {
   version: typeof TRACE_VERSION;
   assistant_text: string;
@@ -45,6 +54,9 @@ export interface AgentRunTrace {
   deltas: AgentRunTraceEvent[];
   file_edits: AgentRunTraceFileEdit[];
   tool_call_count: number;
+  /** Cursor SDK retry diagnostics (live runs only). */
+  sdk_attempts?: SdkAttemptTraceMeta[];
+  sdk_session_gap_ms?: number;
 }
 
 export function buildRunInput(params: {

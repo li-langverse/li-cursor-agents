@@ -126,9 +126,15 @@ export function resolveCursorApiKey(): string | undefined {
   return undefined;
 }
 
-/** SDK model id; `default` is Cursor "Auto" (`Cursor.models.list` displayName). */
+/** SDK model id; `default` is Cursor "Auto" — most reliable for local `Agent.create`. */
 export function resolveCursorModelId(): string {
   loadRuntimeEnv();
   const v = process.env.CURSOR_MODEL?.trim();
   return v || "default";
+}
+
+/** Fallback when configured model returns instant SDK error (e.g. `composer-2` local flake). */
+export function resolveCursorSdkFallbackModelId(): string {
+  loadRuntimeEnv();
+  return process.env.CURSOR_SDK_FALLBACK_MODEL?.trim() || "default";
 }
