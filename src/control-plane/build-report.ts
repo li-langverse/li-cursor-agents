@@ -10,7 +10,9 @@ import { dbEnabled, useSupabaseStore } from "../db/client.js";
 import { listRunsGlobal } from "../db/runs.js";
 
 export function writeReport(report: ControlPlaneReport, interventions: HumanIntervention[]): void {
-  void persistReport(report, interventions);
+  void persistReport(report, interventions).catch((err) => {
+    console.error("[control-plane] persist report failed:", err);
+  });
 }
 
 export async function loadRecentRunSummariesAsync(limit = 12): Promise<AgentRunResult[]> {

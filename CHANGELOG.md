@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Dashboard agent status: **Recommended** (briefing/heap) vs misleading **Queued**; cooldown wins over recommended; supervisor subprocess state mirrored to `data/control-plane/state.json` for parent reload when Supabase persist fails (`src/control-plane/state.ts`, `web/app.js`).
+
 ### Added
 - **Control-plane DB exploration for agents** — MCP server `li-control-plane-db` (`list_control_plane_tables`, `describe_table`, `query_control_plane_db`) wired into Cursor SDK when Supabase is enabled; skill `explore-control-plane-db`; `npm run db:probe`.
 - **`workspace_sweeper` agent** — fallback safety: scan sibling clones for uncommitted work, safe `commit`/`push`/`gh pr create`, document test commands, restart dashboard via `keep-agents-running.sh` (`src/repo-workflow/workspace-sweep.ts`, `npm run workspace:sweep`).

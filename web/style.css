@@ -215,6 +215,7 @@ body {
   animation: pulse 1.5s ease infinite;
 }
 
+.status-dot.recommended,
 .status-dot.queued {
   background: var(--medium);
 }

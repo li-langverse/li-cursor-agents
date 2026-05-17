@@ -66,7 +66,8 @@ function formatTime(iso) {
 function statusLabel(status) {
   const labels = {
     running: "Running",
-    queued: "Queued",
+    recommended: "Recommended",
+    queued: "Recommended", // legacy key
     stopped: "Stopped",
     idle: "Idle",
     cooldown: "Cooldown",
@@ -160,11 +161,13 @@ function agentStatusMap(roster, report, runtime, statusPayload) {
     const activeRun = activeRuns.find((r) => r.agent_id === entry.id && r.status === "running");
     if (stopped.has(entry.id)) status = "stopped";
     else if (activeRun || currentSupervisor === entry.id) status = "running";
-    else if (rec.has(entry.id) || heapTasks.has(entry.id)) status = "queued";
     else {
       const last = recentByAgent.get(entry.id);
       const finishedAt = last?.finished_at ? new Date(last.finished_at).getTime() : 0;
-      if (last?.status === "finished" && finishedAt && Date.now() - finishedAt < 1_800_000) status = "cooldown";
+      const onCooldown =
+        last?.status === "finished" && finishedAt && Date.now() - finishedAt < 1_800_000;
+      if (onCooldown) status = "cooldown";
+      else if (rec.has(entry.id) || heapTasks.has(entry.id)) status = "recommended";
     }
 
     map.set(entry.id, {
@@ -526,13 +529,13 @@ function renderStatCards() {
   const { report, runtime, roster, runsPayload, status } = ui.data;
   const statusMap = agentStatusMap(roster, report, runtime, status);
   let running = 0;
-  let queued = 0;
+  let recommended = 0;
   let stopped = 0;
   let idle = 0;
   let cooldown = 0;
   for (const v of statusMap.values()) {
     if (v.status === "running") running++;
-    if (v.status === "queued") queued++;
+    if (v.status === "recommended" || v.status === "queued") recommended++;
     if (v.status === "stopped") stopped++;
     if (v.status === "idle") idle++;
     if (v.status === "cooldown") cooldown++;
@@ -547,7 +550,7 @@ function renderStatCards() {
 
   $("#stat-cards").innerHTML = `
     <div class="stat-card accent"><div class="label">Running</div><div class="value">${running}</div></div>
-    <div class="stat-card"><div class="label">Queued</div><div class="value">${queued}</div></div>
+    <div class="stat-card" title="In briefing heap — supervisor runs a few per tick"><div class="label">Recommended</div><div class="value">${recommended}</div></div>
     <div class="stat-card"><div class="label">Stopped</div><div class="value">${stopped}</div></div>
     <div class="stat-card"><div class="label">Interventions</div><div class="value">${interventions}</div></div>
     <div class="stat-card"><div class="label">Run artifacts</div><div class="value">${runs}</div></div>`;
@@ -641,7 +644,7 @@ function renderAgentsTable() {
   }
 
   rows.sort((a, b) => {
-    const order = { running: 0, queued: 1, cooldown: 2, idle: 3, stopped: 4 };
+    const order = { running: 0, recommended: 1, queued: 1, cooldown: 2, idle: 3, stopped: 4 };
     return (order[a.info.status] ?? 9) - (order[b.info.status] ?? 9);
   });
 

@@ -105,7 +105,7 @@
               <div class="filter-chips" id="agent-filters">
                 <button type="button" class="chip active" data-filter="all">All</button>
                 <button type="button" class="chip" data-filter="running">Running</button>
-                <button type="button" class="chip" data-filter="queued">Queued</button>
+                <button type="button" class="chip" data-filter="recommended">Recommended</button>
                 <button type="button" class="chip" data-filter="stopped">Stopped</button>
                 <button type="button" class="chip" data-filter="idle">Idle</button>
               </div>
@@ -137,13 +137,16 @@
             <div id="heap-layers" class="heap-layers"></div>
           </section>
 
-                                                  <section id="view-statistics" class="view" aria-label="Statistics" hidden>
+          <section id="view-statistics" class="view" aria-label="Statistics" hidden>
             <p class="hint" id="swarm-stats-meta">Swarm output metrics from agent runs and briefing snapshots.</p>
+            <motion></motion>
+            <motion></motion>
             <div id="swarm-stats-panel" class="panel">
               <h2>Swarm statistics</h2>
               <p class="hint">Aggregated from run traces, PR URLs in outputs, and persisted counters.</p>
-              <div id="swarm-stat-cards" class="stat-cards swarm-stat-cards"></div>
-              <ul id="swarm-stats-notes" class="simple-list swarm-stats-notes hidden"></ul>
+              <motion></motion>
+              <div id="swarm-stat-cards" class="stat-cards swarm-stat-cards"></motion></div>
+              <div id="swarm-stats-notes" class="swarm-stats-notes hidden"></motion></motion>
             </div>
           </section>
 
