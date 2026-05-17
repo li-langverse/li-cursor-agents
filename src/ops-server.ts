@@ -109,9 +109,9 @@ function loadStateForApi(): ReturnType<typeof loadState> {
 
 async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): Promise<void> {
   const state = loadStateForApi();
-  const report = await liveReportPayload();
   const runtime = runtimeSnapshot(state);
 
+  // Fast paths — avoid loadLiveReportAsync on every poll (blocks dashboard).
   if (url.pathname === "/api/status" || url.pathname === "/api/state") {
     json(res, 200, {
       state,
@@ -155,6 +155,8 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     json(res, 200, payload);
     return;
   }
+
+  const report = await liveReportPayload();
 
   if (url.pathname === "/api/report") {
     json(res, 200, report);

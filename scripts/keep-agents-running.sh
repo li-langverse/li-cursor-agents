@@ -8,6 +8,19 @@ mkdir -p logs
 
 # shellcheck source=env.defaults.sh
 source "$ROOT/scripts/env.defaults.sh"
+
+# One Node for dashboard + supervisor (process.execPath). Prefer Homebrew over Cursor's bundled node.
+if [[ -n "${NODE_BIN:-}" && -x "${NODE_BIN}" ]]; then
+  :
+elif [[ -x "/opt/homebrew/bin/node" ]]; then
+  export NODE_BIN="/opt/homebrew/bin/node"
+elif [[ -x "/opt/homebrew/opt/node@22/bin/node" ]]; then
+  export NODE_BIN="/opt/homebrew/opt/node@22/bin/node"
+else
+  export NODE_BIN="$(command -v node)"
+fi
+export PATH="$(dirname "$NODE_BIN"):${PATH}"
+echo "==> Using NODE_BIN=$NODE_BIN ($("$NODE_BIN" -v))"
 if [[ -f "$ROOT/.env" ]]; then set -a; source "$ROOT/.env"; set +a; fi
 li_resolve_env_paths "$ROOT"
 if [[ -f "$LI_GITHUB_ENV" ]]; then set -a; source "$LI_GITHUB_ENV"; set +a; fi
@@ -37,6 +50,7 @@ if [[ "${LI_KEEP_AGENTS_RESTART:-}" != "0" ]]; then
   sleep 1
 fi
 
+"$ROOT/scripts/ensure-native-modules.sh"
 npm run build >/dev/null 2>&1
 
 PORT="$LI_AGENT_DASHBOARD_PORT"
@@ -73,7 +87,7 @@ nohup env \
   CURSOR_API_KEY="${CURSOR_API_KEY:-}" \
   SUPABASE_URL="${SUPABASE_URL:-}" \
   SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-}" \
-  node "$ROOT/dist/cli/serve-dashboard.js" --port "$PORT" \
+  "$NODE_BIN" "$ROOT/dist/cli/serve-dashboard.js" --port "$PORT" \
   >>"$ROOT/logs/keep-agents.log" 2>&1 &
 echo $! >"$ROOT/logs/keep-agents.pid"
 sleep 3
