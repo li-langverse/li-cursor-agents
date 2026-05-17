@@ -37,7 +37,7 @@ npm run setup    # writes .env keys, builds li-local-ci/node:22, runs doctor
 npm run agents:keep
 ```
 
-Defaults (override in `.env`): `LI_USE_LOCAL_CI=1`, `LI_LOCAL_CI_SWEEP_LIMIT=2`, `LI_SUPERVISOR_MAX_TASKS=2`, `LI_STACK_SKIP_SUPABASE=1` when disk &lt; 8GB free.
+Defaults (override in `.env`): `LI_USE_LOCAL_CI=1`, `LI_LOCAL_CI_SWEEP_LIMIT=2`, `LI_SUPERVISOR_MAX_TASKS=2`, `LI_STACK_SKIP_SUPABASE=1` when under 8GB disk free.
 
 ## Quick start (full local stack)
 

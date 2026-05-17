@@ -59,8 +59,15 @@ if [[ -f "$LI_GITHUB_ENV" ]]; then
   upsert_env LI_GITHUB_ENV "$LI_GITHUB_ENV"
 fi
 
-echo "==> npm install + build"
+echo "==> npm install + build (native modules for this Mac)"
+if [[ -d node_modules/sqlite3 ]] && [[ -f node_modules/sqlite3/build/Release/node_sqlite3.node ]]; then
+  if ! node -e "require('sqlite3')" 2>/dev/null; then
+    echo "    rebuilding sqlite3 (wrong arch — e.g. after Docker npm ci)"
+    rm -rf node_modules/sqlite3
+  fi
+fi
 npm install
+npm rebuild sqlite3 2>/dev/null || true
 npm run build
 
 if command -v docker >/dev/null 2>&1; then
