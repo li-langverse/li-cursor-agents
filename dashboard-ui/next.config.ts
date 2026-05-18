@@ -7,7 +7,7 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const nextConfig: NextConfig = {
   outputFileTracingRoot: root,
   reactStrictMode: true,
-  // Read APIs are implemented in app/api/[[...path]]/route.ts (Supabase + dist/dashboard-api).
+  // Read APIs: app/api/[[...path]]/route.ts → dist/db-api (GET only).
   // LI_AGENT_API_URL is only used when a route is not native (mutations, lanes, spawn).
 };
 

@@ -281,6 +281,3 @@ export async function handleDbApiRequest(req: Request, apiPath: string): Promise
     );
   }
 }
-
-/** @deprecated Use handleDbApiRequest — kept for tests importing dashboard-api name. */
-export const handleDashboardRequest = handleDbApiRequest;
