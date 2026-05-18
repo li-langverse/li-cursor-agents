@@ -11,7 +11,8 @@ import { leafAgentIds, setupE2eEnv } from "./helpers.js";
 const LEAVES = AGENT_REGISTRY.filter((a) => a.id !== "orchestrator");
 
 async function dbGet(path: string): Promise<{ status: number; body: Record<string, unknown> }> {
-  const res = await handleDbApiRequest(new Request(`http://localhost${path}`), path);
+  const pathname = path.split("?")[0]!;
+  const res = await handleDbApiRequest(new Request(`http://localhost${path}`), pathname);
   const body = (await res.json()) as Record<string, unknown>;
   return { status: res.status, body };
 }
