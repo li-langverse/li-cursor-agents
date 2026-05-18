@@ -2,7 +2,7 @@
 
 ## Async swarm (default for `keep-agents`)
 
-**Target behavior:** agents stay on — each loop checks for work (briefing, handoffs, sessions) and runs when needed, mostly in parallel (`LI_SDK_MAX_CONCURRENT`, default 4). Implement lane reacts to handoffs; research lane to goals/sessions. **Mock runs** (`CURSOR_MOCK=1`, `--mock`) are for CI/tests only — artifacts go under `data/runs/mock/` and are **not** listed in dashboard history or Supabase.
+**Target behavior:** user clicks **Start agents** once on the dashboard (or `LI_AUTO_START_ASYNC_SWARM=1` on server boot) — research, implement, maintenance, and worker loops run **continuously** until **Stop agents**. Each loop checks the work queue (`GET /api/queue`), handoffs, and sessions; mostly in parallel (`LI_SDK_MAX_CONCURRENT`, default 4). **Mock runs** (`CURSOR_MOCK=1`, `--mock`) are for CI/tests only — artifacts go under `data/runs/mock/` and are **not** listed in dashboard history or Supabase.
 
 No supervisor tick queue. On dashboard start (`LI_AUTO_START_ASYNC_SWARM=1`):
 

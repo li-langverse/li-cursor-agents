@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - **Parallel Cursor SDK sessions** — `LI_SDK_MAX_CONCURRENT` (default `4` in `env.defaults.sh`) with cross-process slot locks; re-entrant lock fixes lane + backend deadlock.
+- **Dashboard Start agents** — one button starts/stops continuous async swarm (`/api/async-swarm/start|stop`); work queue panel uses `GET /api/queue`.
 - **Mock runs excluded from history** — artifacts under `data/runs/mock/`; no DB/dashboard listing; worker pool no longer pauses on handoff unless `LI_HANDOFF_PAUSE_WORKERS=1`.
 - **Async swarm mode** — `LI_AUTO_START_ASYNC_SWARM=1`: research + implement + maintenance lane loops plus parallel per-agent worker pool (no supervisor); `npm run agents:async-swarm`, `/api/async-swarm/start|stop`.
 - **Benchmarks dispatch** — `src/benchmarks/dispatch-swarm-audit.ts`, `npm run swarm:dispatch-benchmarks`; optional `LI_BENCHMARKS_DISPATCH_ON_MAINTENANCE=1`.

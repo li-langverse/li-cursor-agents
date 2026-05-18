@@ -52,79 +52,6 @@ function escAttr(s) {
   return esc(s).replace(/"/g, "&quot;");
 }
 
-function fileLangClass(path) {
-  const ext = String(path).split(".").pop()?.toLowerCase() ?? "";
-  const map = {
-    md: "language-markdown",
-    json: "language-json",
-    yaml: "language-yaml",
-    yml: "language-yaml",
-    ts: "language-typescript",
-    tsx: "language-typescript",
-    js: "language-javascript",
-    lean: "language-lean",
-    li: "language-li",
-    py: "language-python",
-    sh: "language-shell",
-  };
-  return map[ext] ?? "language-plaintext";
-}
-
-function activityFileLink(path, cwd) {
-  if (!path || path === "(shell)") return `<code>${esc(path)}</code>`;
-  return `<button type="button" class="file-link" data-view-file="${escAttr(path)}" data-file-cwd="${escAttr(cwd ?? "")}">${esc(path)}</button>`;
-}
-
-function setFileModalBody(html) {
-  const body = $("#file-modal-body");
-  if (body) body.innerHTML = html;
-}
-
-function closeFileModal() {
-  const modal = $("#file-modal");
-  if (!modal) return;
-  modal.hidden = true;
-  if (typeof modal.close === "function") {
-    try {
-      modal.close();
-    } catch {
-      /* not open */
-    }
-  }
-  const backdrop = $("#backdrop");
-  if (backdrop && $("#agent-drawer")?.hidden && $("#run-drawer")?.hidden) {
-    backdrop.hidden = true;
-  }
-}
-
-async function openFileModal(filePath, cwd) {
-  const modal = $("#file-modal");
-  if (!modal) return;
-  $("#file-modal-title").textContent = "File preview";
-  $("#file-modal-path").textContent = filePath;
-  setFileModalBody('<p class="empty">Loading…</p>');
-  modal.hidden = false;
-  if (typeof modal.showModal === "function") modal.showModal();
-  const backdrop = $("#backdrop");
-  if (backdrop) backdrop.hidden = false;
-
-  const qs = new URLSearchParams({ path: filePath });
-  if (cwd) qs.set("cwd", cwd);
-  try {
-    const data = await fetchJson(`/api/files/read?${qs}`);
-    const lang = fileLangClass(data.path ?? filePath);
-    const note = data.truncated
-      ? `<p class="hint">Showing first ${Math.round(512_000 / 1024)}KB of ${data.size_bytes} bytes.</p>`
-      : "";
-    setFileModalBody(
-      `${note}<pre class="trace-pre file-modal-code ${escAttr(lang)}"><code>${esc(data.content)}</code></pre>`,
-    );
-  } catch (e) {
-    setFileModalBody(`<p class="empty">${esc(e.message)}</p>`);
-  }
-}
-
-
 function formatTime(iso) {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -207,7 +134,7 @@ function renderAgentBackendUi() {
     banner.className = "backend-banner ok";
     banner.hidden = false;
     banner.innerHTML =
-      "<strong>Cursor SDK active</strong> — Supervisor mode and Run all (parallel) use real agents (LLM, file edits, tools, web when required).";
+      "<strong>Cursor SDK active</strong> — click <strong>Start agents</strong> once; agents keep working in the background (no further clicks).";
   }
 }
 
@@ -273,7 +200,7 @@ function agentStatusMap(roster, report, runtime, statusPayload) {
 }
 
 async function loadDashboard() {
-  const [report, status, roster, runsPayload, supervisorActivity, activityPayload, interventionsPayload, statisticsPayload, handoffsPayload, swarmBriefingPayload] =
+  const [report, status, roster, runsPayload, supervisorActivity, activityPayload, interventionsPayload, statisticsPayload, handoffsPayload, swarmBriefingPayload, workQueuePayload] =
     await Promise.all([
       fetchJson("/api/report").catch(() => ({})),
       fetchJson("/api/status"),
@@ -285,6 +212,7 @@ async function loadDashboard() {
       fetchJson("/api/statistics").catch(() => ({ statistics: null })),
       fetchJson("/api/handoffs?limit=30").catch(() => ({ handoffs: [] })),
       fetchJson("/api/swarm/briefing").catch(() => ({})),
+      fetchJson("/api/queue").catch(() => ({ queue: [] })),
     ]);
   const runtime = status?.runtime ?? roster?.runtime;
   const lanes = status?.lanes ?? runtime?.lanes;
@@ -301,8 +229,13 @@ async function loadDashboard() {
     statisticsPayload,
     handoffsPayload,
     swarmBriefingPayload,
+    workQueuePayload,
   };
   return ui.data;
+}
+
+function swarmRunning() {
+  return Boolean(ui.data?.runtime?.async_swarm_running);
 }
 
 function fmtNum(n) {
@@ -419,12 +352,8 @@ function renderActionDrilldowns(item, { compact = false } = {}) {
 
   const actionsParts = [];
   if (edits.length) {
-    const fileCwd = input?.cwd ?? "";
     actionsParts.push(`<h5>File edits (${edits.length})</h5><ul class="simple-list">${edits
-      .map(
-        (f) =>
-          `<li>${activityFileLink(f.path, fileCwd)} · ${esc(f.tool)}${f.ok === false ? " · failed" : ""}</li>`,
-      )
+      .map((f) => `<li><code>${esc(f.path)}</code> · ${esc(f.tool)}${f.ok === false ? " · failed" : ""}</li>`)
       .join("")}</ul>`);
   }
   if (toolSteps.length) {
@@ -432,11 +361,7 @@ function renderActionDrilldowns(item, { compact = false } = {}) {
       .map((s) => {
         const m = s.message ?? {};
         const target = m.args?.path ?? m.args?.command ?? m.type ?? "tool";
-        const targetHtml =
-          m.args?.path && m.args.path !== "(shell)"
-            ? activityFileLink(String(m.args.path), input?.cwd ?? "")
-            : esc(String(target).slice(0, 140));
-        return `<li><code>${esc(m.type ?? "tool")}</code> ${targetHtml}</li>`;
+        return `<li><code>${esc(m.type ?? "tool")}</code> ${esc(String(target).slice(0, 140))}</li>`;
       })
       .join("")}</ul>`);
   }
@@ -545,73 +470,74 @@ function renderSidebar() {
   const agentBackend = status?.agent_backend ?? rt.agent_backend ?? "cursor-sdk";
   const sup = report?.supervisor ?? {};
   const st = status?.state ?? {};
+  const swarmOn = Boolean(rt.async_swarm_running);
+  const swarmStarted = rt.async_swarm_started_at;
   const loopOn = Boolean(rt.supervisor_loop_running);
   const loopStarted = rt.supervisor_loop_started_at ?? st.supervisor_loop_started_at;
+  const qLen = ui.data?.workQueuePayload?.queue?.length ?? 0;
   $("#sidebar-stats").innerHTML = `
     <dl>
       <dt>Data store</dt><dd title="History in Supabase; live runs in this process">${esc(store)}</dd>
       <dt>Agent backend</dt><dd class="${agentBackend === "mock" ? "text-warn" : "text-ok"}">${esc(agentBackend)}</dd>
-      <dt>Supervisor</dt><dd class="${loopOn ? "text-ok" : ""}">${loopOn ? "● loop on" : "○ loop off"}</dd>
-      <dt>Loop since</dt><dd>${loopOn && loopStarted ? formatTime(loopStarted) : "—"}</dd>
+      <dt>Swarm</dt><dd class="${swarmOn ? "text-ok" : ""}">${swarmOn ? "● running" : "○ stopped"}</dd>
+      <dt>Since</dt><dd>${swarmOn && swarmStarted ? formatTime(swarmStarted) : "—"}</dd>
+      <dt>SDK slots</dt><dd>${rt.sdk_max_concurrent ?? "—"}</dd>
+      <dt>Queue</dt><dd>${qLen} pending</dd>
       <dt>Running now</dt><dd>${rt.active_run_count ?? 0}</dd>
-      <dt>Swarm</dt><dd>${roster?.total ?? "—"} agents</dd>
+      <dt>Agents</dt><dd>${roster?.total ?? "—"}</dd>
       <dt>Briefing</dt><dd title="${escAttr(report?.briefing_hash ?? "")}">${esc((report?.briefing_hash ?? "—").slice(0, 12))}</dd>
     </dl>`;
 
   const pill = $("#status-pill");
-  let label = sup.status ?? st.supervisor_status ?? "idle";
-  if (rt.current_supervisor_agent) label = `running ${rt.current_supervisor_agent}`;
-  else if (rt.supervisor_loop_running) label = "supervisor on";
+  let label = "idle";
+  if (swarmOn) label = "swarm on";
+  else if (rt.current_supervisor_agent) label = `running ${rt.current_supervisor_agent}`;
+  else if (loopOn) label = "supervisor on";
   else if ((rt.active_run_count ?? 0) > 0) label = "agents running";
   pill.textContent = label;
   pill.className = `pill ${label.includes("running") || label.includes("on") ? "running" : "idle"}`;
-  renderFooterControls(loopOn, rt.active_run_count ?? 0);
+  renderFooterControls();
 }
 
-function renderFooterControls(loopOn, activeRunCount = 0) {
+function renderFooterControls() {
   const { runtime, status } = ui.data ?? {};
+  const swarmBtn = $("#mode-swarm");
   const sup = $("#mode-supervisor");
   const par = $("#mode-parallel");
-  const res = $("#mode-research-lane");
-  const imp = $("#mode-implement-lane");
-  const lanes = laneInfo();
+  const swarmOn = swarmRunning();
+  const loopOn = Boolean(runtime?.supervisor_loop_running);
+
+  if (swarmBtn) {
+    if (swarmOn) {
+      swarmBtn.textContent = "Stop agents";
+      swarmBtn.className = "btn danger sm active";
+      swarmBtn.title = "Stop continuous swarm (all lanes and worker loops)";
+    } else {
+      swarmBtn.textContent = "Start agents";
+      swarmBtn.className = "btn primary sm";
+      swarmBtn.title =
+        "Start continuous swarm: research + implement + maintenance + all agents (parallel SDK)";
+    }
+  }
   if (sup) {
     if (loopOn) {
       sup.textContent = "Stop supervisor";
       sup.className = "btn danger sm active";
     } else {
-      sup.textContent = "Supervisor mode";
-      sup.className = "btn primary sm";
-    }
-  }
-  if (res) {
-    if (lanes.research_lane_running) {
-      res.textContent = "Stop research lane";
-      res.className = "btn danger sm active";
-    } else {
-      res.textContent = "Research lane";
-      res.className = "btn ghost sm";
-    }
-  }
-  if (imp) {
-    if (lanes.implement_lane_running) {
-      imp.textContent = "Stop implement lane";
-      imp.className = "btn danger sm active";
-    } else {
-      imp.textContent = "Implement lane";
-      imp.className = "btn ghost sm";
+      sup.textContent = "Supervisor";
+      sup.className = "btn ghost sm hidden-advanced";
     }
   }
   if (par) {
     const handoff = runtime?.handoff_run ?? status?.runtime?.handoff_run;
     const handoffOn = Boolean(handoff?.in_progress);
-    par.disabled = handoffOn;
-    par.title = handoffOn
-      ? `Handoff in progress — ${handoff.current_agent ?? "starting"} (one SDK session at a time)`
-      : loopOn
-        ? "Supervisor mode is on — handoff run-all still runs one research → placement → implement cycle"
-        : "Research → placement → implement (sequential ticks; pipeline agents show as running)";
-    par.textContent = handoffOn ? "Handoff running…" : "Run all (handoff)";
+    par.disabled = handoffOn || !swarmOn;
+    par.title = !swarmOn
+      ? "Start agents first"
+      : handoffOn
+        ? `Handoff in progress — ${handoff.current_agent ?? "starting"}`
+        : "One-shot research → placement → implement (optional)";
+    par.textContent = handoffOn ? "Handoff running…" : "Run handoff once";
     par.className = handoffOn ? "btn ghost sm active" : "btn ghost sm";
   }
 }
@@ -619,6 +545,7 @@ function renderFooterControls(loopOn, activeRunCount = 0) {
 function renderSupervisorActivity() {
   const { supervisorActivity, runtime, status } = ui.data ?? {};
   const rt = runtime ?? {};
+  const swarmOn = swarmRunning();
   const loopOn = Boolean(rt.supervisor_loop_running ?? supervisorActivity?.loop_running);
   const badge = $("#supervisor-loop-badge");
   const meta = $("#supervisor-loop-meta");
@@ -626,29 +553,26 @@ function renderSupervisorActivity() {
   if (!feed) return;
 
   if (badge) {
-    badge.classList.toggle("hidden", !loopOn);
-    badge.textContent = loopOn ? "loop on" : "loop off";
+    badge.classList.toggle("hidden", !swarmOn && !loopOn);
+    badge.textContent = swarmOn ? "swarm on" : loopOn ? "supervisor" : "off";
   }
   if (meta) {
-    const started = rt.supervisor_loop_started_at ?? supervisorActivity?.started_at;
-    const lastTick = status?.state?.last_tick_at;
-    if (loopOn) {
-      meta.textContent = `Running since ${formatTime(started)} · last completed tick ${lastTick ? formatTime(lastTick) : "pending…"}`;
+    const started = rt.async_swarm_started_at ?? rt.supervisor_loop_started_at ?? supervisorActivity?.started_at;
+    const lanes = rt.lanes ?? ui.data?.lanes ?? {};
+    if (swarmOn) {
+      meta.textContent = `Agents running continuously since ${formatTime(started)} · research ${lanes.research_lane_running ? "on" : "off"} · implement ${lanes.implement_lane_running ? "on" : "off"} · maintenance ${lanes.maintenance_lane_running ? "on" : "off"}`;
+    } else if (loopOn) {
+      const lastTick = status?.state?.last_tick_at;
+      meta.textContent = `Supervisor since ${formatTime(started)} · last tick ${lastTick ? formatTime(lastTick) : "pending…"}`;
     } else {
-      const handoff = rt.handoff_run;
-      if (handoff?.in_progress) {
-        const cur = handoff.current_agent ? ` · active: ${handoff.current_agent}` : "";
-        meta.textContent = `Handoff run-all in progress (research → placement → implement)${cur}. One agent uses the SDK at a time; pipeline agents show as Running.`;
-      } else {
-        meta.textContent =
-          "Run all (handoff) runs research → placement → implement once (sequential). Async swarm runs other agents on a schedule when enabled.";
-      }
+      meta.textContent =
+        "Click Start agents — no further interaction needed. Agents poll the work queue and handoffs until you stop.";
     }
   }
 
   const entries = supervisorActivity?.entries ?? [];
   if (!entries.length) {
-    feed.innerHTML = `<li class="empty">${loopOn ? "Waiting for first tick…" : "No supervisor events yet."}</li>`;
+    feed.innerHTML = `<li class="empty">${swarmOn || loopOn ? "Waiting for swarm events…" : "Start agents to begin."}</li>`;
     return;
   }
   feed.innerHTML = entries
@@ -726,17 +650,30 @@ function renderLiveActivity() {
 }
 
 function renderQueue() {
-  const rec = ui.data.report?.recommended_agents ?? [];
   const el = $("#queue");
-  if (!rec.length) {
-    el.innerHTML = '<li class="empty">No recommended agents in briefing</li>';
+  const items = ui.data?.workQueuePayload?.queue ?? [];
+  if (!items.length) {
+    const rec = ui.data.report?.recommended_agents ?? [];
+    if (!rec.length) {
+      el.innerHTML = `<li class="empty">${swarmRunning() ? "Queue empty — agents will pick up new briefing tasks" : "Start agents to process the work queue"}</li>`;
+      return;
+    }
+    el.innerHTML = rec
+      .slice(0, 8)
+      .map(
+        (r) =>
+          `<li><button type="button" class="linkish" data-open-agent="${escAttr(r.agent)}"><strong>${esc(r.agent)}</strong></button> — ${esc(r.reason)}</li>`,
+      )
+      .join("");
     return;
   }
-  el.innerHTML = rec
-    .map(
-      (r) =>
-        `<li><button type="button" class="linkish" data-open-agent="${escAttr(r.agent)}"><strong>${esc(r.agent)}</strong></button> — ${esc(r.reason)}</li>`,
-    )
+  el.innerHTML = items
+    .slice(0, 12)
+    .map((item) => {
+      const agent = item.agent_id ?? "?";
+      const pri = item.priority != null ? ` [p${item.priority}]` : "";
+      return `<li><button type="button" class="linkish" data-open-agent="${escAttr(agent)}"><strong>${esc(agent)}</strong></button>${pri} <span class="muted">${esc(item.source)}</span> — ${esc(item.reason)}</li>`;
+    })
     .join("");
 }
 
@@ -1036,12 +973,7 @@ function renderRunTrace(detail) {
     }
     if (trace.file_edits?.length) {
       parts.push(`<section class="trace-section"><h4>Files touched (${trace.file_edits.length})</h4><ul class="simple-list">
-        ${trace.file_edits
-          .map(
-            (f) =>
-              `<li>${activityFileLink(f.path, input?.cwd ?? "")} · ${esc(f.tool)}${f.ok === false ? " · failed" : ""}</li>`,
-          )
-          .join("")}
+        ${trace.file_edits.map((f) => `<li><code>${esc(f.path)}</code> · ${esc(f.tool)}${f.ok === false ? " · failed" : ""}</li>`).join("")}
       </ul></section>`);
     }
     if (trace.steps?.length) {
@@ -1051,11 +983,7 @@ function renderRunTrace(detail) {
           .map((s) => {
             const m = s.message ?? {};
             const path = m.args?.path ?? m.args?.command ?? m.type;
-            const pathHtml =
-              m.args?.path && m.args.path !== "(shell)"
-                ? activityFileLink(String(m.args.path), input?.cwd ?? "")
-                : esc(String(path).slice(0, 120));
-            return `<li><code>${esc(m.type)}</code> ${pathHtml}</li>`;
+            return `<li><code>${esc(m.type)}</code> ${esc(String(path).slice(0, 120))}</li>`;
           })
           .join("")}</ul></section>`);
     }
@@ -1101,7 +1029,6 @@ async function openRunDrawer(runId) {
 }
 
 function closeDrawers() {
-  closeFileModal();
   $("#agent-drawer").hidden = true;
   $("#run-drawer").hidden = true;
   $("#backdrop").hidden = true;
@@ -1224,12 +1151,31 @@ $("#refresh").addEventListener("click", refresh);
 $("#refresh-briefing").addEventListener("click", () =>
   postControl("/api/briefing/refresh", $("#refresh-briefing")),
 );
+$("#mode-swarm")?.addEventListener("click", async () => {
+  const btn = $("#mode-swarm");
+  if (swarmRunning()) {
+    await postControl("/api/async-swarm/stop", btn, { label: "Stopping" });
+    ui.pollMs = 4000;
+    schedulePoll();
+    return;
+  }
+  if (ui.data?.runtime?.supervisor_loop_running) {
+    await fetchJson("/api/supervisor/stop", { method: "POST" }).catch(() => {});
+  }
+  await postControl("/api/async-swarm/start", btn, { label: "Starting" });
+  ui.pollMs = 1500;
+  schedulePoll();
+});
+
 $("#mode-supervisor")?.addEventListener("click", async () => {
   const loopOn = ui.data?.runtime?.supervisor_loop_running;
   const btn = $("#mode-supervisor");
   if (loopOn) {
     await postControl("/api/supervisor/stop", btn, { label: "Stopping" });
     return;
+  }
+  if (swarmRunning()) {
+    await postControl("/api/async-swarm/stop", btn, { label: "Stopping swarm" });
   }
   try {
     await fetchJson("/api/swarm/stop-all", { method: "POST" });
@@ -1241,42 +1187,16 @@ $("#mode-supervisor")?.addEventListener("click", async () => {
 
 $("#mode-parallel")?.addEventListener("click", async () => {
   const btn = $("#mode-parallel");
-  if (ui.data?.runtime?.supervisor_loop_running) {
-    await fetchJson("/api/supervisor/stop", { method: "POST" });
+  if (!swarmRunning()) {
+    showToast("Start agents first", "warn");
+    return;
   }
   ui.pollMs = 1500;
   schedulePoll();
   await postControl("/api/swarm/run-all", btn, { label: "Starting handoff" });
 });
 
-function laneInfo() {
-  return ui.data?.lanes ?? ui.data?.status?.lanes ?? {};
-}
-
-$("#mode-research-lane")?.addEventListener("click", async () => {
-  const lanes = laneInfo();
-  const btn = $("#mode-research-lane");
-  const path = lanes.research_lane_running
-    ? "/api/lanes/research/stop"
-    : "/api/lanes/research/start";
-  await postControl(path, btn, { label: lanes.research_lane_running ? "Stopping" : "Starting" });
-});
-
-$("#mode-implement-lane")?.addEventListener("click", async () => {
-  const lanes = laneInfo();
-  const btn = $("#mode-implement-lane");
-  const path = lanes.implement_lane_running
-    ? "/api/lanes/implement/stop"
-    : "/api/lanes/implement/start";
-  await postControl(path, btn, { label: lanes.implement_lane_running ? "Stopping" : "Starting" });
-});
-
 $("#backdrop").addEventListener("click", closeDrawers);
-$(".file-modal-close")?.addEventListener("click", closeFileModal);
-$("#file-modal")?.addEventListener("cancel", (ev) => {
-  ev.preventDefault();
-  closeFileModal();
-});
 $$(".drawer-close").forEach((btn) => {
   btn.addEventListener("click", () => {
     if (btn.dataset.close === "run") $("#run-drawer").hidden = true;
@@ -1307,12 +1227,6 @@ document.body.addEventListener("click", async (ev) => {
   if (openAgent) {
     ev.preventDefault();
     await openAgentDrawer(openAgent.dataset.openAgent);
-    return;
-  }
-  const viewFile = ev.target.closest("[data-view-file]");
-  if (viewFile) {
-    ev.preventDefault();
-    await openFileModal(viewFile.dataset.viewFile, viewFile.dataset.fileCwd || undefined);
     return;
   }
   const openRun = ev.target.closest("[data-open-run]");

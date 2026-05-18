@@ -213,7 +213,7 @@ describe("dashboard drilldown API e2e", () => {
     assert.ok(indexHtml.includes('data-view="statistics"'), "Statistics nav");
     assert.ok(indexHtml.includes('id="view-statistics"'), "Statistics view section");
     assert.ok(indexHtml.includes('id="swarm-stat-cards"'), "Statistics stat cards mount");
-    assert.ok(indexHtml.includes('id="file-modal"'), "File preview modal");
+    assert.ok(indexHtml.includes('id="mode-swarm"'), "Start agents button");
 
     for (const path of ["/", "/index.html", "/app.js", "/style.css"]) {
       const res = await new Promise<{ status: number; type: string }>((resolve, reject) => {
