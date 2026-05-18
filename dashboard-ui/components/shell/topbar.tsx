@@ -23,7 +23,8 @@ export function Topbar({
   const qc = useQueryClient();
   const runtime = status?.runtime;
   const swarmOn = Boolean(runtime?.async_swarm_running);
-  const backend = status?.agent_backend ?? runtime?.agent_backend ?? "cursor-sdk";
+  const backend = status?.agent_backend ?? runtime?.agent_backend;
+  const statusKnown = !statusFault || Boolean(runtime || backend);
 
   const refreshBriefing = useMutation({
     mutationFn: () => apiPost("/api/briefing/refresh"),
@@ -37,19 +38,25 @@ export function Topbar({
         <p className="subtitle">Control plane dashboard (Next.js)</p>
       </div>
       <div className="topbar-right">
-        <Badge tone={backend === "mock" ? "warn" : "ok"}>{backend}</Badge>
-        <Badge tone={swarmOn ? "ok" : "default"}>{swarmOn ? "swarm on" : "swarm off"}</Badge>
+        {backend ? (
+          <Badge tone={backend === "mock" ? "warn" : "ok"}>{backend}</Badge>
+        ) : null}
+        <Badge tone={swarmOn ? "ok" : agentsReachable ? "default" : "warn"}>
+          {swarmOn ? "swarm on" : agentsReachable ? "swarm off" : "swarm unknown"}
+        </Badge>
         {agentsFault && !agentsReachable ? (
           <Badge tone="danger" title={agentsFault}>
             Agents API down
           </Badge>
-        ) : statusFault && !agentsReachable ? (
-          <Badge tone="danger" title={statusFault}>
-            Control plane unreachable
-          </Badge>
+        ) : !agentsReachable && !agentsFault ? (
+          <Badge tone="warn">Connecting…</Badge>
         ) : statusFault && agentsReachable ? (
           <Badge tone="warn" title={statusFault}>
             Status poll slow
+          </Badge>
+        ) : !statusKnown && !agentsReachable ? (
+          <Badge tone="danger" title={statusFault ?? agentsFault ?? undefined}>
+            Control plane unreachable
           </Badge>
         ) : null}
         <span className="updated">{updatedAt ? updatedAt.toLocaleTimeString() : ""}</span>

@@ -89,6 +89,8 @@ export function defaultOpsPort(): number {
 }
 
 let statisticsCache: { at: number; stats: SwarmStatistics; key: string } | null = null;
+let reportCache: { at: number; body: unknown } | null = null;
+const REPORT_CACHE_MS = Number(process.env.LI_REPORT_CACHE_MS ?? 20_000);
 const STATS_CACHE_MS = Number(process.env.LI_STATISTICS_CACHE_MS ?? 45_000);
 
 async function getSwarmStatisticsForApi(
@@ -374,7 +376,14 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
   }
 
   if (url.pathname === "/api/report") {
+    const refresh = url.searchParams.get("refresh") === "1";
+    const now = Date.now();
+    if (!refresh && reportCache && now - reportCache.at < REPORT_CACHE_MS) {
+      json(res, 200, reportCache.body);
+      return;
+    }
     const report = await liveReportPayload();
+    reportCache = { at: now, body: report };
     json(res, 200, report);
     return;
   }
@@ -436,7 +445,9 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
 
   if (url.pathname === "/api/queue") {
     const { buildAgentWorkQueue } = await import("./control-plane/agent-work-queue.js");
-    const light = url.searchParams.get("light") === "1";
+    const light =
+      url.searchParams.get("full") !== "1" &&
+      (url.searchParams.get("light") === "1" || url.searchParams.get("light") !== "0");
     const snapshot = await buildAgentWorkQueue(state, { light });
     json(res, 200, {
       queue: snapshot.items,

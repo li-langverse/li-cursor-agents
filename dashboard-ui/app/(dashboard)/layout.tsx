@@ -24,11 +24,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     isLoading,
     isError,
     error,
-    isReportLoading,
-    isQueueLoading,
     statusFault,
     agentsFault,
     statusDegraded,
+    agentsReachable,
+    isReportLoading,
   } = useDashboardCore();
 
   return (
@@ -65,7 +65,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           updatedAt={dataUpdatedAt ? new Date(dataUpdatedAt) : undefined}
           statusFault={statusFault}
           agentsFault={agentsFault}
-          agentsReachable={(data?.agents?.roster?.length ?? 0) > 0 && !agentsFault}
+          agentsReachable={agentsReachable}
         />
         <main className="content">
           {isLoading ? <p className="loading-block">Loading agents…</p> : null}
@@ -74,8 +74,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               Status poll failed ({statusFault}) — roster still loaded from <code>/api/agents</code>.
             </p>
           ) : null}
-          {isReportLoading || isQueueLoading ? (
-            <p className="hint">Refreshing briefing / work queue…</p>
+          {isReportLoading ? (
+            <p className="hint">Loading briefing / work queue (background)…</p>
           ) : null}
           {isError ? (
             <p className="error-block">

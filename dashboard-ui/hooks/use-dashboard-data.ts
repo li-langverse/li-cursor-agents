@@ -18,51 +18,84 @@ const EMPTY_QUEUE: QueuePayload = { queue: [], by_agent: {} };
 
 type AgentsQueryResult = { payload: AgentsPayload; fault: string | null };
 
+function mergeStatusWithAgentsRuntime(
+  status: StatusPayload,
+  agents?: AgentsPayload,
+): StatusPayload {
+  const agentRt = agents?.runtime;
+  if (!agentRt) return status;
+  return {
+    ...status,
+    agent_backend: status.agent_backend ?? agentRt.agent_backend,
+    runtime: {
+      ...agentRt,
+      ...status.runtime,
+      async_swarm_running:
+        status.runtime?.async_swarm_running ?? agentRt.async_swarm_running,
+      store: status.runtime?.store ?? agentRt.store,
+      agent_backend: status.runtime?.agent_backend ?? agentRt.agent_backend,
+    },
+  };
+}
+
 /**
  * Split queries so a slow /api/report or /api/queue does not block agents/status UI.
+ * Heavy endpoints start only after /api/agents succeeds.
  */
 export function useDashboardCore() {
   const statusQ = useQuery({
     queryKey: ["dashboard", "status"],
     queryFn: async () => {
       try {
-        const raw = await apiFetch<Record<string, unknown>>("/api/status", { timeoutMs: 10_000 });
+        const raw = await apiFetch<Record<string, unknown>>("/api/status", { timeoutMs: 8_000 });
         return { payload: parseStatusResponse(raw), fault: null as string | null };
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
         return { payload: {} as StatusPayload, fault: message };
       }
     },
-    refetchInterval: 4000,
+    refetchInterval: 5_000,
+    retry: 1,
   });
 
   const agentsQ = useQuery({
     queryKey: ["dashboard", "agents"],
     queryFn: async (): Promise<AgentsQueryResult> => {
       try {
-        const body = await apiFetch<AgentsPayload>("/api/agents", { timeoutMs: 20_000 });
+        const body = await apiFetch<AgentsPayload>("/api/agents", { timeoutMs: 12_000 });
         return { payload: normalizeAgentsPayload(body), fault: null };
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
         return { payload: normalizeAgentsPayload(undefined), fault: message };
       }
     },
-    refetchInterval: 4000,
+    refetchInterval: 8_000,
+    retry: 2,
   });
+
+  const agentsReady =
+    agentsQ.isFetched &&
+    !agentsQ.data?.fault &&
+    (agentsQ.data?.payload?.roster?.length ?? 0) > 0;
 
   const reportQ = useQuery({
     queryKey: ["dashboard", "report"],
     queryFn: () =>
-      apiFetch<Record<string, unknown>>("/api/report", { timeoutMs: 25_000 }).catch(() => ({})),
-    refetchInterval: 30_000,
-    staleTime: 15_000,
+      apiFetch<Record<string, unknown>>("/api/report", { timeoutMs: 20_000 }).catch(() => ({})),
+    enabled: agentsReady,
+    refetchInterval: 45_000,
+    staleTime: 20_000,
+    retry: 0,
   });
 
   const queueQ = useQuery({
-    queryKey: ["dashboard", "queue"],
+    queryKey: ["dashboard", "queue", "light"],
     queryFn: () =>
-      apiFetch<QueuePayload>("/api/queue", { timeoutMs: 30_000 }).catch(() => EMPTY_QUEUE),
-    refetchInterval: 4000,
+      apiFetch<QueuePayload>("/api/queue?light=1", { timeoutMs: 15_000 }).catch(() => EMPTY_QUEUE),
+    enabled: agentsReady,
+    refetchInterval: 12_000,
+    staleTime: 8_000,
+    retry: 0,
   });
 
   const agentsPayload = agentsQ.data?.payload;
@@ -70,15 +103,20 @@ export function useDashboardCore() {
   const statusPayload = statusQ.data?.payload;
   const statusFault = statusQ.data?.fault ?? null;
 
+  const mergedStatus = useMemo(
+    () => mergeStatusWithAgentsRuntime(statusPayload ?? {}, agentsPayload),
+    [statusPayload, agentsPayload],
+  );
+
   const data = useMemo(() => {
     if (!agentsQ.isFetched) return undefined;
     return {
-      status: statusPayload,
+      status: mergedStatus,
       agents: agentsPayload ?? normalizeAgentsPayload(undefined),
       report: reportQ.data ?? {},
       queue: queueQ.data ?? EMPTY_QUEUE,
     };
-  }, [agentsQ.isFetched, agentsPayload, statusPayload, reportQ.data, queueQ.data]);
+  }, [agentsQ.isFetched, agentsPayload, mergedStatus, reportQ.data, queueQ.data]);
 
   const rosterCount = agentsPayload?.roster?.length ?? 0;
   const agentsReachable = rosterCount > 0 && !agentsFault;
@@ -90,18 +128,20 @@ export function useDashboardCore() {
     queueQ.dataUpdatedAt,
   );
 
+  const heavyStillLoading =
+    agentsReady && (reportQ.isFetching || queueQ.isFetching) && !reportQ.data && !queueQ.data;
+
   return {
     data,
-    isLoading: !agentsQ.isFetched,
+    isLoading: agentsQ.isPending && !agentsQ.isFetched,
     isError: Boolean(agentsFault) && rosterCount === 0,
     error: agentsFault ? new Error(agentsFault) : null,
     dataUpdatedAt: dataUpdatedAt > 0 ? dataUpdatedAt : undefined,
-    isReportLoading: reportQ.isLoading,
-    isQueueLoading: queueQ.isLoading,
+    isReportLoading: heavyStillLoading,
+    isQueueLoading: false,
     statusFault,
     agentsFault,
     agentsReachable,
-    /** True when roster loaded but /api/status failed (show soft warning, not "API degraded"). */
     statusDegraded: Boolean(statusFault) && agentsReachable,
   };
 }
@@ -146,7 +186,7 @@ export function useInterventions() {
         }>;
         stale_warning?: string;
       }>("/api/interventions"),
-    refetchInterval: 8000,
+    refetchInterval: 12_000,
   });
 }
 
@@ -163,7 +203,7 @@ export function useRecentActivity(limit = 25) {
           action_summary?: string;
         }>;
       }>(`/api/activity/recent?limit=${limit}`),
-    refetchInterval: 5000,
+    refetchInterval: 8_000,
   });
 }
 
@@ -175,6 +215,6 @@ export function useHeapPlan() {
         heap_plan?: { flat_tasks?: Array<{ agent: string; coordinator: string; reason: string }> };
         org_roadmap?: Record<string, unknown>;
       }>("/api/heap"),
-    refetchInterval: 10_000,
+    refetchInterval: 15_000,
   });
 }
