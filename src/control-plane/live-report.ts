@@ -17,7 +17,10 @@ import type { ControlPlaneReport } from "./types.js";
  * Recompute interventions and queue from current agent-briefing.json (and persist to DB).
  * Stored supervisor snapshots can list merged PRs until briefing is refreshed.
  */
-export async function buildLiveReportAsync(stored: ControlPlaneReport | null): Promise<ControlPlaneReport | null> {
+export async function buildLiveReportAsync(
+  stored: ControlPlaneReport | null,
+  options?: { persist?: boolean },
+): Promise<ControlPlaneReport | null> {
   if (!stored) return null;
 
   const fresh = loadFreshBriefing(stored);
@@ -67,12 +70,14 @@ export async function buildLiveReportAsync(stored: ControlPlaneReport | null): P
       : undefined,
   };
 
-  await persistLiveInterventions({
-    interventions,
-    briefingHash,
-    briefingGeneratedAt,
-    generatedAt: liveAt,
-  });
+  if (options?.persist) {
+    await persistLiveInterventions({
+      interventions,
+      briefingHash,
+      briefingGeneratedAt,
+      generatedAt: liveAt,
+    });
+  }
 
   return report;
 }
@@ -98,7 +103,9 @@ export function buildLiveReport(stored: ControlPlaneReport | null): ControlPlane
   };
 }
 
-export async function loadLiveReportAsync(): Promise<ControlPlaneReport | null> {
+export async function loadLiveReportAsync(options?: {
+  persist?: boolean;
+}): Promise<ControlPlaneReport | null> {
   let stored: ControlPlaneReport | null = null;
   if (dbEnabled()) {
     try {
@@ -110,7 +117,7 @@ export async function loadLiveReportAsync(): Promise<ControlPlaneReport | null> 
   if (!stored) {
     stored = readJson(reportPath()) as ControlPlaneReport | null;
   }
-  return buildLiveReportAsync(stored);
+  return buildLiveReportAsync(stored, { persist: options?.persist ?? false });
 }
 
 export function loadLiveReport(): ControlPlaneReport | null {

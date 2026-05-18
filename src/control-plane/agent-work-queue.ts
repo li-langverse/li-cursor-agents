@@ -3,7 +3,6 @@ import { taskFingerprint } from "../heap/task-queue.js";
 import { listHandoffs } from "../handoffs/handoff-store.js";
 import { buildImplementationQueue } from "../preflight/implementation-queue.js";
 import { loadCachedBriefing } from "../briefing/load-cached-briefing.js";
-import { runPreflight, resolveBenchmarksRoot } from "../preflight.js";
 import { loadResearchGoals, resolveGoalAgent } from "../research-goals/load-goals.js";
 import { loadResearchSession } from "../research-sessions/session-store.js";
 import type { AgentId } from "../types.js";
@@ -100,13 +99,80 @@ export interface BuildAgentWorkQueueOptions {
   light?: boolean;
 }
 
-const QUEUE_CACHE_MS = Number(process.env.LI_QUEUE_CACHE_MS ?? 5_000);
+const QUEUE_CACHE_MS = Number(process.env.LI_QUEUE_CACHE_MS ?? 15_000);
+/** Serve cached queue up to this age while a refresh runs in the background. */
+const QUEUE_STALE_SERVE_MS = Number(process.env.LI_QUEUE_STALE_SERVE_MS ?? 120_000);
+const HANDOFFS_CACHE_MS = Number(process.env.LI_HANDOFFS_CACHE_MS ?? 10_000);
+
 let queueCache: { at: number; key: string; snapshot: AgentWorkQueueSnapshot } | null = null;
 let queueBuildInFlight: { key: string; promise: Promise<AgentWorkQueueSnapshot> } | null = null;
+let handoffsCache: {
+  at: number;
+  key: string;
+  items: Awaited<ReturnType<typeof listHandoffs>>;
+} | null = null;
+let queueWarmerStarted = false;
 
 export function resetAgentWorkQueueCacheForTests(): void {
   queueCache = null;
   queueBuildInFlight = null;
+  handoffsCache = null;
+  queueWarmerStarted = false;
+}
+
+function queueCacheKey(state: ControlPlaneState, options: BuildAgentWorkQueueOptions): string {
+  return `${state.updated_at ?? ""}:${options.light ? "light" : "full"}`;
+}
+
+export function peekAgentWorkQueueSnapshot(
+  state: ControlPlaneState,
+  options: BuildAgentWorkQueueOptions = {},
+): AgentWorkQueueSnapshot | null {
+  const key = queueCacheKey(state, options);
+  if (!queueCache || queueCache.key !== key) return null;
+  if (Date.now() - queueCache.at > QUEUE_STALE_SERVE_MS) return null;
+  return queueCache.snapshot;
+}
+
+/** Refresh queue in the background — never blocks HTTP handlers. */
+export function scheduleAgentWorkQueueRefresh(
+  state: ControlPlaneState,
+  options: BuildAgentWorkQueueOptions = {},
+): void {
+  const key = queueCacheKey(state, options);
+  if (queueCache && queueCache.key === key && Date.now() - queueCache.at < QUEUE_CACHE_MS) {
+    return;
+  }
+  if (queueBuildInFlight?.key === key) return;
+  void buildAgentWorkQueue(state, options).catch(() => {
+    /* logged in buildAgentWorkQueueInner callers */
+  });
+}
+
+export function startAgentWorkQueueWarmer(getState: () => ControlPlaneState): void {
+  if (queueWarmerStarted) return;
+  queueWarmerStarted = true;
+  const intervalMs = Number(process.env.LI_QUEUE_WARM_MS ?? 30_000);
+  setInterval(() => {
+    try {
+      scheduleAgentWorkQueueRefresh(getState(), { light: true });
+    } catch {
+      /* ignore */
+    }
+  }, intervalMs).unref();
+}
+
+async function listHandoffsCached(
+  params: Parameters<typeof listHandoffs>[0],
+): Promise<Awaited<ReturnType<typeof listHandoffs>>> {
+  const key = JSON.stringify(params);
+  const now = Date.now();
+  if (handoffsCache && handoffsCache.key === key && now - handoffsCache.at < HANDOFFS_CACHE_MS) {
+    return handoffsCache.items;
+  }
+  const items = await listHandoffs(params);
+  handoffsCache = { at: now, key, items };
+  return items;
 }
 
 async function buildAgentWorkQueueInner(
@@ -116,12 +182,8 @@ async function buildAgentWorkQueueInner(
   const light = options.light ?? false;
   const items: AgentWorkQueueItem[] = [];
   const seen = new Set<string>();
-  const benchmarksRoot = resolveBenchmarksRoot();
-  let briefing: unknown = loadCachedBriefing();
-  if (!briefing || (typeof briefing === "object" && !Object.keys(briefing as object).length)) {
-    const preflight = runPreflight(benchmarksRoot, true);
-    briefing = preflight.briefing ?? preflight;
-  }
+  // Never run sync preflight on the HTTP hot path — maintenance lane refreshes briefing on disk.
+  const briefing: unknown = loadCachedBriefing() ?? {};
 
   const heapPlan = heapPlanFromBriefing(briefing);
   pushHeapTasks(items, heapPlan, seen);
@@ -172,7 +234,7 @@ async function buildAgentWorkQueueInner(
   }
 
   try {
-    const handoffs = await listHandoffs({ status: ["pending", "pending_placement"], limit: 30 });
+    const handoffs = await listHandoffsCached({ status: ["pending", "pending_placement"], limit: 30 });
     for (const h of handoffs) {
       const agent =
         h.status === "pending_placement" ? "package_architect" : (h.to_agents?.[0] ?? "code_implementer");
@@ -259,7 +321,7 @@ export async function buildAgentWorkQueue(
   state: ControlPlaneState,
   options: BuildAgentWorkQueueOptions = {},
 ): Promise<AgentWorkQueueSnapshot> {
-  const key = `${state.updated_at ?? ""}:${options.light ? "light" : "full"}`;
+  const key = queueCacheKey(state, options);
   const now = Date.now();
   if (queueCache && queueCache.key === key && now - queueCache.at < QUEUE_CACHE_MS) {
     return queueCache.snapshot;
