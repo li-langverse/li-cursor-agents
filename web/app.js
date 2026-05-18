@@ -67,7 +67,7 @@ function statusLabel(status) {
   const labels = {
     running: "Running",
     recommended: "Recommended",
-    queued: "Recommended", // legacy key
+    queued: "In queue",
     stopped: "Stopped",
     idle: "Idle",
     cooldown: "Cooldown",
@@ -143,6 +143,13 @@ function agentStatusMap(roster, report, runtime, statusPayload) {
   const activeRuns = runtime?.active_runs ?? [];
   const stopped = new Set(runtime?.stopped_agents ?? []);
   const currentSupervisor = runtime?.current_supervisor_agent ?? statusPayload?.state?.current_supervisor_agent;
+  const handoffRun = runtime?.handoff_run ?? statusPayload?.handoff_run;
+  const handoffPipeline = new Set(handoffRun?.pipeline_agents ?? []);
+  const swarmWorkers = new Set(
+    runtime?.worker_pool?.agents?.length
+      ? runtime.worker_pool.agents
+      : runtime?.worker_agent_ids ?? [],
+  );
   const rec = new Map((report?.recommended_agents ?? []).map((r) => [r.agent, r.reason]));
   const heapTasks = new Map(
     (report?.heap_plan?.flat_tasks ?? []).map((t) => [t.agent, { reason: t.reason, coord: t.coordinator }]),
@@ -161,7 +168,17 @@ function agentStatusMap(roster, report, runtime, statusPayload) {
     const activeRun = activeRuns.find((r) => r.agent_id === entry.id && r.status === "running");
     if (stopped.has(entry.id)) status = "stopped";
     else if (activeRun || currentSupervisor === entry.id) status = "running";
-    else {
+    else if (handoffRun?.in_progress && handoffRun.current_agent === entry.id) status = "running";
+    else if (handoffRun?.in_progress && handoffPipeline.has(entry.id)) status = "queued";
+    else if (
+      runtime?.async_swarm_running &&
+      !handoffRun?.in_progress &&
+      swarmWorkers.has(entry.id)
+    ) {
+      status = activeRuns.some((r) => r.agent_id === entry.id && r.status === "running")
+        ? "running"
+        : "queued";
+    } else {
       const last = recentByAgent.get(entry.id);
       const finishedAt = last?.finished_at ? new Date(last.finished_at).getTime() : 0;
       const onCooldown =
@@ -553,12 +570,14 @@ function renderStatCards() {
   const statusMap = agentStatusMap(roster, report, runtime, status);
   let running = 0;
   let recommended = 0;
+  let queued = 0;
   let stopped = 0;
   let idle = 0;
   let cooldown = 0;
   for (const v of statusMap.values()) {
     if (v.status === "running") running++;
-    if (v.status === "recommended" || v.status === "queued") recommended++;
+    if (v.status === "queued") queued++;
+    if (v.status === "recommended") recommended++;
     if (v.status === "stopped") stopped++;
     if (v.status === "idle") idle++;
     if (v.status === "cooldown") cooldown++;
