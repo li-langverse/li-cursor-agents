@@ -42,6 +42,8 @@ export interface AgentWorkerTickResult {
   skipped: boolean;
   skip_reason?: string;
   status?: string;
+  work_kind?: "queued" | "proactive";
+  pending_for_agent?: number;
 }
 
 export async function agentWorkerTick(
@@ -63,8 +65,13 @@ export async function agentWorkerTick(
   const next = pickNextWorkForAgent(agentId, queue);
   const proactive = next ? null : pickProactiveWorkForAgent(agentId);
   const work = next ?? proactive;
+  const pendingForAgent = (queue.by_agent[agentId] ?? []).filter((i) => i.status === "pending").length;
   if (!work) {
-    return { skipped: true, skip_reason: "no queued work for this agent" };
+    return {
+      skipped: true,
+      skip_reason: "no queued work for this agent",
+      pending_for_agent: pendingForAgent,
+    };
   }
 
   const mock = options?.mock ?? shouldUseMock(false);
@@ -86,7 +93,12 @@ export async function agentWorkerTick(
 
   if (proactive) recordProactiveAgentRun(agentId);
 
-  return { skipped: false, status: result.status };
+  return {
+    skipped: false,
+    status: result.status,
+    work_kind: next ? "queued" : "proactive",
+    pending_for_agent: pendingForAgent,
+  };
 }
 
 const workerAborts = new Map<AgentId, AbortController>();
@@ -111,14 +123,17 @@ function sleepUntil(abort: AbortSignal, ms: number): Promise<void> {
 
 async function agentWorkerLoop(agentId: AgentId, abort: AbortSignal, mock: boolean): Promise<void> {
   const startupDefer = Number(process.env.LI_WORKER_STARTUP_DEFER_MS ?? 0);
-  const stagger = Math.abs(hashString(agentId)) % 20_000;
+  const staggerCap = Number(process.env.LI_WORKER_STAGGER_MAX_MS ?? 20_000);
+  const stagger = Math.abs(hashString(agentId)) % (Number.isFinite(staggerCap) && staggerCap > 0 ? staggerCap : 20_000);
   const waitMs = startupDefer + stagger;
   workerConsole(`pool:${agentId}`, "info", `worker loop started — first tick in ${waitMs}ms`);
   await sleepUntil(abort, waitMs);
   while (!abort.aborted) {
     try {
       const tick = await agentWorkerTick(agentId, { mock });
-      const msg = tick.skipped ? `skipped: ${tick.skip_reason}` : `tick status=${tick.status}`;
+      const msg = tick.skipped
+        ? `skipped: ${tick.skip_reason} (pending=${tick.pending_for_agent ?? 0})`
+        : `tick ${tick.work_kind ?? "run"} status=${tick.status}`;
       workerConsole(`pool:${agentId}`, "info", msg);
       agentLog(`worker:${agentId}`, "info", msg);
     } catch (err) {

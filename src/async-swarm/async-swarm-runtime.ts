@@ -19,6 +19,8 @@ import {
   startWorkerHeartbeatLoop,
   stopWorkerHeartbeatLoop,
 } from "../worker/heartbeat-loop.js";
+import { proactiveAllPoolWorkersEnabled } from "../control-plane/proactive-agent-work.js";
+import { workerConsole } from "../worker/worker-console.js";
 
 export { isAsyncSwarmRunning, asyncSwarmSnapshot } from "./async-swarm-state.js";
 
@@ -65,6 +67,13 @@ export async function startAsyncSwarm(options?: {
   pushSupervisorActivity("info", message, { mode: "async_swarm", mock });
   agentLog("async-swarm", "info", message);
   await flushWorkerHeartbeat();
+
+  workerConsole(
+    "async-swarm",
+    "info",
+    `worker pool: ${workers.agents.length} agents; proactive_all_pool=${proactiveAllPoolWorkersEnabled()}`,
+    workers.agents.slice(0, 8).join(", ") + (workers.agents.length > 8 ? ", …" : ""),
+  );
 
   return { started: true, message };
 }
