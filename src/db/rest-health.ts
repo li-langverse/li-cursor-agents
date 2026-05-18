@@ -16,12 +16,17 @@ export async function probeSupabaseRest(): Promise<RestHealthResult> {
     await withSupabaseRetry(
       "probeSupabaseRest",
       async () => {
-        const { error } = await getSupabase()
+        const { error: stateErr } = await getSupabase()
           .from("control_plane_state")
           .select("id")
           .eq("id", 1)
           .maybeSingle();
-        if (error) throw new Error(error.message);
+        if (stateErr) throw new Error(stateErr.message);
+        const { error: handoffErr } = await getSupabase()
+          .from("agent_handoffs")
+          .select("handoff_id")
+          .limit(1);
+        if (handoffErr) throw new Error(handoffErr.message);
       },
       { attempts: 3, baseDelayMs: 250 },
     );
