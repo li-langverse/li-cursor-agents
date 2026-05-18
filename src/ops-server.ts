@@ -37,6 +37,7 @@ import {
   listRecentActivity,
   listRunsMerged,
 } from "./control-plane/runs-catalog.js";
+import { readFileSafe } from "./control-plane/safe-file-read.js";
 import { listActiveRuns } from "./control-plane/runtime.js";
 import { listSupervisorActivity } from "./control-plane/supervisor-activity.js";
 import { buildSwarmStatistics } from "./control-plane/swarm-statistics.js";
@@ -376,6 +377,22 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       items: await listRecentActivity(limit),
       store,
     });
+    return;
+  }
+
+  if (url.pathname === "/api/files/read" && req.method === "GET") {
+    const filePath = url.searchParams.get("path")?.trim();
+    if (!filePath) {
+      json(res, 400, { error: "path query parameter required" });
+      return;
+    }
+    const cwd = url.searchParams.get("cwd")?.trim() || undefined;
+    const file = readFileSafe(filePath, cwd);
+    if (!file) {
+      json(res, 404, { error: "file not found or path not allowed" });
+      return;
+    }
+    json(res, 200, file);
     return;
   }
 

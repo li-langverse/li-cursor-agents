@@ -52,6 +52,79 @@ function escAttr(s) {
   return esc(s).replace(/"/g, "&quot;");
 }
 
+function fileLangClass(path) {
+  const ext = String(path).split(".").pop()?.toLowerCase() ?? "";
+  const map = {
+    md: "language-markdown",
+    json: "language-json",
+    yaml: "language-yaml",
+    yml: "language-yaml",
+    ts: "language-typescript",
+    tsx: "language-typescript",
+    js: "language-javascript",
+    lean: "language-lean",
+    li: "language-li",
+    py: "language-python",
+    sh: "language-shell",
+  };
+  return map[ext] ?? "language-plaintext";
+}
+
+function activityFileLink(path, cwd) {
+  if (!path || path === "(shell)") return `<code>${esc(path)}</code>`;
+  return `<button type="button" class="file-link" data-view-file="${escAttr(path)}" data-file-cwd="${escAttr(cwd ?? "")}">${esc(path)}</button>`;
+}
+
+function setFileModalBody(html) {
+  const body = $("#file-modal-body");
+  if (body) body.innerHTML = html;
+}
+
+function closeFileModal() {
+  const modal = $("#file-modal");
+  if (!modal) return;
+  modal.hidden = true;
+  if (typeof modal.close === "function") {
+    try {
+      modal.close();
+    } catch {
+      /* not open */
+    }
+  }
+  const backdrop = $("#backdrop");
+  if (backdrop && $("#agent-drawer")?.hidden && $("#run-drawer")?.hidden) {
+    backdrop.hidden = true;
+  }
+}
+
+async function openFileModal(filePath, cwd) {
+  const modal = $("#file-modal");
+  if (!modal) return;
+  $("#file-modal-title").textContent = "File preview";
+  $("#file-modal-path").textContent = filePath;
+  setFileModalBody('<p class="empty">Loading…</p>');
+  modal.hidden = false;
+  if (typeof modal.showModal === "function") modal.showModal();
+  const backdrop = $("#backdrop");
+  if (backdrop) backdrop.hidden = false;
+
+  const qs = new URLSearchParams({ path: filePath });
+  if (cwd) qs.set("cwd", cwd);
+  try {
+    const data = await fetchJson(`/api/files/read?${qs}`);
+    const lang = fileLangClass(data.path ?? filePath);
+    const note = data.truncated
+      ? `<p class="hint">Showing first ${Math.round(512_000 / 1024)}KB of ${data.size_bytes} bytes.</p>`
+      : "";
+    setFileModalBody(
+      `${note}<pre class="trace-pre file-modal-code ${escAttr(lang)}"><code>${esc(data.content)}</code></pre>`,
+    );
+  } catch (e) {
+    setFileModalBody(`<p class="empty">${esc(e.message)}</p>`);
+  }
+}
+
+
 function formatTime(iso) {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -346,8 +419,12 @@ function renderActionDrilldowns(item, { compact = false } = {}) {
 
   const actionsParts = [];
   if (edits.length) {
+    const fileCwd = input?.cwd ?? "";
     actionsParts.push(`<h5>File edits (${edits.length})</h5><ul class="simple-list">${edits
-      .map((f) => `<li><code>${esc(f.path)}</code> · ${esc(f.tool)}${f.ok === false ? " · failed" : ""}</li>`)
+      .map(
+        (f) =>
+          `<li>${activityFileLink(f.path, fileCwd)} · ${esc(f.tool)}${f.ok === false ? " · failed" : ""}</li>`,
+      )
       .join("")}</ul>`);
   }
   if (toolSteps.length) {
@@ -355,7 +432,11 @@ function renderActionDrilldowns(item, { compact = false } = {}) {
       .map((s) => {
         const m = s.message ?? {};
         const target = m.args?.path ?? m.args?.command ?? m.type ?? "tool";
-        return `<li><code>${esc(m.type ?? "tool")}</code> ${esc(String(target).slice(0, 140))}</li>`;
+        const targetHtml =
+          m.args?.path && m.args.path !== "(shell)"
+            ? activityFileLink(String(m.args.path), input?.cwd ?? "")
+            : esc(String(target).slice(0, 140));
+        return `<li><code>${esc(m.type ?? "tool")}</code> ${targetHtml}</li>`;
       })
       .join("")}</ul>`);
   }
@@ -955,7 +1036,12 @@ function renderRunTrace(detail) {
     }
     if (trace.file_edits?.length) {
       parts.push(`<section class="trace-section"><h4>Files touched (${trace.file_edits.length})</h4><ul class="simple-list">
-        ${trace.file_edits.map((f) => `<li><code>${esc(f.path)}</code> · ${esc(f.tool)}${f.ok === false ? " · failed" : ""}</li>`).join("")}
+        ${trace.file_edits
+          .map(
+            (f) =>
+              `<li>${activityFileLink(f.path, input?.cwd ?? "")} · ${esc(f.tool)}${f.ok === false ? " · failed" : ""}</li>`,
+          )
+          .join("")}
       </ul></section>`);
     }
     if (trace.steps?.length) {
@@ -965,7 +1051,11 @@ function renderRunTrace(detail) {
           .map((s) => {
             const m = s.message ?? {};
             const path = m.args?.path ?? m.args?.command ?? m.type;
-            return `<li><code>${esc(m.type)}</code> ${esc(String(path).slice(0, 120))}</li>`;
+            const pathHtml =
+              m.args?.path && m.args.path !== "(shell)"
+                ? activityFileLink(String(m.args.path), input?.cwd ?? "")
+                : esc(String(path).slice(0, 120));
+            return `<li><code>${esc(m.type)}</code> ${pathHtml}</li>`;
           })
           .join("")}</ul></section>`);
     }
@@ -1011,6 +1101,7 @@ async function openRunDrawer(runId) {
 }
 
 function closeDrawers() {
+  closeFileModal();
   $("#agent-drawer").hidden = true;
   $("#run-drawer").hidden = true;
   $("#backdrop").hidden = true;
@@ -1181,6 +1272,11 @@ $("#mode-implement-lane")?.addEventListener("click", async () => {
 });
 
 $("#backdrop").addEventListener("click", closeDrawers);
+$(".file-modal-close")?.addEventListener("click", closeFileModal);
+$("#file-modal")?.addEventListener("cancel", (ev) => {
+  ev.preventDefault();
+  closeFileModal();
+});
 $$(".drawer-close").forEach((btn) => {
   btn.addEventListener("click", () => {
     if (btn.dataset.close === "run") $("#run-drawer").hidden = true;
@@ -1211,6 +1307,12 @@ document.body.addEventListener("click", async (ev) => {
   if (openAgent) {
     ev.preventDefault();
     await openAgentDrawer(openAgent.dataset.openAgent);
+    return;
+  }
+  const viewFile = ev.target.closest("[data-view-file]");
+  if (viewFile) {
+    ev.preventDefault();
+    await openFileModal(viewFile.dataset.viewFile, viewFile.dataset.fileCwd || undefined);
     return;
   }
   const openRun = ev.target.closest("[data-open-run]");

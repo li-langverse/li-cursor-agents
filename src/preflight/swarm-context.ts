@@ -5,6 +5,7 @@ import {
   loadResearchSession,
 } from "../research-sessions/session-store.js";
 import { buildSwarmMandateBlock } from "../swarm/mandate.js";
+import { buildResearchDeliverableBlock } from "./research-deliverables.js";
 import {
   buildImplementationQueue,
   buildImplementationQueueInstruction,
@@ -30,6 +31,9 @@ export async function buildSwarmPromptBlocks(
   briefing: unknown,
 ): Promise<string> {
   const parts: string[] = [buildSwarmMandateBlock()];
+
+  const researchDeliverable = buildResearchDeliverableBlock(definitionId);
+  if (researchDeliverable) parts.push(researchDeliverable);
 
   if (RESEARCH_SESSION_AGENTS.has(definitionId)) {
     const session = await loadResearchSession(definitionId);

@@ -163,14 +163,11 @@
 
           <section id="view-statistics" class="view" aria-label="Statistics" hidden>
             <p class="hint" id="swarm-stats-meta">Swarm output metrics from agent runs and briefing snapshots.</p>
-            <motion></motion>
-            <motion></motion>
             <div id="swarm-stats-panel" class="panel">
               <h2>Swarm statistics</h2>
               <p class="hint">Aggregated from run traces, PR URLs in outputs, and persisted counters.</p>
-              <motion></motion>
-              <div id="swarm-stat-cards" class="stat-cards swarm-stat-cards"></motion></div>
-              <div id="swarm-stats-notes" class="swarm-stats-notes hidden"></motion></motion>
+              <div id="swarm-stat-cards" class="stat-cards swarm-stat-cards"></div>
+              <div id="swarm-stats-notes" class="swarm-stats-notes hidden"></div>
             </div>
           </section>
 
@@ -200,6 +197,18 @@
           <div id="drawer-run-output" class="run-output run-trace-body"></div>
         </div>
       </aside>
+      <dialog id="file-modal" class="file-modal" aria-labelledby="file-modal-title" hidden>
+        <header class="file-modal-header">
+          <div>
+            <h2 id="file-modal-title">File</h2>
+            <p id="file-modal-path" class="file-modal-path"></p>
+          </div>
+          <button type="button" class="btn icon file-modal-close" aria-label="Close">×</button>
+        </header>
+        <div id="file-modal-body" class="file-modal-body">
+          <p class="empty">Select a file path from activity to preview.</p>
+        </div>
+      </dialog>
       <div id="backdrop" class="backdrop hidden"></div>
     </div>
 

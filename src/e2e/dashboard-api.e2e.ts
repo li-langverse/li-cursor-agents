@@ -207,6 +207,7 @@ describe("dashboard drilldown API e2e", () => {
     assert.ok(indexHtml.includes('data-view="statistics"'), "Statistics nav");
     assert.ok(indexHtml.includes('id="view-statistics"'), "Statistics view section");
     assert.ok(indexHtml.includes('id="swarm-stat-cards"'), "Statistics stat cards mount");
+    assert.ok(indexHtml.includes('id="file-modal"'), "File preview modal");
 
     for (const path of ["/", "/index.html", "/app.js", "/style.css"]) {
       const res = await new Promise<{ status: number; type: string }>((resolve, reject) => {
@@ -217,6 +218,25 @@ describe("dashboard drilldown API e2e", () => {
       assert.equal(res.status, 200, path);
       assert.ok(res.type.length > 0);
     }
+  });
+
+  test("GET /api/files/read serves package files safely", async () => {
+    if (!server) {
+      env = setupE2eEnv("v1");
+      server = startOpsServer(0);
+      await new Promise((r) => setTimeout(r, 150));
+    }
+    const port = opsPort(server);
+    const ok = await httpGetJson(port, "/api/files/read?path=package.json");
+    assert.equal(ok.status, 200);
+    const body = ok.body as { content: string; path: string };
+    assert.match(body.content, /"name"/);
+
+    const denied = await httpGetJson(
+      port,
+      "/api/files/read?path=../../../etc/passwd",
+    );
+    assert.equal(denied.status, 404);
   });
 
   test("POST supervisor start returns feedback and activity log", async () => {

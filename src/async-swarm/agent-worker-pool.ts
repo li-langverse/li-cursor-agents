@@ -1,37 +1,19 @@
-/** Continuous per-agent ticks — parallel loops, SDK lock serializes LLM runs. */
+/** Continuous per-agent ticks — parallel loops; SDK slots via LI_SDK_MAX_CONCURRENT. */
 
 import { agentLog } from "../agent-log.js";
-import { withGlobalSdkSessionLock } from "../backends/sdk-session-lock.js";
 import { loadState } from "../control-plane/state.js";
 import { isHandoffRunInProgress } from "../lanes/handoff-run-coordinator.js";
-import { AGENT_REGISTRY } from "../agents/registry.js";
+import { asyncWorkerAgentIds } from "../lanes/lane-agent-ids.js";
 import { resolveSpawnWorkflowRepo } from "../handoffs/resolve-spawn-workflow-repo.js";
-import { loadResearchGoals, resolveGoalAgent } from "../research-goals/load-goals.js";
 import { agentsPackageRoot, runAgent, shouldUseMock } from "../runner.js";
 import { resolveBenchmarksRoot } from "../preflight.js";
 import type { AgentId } from "../types.js";
 
-export const IMPLEMENT_LANE_AGENTS = new Set<AgentId>(["code_implementer", "package_architect"]);
-
-export function researchLaneAgentIds(): Set<AgentId> {
-  const ids = new Set<AgentId>();
-  for (const g of loadResearchGoals()) {
-    if (g.enabled === false) continue;
-    ids.add(resolveGoalAgent(g));
-  }
-  return ids;
-}
-
-/** Leaf agents run by the async worker pool (lanes own research + implement). */
-export function asyncWorkerAgentIds(): AgentId[] {
-  const research = researchLaneAgentIds();
-  return AGENT_REGISTRY.map((a) => a.id).filter(
-    (id) =>
-      id !== "orchestrator" &&
-      !IMPLEMENT_LANE_AGENTS.has(id) &&
-      !research.has(id),
-  );
-}
+export {
+  IMPLEMENT_LANE_AGENTS,
+  asyncWorkerAgentIds,
+  researchLaneAgentIds,
+} from "../lanes/lane-agent-ids.js";
 
 export function agentWorkerIntervalMs(agentId: AgentId): number {
   const base = Number(process.env.LI_ASYNC_AGENT_INTERVAL_MS ?? 180_000);
@@ -69,16 +51,14 @@ export async function agentWorkerTick(
   const packageRoot = agentsPackageRoot();
   const workflowRepo = await resolveSpawnWorkflowRepo(agentId);
 
-  const result = await withGlobalSdkSessionLock(() =>
-    runAgent({
-      agentId,
-      cwd: benchmarksRoot ?? packageRoot,
-      benchmarksRoot,
-      mock,
-      dryRun: false,
-      workflowRepo,
-    }),
-  );
+  const result = await runAgent({
+    agentId,
+    cwd: benchmarksRoot ?? packageRoot,
+    benchmarksRoot,
+    mock,
+    dryRun: false,
+    workflowRepo,
+  });
 
   return { skipped: false, status: result.status };
 }

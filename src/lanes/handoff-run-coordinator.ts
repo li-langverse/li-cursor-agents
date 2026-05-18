@@ -1,10 +1,6 @@
 import { isAsyncSwarmRunning } from "../async-swarm/async-swarm-state.js";
-import {
-  IMPLEMENT_LANE_AGENTS,
-  researchLaneAgentIds,
-  startAgentWorkerPool,
-  stopAgentWorkerPool,
-} from "../async-swarm/agent-worker-pool.js";
+import { startAgentWorkerPool, stopAgentWorkerPool } from "../async-swarm/agent-worker-pool.js";
+import { IMPLEMENT_LANE_AGENTS, researchLaneAgentIds } from "./lane-agent-ids.js";
 import type { AgentId } from "../types.js";
 import { pushSupervisorActivity } from "../control-plane/supervisor-activity.js";
 import { formatHandoffPhasesSummary, runHandoffPhasedSwarm, type HandoffPhaseResult } from "./run-handoff-phases.js";
