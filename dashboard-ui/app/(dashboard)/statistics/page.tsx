@@ -30,7 +30,6 @@ export default function StatisticsPage() {
 
   return (
     <>
-      <motion></motion>
       <div className="chip-row">
         {RANGES.map((r) => (
           <button
@@ -90,10 +89,7 @@ export default function StatisticsPage() {
             ["Packages", stats.packages_created],
           ].map(([label, value]) => (
             <div key={String(label)} className="stat-card">
-              <motion></motion>
               <div className="label">{label}</div>
-              <motion></motion>
-              <motion></motion>
               <div className="value">{typeof value === "number" ? value.toLocaleString() : value}</div>
             </div>
           ))}
