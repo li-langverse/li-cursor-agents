@@ -207,14 +207,13 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
         hydrateRuntimeSettingsFromDb(),
         hydrateBriefingFromDb(),
       ])
-        .then(() => import("./worker/heartbeat.js"))
-        .then((m) => m.persistWorkerHeartbeat(loadState()))
+        .then(() => import("./worker/swarm-reconcile.js"))
+        .then((m) => m.reconcileSwarmAfterStartup())
         .catch((err) => {
-          agentLog("db", "ERROR", `hydrate store: ${err instanceof Error ? err.message : err}`);
+          agentLog("db", "ERROR", `hydrate/reconcile: ${err instanceof Error ? err.message : err}`);
         });
       void probeAgentHandoffsTable();
-    }
-    if (process.env.LI_AUTO_START_ASYNC_SWARM === "1" || process.env.LI_AUTO_START_ASYNC_SWARM === "true") {
+    } else if (process.env.LI_AUTO_START_ASYNC_SWARM === "1" || process.env.LI_AUTO_START_ASYNC_SWARM === "true") {
       void startAsyncSwarm({ stopSupervisor: true }).then((r) => {
         agentLog("dashboard", "info", `auto-start async swarm: ${r.message}`);
       });
@@ -226,7 +225,7 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
       agentLog(
         "dashboard",
         "info",
-        "Start async swarm: LI_AUTO_START_ASYNC_SWARM=1 or supervisor: LI_AUTO_START_SUPERVISOR=1",
+        "Start async swarm: LI_AUTO_START_ASYNC_SWARM=1 or footer Start agents",
       );
     }
   });
