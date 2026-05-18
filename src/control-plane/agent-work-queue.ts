@@ -4,7 +4,9 @@ import { listHandoffs } from "../handoffs/handoff-store.js";
 import { buildImplementationQueue } from "../preflight/implementation-queue.js";
 import { loadCachedBriefing } from "../briefing/load-cached-briefing.js";
 import { loadResearchGoals, resolveGoalAgent } from "../research-goals/load-goals.js";
-import { loadResearchSession } from "../research-sessions/session-store.js";
+import { listInProgressResearchSessions } from "../research-sessions/session-store.js";
+import { dbEnabled } from "../db/client.js";
+import { loadWorkQueueFromDb, syncWorkQueueToDb } from "../db/queued-tasks.js";
 import type { AgentId } from "../types.js";
 import type { ControlPlaneState } from "./types.js";
 import { isHandoffRunInProgress } from "../lanes/handoff-run-coordinator.js";
@@ -256,54 +258,63 @@ async function buildAgentWorkQueueInner(
   pushBriefingDerivedWorkItems(items, seen, briefing);
 
   if (!light) {
-  for (const goal of loadResearchGoals()) {
-    if (goal.enabled === false) continue;
-    const agentId = resolveGoalAgent(goal);
-    const session = await loadResearchSession(agentId);
-    if (!session) continue;
+    const sessionsByAgent = new Map(
+      (await listInProgressResearchSessions()).map((s) => [s.agent_id, s]),
+    );
+    for (const goal of loadResearchGoals()) {
+      if (goal.enabled === false) continue;
+      const agentId = resolveGoalAgent(goal);
+      const session = sessionsByAgent.get(agentId);
+      if (!session) continue;
 
-    if (session.current_focus) {
-      items.push({
-        id: `research:${session.session_id}:current`,
-        agent_id: agentId,
-        source: "research_focus",
-        priority: 70,
-        reason: `${session.current_focus.kind}: ${session.current_focus.target}`,
-        status: "in_progress",
-        meta: {
-          hypothesis_status: session.current_focus.hypothesis_status,
-          goal: goal.id,
-        },
-      });
+      if (session.current_focus) {
+        items.push({
+          id: `research:${session.session_id}:current`,
+          agent_id: agentId,
+          source: "research_focus",
+          priority: 70,
+          reason: `${session.current_focus.kind}: ${session.current_focus.target}`,
+          status: "in_progress",
+          meta: {
+            hypothesis_status: session.current_focus.hypothesis_status,
+            goal: goal.id,
+          },
+        });
+      }
+      for (let i = 0; i < session.queue.length; i++) {
+        const f = session.queue[i];
+        items.push({
+          id: `research:${session.session_id}:q:${i}`,
+          agent_id: agentId,
+          source: "research_focus",
+          priority: 40 - i,
+          reason: `${f.kind}: ${f.target}`,
+          status: "pending",
+        });
+      }
+      for (const hyp of session.hypotheses ?? []) {
+        if (hyp.status !== "falsified" && hyp.status !== "deferred") continue;
+        if (!hyp.retest_allowed) continue;
+        items.push({
+          id: `hypothesis:${hyp.id}:retest`,
+          agent_id: agentId,
+          source: "research_hypothesis",
+          priority: 55,
+          reason: `retest ${hyp.status} hypothesis: ${hyp.statement.slice(0, 120)}`,
+          status: "pending",
+          meta: { hypothesis_id: hyp.id, prior_status: hyp.status },
+        });
+      }
     }
-    for (let i = 0; i < session.queue.length; i++) {
-      const f = session.queue[i];
-      items.push({
-        id: `research:${session.session_id}:q:${i}`,
-        agent_id: agentId,
-        source: "research_focus",
-        priority: 40 - i,
-        reason: `${f.kind}: ${f.target}`,
-        status: "pending",
-      });
-    }
-    for (const hyp of session.hypotheses ?? []) {
-      if (hyp.status !== "falsified" && hyp.status !== "deferred") continue;
-      if (!hyp.retest_allowed) continue;
-      items.push({
-        id: `hypothesis:${hyp.id}:retest`,
-        agent_id: agentId,
-        source: "research_hypothesis",
-        priority: 55,
-        reason: `retest ${hyp.status} hypothesis: ${hyp.statement.slice(0, 120)}`,
-        status: "pending",
-        meta: { hypothesis_id: hyp.id, prior_status: hyp.status },
-      });
-    }
-  }
   }
 
   items.sort((a, b) => b.priority - a.priority);
+
+  if (dbEnabled() && state.last_briefing_hash && items.length > 0) {
+    void syncWorkQueueToDb(state.last_briefing_hash, items).catch(() => {
+      /* background denormalize for indexed dashboard reads */
+    });
+  }
 
   return {
     generated_at: new Date().toISOString(),
@@ -317,6 +328,20 @@ async function buildAgentWorkQueueInner(
   };
 }
 
+function dbRowsToQueueItems(
+  rows: Awaited<ReturnType<typeof loadWorkQueueFromDb>>,
+): AgentWorkQueueItem[] {
+  return rows.map((row) => ({
+    id: row.id,
+    agent_id: row.agent_id,
+    source: row.source as AgentWorkQueueItem["source"],
+    priority: row.priority,
+    reason: row.reason,
+    status: row.status as AgentWorkQueueItem["status"],
+    meta: row.meta,
+  }));
+}
+
 export async function buildAgentWorkQueue(
   state: ControlPlaneState,
   options: BuildAgentWorkQueueOptions = {},
@@ -325,6 +350,26 @@ export async function buildAgentWorkQueue(
   const now = Date.now();
   if (queueCache && queueCache.key === key && now - queueCache.at < QUEUE_CACHE_MS) {
     return queueCache.snapshot;
+  }
+
+  if (options.light && dbEnabled() && state.last_briefing_hash) {
+    const dbRows = await loadWorkQueueFromDb(state.last_briefing_hash);
+    if (dbRows.length > 0) {
+      const items = dbRowsToQueueItems(dbRows);
+      const snapshot: AgentWorkQueueSnapshot = {
+        generated_at: new Date().toISOString(),
+        items,
+        by_agent: groupAgentWorkQueue(items),
+        swarm: {
+          async_swarm_running: isAsyncSwarmRunning(),
+          handoff_run_in_progress: isHandoffRunInProgress(),
+          lanes: laneRuntimeSnapshot(),
+        },
+      };
+      queueCache = { at: now, key, snapshot };
+      scheduleAgentWorkQueueRefresh(state, options);
+      return snapshot;
+    }
   }
   if (!queueBuildInFlight || queueBuildInFlight.key !== key) {
     queueBuildInFlight = {

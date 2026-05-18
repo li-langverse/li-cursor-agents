@@ -5,6 +5,9 @@ import { enrichBriefingObject } from "../briefing/enrich-briefing-file.js";
 import { failHandoffsMissingNorthStar } from "../handoffs/handoff-hygiene.js";
 import { resolveBenchmarksRoot, runPreflight } from "../preflight.js";
 import { dispatchSwarmAuditRefresh } from "../benchmarks/dispatch-swarm-audit.js";
+import { liveBriefingHash } from "../control-plane/live-interventions.js";
+import { loadState } from "../control-plane/state.js";
+import { buildAgentWorkQueue } from "../control-plane/agent-work-queue.js";
 import { loadLaneState, saveLaneState } from "./lane-state.js";
 
 export interface MaintenanceLaneTickResult {
@@ -58,6 +61,12 @@ export async function maintenanceLaneTick(options?: {
   const next = loadLaneState();
   next.last_maintenance_tick_at = new Date().toISOString();
   saveLaneState(next);
+
+  const briefingHash = liveBriefingHash(enriched);
+  const cpState = { ...loadState(), last_briefing_hash: briefingHash };
+  void buildAgentWorkQueue(cpState, { light: true }).catch(() => {
+    /* denormalize queue rows for indexed GET /api/queue */
+  });
 
   let benchmarks_dispatch: MaintenanceLaneTickResult["benchmarks_dispatch"];
   if (process.env.LI_BENCHMARKS_DISPATCH_ON_MAINTENANCE === "1") {

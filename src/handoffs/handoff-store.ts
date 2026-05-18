@@ -3,6 +3,10 @@ import { join } from "node:path";
 import { randomUUID } from "node:crypto";
 import { agentsPackageRoot } from "../runner.js";
 import { dbEnabled, getSupabase } from "../db/client.js";
+import { withSupabaseRetry } from "../db/supabase-retry.js";
+
+const HANDOFF_LIST_COLUMNS =
+  "handoff_id, research_goal_id, from_agent, to_agents, status, domains, north_star_fit, package_placement, work, research_session_id, briefing_hash, source_run_id, created_at, updated_at, claimed_at, completed_at";
 import type { AgentHandoff, CreateHandoffInput, HandoffStatus } from "./types.js";
 
 const HANDOFFS_DIR = () => join(agentsPackageRoot(), "data", "handoffs");
@@ -139,19 +143,23 @@ export async function listHandoffs(filter?: {
   limit?: number;
 }): Promise<AgentHandoff[]> {
   if (dbEnabled()) {
-    let q = getSupabase().from("agent_handoffs").select("*").order("created_at", { ascending: true });
-    if (filter?.status) {
-      const statuses = Array.isArray(filter.status) ? filter.status : [filter.status];
-      q = q.in("status", statuses);
-    }
-    if (filter?.limit) q = q.limit(filter.limit);
-    const { data, error } = await q;
-    if (error) throw new Error(`listHandoffs: ${error.message}`);
-    let rows = (data ?? []).map((r) => rowToHandoff(r as Record<string, unknown>));
-    if (filter?.toAgent) {
-      rows = rows.filter((h) => h.to_agents.includes(filter.toAgent!));
-    }
-    return rows;
+    return withSupabaseRetry("listHandoffs", async () => {
+      let q = getSupabase()
+        .from("agent_handoffs")
+        .select(HANDOFF_LIST_COLUMNS)
+        .order("created_at", { ascending: true });
+      if (filter?.status) {
+        const statuses = Array.isArray(filter.status) ? filter.status : [filter.status];
+        q = q.in("status", statuses);
+      }
+      if (filter?.toAgent) {
+        q = q.contains("to_agents", [filter.toAgent]);
+      }
+      if (filter?.limit) q = q.limit(filter.limit);
+      const { data, error } = await q;
+      if (error) throw new Error(`listHandoffs: ${error.message}`);
+      return (data ?? []).map((r) => rowToHandoff(r as Record<string, unknown>));
+    });
   }
 
   let rows = readDiskHandoffs();

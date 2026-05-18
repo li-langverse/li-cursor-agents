@@ -2,6 +2,10 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
 import { dbEnabled, getSupabase } from "../db/client.js";
+import { withSupabaseRetry } from "../db/supabase-retry.js";
+
+const SESSION_COLUMNS =
+  "session_id, agent_id, goal_id, cycle, status, current_focus, queue, hypotheses, completed_steps, artifacts, connections, deferred_findings, last_run_id, last_run_status, created_at, updated_at";
 import type {
   CompletedStep,
   ResearchFocus,
@@ -76,18 +80,37 @@ function writeDiskSession(session: ResearchSession): void {
   writeFileSync(sessionPath(session.agent_id), `${JSON.stringify(sessionToRow(session), null, 2)}\n`, "utf8");
 }
 
-export async function loadResearchSession(agentId: string): Promise<ResearchSession | null> {
-  if (dbEnabled()) {
+/** One indexed query for full queue build (replaces N+1 loadResearchSession per goal). */
+export async function listInProgressResearchSessions(): Promise<ResearchSession[]> {
+  if (!dbEnabled()) {
+    return [];
+  }
+  return withSupabaseRetry("listInProgressResearchSessions", async () => {
     const { data, error } = await getSupabase()
       .from("research_sessions")
-      .select("*")
-      .eq("agent_id", agentId)
+      .select(SESSION_COLUMNS)
       .eq("status", "in_progress")
       .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-    if (error) throw new Error(`loadResearchSession: ${error.message}`);
-    return data ? rowToSession(data as Record<string, unknown>) : null;
+      .limit(32);
+    if (error) throw new Error(`listInProgressResearchSessions: ${error.message}`);
+    return (data ?? []).map((r) => rowToSession(r as Record<string, unknown>));
+  });
+}
+
+export async function loadResearchSession(agentId: string): Promise<ResearchSession | null> {
+  if (dbEnabled()) {
+    return withSupabaseRetry("loadResearchSession", async () => {
+      const { data, error } = await getSupabase()
+        .from("research_sessions")
+        .select(SESSION_COLUMNS)
+        .eq("agent_id", agentId)
+        .eq("status", "in_progress")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw new Error(`loadResearchSession: ${error.message}`);
+      return data ? rowToSession(data as Record<string, unknown>) : null;
+    });
   }
   const s = readDiskSession(agentId);
   return s?.status === "in_progress" ? s : null;

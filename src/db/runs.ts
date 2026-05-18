@@ -1,6 +1,7 @@
 import type { AgentRunResult } from "../types.js";
 import type { AgentKitRolloutRow } from "../repo-workflow/types.js";
 import { dbEnabled, getSupabase } from "./client.js";
+import { withSupabaseRetry } from "./supabase-retry.js";
 
 export interface PersistRunInput {
   run: AgentRunResult & {
@@ -216,6 +217,7 @@ export async function listRunsGlobalInRange(
   const out: AgentRunHistoryRow[] = [];
   let offset = 0;
 
+  return withSupabaseRetry("listRunsGlobalInRange", async () => {
   while (out.length < max) {
     let q = getSupabase()
       .from("agent_runs")
@@ -243,6 +245,7 @@ export async function listRunsGlobalInRange(
   }
 
   return out.slice(0, max);
+  });
 }
 
 export async function getRunById(runId: string): Promise<AgentRunHistoryRow | null> {
