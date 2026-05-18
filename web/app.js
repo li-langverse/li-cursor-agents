@@ -66,6 +66,7 @@ function formatTime(iso) {
 function statusLabel(status) {
   const labels = {
     running: "Running",
+    on_duty: "On duty",
     recommended: "Recommended",
     queued: "In queue",
     stopped: "Stopped",
@@ -170,14 +171,15 @@ function agentStatusMap(roster, report, runtime, statusPayload) {
     else if (activeRun || currentSupervisor === entry.id) status = "running";
     else if (handoffRun?.in_progress && handoffPipeline.has(entry.id)) status = "running";
     else if (handoffRun?.in_progress && swarmWorkers.has(entry.id)) status = "queued";
-    else if (
-      runtime?.async_swarm_running &&
-      !handoffRun?.in_progress &&
-      swarmWorkers.has(entry.id)
-    ) {
-      status = activeRuns.some((r) => r.agent_id === entry.id && r.status === "running")
-        ? "running"
-        : "queued";
+    else if (runtime?.async_swarm_running) {
+      const last = recentByAgent.get(entry.id);
+      const finishedAt = last?.finished_at ? new Date(last.finished_at).getTime() : 0;
+      const onCooldown =
+        last?.status === "finished" && finishedAt && Date.now() - finishedAt < 1_800_000;
+      if (onCooldown) status = "cooldown";
+      else if (activeRuns.some((r) => r.agent_id === entry.id && r.status === "running")) status = "running";
+      else if (handoffRun?.in_progress && swarmWorkers.has(entry.id)) status = "queued";
+      else status = "on_duty";
     } else {
       const last = recentByAgent.get(entry.id);
       const finishedAt = last?.finished_at ? new Date(last.finished_at).getTime() : 0;
@@ -496,7 +498,90 @@ function renderSidebar() {
   else if ((rt.active_run_count ?? 0) > 0) label = "agents running";
   pill.textContent = label;
   pill.className = `pill ${label.includes("running") || label.includes("on") ? "running" : "idle"}`;
+
+  const swarmPill = $("#swarm-pill");
+  if (swarmPill) {
+    if (swarmOn) {
+      const duty = countAgentsByStatus("on_duty");
+      const sdk = rt.active_run_count ?? 0;
+      swarmPill.hidden = false;
+      swarmPill.textContent = sdk > 0 ? `swarm · ${sdk} in SDK` : `swarm · ${duty} on duty`;
+      swarmPill.className = "pill swarm-pill running";
+      swarmPill.title = `Continuous swarm since ${formatTime(swarmStarted)}`;
+    } else {
+      swarmPill.hidden = false;
+      swarmPill.textContent = "swarm off";
+      swarmPill.className = "pill swarm-pill idle";
+      swarmPill.title = "Click Start agents to run continuously";
+    }
+  }
+
   renderFooterControls();
+}
+
+function countAgentsByStatus(status) {
+  const { roster, report, runtime, status: statusPayload } = ui.data ?? {};
+  if (!roster) return 0;
+  const map = agentStatusMap(roster, report, runtime, statusPayload);
+  let n = 0;
+  for (const v of map.values()) if (v.status === status) n++;
+  return n;
+}
+
+function renderSwarmStatusUi() {
+  const { runtime, roster, report, status } = ui.data ?? {};
+  const banner = $("#swarm-status-banner");
+  const strip = $("#swarm-agents-strip");
+  const swarmOn = Boolean(runtime?.async_swarm_running);
+  const statusMap = roster ? agentStatusMap(roster, report, runtime, status) : new Map();
+
+  let onDuty = 0;
+  let running = 0;
+  let queued = 0;
+  const stripAgents = [];
+  for (const [id, info] of statusMap) {
+    if (info.status === "on_duty") onDuty++;
+    if (info.status === "running") {
+      running++;
+      stripAgents.push({ id, info, rank: 0 });
+    } else if (info.status === "queued") {
+      queued++;
+      stripAgents.push({ id, info, rank: 1 });
+    } else if (info.status === "on_duty") {
+      stripAgents.push({ id, info, rank: 2 });
+    }
+  }
+  stripAgents.sort((a, b) => a.rank - b.rank || a.id.localeCompare(b.id));
+
+  if (banner) {
+    if (swarmOn) {
+      const sdk = runtime?.active_run_count ?? running;
+      const lanes = runtime?.lanes ?? ui.data?.lanes ?? {};
+      banner.hidden = false;
+      banner.className = "swarm-status-banner active";
+      banner.innerHTML = `<span class="swarm-status-pulse" aria-hidden="true"></span><strong>Agents running</strong> — ${onDuty} on duty · ${running} in SDK now · ${queued} queued · research ${lanes.research_lane_running ? "on" : "off"} · implement ${lanes.implement_lane_running ? "on" : "off"}`;
+    } else {
+      banner.hidden = true;
+      banner.className = "swarm-status-banner hidden";
+      banner.innerHTML = "";
+    }
+  }
+
+  if (strip) {
+    if (swarmOn && stripAgents.length) {
+      strip.hidden = false;
+      strip.innerHTML = stripAgents
+        .slice(0, 24)
+        .map(
+          ({ id, info }) =>
+            `<button type="button" class="swarm-agent-chip ${escAttr(info.status)}" data-open-agent="${escAttr(id)}" title="${escAttr(info.reason ?? info.entry?.description ?? "")}"><span class="status-dot ${escAttr(info.status)}"></span><span class="mono">${esc(id)}</span></button>`,
+        )
+        .join("");
+    } else {
+      strip.hidden = true;
+      strip.innerHTML = "";
+    }
+  }
 }
 
 function renderFooterControls() {
@@ -587,6 +672,7 @@ function renderStatCards() {
   const { report, runtime, roster, runsPayload, status } = ui.data;
   const statusMap = agentStatusMap(roster, report, runtime, status);
   let running = 0;
+  let onDuty = 0;
   let recommended = 0;
   let queued = 0;
   let stopped = 0;
@@ -594,6 +680,7 @@ function renderStatCards() {
   let cooldown = 0;
   for (const v of statusMap.values()) {
     if (v.status === "running") running++;
+    if (v.status === "on_duty") onDuty++;
     if (v.status === "queued") queued++;
     if (v.status === "recommended") recommended++;
     if (v.status === "stopped") stopped++;
@@ -602,20 +689,26 @@ function renderStatCards() {
   }
   const interventions = report?.interventions?.length ?? 0;
   const runs = runsPayload?.runs?.length ?? 0;
-  const gaps = briefingGaps(report);
-  const gapTotal =
-    (gaps?.incomplete_runs ?? 0) +
-    (gaps?.agent_prs_blocked ?? 0) +
-    (gaps?.numerics_without_evidence ?? 0);
+  const swarmOn = Boolean(runtime?.async_swarm_running);
+  const sdkActive = runtime?.active_run_count ?? running;
 
-  $("#stat-cards").innerHTML = `
+  if (swarmOn) {
+    $("#stat-cards").innerHTML = `
+    <div class="stat-card accent swarm-on"><div class="label">Swarm</div><div class="value">on</div></div>
+    <div class="stat-card accent"><div class="label">On duty</div><div class="value">${onDuty}</div></div>
+    <div class="stat-card"><div class="label">In SDK now</div><div class="value">${sdkActive}</div></div>
+    <div class="stat-card"><div class="label">Queued</div><div class="value">${queued}</div></div>
+    <div class="stat-card"><div class="label">Interventions</div><div class="value">${interventions}</div></div>
+    <div class="stat-card"><div class="label">Run artifacts</div><div class="value">${runs}</div></div>`;
+  } else {
+    $("#stat-cards").innerHTML = `
     <div class="stat-card accent"><div class="label">Running</div><div class="value">${running}</div></div>
     <div class="stat-card"><div class="label">Queued</div><div class="value">${queued}</div></div>
     <div class="stat-card"><div class="label">Stopped</div><div class="value">${stopped}</div></div>
     <div class="stat-card"><div class="label">Interventions</div><div class="value">${interventions}</div></div>
     <div class="stat-card"><div class="label">Run artifacts</div><div class="value">${runs}</div></div>`;
+  }
 }
-
 function renderLiveActivity() {
   const { report, runtime, runsPayload } = ui.data;
   const feed = $("#live-activity");
@@ -717,7 +810,7 @@ function renderAgentsTable() {
   }
 
   rows.sort((a, b) => {
-    const order = { running: 0, recommended: 1, queued: 1, cooldown: 2, idle: 3, stopped: 4 };
+    const order = { running: 0, queued: 0, on_duty: 1, recommended: 2, cooldown: 3, idle: 4, stopped: 5 };
     return (order[a.info.status] ?? 9) - (order[b.info.status] ?? 9);
   });
 
@@ -1044,6 +1137,7 @@ async function refresh() {
     renderAgentBackendUi();
     renderSupervisorActivity();
     renderStatCards();
+    renderSwarmStatusUi();
     renderSwarmStatistics();
     renderLiveActivity();
     renderQueue();

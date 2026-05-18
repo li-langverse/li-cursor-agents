@@ -35,6 +35,7 @@
           <div class="topbar-right">
             <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
             <span id="backend-pill" class="backend-pill sdk" title="Agent execution backend">cursor-sdk</span>
+            <span id="swarm-pill" class="pill swarm-pill hidden" title="Continuous async swarm">swarm off</span>
             <span id="status-pill" class="pill idle">loading</span>
             <span id="updated" class="updated"></span>
             <button type="button" id="refresh-briefing" class="btn ghost sm" title="Re-run agent-briefing.py">Refresh briefing</button>
@@ -45,7 +46,9 @@
         <main class="main-views">
           <section id="view-overview" class="view active" aria-label="Overview">
             <div id="backend-banner" class="backend-banner hidden" role="alert" aria-live="polite"></div>
+            <div id="swarm-status-banner" class="swarm-status-banner hidden" role="status" aria-live="polite"></div>
             <div class="stat-cards" id="stat-cards"></div>
+            <div id="swarm-agents-strip" class="swarm-agents-strip hidden" aria-label="Agents on duty"></div>
             <div class="panel" id="swarm-handoffs-panel">
               <div class="panel-head-row">
                 <h2>Swarm handoffs</h2>
@@ -129,6 +132,7 @@
               <div class="filter-chips" id="agent-filters">
                 <button type="button" class="chip active" data-filter="all">All</button>
                 <button type="button" class="chip" data-filter="running">Running</button>
+                <button type="button" class="chip" data-filter="on_duty">On duty</button>
                 <button type="button" class="chip" data-filter="recommended">Recommended</button>
                 <button type="button" class="chip" data-filter="stopped">Stopped</button>
                 <button type="button" class="chip" data-filter="idle">Idle</button>
@@ -166,9 +170,8 @@
       <div id="swarm-stats-panel" class="panel">
               <h2>Swarm statistics</h2>
               <p class="hint">Aggregated from run traces, PR URLs in outputs, and persisted counters.</p>
-              <motion></motion>
-              <div id="swarm-stat-cards" class="stat-cards swarm-stat-cards"></motion></div>
-              <div id="swarm-stats-notes" class="swarm-stats-notes hidden"></motion></motion>
+              <div id="swarm-stat-cards" class="stat-cards swarm-stat-cards"></div>
+                                          <div id="swarm-stats-notes" class="swarm-stats-notes hidden"></div>
             </div>
           </section>
 

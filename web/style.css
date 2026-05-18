@@ -196,9 +196,19 @@ body {
 
 .pill.running,
 .pill.running_agent,
-.pill.agents {
+.pill.agents,
+.pill.swarm-pill.running {
   background: #2a3d5c;
   color: var(--accent);
+}
+
+.pill.swarm-pill.running {
+  animation: pulse 1.5s ease infinite;
+}
+
+.pill.swarm-pill.idle {
+  background: #243044;
+  color: var(--low);
 }
 
 .status-dot {
@@ -209,10 +219,16 @@ body {
   margin-right: 0.35rem;
 }
 
-.status-dot.running {
+.status-dot.running,
+.status-dot.on_duty {
   background: var(--accent);
   box-shadow: 0 0 6px var(--accent);
   animation: pulse 1.5s ease infinite;
+}
+
+.status-dot.on_duty {
+  background: #4ade80;
+  box-shadow: 0 0 6px rgba(74, 222, 128, 0.65);
 }
 
 .status-dot.recommended,
@@ -1069,6 +1085,80 @@ footer.footer-modes {
 
 .backend-banner.hidden {
   display: none;
+}
+
+.swarm-status-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+  padding: 0.7rem 0.95rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  background: rgba(56, 189, 120, 0.12);
+  border: 1px solid rgba(56, 189, 120, 0.38);
+  color: #d1fae5;
+}
+
+.swarm-status-banner.hidden {
+  display: none;
+}
+
+.swarm-status-pulse {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 8px rgba(74, 222, 128, 0.8);
+  animation: pulse 1.2s ease infinite;
+}
+
+.swarm-agents-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: -0.25rem 0 0.85rem;
+}
+
+.swarm-agents-strip.hidden {
+  display: none;
+}
+
+.swarm-agent-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.swarm-agent-chip:hover {
+  border-color: var(--accent);
+}
+
+.swarm-agent-chip.running {
+  border-color: rgba(96, 165, 250, 0.55);
+}
+
+.swarm-agent-chip.on_duty {
+  border-color: rgba(74, 222, 128, 0.45);
+}
+
+.swarm-agent-chip.queued {
+  border-color: rgba(230, 162, 60, 0.45);
+}
+
+.stat-card.swarm-on .value {
+  color: #4ade80;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .toast {
