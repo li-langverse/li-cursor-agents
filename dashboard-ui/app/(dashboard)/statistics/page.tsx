@@ -31,7 +31,6 @@ export default function StatisticsPage() {
   return (
     <>
       <motion></motion>
-      <motion></motion>
       <div className="chip-row">
         {RANGES.map((r) => (
           <button
