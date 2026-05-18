@@ -88,7 +88,8 @@ function sleepUntil(abort: AbortSignal, ms: number): Promise<void> {
 }
 
 async function agentWorkerLoop(agentId: AgentId, abort: AbortSignal, mock: boolean): Promise<void> {
-  await sleepUntil(abort, Math.abs(hashString(agentId)) % 20_000);
+  const startupDefer = Number(process.env.LI_WORKER_STARTUP_DEFER_MS ?? 0);
+  await sleepUntil(abort, startupDefer + (Math.abs(hashString(agentId)) % 20_000));
   while (!abort.aborted) {
     try {
       const tick = await agentWorkerTick(agentId, { mock });

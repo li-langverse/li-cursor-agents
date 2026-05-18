@@ -2,17 +2,37 @@
  * Shared helpers for dev:all readiness (tested by dev-stack-ready-lib.test.mjs).
  */
 
-export function createFetchJson(base, { signal } = {}) {
-  return async function fetchJson(path, init) {
-    const res = await fetch(`${base}${path}`, { cache: "no-store", signal, ...init });
-    const text = await res.text();
-    let body;
-    try {
-      body = text ? JSON.parse(text) : {};
-    } catch {
-      body = { _raw: text.slice(0, 200) };
+export function createFetchJson(base, { defaultTimeoutMs = 12_000 } = {}) {
+  return async function fetchJson(path, init = {}) {
+    const timeoutMs = init.timeoutMs ?? defaultTimeoutMs;
+    const { timeoutMs: _drop, signal: outerSignal, ...rest } = init;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    if (outerSignal) {
+      outerSignal.addEventListener("abort", () => controller.abort(), { once: true });
     }
-    return { status: res.status, body };
+    try {
+      const res = await fetch(`${base}${path}`, {
+        cache: "no-store",
+        signal: controller.signal,
+        ...rest,
+      });
+      const text = await res.text();
+      let body;
+      try {
+        body = text ? JSON.parse(text) : {};
+      } catch {
+        body = { _raw: text.slice(0, 200) };
+      }
+      return { status: res.status, body };
+    } catch (e) {
+      if (e instanceof Error && e.name === "AbortError") {
+        throw new Error(`${path} timed out after ${timeoutMs / 1000}s`);
+      }
+      throw e;
+    } finally {
+      clearTimeout(timer);
+    }
   };
 }
 

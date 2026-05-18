@@ -14,6 +14,9 @@ cd "$ROOT"
 # Full stack by default (override in .env if needed)
 export LI_AUTO_START_ASYNC_SWARM="${LI_AUTO_START_ASYNC_SWARM:-1}"
 export LI_AUTO_START_SUPERVISOR="${LI_AUTO_START_SUPERVISOR:-0}"
+# Let dev:all finish API probes before maintenance + worker queue builds contend for the event loop.
+export LI_MAINTENANCE_STARTUP_DELAY_MS="${LI_MAINTENANCE_STARTUP_DELAY_MS:-15000}"
+export LI_WORKER_STARTUP_DEFER_MS="${LI_WORKER_STARTUP_DEFER_MS:-20000}"
 
 # shellcheck source=env.defaults.sh
 source "$ROOT/scripts/env.defaults.sh"
@@ -111,6 +114,8 @@ env \
   LI_CONTROL_PLANE_STORE="${LI_CONTROL_PLANE_STORE:-$_store}" \
   LI_AUTO_START_ASYNC_SWARM="${LI_AUTO_START_ASYNC_SWARM}" \
   LI_AUTO_START_SUPERVISOR="${LI_AUTO_START_SUPERVISOR}" \
+  LI_MAINTENANCE_STARTUP_DELAY_MS="${LI_MAINTENANCE_STARTUP_DELAY_MS}" \
+  LI_WORKER_STARTUP_DEFER_MS="${LI_WORKER_STARTUP_DEFER_MS}" \
   LI_SDK_MAX_CONCURRENT="${LI_SDK_MAX_CONCURRENT:-4}" \
   SUPABASE_URL="${SUPABASE_URL:-}" \
   SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-}" \
@@ -120,8 +125,7 @@ env \
   node dist/cli/serve-dashboard.js &
 PIDS+=($!)
 
-echo "==> Waiting for full API readiness (retries transient socket errors)…"
-sleep 2
+echo "==> Waiting for API readiness (status + agents; progress below)…"
 LI_AGENT_DASHBOARD_PORT="$API_PORT" node "$ROOT/scripts/wait-dev-stack-ready.mjs"
 
 echo ""

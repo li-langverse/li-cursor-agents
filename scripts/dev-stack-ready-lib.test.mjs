@@ -13,6 +13,23 @@ test("runtimeSwarmOn reads async_swarm_running", () => {
   assert.equal(runtimeSwarmOn({}), false);
 });
 
+test("createFetchJson aborts slow requests", async () => {
+  const original = globalThis.fetch;
+  globalThis.fetch = (_url, init) =>
+    new Promise((resolve, reject) => {
+      const signal = init?.signal;
+      if (signal) {
+        signal.addEventListener("abort", () => reject(Object.assign(new Error("aborted"), { name: "AbortError" })));
+      }
+    });
+  try {
+    const fetchJson = createFetchJson("http://127.0.0.1:9", { defaultTimeoutMs: 50 });
+    await assert.rejects(() => fetchJson("/slow", { timeoutMs: 50 }), /timed out/);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
+
 test("createFetchJson parses JSON body", async () => {
   const original = globalThis.fetch;
   globalThis.fetch = async () => ({

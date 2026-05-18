@@ -436,7 +436,8 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
 
   if (url.pathname === "/api/queue") {
     const { buildAgentWorkQueue } = await import("./control-plane/agent-work-queue.js");
-    const snapshot = await buildAgentWorkQueue(state);
+    const light = url.searchParams.get("light") === "1";
+    const snapshot = await buildAgentWorkQueue(state, { light });
     json(res, 200, {
       queue: snapshot.items,
       by_agent: snapshot.by_agent,

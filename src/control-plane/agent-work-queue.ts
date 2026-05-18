@@ -95,7 +95,25 @@ export function pickNextWorkForAgent(
   return list.find((i) => i.status === "pending") ?? null;
 }
 
-export async function buildAgentWorkQueue(state: ControlPlaneState): Promise<AgentWorkQueueSnapshot> {
+export interface BuildAgentWorkQueueOptions {
+  /** Skip per-goal research session DB reads (faster for dev:all readiness). */
+  light?: boolean;
+}
+
+const QUEUE_CACHE_MS = Number(process.env.LI_QUEUE_CACHE_MS ?? 5_000);
+let queueCache: { at: number; key: string; snapshot: AgentWorkQueueSnapshot } | null = null;
+let queueBuildInFlight: Promise<AgentWorkQueueSnapshot> | null = null;
+
+export function resetAgentWorkQueueCacheForTests(): void {
+  queueCache = null;
+  queueBuildInFlight = null;
+}
+
+async function buildAgentWorkQueueInner(
+  state: ControlPlaneState,
+  options: BuildAgentWorkQueueOptions,
+): Promise<AgentWorkQueueSnapshot> {
+  const light = options.light ?? false;
   const items: AgentWorkQueueItem[] = [];
   const seen = new Set<string>();
   const benchmarksRoot = resolveBenchmarksRoot();
@@ -175,6 +193,7 @@ export async function buildAgentWorkQueue(state: ControlPlaneState): Promise<Age
 
   pushBriefingDerivedWorkItems(items, seen, briefing);
 
+  if (!light) {
   for (const goal of loadResearchGoals()) {
     if (goal.enabled === false) continue;
     const agentId = resolveGoalAgent(goal);
@@ -220,6 +239,7 @@ export async function buildAgentWorkQueue(state: ControlPlaneState): Promise<Age
       });
     }
   }
+  }
 
   items.sort((a, b) => b.priority - a.priority);
 
@@ -233,4 +253,23 @@ export async function buildAgentWorkQueue(state: ControlPlaneState): Promise<Age
       lanes: laneRuntimeSnapshot(),
     },
   };
+}
+
+export async function buildAgentWorkQueue(
+  state: ControlPlaneState,
+  options: BuildAgentWorkQueueOptions = {},
+): Promise<AgentWorkQueueSnapshot> {
+  const key = `${state.updated_at ?? ""}:${options.light ? "light" : "full"}`;
+  const now = Date.now();
+  if (queueCache && queueCache.key === key && now - queueCache.at < QUEUE_CACHE_MS) {
+    return queueCache.snapshot;
+  }
+  if (!queueBuildInFlight) {
+    queueBuildInFlight = buildAgentWorkQueueInner(state, options).finally(() => {
+      queueBuildInFlight = null;
+    });
+  }
+  const snapshot = await queueBuildInFlight;
+  queueCache = { at: Date.now(), key, snapshot };
+  return snapshot;
 }

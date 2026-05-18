@@ -147,6 +147,10 @@ export function stopImplementLaneLoop(): { stopped: boolean; message: string } {
 }
 
 async function maintenanceLoop(abort: AbortSignal): Promise<void> {
+  const startupDelay = Number(process.env.LI_MAINTENANCE_STARTUP_DELAY_MS ?? 0);
+  if (startupDelay > 0) {
+    await sleepUntil(abort, startupDelay);
+  }
   while (!abort.aborted) {
     try {
       const tick = await maintenanceLaneTick({ skipSlowPreflight: true });
