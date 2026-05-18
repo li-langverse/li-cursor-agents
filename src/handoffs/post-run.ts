@@ -7,6 +7,11 @@ import {
   completeResearchRunStep,
   markResearchRunFailed,
 } from "../research-sessions/session-lifecycle.js";
+import {
+  mergeHypothesisOutcomes,
+  parseHypothesisOutcomesFromOutput,
+} from "../research-sessions/hypothesis-parse.js";
+import { advanceResearchSession, loadResearchSession } from "../research-sessions/session-store.js";
 import { loadResearchGoals, northStarFitForGoal } from "../research-goals/load-goals.js";
 import { enqueueImplementationHandoff } from "./implementation-handoff.js";
 import { runIdFromOutputPath } from "../db/persist.js";
@@ -77,6 +82,17 @@ export async function applyResearchPostRun(result: AgentRunResult, briefingHash?
     result.status,
     summary,
   );
+
+  const text = result.outputText ?? "";
+  const parsed = parseHypothesisOutcomesFromOutput(text);
+  if (parsed.length) {
+    const current = (await loadResearchSession(result.agentId as AgentId)) ?? session;
+    if (current) {
+      await advanceResearchSession(result.agentId as AgentId, {
+        hypotheses: mergeHypothesisOutcomes(current.hypotheses ?? [], parsed),
+      });
+    }
+  }
 
   if (session?.status === "cycle_complete" && session.goal_id) {
     const dup = await listHandoffs({

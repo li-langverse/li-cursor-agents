@@ -21,3 +21,13 @@ When your hypothesis is falsifiable in-repo:
 - Run `lic check` on touched tests when feasible; record command + outcome in the session digest
 
 Markdown-only digests without code inspection and evidence do **not** complete a focus step.
+
+## Hypothesis outcomes (session)
+
+Wrong ideas are fine. Record each testable claim:
+
+- `HYPOTHESIS: verified — <statement> | evidence: <file:line or test command>`
+- `HYPOTHESIS: falsified — <statement> | evidence: <what disproved it>`
+- `HYPOTHESIS: deferred — <statement> | evidence: <blocker>`
+
+You may **retest** a falsified hypothesis later if new tests or code change the picture.

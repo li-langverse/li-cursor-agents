@@ -25,8 +25,10 @@ export function buildResearchDeliverableBlock(agentId: string): string {
     "",
     "Each focus step must **verify in-repo**, not markdown-only handoffs:",
     "- Read relevant `lic/`, `li-tests/`, and verification docs for the current focus target",
-    "- When the hypothesis is falsifiable, add or extend tests under `li-tests/` (or package tests)",
-    "- Run `lic check` or targeted tests when feasible; record command + outcome in session artifacts",
+    "- State a **testable hypothesis** for the step; wrong ideas are expected — record **falsified** with evidence",
+    "- When falsifiable, add or extend tests under `li-tests/` (or package tests); run `lic check` or targeted tests",
+    "- Record outcomes as: `HYPOTHESIS: verified — …` or `HYPOTHESIS: falsified — … | evidence: file:line or test cmd`",
+    "- You may **return to a falsified hypothesis** later if new code/tests change the picture (mark retest in session)",
     "- Cite file:line evidence and repro steps in the digest",
     "",
   ].join("\n");

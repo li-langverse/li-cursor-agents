@@ -344,8 +344,12 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
   }
 
   if (url.pathname === "/api/queue") {
+    const { buildAgentWorkQueue } = await import("./control-plane/agent-work-queue.js");
+    const snapshot = await buildAgentWorkQueue(state);
     json(res, 200, {
-      queue: [],
+      queue: snapshot.items,
+      generated_at: snapshot.generated_at,
+      swarm: snapshot.swarm,
       briefing_hash: state.last_briefing_hash,
       completed: state.recent_tasks,
       stopped_agents: state.stopped_agents ?? [],

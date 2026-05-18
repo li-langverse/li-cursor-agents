@@ -72,6 +72,7 @@ export async function ensureSessionForGoal(
     status: "in_progress",
     current_focus: first ?? null,
     queue: rest,
+    hypotheses: existing?.hypotheses ?? [],
     completed_steps: [],
     artifacts: {
       progress_md: `lic/docs/ecosystem/research-sessions/${goal.id}-cycle.md`,

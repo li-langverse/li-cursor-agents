@@ -2,7 +2,13 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
 import { dbEnabled, getSupabase } from "../db/client.js";
-import type { CompletedStep, ResearchFocus, ResearchSession, ResearchSessionStatus } from "./types.js";
+import type {
+  CompletedStep,
+  ResearchFocus,
+  ResearchHypothesis,
+  ResearchSession,
+  ResearchSessionStatus,
+} from "./types.js";
 
 const SESSIONS_DIR = () => join(agentsPackageRoot(), "data", "research-sessions");
 
@@ -23,6 +29,7 @@ function rowToSession(row: Record<string, unknown>): ResearchSession {
     status: row.status as ResearchSessionStatus,
     current_focus: (row.current_focus as ResearchFocus | null) ?? null,
     queue: (row.queue as ResearchFocus[]) ?? [],
+    hypotheses: (row.hypotheses as ResearchHypothesis[]) ?? [],
     completed_steps: (row.completed_steps as CompletedStep[]) ?? [],
     artifacts: row.artifacts as Record<string, string> | undefined,
     connections: (row.connections as ResearchSession["connections"]) ?? [],
@@ -43,6 +50,7 @@ function sessionToRow(s: ResearchSession): Record<string, unknown> {
     status: s.status,
     current_focus: s.current_focus,
     queue: s.queue,
+    hypotheses: s.hypotheses ?? [],
     completed_steps: s.completed_steps,
     artifacts: s.artifacts ?? null,
     connections: s.connections,
@@ -107,6 +115,7 @@ export async function advanceResearchSession(
     last_run_status?: string;
     connection?: ResearchSession["connections"][0];
     deferred_finding?: string;
+    hypotheses?: ResearchHypothesis[];
   },
 ): Promise<ResearchSession | null> {
   const session = await loadResearchSession(agentId);
@@ -127,9 +136,12 @@ export async function advanceResearchSession(
   let current_focus = patch.next_focus !== undefined ? patch.next_focus : session.current_focus;
   if (patch.dequeue && queue.length) current_focus = queue[0] ?? null;
 
+  const hypotheses = patch.hypotheses ?? session.hypotheses ?? [];
+
   const updated: ResearchSession = {
     ...session,
     queue,
+    hypotheses,
     completed_steps,
     connections,
     deferred_findings,
@@ -169,7 +181,24 @@ export function buildResearchSessionContinuationBlock(session: ResearchSession):
   if (session.queue.length) {
     lines.push("### Remaining queue (do not start these yet)", "");
     for (const q of session.queue.slice(0, 6)) {
-      lines.push(`- ${q.kind}: ${q.target}`);
+      const hs = q.hypothesis_status ? ` [${q.hypothesis_status}]` : "";
+      lines.push(`- ${q.kind}: ${q.target}${hs}`);
+    }
+    lines.push("");
+  }
+  const hyps = session.hypotheses ?? [];
+  if (hyps.length) {
+    lines.push(
+      "### Hypotheses (may be wrong — record outcomes)",
+      "",
+      "Use lines like `HYPOTHESIS: verified — <statement> | evidence: <file:line or test>` or `HYPOTHESIS: falsified — …`.",
+      "Falsified/deferred hypotheses may be **retested** when new evidence appears; do not discard without recording outcome.",
+      "",
+    );
+    for (const h of hyps.slice(-10)) {
+      lines.push(
+        `- \`${h.id.slice(0, 8)}\` **${h.status}**: ${h.statement}${h.evidence ? ` — ${h.evidence}` : ""}`,
+      );
     }
     lines.push("");
   }
