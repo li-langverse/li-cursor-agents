@@ -6,6 +6,8 @@ import type { LaneStateFile } from "../lanes/lane-state.js";
 import { implementLaneIntervalMs } from "../lanes/implement-lane.js";
 import { researchLaneIntervalMs } from "../lanes/research-lane.js";
 import { maintenanceLaneIntervalMs } from "../lanes/maintenance-lane.js";
+import { researchLaneAgentIds } from "../lanes/lane-agent-ids.js";
+import { defaultProactiveAgentIds } from "../control-plane/proactive-agent-work.js";
 
 export function runtimeSnapshotFromDb(
   state: ControlPlaneState,
@@ -50,5 +52,7 @@ export function laneSnapshotFromDb(
     research_interval_ms: researchLaneIntervalMs(),
     implement_interval_ms: implementLaneIntervalMs(),
     maintenance_interval_ms: maintenanceLaneIntervalMs(),
+    research_agent_ids: [...researchLaneAgentIds()],
+    proactive_agent_ids: defaultProactiveAgentIds(),
   };
 }

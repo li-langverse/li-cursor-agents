@@ -27,6 +27,7 @@ import { resolveCursorApiKey } from "../env.js";
 import { dataStoreLabel, dbEnabled, configuredStore } from "../db/client.js";
 import { loadWorkerStatusFromDb } from "../db/worker-status.js";
 import { loadLaneStateFromDb } from "../db/lane-state.js";
+import { researchLaneAgentIds } from "../lanes/lane-agent-ids.js";
 import { runtimeSnapshotFromDb, laneSnapshotFromDb } from "./runtime-read.js";
 import { listSettingsViewsForRead, SETTING_CATEGORIES } from "./settings-read.js";
 import { loadQueuePayloadForRead } from "./queue-read.js";
@@ -124,6 +125,7 @@ async function handleGet(pathname: string, url: URL): Promise<Response | null> {
       agent_backend: backend,
       sdk_ready: sdkReady,
       lanes: laneSnapshotFromDb(lane, worker),
+      research_agent_ids: [...researchLaneAgentIds()],
     });
   }
 

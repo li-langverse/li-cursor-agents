@@ -96,9 +96,13 @@ describe("dashboard run trace e2e", () => {
     );
     assert.equal(history.status, 200);
     const histRuns = history.body.runs as Array<{ run_id: string }>;
-    assert.ok(
-      !histRuns.some((r) => r.run_id === runId),
-      "mock runs must not appear in production agent history",
+    const persistMocks = process.env.LI_PERSIST_MOCK_RUNS === "1";
+    assert.equal(
+      histRuns.some((r) => r.run_id === runId),
+      persistMocks,
+      persistMocks
+        ? "mock runs with LI_PERSIST_MOCK_RUNS=1 appear in agent history"
+        : "mock runs must not appear in production agent history",
     );
   });
 });

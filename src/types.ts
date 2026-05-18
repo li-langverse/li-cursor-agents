@@ -82,6 +82,8 @@ export interface AgentRunOptions {
   extraInstruction?: string;
   /** Override repo for guaranteed-push workflow clone (e.g. `lic` for goal implementation). */
   workflowRepo?: string;
+  /** When set (supervisor tracking), output + DB use this run_id. */
+  runId?: string;
 }
 
 export interface AgentRunCompletionMeta {

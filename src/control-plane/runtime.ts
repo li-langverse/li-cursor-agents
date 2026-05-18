@@ -15,6 +15,7 @@ import type { AgentId } from "../types.js";
 import { asyncSwarmSnapshot } from "../async-swarm/async-swarm-state.js";
 import { computeInSdkCount } from "./active-run-metrics.js";
 import { sdkMaxConcurrent, sdkSessionInProcessActive } from "../backends/sdk-session-lock.js";
+import { allocateRunId } from "./run-paths.js";
 import { handoffRunStatus } from "../lanes/handoff-run-coordinator.js";
 import { runHandoffPhasedSwarm } from "../lanes/run-handoff-phases.js";
 import { resolveSpawnWorkflowRepo } from "../handoffs/resolve-spawn-workflow-repo.js";
@@ -53,10 +54,10 @@ export function hasActiveRunningTrack(agentId: AgentId): boolean {
 }
 
 /** Track in-process supervisor runs (same map as spawnAgentRun child processes). */
-export function registerSupervisorRun(agentId: AgentId, reason: string): string {
-  const runId = `${agentId}-supervisor-${Date.now()}`;
-  activeRuns.set(runId, {
-    run_id: runId,
+export function registerSupervisorRun(agentId: AgentId, reason: string, runId?: string): string {
+  const id = runId ?? allocateRunId(agentId);
+  activeRuns.set(id, {
+    run_id: id,
     agent_id: agentId,
     pid: process.pid,
     started_at: new Date().toISOString(),
@@ -64,7 +65,7 @@ export function registerSupervisorRun(agentId: AgentId, reason: string): string 
     reason,
   });
   scheduleWorkerHeartbeat();
-  return runId;
+  return id;
 }
 
 export function completeSupervisorRun(runId: string, status: AgentRunLifecycle): void {

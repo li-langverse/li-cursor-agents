@@ -38,7 +38,7 @@
     "test": "npm run build && LI_CONTROL_PLANE_STORE=disk CURSOR_MOCK=1 node --test 'dist/**/*.test.js' --test 'dist/e2e/*.e2e.js' && node scripts/test-log-timestamps.mjs",
     "test:log-timestamps": "npm run build && node scripts/test-log-timestamps.mjs",
     "test:db-api": "npm run build && CURSOR_MOCK=1 LI_CONTROL_PLANE_STORE=disk node --test dist/e2e/db-api.e2e.js",
-    "test:dashboard-api": "npm run build && CURSOR_MOCK=1 LI_CONTROL_PLANE_STORE=disk node --test dist/e2e/db-api.e2e.js dist/e2e/worker-swarm.e2e.js dist/e2e/dashboard-api.e2e.js dist/e2e/dashboard-live-runs.e2e.js dist/e2e/dashboard-run-trace.e2e.js dist/e2e/dashboard-next-tabs.e2e.js",
+    "test:dashboard-api": "npm run build && CURSOR_MOCK=1 LI_CONTROL_PLANE_STORE=disk LI_PERSIST_MOCK_RUNS=1 node --test dist/e2e/db-api.e2e.js dist/e2e/worker-swarm.e2e.js dist/e2e/dashboard-api.e2e.js dist/e2e/dashboard-live-runs.e2e.js dist/e2e/dashboard-run-trace.e2e.js dist/e2e/dashboard-next-tabs.e2e.js dist/e2e/agent-activity-pipeline.e2e.js",
     "test:worker-swarm": "npm run build && CURSOR_MOCK=1 LI_CONTROL_PLANE_STORE=disk node --test dist/e2e/worker-swarm.e2e.js",
     "test:dashboard-ui": "node scripts/check-dashboard-no-motion.mjs && npm --prefix dashboard-ui run build",
     "test:dev-stack-ready": "node --test scripts/dev-stack-ready-lib.test.mjs",

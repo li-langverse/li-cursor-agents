@@ -11,6 +11,8 @@ export interface LaneStateFile {
   last_implement_tick_at?: string;
   last_maintenance_tick_at?: string;
   goal_last_run_at: Record<string, string>;
+  /** Last proactive worker-pool run (orchestrator, implementation_gaps, …). */
+  proactive_last_run_at?: Record<string, string>;
 }
 
 const defaultState = (): LaneStateFile => ({

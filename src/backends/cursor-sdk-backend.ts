@@ -2,7 +2,7 @@ import { join } from "node:path";
 import type { RunResult } from "@cursor/sdk";
 import { errorDetailFromUnknown } from "../agent-output-format.js";
 import { createTraceCollector, type AgentRunTrace } from "../agent-run-trace.js";
-import { runsDir } from "../control-plane/paths.js";
+import { allocateRunId, runOutputPath } from "../control-plane/run-paths.js";
 import {
   resolveCursorApiKey,
   resolveCursorModelId,
@@ -73,7 +73,11 @@ export class CursorSdkBackend implements AgentBackend {
     options: AgentRunOptions,
   ): Promise<AgentRunResult> {
     const start = Date.now();
-    const outputPath = join(runsDir(), `${definition.id}-${Date.now()}.md`);
+    const outputPath = runOutputPath(
+      definition.id,
+      options.runId ?? allocateRunId(definition.id),
+      false,
+    );
 
     if (options.dryRun) {
       const trace = createTraceCollector().finalize(

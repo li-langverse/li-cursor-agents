@@ -21,5 +21,6 @@ export function isMockCatalogEntry(entry: RunCatalogEntry): boolean {
 }
 
 export function filterProductionRuns<T extends RunCatalogEntry>(runs: T[]): T[] {
+  if (process.env.LI_PERSIST_MOCK_RUNS === "1") return runs;
   return runs.filter((r) => !isMockCatalogEntry(r));
 }

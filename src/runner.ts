@@ -41,6 +41,7 @@ import {
   hasActiveRunningTrack,
   registerSupervisorRun,
 } from "./control-plane/runtime.js";
+import { allocateRunId, runOutputPath } from "./control-plane/run-paths.js";
 import type { AgentRunLifecycle } from "./control-plane/types.js";
 import type { AgentId, AgentRunOptions, AgentRunResult } from "./types.js";
 import type { RepoWorkflowSession } from "./repo-workflow/workspace-session.js";
@@ -62,17 +63,17 @@ async function scheduleWorkerHeartbeatFromRunner(): Promise<void> {
 
 async function withRunAgentTracking(
   agentId: AgentId,
-  fn: () => Promise<AgentRunResult>,
+  fn: (runId: string) => Promise<AgentRunResult>,
 ): Promise<AgentRunResult> {
   if (hasActiveRunningTrack(agentId)) {
     await scheduleWorkerHeartbeatFromRunner();
-    return fn();
+    return fn(allocateRunId(agentId));
   }
 
   const runId = registerSupervisorRun(agentId, "runAgent");
   await scheduleWorkerHeartbeatFromRunner();
   try {
-    const result = await fn();
+    const result = await fn(runId);
     completeSupervisorRun(runId, runLifecycleFromResult(result.status));
     return result;
   } catch (err) {
@@ -126,7 +127,9 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
     throw new Error(`Unknown agent: ${options.agentId} (see npm run agents:list)`);
   }
 
-  return withRunAgentTracking(definition.id, async () => runAgentBody(options, definition));
+  return withRunAgentTracking(definition.id, async (runId) =>
+    runAgentBody({ ...options, runId }, definition),
+  );
 }
 
 async function runAgentBody(
@@ -170,7 +173,7 @@ async function runAgentBody(
       agentId: definition.id,
     });
     const text = formatWorkspaceSweepReport(sweep);
-    const outputPath = join(runsDir(), `${definition.id}-${Date.now()}.md`);
+    const outputPath = runOutputPath(definition.id, options.runId ?? allocateRunId(definition.id), mock);
     writeFileSync(outputPath, text, "utf8");
     const prUrls = sweep.sweeps.map((s) => s.push.pr_url).filter((u): u is string => Boolean(u));
     const forceLlm = process.env.LI_WORKSPACE_SWEEP_FORCE_LLM === "1";
@@ -233,7 +236,11 @@ async function runAgentBody(
     const forceLlm = process.env.LI_AGENT_KIT_FORCE_LLM === "1";
     if (!forceLlm && !rolloutNeedsLlmFollowUp(rollout)) {
       const start = Date.now();
-      const outputPath = join(runsDir(), `${definition.id}-${Date.now()}.md`);
+      const outputPath = runOutputPath(
+        definition.id,
+        options.runId ?? allocateRunId(definition.id),
+        mock,
+      );
       const text = formatRolloutDigest(rollout);
       writeFileSync(outputPath, text, "utf8");
       const prUrls = rollout.map((r) => r.pr_url).filter((u): u is string => Boolean(u));
@@ -315,7 +322,11 @@ async function runAgentBody(
   try {
     result = await backend.run(definition, systemPrompt, userMessage, { ...options, cwd: workCwd });
   } catch (err) {
-    const outputPath = join(runsDir(), `${definition.id}-${Date.now()}.md`);
+    const outputPath = runOutputPath(
+      definition.id,
+      options.runId ?? allocateRunId(definition.id),
+      mock,
+    );
     result = {
       agentId: definition.id,
       backend: mock ? "mock" : "cursor-sdk",
