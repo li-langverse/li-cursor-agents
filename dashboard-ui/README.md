@@ -1,32 +1,27 @@
 # Agent swarm dashboard (Next.js)
 
-Next.js **16.2.6** (May 2026 security release) UI for the li-cursor-agents control plane. `/api/*` is proxied to the existing Node server on port **9477**.
+Next.js **16.2.6** UI for the li-cursor-agents control plane.
+
+## Architecture
+
+| Layer | Role |
+|-------|------|
+| **Next.js `:3000`** | UI + **native `GET /api/*`** (Supabase via `dist/dashboard-api`) |
+| **ops-server `:9477`** | Agent spawn, lanes, supervisor, briefing refresh (`POST`/`PATCH`) |
+
+Run `npm run build` at repo root before `dashboard-ui` dev/build so `dist/dashboard-api` exists.
 
 ## Dev (one command)
 
-From repo root:
-
 ```bash
+npm run db:ensure   # apply migrations (lane_state, runtime_settings, briefing is_latest, …)
 npm run dev:all
 ```
 
-Starts Supabase (when Docker is available), builds TypeScript, control-plane API on **:9477** with **async swarm running**, verifies all core `/api/*` routes (including `agent_handoffs`), then Next.js on **:3000** (`/api` proxied to the API).
+## Environment
 
-Disk-only (no Docker): `LI_STACK_SKIP_SUPABASE=1 npm run dev:all`
+- Root `.env` / `.env.supabase` — `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `LI_CONTROL_PLANE_STORE=supabase`
+- `LI_AGENT_API_URL` — ops-server for mutations (default `http://127.0.0.1:9477`)
+- Optional `NEXT_PUBLIC_LI_AGENT_API_URL` — browser direct to ops (rare)
 
-## Dev (two terminals)
-
-```bash
-npm run build && npm run dashboard    # :9477
-npm run dashboard:ui                  # :3000
-```
-
-## Production UI only
-
-```bash
-cd dashboard-ui && npm run build && npm run start
-```
-
-Set `LI_AGENT_API_URL` if the API is not on `http://127.0.0.1:9477`.
-
-The legacy static UI under `web/` remains for now; this app is the preferred dashboard.
+Disk-only dev: `LI_STACK_SKIP_SUPABASE=1 npm run dev:all`
