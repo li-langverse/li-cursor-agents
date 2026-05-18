@@ -2444,7 +2444,7 @@
     "pending_placement": 0,
     "ready_to_implement": 0,
     "by_domain": {},
-    "active_research_session": null,
+    "active_research_session": "proof_gap_researcher:provability_holes (cycle 1)",
     "research_lane_enabled": true,
     "implement_lane_enabled": true,
     "last_research_tick_at": "2026-05-18T11:02:29.387Z"
@@ -2525,6 +2525,6 @@
     "missing_north_star_fit": [],
     "invalid_north_star_fit": []
   },
-  "swarm_enriched_at": "2026-05-18T11:51:16.896Z",
-  "swarm_recommendations_merged_at": "2026-05-18T11:51:16.896Z"
+  "swarm_enriched_at": "2026-05-18T11:51:42.157Z",
+  "swarm_recommendations_merged_at": "2026-05-18T11:51:42.158Z"
 }
