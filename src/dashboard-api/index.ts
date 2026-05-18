@@ -1,6 +1,6 @@
 /**
- * Native dashboard read API — Supabase + in-process state (no disk rebuild on hot paths).
- * Used by Next.js `app/api/[[...path]]/route.ts`; mutating routes proxy to ops-server :9477.
+ * Native dashboard API — Supabase reads + in-process swarm/supervisor control.
+ * Used by Next.js `app/api/[[...path]]/route.ts`; unhandled routes proxy to ops-server :9477.
  */
 import { loadRuntimeEnv } from "../env.js";
 import { dashboardRosterSummary } from "../agents/dashboard-roster.js";
@@ -24,8 +24,31 @@ import { listRunsMerged } from "../control-plane/runs-catalog.js";
 import { loadLiveInterventionsFromDb } from "../db/control-plane.js";
 import { loadLatestReportHybrid } from "../db/persist.js";
 import { listSupervisorActivityAsync } from "../control-plane/supervisor-activity.js";
-import { isSupervisorLoopRunning, runtimeSnapshot } from "../control-plane/runtime.js";
+import { canonicalAgentId } from "../agents/registry.js";
+import { startAsyncSwarm, stopAsyncSwarm } from "../async-swarm/async-swarm-runtime.js";
+import { patchSettings } from "../config/runtime-settings.js";
+import { resolveSpawnWorkflowRepo } from "../handoffs/resolve-spawn-workflow-repo.js";
+import {
+  handoffRunStatus,
+  startHandoffRunInBackground,
+} from "../lanes/handoff-run-coordinator.js";
+import { formatHandoffPhasesSummary } from "../lanes/handoff-run-summary.js";
+import { maintenanceLaneTick } from "../lanes/maintenance-lane.js";
+import { resolveBenchmarksRoot } from "../preflight.js";
+import {
+  cancelRun,
+  isSupervisorLoopRunning,
+  resumeAgent,
+  runAllAgentsNow,
+  runtimeSnapshot,
+  spawnAgentRun,
+  startSupervisorLoop,
+  stopAgent,
+  stopAllActiveRuns,
+  stopSupervisorLoop,
+} from "../control-plane/runtime.js";
 import { loadState, loadStateForApi } from "../control-plane/state.js";
+import type { AgentId } from "../types.js";
 import { loadLaneState } from "../lanes/lane-state.js";
 import { laneRuntimeSnapshot } from "../lanes/lane-runtime.js";
 import { agentBackendLabel } from "../runner.js";
@@ -213,6 +236,173 @@ async function handleNativeGet(pathname: string, url: URL): Promise<Response | n
   return null;
 }
 
+async function readJsonBody(req: Request): Promise<Record<string, unknown>> {
+  try {
+    const text = await req.text();
+    if (!text.trim()) return {};
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
+async function handleNativePost(pathname: string, req: Request): Promise<Response | null> {
+  const state = currentState();
+  const runtime = runtimeSnapshot(state);
+
+  if (pathname === "/api/async-swarm/start" && req.method === "POST") {
+    const mock = process.env.CURSOR_MOCK === "1";
+    const result = await startAsyncSwarm({ mock, stopSupervisor: true });
+    const st = loadStateForApi();
+    return jsonBody({ ok: result.started, ...result, runtime: runtimeSnapshot(st) });
+  }
+
+  if (pathname === "/api/async-swarm/stop" && req.method === "POST") {
+    const result = await stopAsyncSwarm();
+    const st = loadStateForApi();
+    return jsonBody({ ok: result.stopped, ...result, runtime: runtimeSnapshot(st) });
+  }
+
+  if (pathname === "/api/supervisor/start" && req.method === "POST") {
+    await stopAsyncSwarm();
+    const result = await startSupervisorLoop({ forceFirstTick: true, force: false });
+    const message =
+      result.message +
+      (result.started ? " — first tick runs agents immediately (check Supervisor log)." : "");
+    const loopState = loadStateForApi();
+    return jsonBody({
+      ok: result.started || result.already_running,
+      ...result,
+      message,
+      runtime: runtimeSnapshot(loopState),
+      activity: await listSupervisorActivityAsync(8),
+    });
+  }
+
+  if (pathname === "/api/supervisor/stop" && req.method === "POST") {
+    const stopped = await stopSupervisorLoop();
+    const stopState = loadStateForApi();
+    return jsonBody({
+      ok: true,
+      ...stopped,
+      runtime: runtimeSnapshot(stopState),
+      activity: await listSupervisorActivityAsync(5),
+    });
+  }
+
+  if (pathname === "/api/swarm/stop-all" && req.method === "POST") {
+    void stopSupervisorLoop();
+    void stopAsyncSwarm();
+    const killed = await stopAllActiveRuns();
+    const haltState = loadStateForApi();
+    return jsonBody({ ok: true, killed, runtime: runtimeSnapshot(haltState) });
+  }
+
+  if (pathname === "/api/swarm/run-all" && req.method === "POST") {
+    const useBackground = process.env.LI_SWARM_HANDOFF_SYNC !== "1";
+    if (useBackground && process.env.LI_SWARM_HANDOFF_PHASES !== "0") {
+      const mock = process.env.CURSOR_MOCK === "1";
+      const started = startHandoffRunInBackground({ mock });
+      const swarmState = loadStateForApi();
+      return jsonBody(
+        {
+          ok: started.accepted,
+          accepted: started.accepted,
+          already_running: started.already_running,
+          message: started.message,
+          handoff_run: handoffRunStatus(),
+          runtime: runtimeSnapshot(swarmState),
+          activity: await listSupervisorActivityAsync(12),
+        },
+        started.accepted ? 202 : 200,
+      );
+    }
+    const result = await runAllAgentsNow();
+    const swarmState = loadStateForApi();
+    const message = result.handoff_phases
+      ? formatHandoffPhasesSummary(result.handoff_phases)
+      : result.spawned?.length
+        ? `Spawned ${result.spawned.length} agent(s)`
+        : "Run-all complete";
+    return jsonBody({
+      ok: true,
+      message,
+      ...result,
+      runtime: runtimeSnapshot(swarmState),
+      activity: await listSupervisorActivityAsync(12),
+    });
+  }
+
+  if (pathname === "/api/briefing/refresh" && req.method === "POST") {
+    const root = resolveBenchmarksRoot();
+    if (!root) {
+      return jsonBody({ error: "BENCHMARKS_ROOT not set" }, 400);
+    }
+    const tick = await maintenanceLaneTick({ benchmarksRoot: root, skipSlowPreflight: true });
+    const report = await loadLatestReportHybrid();
+    return jsonBody({
+      ok: tick.ok,
+      briefing_path: tick.briefing_path,
+      skip_reason: tick.skip_reason,
+      report: report ?? { error: "no report" },
+    });
+  }
+
+  if (pathname === "/api/settings" && req.method === "PATCH") {
+    const body = await readJsonBody(req);
+    try {
+      const payload = patchSettings(
+        (body.values as Record<string, string>) ?? {},
+        { resetKeys: body.reset_keys as string[] | undefined },
+      );
+      return jsonBody({ ok: true, categories: SETTING_CATEGORIES, ...payload });
+    } catch (err) {
+      return jsonBody({ error: err instanceof Error ? err.message : String(err) }, 400);
+    }
+  }
+
+  const agentStart = pathname.match(/^\/api\/agents\/([^/]+)\/start$/);
+  if (agentStart && req.method === "POST") {
+    const agentId = canonicalAgentId(decodeURIComponent(agentStart[1]!));
+    if (!agentId) return jsonBody({ error: "unknown agent" }, 404);
+    const workflowRepo = await resolveSpawnWorkflowRepo(agentId);
+    const result = spawnAgentRun(agentId, "dashboard start", { workflowRepo });
+    if (!result.ok) return jsonBody({ error: result.error }, 409);
+    const startState = loadStateForApi();
+    return jsonBody({
+      ok: true,
+      run: result.run,
+      workflowRepo,
+      runtime: runtimeSnapshot(startState),
+    });
+  }
+
+  const agentStop = pathname.match(/^\/api\/agents\/([^/]+)\/stop$/);
+  if (agentStop && req.method === "POST") {
+    const agentId = canonicalAgentId(decodeURIComponent(agentStop[1]!)) as AgentId | undefined;
+    if (!agentId) return jsonBody({ error: "unknown agent" }, 404);
+    const next = stopAgent(agentId, true);
+    return jsonBody({ ok: true, stopped: agentId, state: next, runtime: runtimeSnapshot(next) });
+  }
+
+  const agentResume = pathname.match(/^\/api\/agents\/([^/]+)\/resume$/);
+  if (agentResume && req.method === "POST") {
+    const agentId = canonicalAgentId(decodeURIComponent(agentResume[1]!)) as AgentId | undefined;
+    if (!agentId) return jsonBody({ error: "unknown agent" }, 404);
+    const next = resumeAgent(agentId);
+    return jsonBody({ ok: true, resumed: agentId, runtime: runtimeSnapshot(next) });
+  }
+
+  const runCancel = pathname.match(/^\/api\/runs\/([^/]+)\/cancel$/);
+  if (runCancel && req.method === "POST") {
+    const ok = cancelRun(runCancel[1]!);
+    const cancelState = loadStateForApi();
+    return jsonBody({ ok, runtime: runtimeSnapshot(cancelState) }, ok ? 200 : 404);
+  }
+
+  return null;
+}
+
 async function proxyToOps(req: Request, apiPath: string): Promise<Response> {
   const base = (process.env.LI_AGENT_API_URL ?? "http://127.0.0.1:9477").replace(/\/$/, "");
   const incoming = new URL(req.url);
@@ -229,14 +419,32 @@ async function proxyToOps(req: Request, apiPath: string): Promise<Response> {
     // @ts-expect-error duplex for streaming body
     init.duplex = "half";
   }
-  const res = await fetch(target, init);
-  return new Response(res.body, {
-    status: res.status,
-    headers: {
-      "Content-Type": res.headers.get("Content-Type") ?? "application/json",
-      "Access-Control-Allow-Origin": "*",
-    },
-  });
+  try {
+    const res = await fetch(target, init);
+    return new Response(res.body, {
+      status: res.status,
+      headers: {
+        "Content-Type": res.headers.get("Content-Type") ?? "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
+  } catch (err) {
+    const refused =
+      err instanceof TypeError &&
+      (String((err as Error & { cause?: unknown }).cause).includes("ECONNREFUSED") ||
+        err.message.includes("fetch failed"));
+    if (refused) {
+      return jsonBody(
+        {
+          error:
+            "Control plane on :9477 is not running. Swarm/supervisor/agent controls run in Next natively — pull latest. Other actions need: npm run dashboard or npm run dev:all",
+          path: apiPath,
+        },
+        503,
+      );
+    }
+    throw err;
+  }
 }
 
 /** Next.js route handler entry (also callable from tests). */
@@ -260,6 +468,18 @@ export async function handleDashboardRequest(req: Request, apiPath: string): Pro
   if (req.method === "GET" && NATIVE_GET.has(pathname)) {
     try {
       const native = await handleNativeGet(pathname, url);
+      if (native) return native;
+    } catch (err) {
+      return jsonBody(
+        { error: err instanceof Error ? err.message : String(err) },
+        500,
+      );
+    }
+  }
+
+  if (req.method === "POST" || req.method === "PATCH") {
+    try {
+      const native = await handleNativePost(pathname, req);
       if (native) return native;
     } catch (err) {
       return jsonBody(
