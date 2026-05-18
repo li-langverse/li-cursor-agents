@@ -504,11 +504,11 @@ function renderFooterControls(loopOn, activeRunCount = 0) {
     }
   }
   if (par) {
-    par.disabled = loopOn;
+    par.disabled = false;
     par.title = loopOn
-      ? "Stop supervisor mode before handoff phased run"
-      : "Research → placement → implement (one tick each)";
-    par.textContent = loopOn ? "Run all (handoff)" : "Run all (handoff)";
+      ? "Supervisor mode is on — handoff run-all still runs one research → placement → implement cycle"
+      : "Research → placement → implement (one tick each; shows in Supervisor log + active runs)";
+    par.textContent = "Run all (handoff)";
   }
 }
 
@@ -571,94 +571,13 @@ function renderStatCards() {
     (gaps?.agent_prs_blocked ?? 0) +
     (gaps?.numerics_without_evidence ?? 0);
 
-  const sc = ui.data?.lanes?.scorecard ?? ui.data?.swarmBriefingPayload?.scorecard ?? {};
-
   $("#stat-cards").innerHTML = `
     <div class="stat-card accent"><div class="label">Running</div><div class="value">${running}</div></div>
-        <div class="stat-card"><div class="label">Recommended</div><div class="value">${recommended}</div></div>
-    <div class="stat-card"><div class="label">Open handoffs</div><div class="value">${sc.pending_handoffs ?? "—"}</div></div>
-    <div class="stat-card"><div class="label">Ready implement</div><div class="value">${sc.ready_to_implement ?? "—"}</div></div>
-    <div class="stat-card"><div class="label">Interventions</div><div class="value">${interventions}</div></div>`;
+    <div class="stat-card"><div class="label">Queued</div><div class="value">${queued}</div></div>
+    <div class="stat-card"><div class="label">Stopped</div><div class="value">${stopped}</div></div>
+    <div class="stat-card"><div class="label">Interventions</div><div class="value">${interventions}</div></div>
+    <div class="stat-card"><div class="label">Run artifacts</div><div class="value">${runs}</div></div>`;
 }
-
-
-function renderSwarmHandoffsPanel() {
-  const sc = ui.data?.swarmBriefingPayload?.scorecard ?? ui.data?.lanes?.scorecard ?? {};
-  const audit = ui.data?.swarmBriefingPayload?.handoff_audit ?? {};
-  const goals = ui.data?.swarmBriefingPayload?.goals ?? ui.data?.swarmBriefingPayload?.research_goals_status ?? [];
-  const handoffs = ui.data?.handoffsPayload?.handoffs ?? [];
-  const meta = $("#swarm-handoffs-meta");
-  const session = sc.active_research_session;
-  if (meta) {
-    meta.textContent = [
-      session ? `Research: ${session}` : null,
-      audit.missing_north_star_fit?.length
-        ? `${audit.missing_north_star_fit.length} missing north_star_fit`
-        : null,
-      ui.data?.swarmBriefingPayload?.snapshot?.swarm_enriched_at
-        ? `Enriched ${ui.data.swarmBriefingPayload.snapshot.swarm_enriched_at}`
-        : null,
-    ]
-      .filter(Boolean)
-      .join(" · ") || "Scorecard and open handoffs from briefing + control-plane store.";
-  }
-
-  const row = $("#swarm-scorecard-row");
-  if (row) {
-    const items = [
-      { label: "Pending placement", value: sc.pending_placement ?? 0 },
-      { label: "Ready implement", value: sc.ready_to_implement ?? 0 },
-      { label: "Research lane", value: sc.research_lane_enabled ? "on" : "off" },
-      { label: "Implement lane", value: sc.implement_lane_enabled ? "on" : "off" },
-    ];
-    row.innerHTML = items
-      .map(
-        (it) =>
-          `<div class="stat-card"><div class="label">${esc(it.label)}</div><div class="value">${esc(String(it.value))}</div></div>`,
-      )
-      .join("");
-  }
-
-  const tbody = $("#handoffs-table-body");
-  if (tbody) {
-    const open = handoffs.filter((h) => h.status !== "done" && h.status !== "failed");
-    if (!open.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="empty">No open handoffs</td></tr>';
-    } else {
-      tbody.innerHTML = open
-        .map((h) => {
-          const fit = (h.north_star_fit ?? "").slice(0, 72);
-          const to = (h.to_agents ?? []).join(", ");
-          return `<tr>
-            <td><span class="badge">${esc(h.status)}</span></td>
-            <td>${esc(to)}</td>
-            <td>${esc(h.research_goal_id ?? "—")}</td>
-            <td class="mono">${esc(h.workflow_repo ?? "—")}</td>
-            <td title="${escAttr(h.north_star_fit ?? "")}">${esc(fit || "—")}${fit.length < (h.north_star_fit?.length ?? 0) ? "…" : ""}</td>
-            <td class="time">${formatTime(h.updated_at)}</td>
-          </tr>`;
-        })
-        .join("");
-    }
-  }
-
-  const goalsEl = $("#swarm-goals-list");
-  if (goalsEl) {
-    const eligible = (goals ?? []).filter((g) => g.eligible);
-    if (!eligible.length) {
-      goalsEl.innerHTML = '<li class="empty">No eligible research goals this cadence</li>';
-    } else {
-      goalsEl.innerHTML = eligible
-        .slice(0, 6)
-        .map(
-          (g) =>
-            `<li><strong>${esc(g.goal_id)}</strong> (P${g.priority}) → ${esc(g.agent)} — ${esc(g.title ?? "")}</li>`,
-        )
-        .join("");
-    }
-  }
-}
-
 
 function renderLiveActivity() {
   const { report, runtime, runsPayload } = ui.data;
@@ -1075,7 +994,6 @@ async function refresh() {
     renderAgentBackendUi();
     renderSupervisorActivity();
     renderStatCards();
-    renderSwarmHandoffsPanel();
     renderSwarmStatistics();
     renderLiveActivity();
     renderQueue();
@@ -1106,9 +1024,32 @@ async function postControl(path, button, { label } = {}) {
   if (button && label) button.textContent = `${label}…`;
   try {
     const body = await fetchJson(path, { method: "POST" });
-    const msg = body.message ?? (body.started ? "Supervisor loop started" : body.stopped ? "Supervisor stopped" : "OK");
-    showToast(msg, body.already_running ? "warn" : body.started === false && body.stopped === false ? "warn" : "ok");
-    ui.pollMs = body.runtime?.supervisor_loop_running ? 2000 : 4000;
+    const msg =
+      body.message ??
+      (body.handoff_phases
+        ? "Handoff phases complete — see Supervisor log"
+        : body.started
+          ? "Supervisor loop started"
+          : body.stopped
+            ? "Supervisor stopped"
+            : "OK");
+    const allSkipped =
+      body.handoff_phases?.phases?.length > 0 &&
+      body.handoff_phases.phases.every((p) => p.tick?.skipped);
+    const handoffStarted = body.accepted === true && body.handoff_run?.in_progress;
+    showToast(
+      handoffStarted
+        ? `${msg} — check Activity / Supervisor log`
+        : msg,
+      allSkipped ? "warn" : body.already_running ? "warn" : body.started === false && body.stopped === false ? "warn" : "ok",
+    );
+    ui.pollMs =
+      handoffStarted ||
+      body.runtime?.supervisor_loop_running ||
+      body.runtime?.async_swarm_running ||
+      body.handoff_run?.in_progress
+        ? 1500
+        : 4000;
     schedulePoll();
     await refresh();
   } catch (e) {
@@ -1157,10 +1098,6 @@ $("#agent-search").addEventListener("input", (ev) => {
 
 $("#goto-activity")?.addEventListener("click", () => setView("activity"));
 $("#refresh").addEventListener("click", refresh);
-$("#swarm-handoffs-refresh")?.addEventListener("click", () =>
-  postControl("/api/lanes/implement/tick", $("#swarm-handoffs-refresh"), { label: "Implement tick" }),
-);
-
 $("#refresh-briefing").addEventListener("click", () =>
   postControl("/api/briefing/refresh", $("#refresh-briefing")),
 );
@@ -1184,7 +1121,9 @@ $("#mode-parallel")?.addEventListener("click", async () => {
   if (ui.data?.runtime?.supervisor_loop_running) {
     await fetchJson("/api/supervisor/stop", { method: "POST" });
   }
-  await postControl("/api/swarm/run-all", btn, { label: "Handoff phases" });
+  ui.pollMs = 1500;
+  schedulePoll();
+  await postControl("/api/swarm/run-all", btn, { label: "Starting handoff" });
 });
 
 function laneInfo() {

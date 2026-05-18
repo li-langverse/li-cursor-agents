@@ -14,6 +14,7 @@ import {
 } from "../research-sessions/session-lifecycle.js";
 import { buildResearchSessionContinuationBlock } from "../research-sessions/session-store.js";
 import { northStarFitForGoal } from "../research-goals/load-goals.js";
+import { isHandoffRunInProgress } from "./handoff-run-coordinator.js";
 import { loadLaneState, recordGoalRun, saveLaneState } from "./lane-state.js";
 import type { AgentId } from "../types.js";
 import type { ResearchGoal } from "../research-goals/load-goals.js";
@@ -77,10 +78,15 @@ export async function researchLaneTick(options?: {
   mock?: boolean;
   dryRun?: boolean;
   benchmarksRoot?: string;
+  /** Run-all (handoff): execute even when lane toggle is off. */
+  force?: boolean;
 }): Promise<ResearchLaneTickResult> {
   const laneState = loadLaneState();
-  if (!laneState.research_lane_enabled) {
+  if (!options?.force && !laneState.research_lane_enabled) {
     return { skipped: true, skip_reason: "research lane disabled" };
+  }
+  if (!options?.force && isHandoffRunInProgress()) {
+    return { skipped: true, skip_reason: "handoff run-all in progress" };
   }
 
   const target = await pickResearchLaneTarget();

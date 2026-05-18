@@ -17,6 +17,11 @@ import {
   stopSupervisorLoop,
 } from "./control-plane/runtime.js";
 import { startAsyncSwarm, stopAsyncSwarm } from "./async-swarm/async-swarm-runtime.js";
+import {
+  handoffRunStatus,
+  startHandoffRunInBackground,
+} from "./lanes/handoff-run-coordinator.js";
+import { formatHandoffPhasesSummary } from "./lanes/handoff-run-summary.js";
 import { resolveGoalImplementationRepo } from "./handoffs/goal-workflow.js";
 import { resolveSpawnWorkflowRepo } from "./handoffs/resolve-spawn-workflow-repo.js";
 import { sortedCoordinators } from "./heap/coordinators.js";
@@ -474,10 +479,43 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     return;
   }
 
+  if (url.pathname === "/api/swarm/run-all/status" && req.method === "GET") {
+    json(res, 200, handoffRunStatus());
+    return;
+  }
+
   if (url.pathname === "/api/swarm/run-all" && req.method === "POST") {
+    const useBackground = process.env.LI_SWARM_HANDOFF_SYNC !== "1";
+    if (useBackground && process.env.LI_SWARM_HANDOFF_PHASES !== "0") {
+      const mock = process.env.CURSOR_MOCK === "1";
+      const started = startHandoffRunInBackground({ mock });
+      const swarmState = await loadStateForApi();
+      json(res, 202, {
+        ok: started.accepted,
+        accepted: started.accepted,
+        already_running: started.already_running,
+        message: started.message,
+        handoff_run: handoffRunStatus(),
+        runtime: runtimeSnapshot(swarmState),
+        activity: listSupervisorActivity(12),
+      });
+      return;
+    }
+
     const result = await runAllAgentsNow();
     const swarmState = await loadStateForApi();
-    json(res, 200, { ok: true, ...result, runtime: runtimeSnapshot(swarmState) });
+    const message = result.handoff_phases
+      ? formatHandoffPhasesSummary(result.handoff_phases)
+      : result.spawned?.length
+        ? `Spawned ${result.spawned.length} agent(s)`
+        : "Run-all complete";
+    json(res, 200, {
+      ok: true,
+      message,
+      ...result,
+      runtime: runtimeSnapshot(swarmState),
+      activity: listSupervisorActivity(12),
+    });
     return;
   }
 

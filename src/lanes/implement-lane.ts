@@ -15,6 +15,7 @@ import {
 import { withGlobalSdkSessionLock } from "../backends/sdk-session-lock.js";
 import { resolveBenchmarksRoot } from "../preflight.js";
 import { agentsPackageRoot, runAgent, shouldUseMock } from "../runner.js";
+import { isHandoffRunInProgress } from "./handoff-run-coordinator.js";
 import { loadLaneState, saveLaneState } from "./lane-state.js";
 import type { AgentHandoff } from "../handoffs/types.js";
 import type { AgentId } from "../types.js";
@@ -83,10 +84,15 @@ export async function implementLaneTick(options?: {
   mock?: boolean;
   dryRun?: boolean;
   benchmarksRoot?: string;
+  /** Run-all (handoff): execute even when lane toggle is off. */
+  force?: boolean;
 }): Promise<ImplementLaneTickResult> {
   const laneState = loadLaneState();
-  if (!laneState.implement_lane_enabled) {
+  if (!options?.force && !laneState.implement_lane_enabled) {
     return { skipped: true, skip_reason: "implement lane disabled" };
+  }
+  if (!options?.force && isHandoffRunInProgress()) {
+    return { skipped: true, skip_reason: "handoff run-all in progress" };
   }
 
   const target = await pickImplementLaneTarget();

@@ -3,6 +3,7 @@
 import { agentLog } from "../agent-log.js";
 import { withGlobalSdkSessionLock } from "../backends/sdk-session-lock.js";
 import { loadState } from "../control-plane/state.js";
+import { isHandoffRunInProgress } from "../lanes/handoff-run-coordinator.js";
 import { AGENT_REGISTRY } from "../agents/registry.js";
 import { resolveSpawnWorkflowRepo } from "../handoffs/resolve-spawn-workflow-repo.js";
 import { loadResearchGoals, resolveGoalAgent } from "../research-goals/load-goals.js";
@@ -58,6 +59,9 @@ export async function agentWorkerTick(
   const state = loadState();
   if ((state.stopped_agents ?? []).includes(agentId)) {
     return { skipped: true, skip_reason: "agent stopped" };
+  }
+  if (isHandoffRunInProgress()) {
+    return { skipped: true, skip_reason: "handoff run-all in progress" };
   }
 
   const mock = options?.mock ?? shouldUseMock(false);
