@@ -1,7 +1,12 @@
 /** Continuous per-agent ticks — parallel loops; SDK slots via LI_SDK_MAX_CONCURRENT. */
 
 import { agentLog } from "../agent-log.js";
-import { buildAgentWorkQueue, pickNextWorkForAgent } from "../control-plane/agent-work-queue.js";
+import {
+  buildAgentWorkQueue,
+  peekAgentWorkQueueSnapshot,
+  pickNextWorkForAgent,
+  scheduleAgentWorkQueueRefresh,
+} from "../control-plane/agent-work-queue.js";
 import { loadState } from "../control-plane/state.js";
 import { asyncWorkerAgentIds } from "../lanes/lane-agent-ids.js";
 import { resolveSpawnWorkflowRepo } from "../handoffs/resolve-spawn-workflow-repo.js";
@@ -43,7 +48,13 @@ export async function agentWorkerTick(
     return { skipped: true, skip_reason: "agent stopped" };
   }
 
-  const queue = await buildAgentWorkQueue(state, { light: true });
+  const lightOpts = { light: true as const };
+  let queue = peekAgentWorkQueueSnapshot(state, lightOpts);
+  if (!queue) {
+    queue = await buildAgentWorkQueue(state, lightOpts);
+  } else {
+    scheduleAgentWorkQueueRefresh(state, lightOpts);
+  }
   const next = pickNextWorkForAgent(agentId, queue);
   if (!next) {
     return { skipped: true, skip_reason: "no queued work for this agent" };

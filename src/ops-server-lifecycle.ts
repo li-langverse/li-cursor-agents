@@ -41,18 +41,5 @@ export function installOpsProcessGuards(server: Server): void {
 
 export function startOpsBackgroundServices(getState: () => ControlPlaneState): void {
   startAgentWorkQueueWarmer(getState);
-  const warmMs = Number(process.env.LI_QUEUE_WARM_MS ?? 25_000);
-  const tick = () => {
-    try {
-      scheduleAgentWorkQueueRefresh(getState(), { light: true });
-    } catch (err) {
-      agentLog(
-        "dashboard",
-        "warn",
-        `queue warm tick: ${err instanceof Error ? err.message : String(err)}`,
-      );
-    }
-  };
-  setTimeout(tick, 2_000).unref();
-  setInterval(tick, warmMs).unref();
+  setTimeout(() => scheduleAgentWorkQueueRefresh(getState(), { light: true }), 2_000).unref();
 }

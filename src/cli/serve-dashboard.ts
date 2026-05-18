@@ -15,4 +15,7 @@ function parsePort(argv: string[]): number {
   return port;
 }
 
-startOpsServer(parsePort(process.argv.slice(2)));
+const server = startOpsServer(parsePort(process.argv.slice(2)));
+server.on("error", (err) => {
+  console.error("[dashboard] HTTP server error:", err.message);
+});

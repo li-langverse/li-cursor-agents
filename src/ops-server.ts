@@ -48,6 +48,10 @@ import { scanSwarmHealth } from "./observer/swarm-health.js";
 import { buildSwarmStatistics } from "./control-plane/swarm-statistics.js";
 import { defaultStatsRunLimit, parseStatsTimeRange } from "./control-plane/stats-time-range.js";
 import { agentLog } from "./agent-log.js";
+import {
+  installOpsProcessGuards,
+  startOpsBackgroundServices,
+} from "./ops-server-lifecycle.js";
 import { hydrateStateFromDb, loadState, loadStateForApi } from "./control-plane/state.js";
 import { assertStoreReady, configuredStore, dataStoreLabel, dbEnabled } from "./db/client.js";
 import type { ControlPlaneReport, ControlPlaneState } from "./control-plane/types.js";
@@ -90,6 +94,7 @@ export function defaultOpsPort(): number {
 
 let statisticsCache: { at: number; stats: SwarmStatistics; key: string } | null = null;
 let reportCache: { at: number; body: unknown } | null = null;
+let interventionsCache: { at: number; body: unknown } | null = null;
 const REPORT_CACHE_MS = Number(process.env.LI_REPORT_CACHE_MS ?? 20_000);
 const STATS_CACHE_MS = Number(process.env.LI_STATISTICS_CACHE_MS ?? 45_000);
 
@@ -178,11 +183,14 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
     }
   });
 
+  installOpsProcessGuards(server);
+
   server.listen(port, "127.0.0.1", () => {
     const addr = server.address();
     const p = typeof addr === "object" && addr ? addr.port : port;
     const backend = agentBackendLabel();
     const keyOk = Boolean(resolveCursorApiKey());
+    startOpsBackgroundServices(currentApiState);
     agentLog("dashboard", "info", `Agent dashboard: http://127.0.0.1:${p}/`);
     agentLog(
       "dashboard",
@@ -214,13 +222,19 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
   return server;
 }
 
-async function liveReportPayload(): Promise<ControlPlaneReport | { error: string }> {
-  const report = await loadLiveReportAsync();
+async function liveReportPayload(options?: {
+  persist?: boolean;
+}): Promise<ControlPlaneReport | { error: string }> {
+  const report = await loadLiveReportAsync({ persist: options?.persist ?? false });
   return report ?? { error: "no report — run supervisor or start swarm" };
 }
 
+function currentApiState(): ReturnType<typeof loadState> {
+  return isSupervisorLoopRunning() ? loadStateForApi() : loadState();
+}
+
 async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const state = isSupervisorLoopRunning() ? loadStateForApi() : loadState();
+  const state = currentApiState();
   const store = dataStoreLabel();
   const runtime = runtimeSnapshot(state);
 
@@ -370,7 +384,16 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
   }
 
   if (url.pathname === "/api/interventions") {
+    const now = Date.now();
+    if (interventionsCache && now - interventionsCache.at < REPORT_CACHE_MS) {
+      json(res, 200, interventionsCache.body);
+      void loadLiveInterventionsPayload().then((payload) => {
+        interventionsCache = { at: Date.now(), body: payload };
+      });
+      return;
+    }
     const payload = await loadLiveInterventionsPayload();
+    interventionsCache = { at: now, body: payload };
     json(res, 200, payload);
     return;
   }
@@ -380,9 +403,12 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     const now = Date.now();
     if (!refresh && reportCache && now - reportCache.at < REPORT_CACHE_MS) {
       json(res, 200, reportCache.body);
+      void liveReportPayload().then((report) => {
+        reportCache = { at: Date.now(), body: report };
+      });
       return;
     }
-    const report = await liveReportPayload();
+    const report = await liveReportPayload({ persist: refresh });
     reportCache = { at: now, body: report };
     json(res, 200, report);
     return;
@@ -395,11 +421,13 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       return;
     }
     const tick = await maintenanceLaneTick({ benchmarksRoot: root, skipSlowPreflight: true });
+    const report = await liveReportPayload({ persist: true });
+    reportCache = { at: Date.now(), body: report };
     json(res, 200, {
       ok: tick.ok,
       briefing_path: tick.briefing_path,
       skip_reason: tick.skip_reason,
-      report: await liveReportPayload(),
+      report,
       swarm: loadSwarmBriefingSnapshot(null),
     });
     return;
@@ -444,9 +472,31 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
   }
 
   if (url.pathname === "/api/queue") {
-    const { buildAgentWorkQueue } = await import("./control-plane/agent-work-queue.js");
+    const {
+      buildAgentWorkQueue,
+      peekAgentWorkQueueSnapshot,
+      scheduleAgentWorkQueueRefresh,
+    } = await import("./control-plane/agent-work-queue.js");
     const light = url.searchParams.get("full") !== "1";
-    const snapshot = await buildAgentWorkQueue(state, { light });
+    const wait = url.searchParams.get("wait") === "1";
+    const options = { light };
+    const cached = peekAgentWorkQueueSnapshot(state, options);
+    if (cached && !wait) {
+      scheduleAgentWorkQueueRefresh(state, options);
+      json(res, 200, {
+        queue: cached.items,
+        by_agent: cached.by_agent,
+        generated_at: cached.generated_at,
+        swarm: cached.swarm,
+        briefing_hash: state.last_briefing_hash,
+        completed: state.recent_tasks,
+        stopped_agents: state.stopped_agents ?? [],
+        active_runs: runtime.active_runs,
+        queue_stale: true,
+      });
+      return;
+    }
+    const snapshot = cached ?? (await buildAgentWorkQueue(state, options));
     json(res, 200, {
       queue: snapshot.items,
       by_agent: snapshot.by_agent,

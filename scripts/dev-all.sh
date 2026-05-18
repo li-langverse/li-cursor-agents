@@ -11,12 +11,15 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-# Full stack by default (override in .env if needed)
-export LI_AUTO_START_ASYNC_SWARM="${LI_AUTO_START_ASYNC_SWARM:-1}"
+# Dashboard-first defaults (override in .env). Workers: LI_AUTO_START_ASYNC_SWARM=1
+export LI_AUTO_START_ASYNC_SWARM="${LI_AUTO_START_ASYNC_SWARM:-0}"
 export LI_AUTO_START_SUPERVISOR="${LI_AUTO_START_SUPERVISOR:-0}"
-# Let dev:all finish API probes before maintenance + worker queue builds contend for the event loop.
-export LI_MAINTENANCE_STARTUP_DELAY_MS="${LI_MAINTENANCE_STARTUP_DELAY_MS:-15000}"
-export LI_WORKER_STARTUP_DEFER_MS="${LI_WORKER_STARTUP_DEFER_MS:-20000}"
+export LI_MAINTENANCE_STARTUP_DELAY_MS="${LI_MAINTENANCE_STARTUP_DELAY_MS:-30000}"
+export LI_WORKER_STARTUP_DEFER_MS="${LI_WORKER_STARTUP_DEFER_MS:-45000}"
+export LI_QUEUE_CACHE_MS="${LI_QUEUE_CACHE_MS:-20000}"
+export LI_QUEUE_WARM_MS="${LI_QUEUE_WARM_MS:-25000}"
+export LI_ASYNC_AGENT_INTERVAL_MS="${LI_ASYNC_AGENT_INTERVAL_MS:-300000}"
+export LI_REPORT_CACHE_MS="${LI_REPORT_CACHE_MS:-30000}"
 
 # shellcheck source=env.defaults.sh
 source "$ROOT/scripts/env.defaults.sh"
@@ -123,7 +126,11 @@ env \
   LI_AUTO_START_SUPERVISOR="${LI_AUTO_START_SUPERVISOR}" \
   LI_MAINTENANCE_STARTUP_DELAY_MS="${LI_MAINTENANCE_STARTUP_DELAY_MS}" \
   LI_WORKER_STARTUP_DEFER_MS="${LI_WORKER_STARTUP_DEFER_MS}" \
-  LI_SDK_MAX_CONCURRENT="${LI_SDK_MAX_CONCURRENT:-4}" \
+  LI_SDK_MAX_CONCURRENT="${LI_SDK_MAX_CONCURRENT:-2}" \
+  LI_QUEUE_CACHE_MS="${LI_QUEUE_CACHE_MS}" \
+  LI_QUEUE_WARM_MS="${LI_QUEUE_WARM_MS}" \
+  LI_ASYNC_AGENT_INTERVAL_MS="${LI_ASYNC_AGENT_INTERVAL_MS}" \
+  LI_REPORT_CACHE_MS="${LI_REPORT_CACHE_MS}" \
   SUPABASE_URL="${SUPABASE_URL:-}" \
   SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-}" \
   CURSOR_API_KEY="${CURSOR_API_KEY:-}" \
@@ -151,10 +158,16 @@ echo ""
 echo "  Dashboard UI:  http://127.0.0.1:${UI_PORT}/  (proxies /api → :${API_PORT})"
 echo "  Control API:   http://127.0.0.1:${API_PORT}/"
 echo "  Store:         ${LI_CONTROL_PLANE_STORE:-$_store}  Supabase: ${SUPABASE_URL:-(disk)}"
-echo "  Async swarm:   running"
+  echo "  Async swarm:   ${LI_AUTO_START_ASYNC_SWARM} (set LI_AUTO_START_ASYNC_SWARM=1 to enable workers)"
 echo "  Ctrl+C stops API + UI"
 echo ""
 
 cd "$ROOT/dashboard-ui"
-npm run dev -- -p "$UI_PORT"
+if ! npm run dev -- -p "$UI_PORT"; then
+  echo "" >&2
+  echo "WARN: Next.js exited — control API still on http://127.0.0.1:${API_PORT}/ (PID ${API_PID})" >&2
+  echo "      Press Ctrl+C to stop the API, or run: kill ${API_PID}" >&2
+  wait "$API_PID" 2>/dev/null || true
+  exit 1
+fi
 stop_api
