@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-17T20:21Z",
+  "generated_at": "2026-05-18T16:56Z",
   "role": "preflight_for_cursor_agents",
   "note": "Intelligence (web, review, gaps) runs in Cursor Automations — not in this file.",
   "preflight_runs": {
@@ -28,7 +28,7 @@
     "org_agent_kit_audit": {
       "command": "python3 scripts/ensure-org-agent-kit.py --local-only",
       "exit_code": 1,
-      "stdout_tail": "wrote /Users/julian/Documents/coding-projects/benchmarks/data/latest/org-agent-kit-audit.json\ncanonical: 1.3.2+130de1d9a8d0e52c\nOK: 0  needing sync: 8\n  - benchmarks: drift\n  - li-cursor-agents: drift\n  - li-local-ci: missing_kit\n  - lic: drift\n  - lip: drift\n  - lis: drift\n  - lit: drift\n  - roadmap: drift\n",
+      "stdout_tail": "wrote /Users/julian/Documents/coding-projects/benchmarks/data/latest/org-agent-kit-audit.json\ncanonical: 1.3.2+130de1d9a8d0e52c\nOK: 0  needing sync: 8\n  - benchmarks: drift\n  - li-cursor-agents: drift\n  - li-local-ci: missing_kit\n  - lic: missing_kit\n  - lip: drift\n  - lis: drift\n  - lit: drift\n  - roadmap: drift\n",
       "stderr_tail": ""
     },
     "explorer": {
@@ -38,7 +38,7 @@
     "merge_plan": {
       "command": "python3 scripts/pr-merge-queue-plan.py",
       "exit_code": 0,
-      "stdout_tail": "wrote /Users/julian/Documents/coding-projects/benchmarks/data/latest/pr-merge-queue-plan.json\n",
+      "stdout_tail": "verlap on `main`; merge #47 first, then merge `origin/main` into #48 (preserve both sides) before merging #48\n  warn: ~100% file overlap on `main`; merge #40 first, then merge `origin/main` into #48 (preserve both sides) before merging #48\n  warn: ~100% file overlap on `main`; merge #32 first, then merge `origin/main` into #34 (preserve both sides) before merging #34\n  warn: benchmarks#34 CONFLICTING with main: rebase before merge\n  warn: benchmarks#32 CONFLICTING with main: rebase before merge\n",
       "stderr_tail": ""
     },
     "pr_program": {
@@ -60,7 +60,7 @@
     "workspace_dirty_sweep": {
       "command": "python3 scripts/workspace-dirty-sweep.py",
       "exit_code": 0,
-      "stdout_tail": "wrote /Users/julian/Documents/coding-projects/benchmarks/data/latest/workspace-dirty-sweep.json dirty_count=3\n",
+      "stdout_tail": "wrote /Users/julian/Documents/coding-projects/benchmarks/data/latest/workspace-dirty-sweep.json dirty_count=2\n",
       "stderr_tail": ""
     },
     "agent_deliverable_gate": {
@@ -69,7 +69,7 @@
     }
   },
   "issue_triage": {
-    "generated_at": "2026-05-17T20:18Z",
+    "generated_at": "2026-05-18T16:53Z",
     "vision_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/vision-and-roadmap.md",
     "skill": "plan-feature-from-issue (see .cursor/skills/)",
     "summary": {
@@ -326,81 +326,188 @@
     ]
   },
   "plan_completion_audit": {
-    "generated_at": "2026-05-17T19:49Z",
+    "generated_at": "2026-05-18T16:17Z",
     "roots": {
-      "lic": "/Users/julian/Documents/coding-projects/lic",
+      "lic": "/Users/julian/Documents/coding-projects/li",
       "benchmarks": "/Users/julian/Documents/coding-projects/benchmarks",
       "roadmap": "/Users/julian/Documents/coding-projects/roadmap"
     },
     "summary": {
-      "open_tracker_items": 1,
-      "open_plan_checkboxes": 0,
+      "open_tracker_items": 0,
+      "open_plan_checkboxes": 67,
       "provability_partial": 0,
       "provability_missing": 0,
-      "catalog_gaps": 21,
-      "total_findings": 22
+      "catalog_gaps": 9,
+      "total_findings": 76
     },
-    "master_plan_open": [
+    "master_plan_open": [],
+    "plan_files_open": [
       {
-        "source": "master_plan",
-        "item": "missing file: /Users/julian/Documents/coding-projects/lic/docs/superpowers/plans/2026-05-14-li-master-plan.md"
+        "source": "lic:plans/2026-05-14-benchmarks-and-simulations.md",
+        "item": "Shared `params.toml` checked into all impl folders"
+      },
+      {
+        "source": "lic:plans/2026-05-14-benchmarks-and-simulations.md",
+        "item": "Reference energy/trajectory hash documented in `README.md`"
+      },
+      {
+        "source": "lic:plans/2026-05-14-benchmarks-and-simulations.md",
+        "item": "C++ reference passes verify.py"
+      },
+      {
+        "source": "lic:plans/2026-05-14-benchmarks-and-simulations.md",
+        "item": "Li reference passes `verify.py` and **`lic build`**"
+      },
+      {
+        "source": "lic:plans/2026-05-14-benchmarks-and-simulations.md",
+        "item": "Timing runs separated from verification runs"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-00-bootstrap.md",
+        "item": "`cmake --build build` succeeds"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-00-bootstrap.md",
+        "item": "`./build/compiler/lic/lic smoke-llvm` succeeds"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-00-bootstrap.md",
+        "item": "Master plan Phase 0 checkbox checked"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "`enum Type { Int, Uint, WrappingInt, Float64, Bool, Unit, String, Array { len: u64, elem: Box<Type> }, Option(Box<Type>), Enum(EnumId), Object(ObjectId), Proc { .. } }`"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "`TypeCtx::define_type`, `lookup`, `define_proc`"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "`check_module(&Module) -> Result<TypedModule, Vec<TypeError>>`"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "Return typed wrapper nodes or side table `node_id → Type`"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "Track `Owned | BorrowImm | BorrowMut` per local"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "Reject: use after move, two `mut` borrows, mut while imm borrow live"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "v1: no references in struct fields yet"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "Tests assert compile error messages mention dimension / type mismatch"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "`lic check file.li` — parse + typecheck, exit 1 on errors"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "`fib.li` typechecks"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "All `bad_*.li` fail with expected errors"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "Borrow double-mut test fails cleanly"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "`lower_module(TypedModule) -> MirModule`"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "One basic block per stmt chain; if/while create CFG edges"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "Map MIR types to LLVM types (`array` → struct or stack array)"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "Emit `main` calling user `main` if present"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "Debug: `li_bounds_fail` call on dynamic index"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "`lic build input.li -o out [--release]`"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "Pipeline: parse → check → mir → llvm bitcode → `clang -o out`"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "Link `runtime/li_rt.c`"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "Deferred until Phase 4 provides `echo` — for Phase 3 use:"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "`lic build examples/hello.li -o hello && ./hello; echo $?` → 0"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "insta snapshot of LLVM IR for `return 0` program"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "Native binary from minimal proc"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "`-O2` flag forwarded to clang in `--release`"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "Bounds check calls present in IR for dynamic index"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-04-runtime-stdlib.md",
+        "item": "`echo` accepts `string` or `int` (format in rt)"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-04-runtime-stdlib.md",
+        "item": "`li_rt_print_string`, `li_rt_print_int`"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-04-runtime-stdlib.md",
+        "item": "NUL-terminated `*const i8` or `{ ptr, len }` — pick `{ ptr, len }` struct `StringLit` as immutable static"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-04-runtime-stdlib.md",
+        "item": "v1: no heap strings; concatenation out of scope"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-04-runtime-stdlib.md",
+        "item": "`array[N,T]` as LLVM array type on stack"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-04-runtime-stdlib.md",
+        "item": "Literal index: compile-time OOB error (phase 2) + no runtime check"
       }
     ],
-    "plan_files_open": [],
     "provability_gaps": {
-      "missing_file": "/Users/julian/Documents/coding-projects/lic/docs/verification/provability-gaps.md",
       "partial": [],
       "missing": []
     },
     "catalog_gaps": [
-      {
-        "source": "benchmarks:catalog.toml",
-        "item": "catalog id=simd_dot path missing under LIC_ROOT: benchmarks/tier1_micro/simd_dot"
-      },
-      {
-        "source": "benchmarks:catalog.toml",
-        "item": "catalog id=matmul_naive path missing under LIC_ROOT: benchmarks/tier1_micro/matmul_naive"
-      },
-      {
-        "source": "benchmarks:catalog.toml",
-        "item": "catalog id=matmul_blocked path missing under LIC_ROOT: benchmarks/tier1_micro/matmul_blocked"
-      },
-      {
-        "source": "benchmarks:catalog.toml",
-        "item": "catalog id=reduce_sum path missing under LIC_ROOT: benchmarks/tier1_micro/reduce_sum"
-      },
-      {
-        "source": "benchmarks:catalog.toml",
-        "item": "catalog id=horner_pure_li path missing under LIC_ROOT: benchmarks/tier1_micro/horner_pure_li"
-      },
-      {
-        "source": "benchmarks:catalog.toml",
-        "item": "catalog id=md_lennard_jones path missing under LIC_ROOT: benchmarks/tier2_physics/md_lennard_jones"
-      },
-      {
-        "source": "benchmarks:catalog.toml",
-        "item": "catalog id=three_body path missing under LIC_ROOT: benchmarks/tier2_physics/three_body"
-      },
-      {
-        "source": "benchmarks:catalog.toml",
-        "item": "catalog id=nbody_gravity path missing under LIC_ROOT: benchmarks/tier2_physics/nbody_gravity"
-      },
-      {
-        "source": "benchmarks:catalog.toml",
-        "item": "catalog id=harmonic_oscillator_chain path missing under LIC_ROOT: benchmarks/tier2_physics/harmonic_oscillator_chain"
-      },
-      {
-        "source": "benchmarks:catalog.toml",
-        "item": "catalog id=wave_equation_1d path missing under LIC_ROOT: benchmarks/tier2_physics/wave_equation_1d"
-      },
-      {
-        "source": "benchmarks:catalog.toml",
-        "item": "catalog id=heat_equation_2d path missing under LIC_ROOT: benchmarks/tier2_physics/heat_equation_2d"
-      },
-      {
-        "source": "benchmarks:catalog.toml",
-        "item": "catalog id=double_pendulum path missing under LIC_ROOT: benchmarks/tier2_physics/double_pendulum"
-      },
       {
         "source": "benchmarks:catalog.toml",
         "item": "catalog id=advection_diffusion_2d path missing under LIC_ROOT: benchmarks/tier2_physics/advection_diffusion_2d"
@@ -441,26 +548,9 @@
     "implementation_signals": [],
     "recommended_actions": [
       {
-        "priority": "P1",
-        "action": "Close or update master plan phase tracker rows",
-        "count": 1
-      },
-      {
         "priority": "P2",
         "action": "Implement lic benchmarks for catalog rows or remove catalog entry",
         "benchmarks": [
-          "catalog id=simd_dot path missing under LIC_ROOT: benchmarks/tier1_micro/simd_dot",
-          "catalog id=matmul_naive path missing under LIC_ROOT: benchmarks/tier1_micro/matmul_naive",
-          "catalog id=matmul_blocked path missing under LIC_ROOT: benchmarks/tier1_micro/matmul_blocked",
-          "catalog id=reduce_sum path missing under LIC_ROOT: benchmarks/tier1_micro/reduce_sum",
-          "catalog id=horner_pure_li path missing under LIC_ROOT: benchmarks/tier1_micro/horner_pure_li",
-          "catalog id=md_lennard_jones path missing under LIC_ROOT: benchmarks/tier2_physics/md_lennard_jones",
-          "catalog id=three_body path missing under LIC_ROOT: benchmarks/tier2_physics/three_body",
-          "catalog id=nbody_gravity path missing under LIC_ROOT: benchmarks/tier2_physics/nbody_gravity",
-          "catalog id=harmonic_oscillator_chain path missing under LIC_ROOT: benchmarks/tier2_physics/harmonic_oscillator_chain",
-          "catalog id=wave_equation_1d path missing under LIC_ROOT: benchmarks/tier2_physics/wave_equation_1d",
-          "catalog id=heat_equation_2d path missing under LIC_ROOT: benchmarks/tier2_physics/heat_equation_2d",
-          "catalog id=double_pendulum path missing under LIC_ROOT: benchmarks/tier2_physics/double_pendulum",
           "catalog id=advection_diffusion_2d path missing under LIC_ROOT: benchmarks/tier2_physics/advection_diffusion_2d",
           "catalog id=wave_equation_2d path missing under LIC_ROOT: benchmarks/tier2_physics/wave_equation_2d",
           "catalog id=sph_dam_break_2d path missing under LIC_ROOT: benchmarks/tier2_physics/sph_dam_break_2d",
@@ -475,7 +565,7 @@
     ]
   },
   "ecosystem_audit": {
-    "generated_at": "2026-05-17T20:18Z",
+    "generated_at": "2026-05-18T16:53Z",
     "vision": {
       "master_plan": "https://github.com/li-langverse/lic/blob/main/docs/superpowers/plans/2026-05-14-li-master-plan.md",
       "benchmark_goal": "Li ≤1.2× cpp (tier-1/2); beat HPC SOTA everywhere — PH-5b, PH-7e pure-Li codegen",
@@ -483,9 +573,9 @@
       "merge_order": "P0 package CI PRs → benchmarks#1 → lic dev→main"
     },
     "metrics": {
-      "open_prs": 6,
-      "failed_prs": 4,
-      "ready_prs": 0,
+      "open_prs": 20,
+      "failed_prs": 9,
+      "ready_prs": 6,
       "repos_missing_ci_main": 1,
       "repos_without_live_pages": 10
     },
@@ -495,6 +585,56 @@
         "number": 6,
         "title": "feat(benchmarks): expand tier-2 gaming-physics suite (5 kernels)",
         "url": "https://github.com/li-langverse/li-language/pull/6",
+        "base": "main",
+        "ci": "fail",
+        "draft": false,
+        "ready": false
+      },
+      {
+        "repo": "lic",
+        "number": 48,
+        "title": "chore(lic): Benchmark improver automated update",
+        "url": "https://github.com/li-langverse/lic/pull/48",
+        "base": "main",
+        "ci": "fail",
+        "draft": false,
+        "ready": false
+      },
+      {
+        "repo": "lic",
+        "number": 47,
+        "title": "fix(lexer): '+' token fixes horner_pure_li pure_li red row (~72× → ~0.3×)",
+        "url": "https://github.com/li-langverse/lic/pull/47",
+        "base": "main",
+        "ci": "fail",
+        "draft": false,
+        "ready": false
+      },
+      {
+        "repo": "lic",
+        "number": 46,
+        "title": "chore(security): downstream security-gate workflow template",
+        "url": "https://github.com/li-langverse/lic/pull/46",
+        "base": "main",
+        "ci": "fail",
+        "draft": false,
+        "ready": false
+      },
+      {
+        "repo": "lic",
+        "number": 45,
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "url": "https://github.com/li-langverse/lic/pull/45",
+        "base": "main",
+        "ci": "fail",
+        "draft": false,
+        "ready": false
+      },
+      {
+        "repo": "lic",
+        "number": 43,
+        "title": "docs(numerics): red/near-limit SOTA map and bench repro (numerics_researcher)",
+        "url": "https://github.com/li-langverse/lic/pull/43",
         "base": "main",
         "ci": "fail",
         "draft": false,
@@ -531,7 +671,68 @@
         "ready": false
       }
     ],
-    "ready_prs": [],
+    "ready_prs": [
+      {
+        "repo": "benchmarks",
+        "number": 33,
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "url": "https://github.com/li-langverse/benchmarks/pull/33",
+        "base": "main",
+        "ci": "pass",
+        "draft": false,
+        "ready": true
+      },
+      {
+        "repo": "lip",
+        "number": 5,
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "url": "https://github.com/li-langverse/lip/pull/5",
+        "base": "main",
+        "ci": "pass",
+        "draft": false,
+        "ready": true
+      },
+      {
+        "repo": "lis",
+        "number": 2,
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "url": "https://github.com/li-langverse/lis/pull/2",
+        "base": "main",
+        "ci": "pass",
+        "draft": false,
+        "ready": true
+      },
+      {
+        "repo": "lit",
+        "number": 5,
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "url": "https://github.com/li-langverse/lit/pull/5",
+        "base": "main",
+        "ci": "pass",
+        "draft": false,
+        "ready": true
+      },
+      {
+        "repo": "roadmap",
+        "number": 11,
+        "title": "chore(roadmap): workspace sweep fallback",
+        "url": "https://github.com/li-langverse/roadmap/pull/11",
+        "base": "main",
+        "ci": "pass",
+        "draft": false,
+        "ready": true
+      },
+      {
+        "repo": "roadmap",
+        "number": 10,
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "url": "https://github.com/li-langverse/roadmap/pull/10",
+        "base": "main",
+        "ci": "pass",
+        "draft": false,
+        "ready": true
+      }
+    ],
     "missing_ci_on_main": [
       "li-local-ci"
     ],
@@ -593,81 +794,188 @@
       ]
     },
     "plan_completion": {
-      "generated_at": "2026-05-17T19:49Z",
+      "generated_at": "2026-05-18T16:17Z",
       "roots": {
-        "lic": "/Users/julian/Documents/coding-projects/lic",
+        "lic": "/Users/julian/Documents/coding-projects/li",
         "benchmarks": "/Users/julian/Documents/coding-projects/benchmarks",
         "roadmap": "/Users/julian/Documents/coding-projects/roadmap"
       },
       "summary": {
-        "open_tracker_items": 1,
-        "open_plan_checkboxes": 0,
+        "open_tracker_items": 0,
+        "open_plan_checkboxes": 67,
         "provability_partial": 0,
         "provability_missing": 0,
-        "catalog_gaps": 21,
-        "total_findings": 22
+        "catalog_gaps": 9,
+        "total_findings": 76
       },
-      "master_plan_open": [
+      "master_plan_open": [],
+      "plan_files_open": [
         {
-          "source": "master_plan",
-          "item": "missing file: /Users/julian/Documents/coding-projects/lic/docs/superpowers/plans/2026-05-14-li-master-plan.md"
+          "source": "lic:plans/2026-05-14-benchmarks-and-simulations.md",
+          "item": "Shared `params.toml` checked into all impl folders"
+        },
+        {
+          "source": "lic:plans/2026-05-14-benchmarks-and-simulations.md",
+          "item": "Reference energy/trajectory hash documented in `README.md`"
+        },
+        {
+          "source": "lic:plans/2026-05-14-benchmarks-and-simulations.md",
+          "item": "C++ reference passes verify.py"
+        },
+        {
+          "source": "lic:plans/2026-05-14-benchmarks-and-simulations.md",
+          "item": "Li reference passes `verify.py` and **`lic build`**"
+        },
+        {
+          "source": "lic:plans/2026-05-14-benchmarks-and-simulations.md",
+          "item": "Timing runs separated from verification runs"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-00-bootstrap.md",
+          "item": "`cmake --build build` succeeds"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-00-bootstrap.md",
+          "item": "`./build/compiler/lic/lic smoke-llvm` succeeds"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-00-bootstrap.md",
+          "item": "Master plan Phase 0 checkbox checked"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "`enum Type { Int, Uint, WrappingInt, Float64, Bool, Unit, String, Array { len: u64, elem: Box<Type> }, Option(Box<Type>), Enum(EnumId), Object(ObjectId), Proc { .. } }`"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "`TypeCtx::define_type`, `lookup`, `define_proc`"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "`check_module(&Module) -> Result<TypedModule, Vec<TypeError>>`"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "Return typed wrapper nodes or side table `node_id → Type`"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "Track `Owned | BorrowImm | BorrowMut` per local"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "Reject: use after move, two `mut` borrows, mut while imm borrow live"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "v1: no references in struct fields yet"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "Tests assert compile error messages mention dimension / type mismatch"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "`lic check file.li` — parse + typecheck, exit 1 on errors"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "`fib.li` typechecks"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "All `bad_*.li` fail with expected errors"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "Borrow double-mut test fails cleanly"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "`lower_module(TypedModule) -> MirModule`"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "One basic block per stmt chain; if/while create CFG edges"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "Map MIR types to LLVM types (`array` → struct or stack array)"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "Emit `main` calling user `main` if present"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "Debug: `li_bounds_fail` call on dynamic index"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "`lic build input.li -o out [--release]`"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "Pipeline: parse → check → mir → llvm bitcode → `clang -o out`"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "Link `runtime/li_rt.c`"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "Deferred until Phase 4 provides `echo` — for Phase 3 use:"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "`lic build examples/hello.li -o hello && ./hello; echo $?` → 0"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "insta snapshot of LLVM IR for `return 0` program"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "Native binary from minimal proc"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "`-O2` flag forwarded to clang in `--release`"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "Bounds check calls present in IR for dynamic index"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-04-runtime-stdlib.md",
+          "item": "`echo` accepts `string` or `int` (format in rt)"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-04-runtime-stdlib.md",
+          "item": "`li_rt_print_string`, `li_rt_print_int`"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-04-runtime-stdlib.md",
+          "item": "NUL-terminated `*const i8` or `{ ptr, len }` — pick `{ ptr, len }` struct `StringLit` as immutable static"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-04-runtime-stdlib.md",
+          "item": "v1: no heap strings; concatenation out of scope"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-04-runtime-stdlib.md",
+          "item": "`array[N,T]` as LLVM array type on stack"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-04-runtime-stdlib.md",
+          "item": "Literal index: compile-time OOB error (phase 2) + no runtime check"
         }
       ],
-      "plan_files_open": [],
       "provability_gaps": {
-        "missing_file": "/Users/julian/Documents/coding-projects/lic/docs/verification/provability-gaps.md",
         "partial": [],
         "missing": []
       },
       "catalog_gaps": [
-        {
-          "source": "benchmarks:catalog.toml",
-          "item": "catalog id=simd_dot path missing under LIC_ROOT: benchmarks/tier1_micro/simd_dot"
-        },
-        {
-          "source": "benchmarks:catalog.toml",
-          "item": "catalog id=matmul_naive path missing under LIC_ROOT: benchmarks/tier1_micro/matmul_naive"
-        },
-        {
-          "source": "benchmarks:catalog.toml",
-          "item": "catalog id=matmul_blocked path missing under LIC_ROOT: benchmarks/tier1_micro/matmul_blocked"
-        },
-        {
-          "source": "benchmarks:catalog.toml",
-          "item": "catalog id=reduce_sum path missing under LIC_ROOT: benchmarks/tier1_micro/reduce_sum"
-        },
-        {
-          "source": "benchmarks:catalog.toml",
-          "item": "catalog id=horner_pure_li path missing under LIC_ROOT: benchmarks/tier1_micro/horner_pure_li"
-        },
-        {
-          "source": "benchmarks:catalog.toml",
-          "item": "catalog id=md_lennard_jones path missing under LIC_ROOT: benchmarks/tier2_physics/md_lennard_jones"
-        },
-        {
-          "source": "benchmarks:catalog.toml",
-          "item": "catalog id=three_body path missing under LIC_ROOT: benchmarks/tier2_physics/three_body"
-        },
-        {
-          "source": "benchmarks:catalog.toml",
-          "item": "catalog id=nbody_gravity path missing under LIC_ROOT: benchmarks/tier2_physics/nbody_gravity"
-        },
-        {
-          "source": "benchmarks:catalog.toml",
-          "item": "catalog id=harmonic_oscillator_chain path missing under LIC_ROOT: benchmarks/tier2_physics/harmonic_oscillator_chain"
-        },
-        {
-          "source": "benchmarks:catalog.toml",
-          "item": "catalog id=wave_equation_1d path missing under LIC_ROOT: benchmarks/tier2_physics/wave_equation_1d"
-        },
-        {
-          "source": "benchmarks:catalog.toml",
-          "item": "catalog id=heat_equation_2d path missing under LIC_ROOT: benchmarks/tier2_physics/heat_equation_2d"
-        },
-        {
-          "source": "benchmarks:catalog.toml",
-          "item": "catalog id=double_pendulum path missing under LIC_ROOT: benchmarks/tier2_physics/double_pendulum"
-        },
         {
           "source": "benchmarks:catalog.toml",
           "item": "catalog id=advection_diffusion_2d path missing under LIC_ROOT: benchmarks/tier2_physics/advection_diffusion_2d"
@@ -708,26 +1016,9 @@
       "implementation_signals": [],
       "recommended_actions": [
         {
-          "priority": "P1",
-          "action": "Close or update master plan phase tracker rows",
-          "count": 1
-        },
-        {
           "priority": "P2",
           "action": "Implement lic benchmarks for catalog rows or remove catalog entry",
           "benchmarks": [
-            "catalog id=simd_dot path missing under LIC_ROOT: benchmarks/tier1_micro/simd_dot",
-            "catalog id=matmul_naive path missing under LIC_ROOT: benchmarks/tier1_micro/matmul_naive",
-            "catalog id=matmul_blocked path missing under LIC_ROOT: benchmarks/tier1_micro/matmul_blocked",
-            "catalog id=reduce_sum path missing under LIC_ROOT: benchmarks/tier1_micro/reduce_sum",
-            "catalog id=horner_pure_li path missing under LIC_ROOT: benchmarks/tier1_micro/horner_pure_li",
-            "catalog id=md_lennard_jones path missing under LIC_ROOT: benchmarks/tier2_physics/md_lennard_jones",
-            "catalog id=three_body path missing under LIC_ROOT: benchmarks/tier2_physics/three_body",
-            "catalog id=nbody_gravity path missing under LIC_ROOT: benchmarks/tier2_physics/nbody_gravity",
-            "catalog id=harmonic_oscillator_chain path missing under LIC_ROOT: benchmarks/tier2_physics/harmonic_oscillator_chain",
-            "catalog id=wave_equation_1d path missing under LIC_ROOT: benchmarks/tier2_physics/wave_equation_1d",
-            "catalog id=heat_equation_2d path missing under LIC_ROOT: benchmarks/tier2_physics/heat_equation_2d",
-            "catalog id=double_pendulum path missing under LIC_ROOT: benchmarks/tier2_physics/double_pendulum",
             "catalog id=advection_diffusion_2d path missing under LIC_ROOT: benchmarks/tier2_physics/advection_diffusion_2d",
             "catalog id=wave_equation_2d path missing under LIC_ROOT: benchmarks/tier2_physics/wave_equation_2d",
             "catalog id=sph_dam_break_2d path missing under LIC_ROOT: benchmarks/tier2_physics/sph_dam_break_2d",
@@ -747,6 +1038,11 @@
         "action": "Fix failing PR CI before new feature work",
         "prs": [
           "li-language#6",
+          "lic#48",
+          "lic#47",
+          "lic#46",
+          "lic#45",
+          "lic#43",
           "lic#40",
           "lic#37",
           "lic#8"
@@ -776,15 +1072,20 @@
       {
         "priority": "P1",
         "action": "Plan completion debt — run plan-completion-audit automation",
-        "total_findings": 22,
-        "master_open": 1
+        "total_findings": 76,
+        "master_open": 0
+      },
+      {
+        "priority": "P2",
+        "action": "Human review merge queue (do not self-merge)",
+        "count": 6
       }
     ]
   },
   "ecosystem_explorer": {
-    "generated_at": "2026-05-17T19:50Z",
-    "lic_root": "/Users/julian/Documents/coding-projects/benchmarks/lic",
-    "lic_present": false,
+    "generated_at": "2026-05-18T16:18Z",
+    "lic_root": "/Users/julian/Documents/coding-projects/li",
+    "lic_present": true,
     "std_modules_on_disk": [],
     "missing_std_modules": [
       {
@@ -1126,15 +1427,31 @@
       "entries": [
         {
           "path": "scripts/expected-agent-kit-version",
-          "version": "1.1.0+5f476d66cf8d1b57"
+          "version": "1.1.0+5f476d66cf8d1b57",
+          "repo_hint": "benchmarks"
         },
         {
-          "path": "/Users/julian/Documents/coding-projects/li/scripts/expected-agent-kit-version",
-          "version": "1.1.0+5f476d66cf8d1b57"
+          "path": "/Users/julian/Documents/coding-projects/roadmap/scripts/expected-agent-kit-version",
+          "version": "1.3.0+manual",
+          "repo_hint": "roadmap"
         }
       ],
-      "drift": false,
-      "canonical_hint": "run ensure-org-agent-kit.py"
+      "drift": true,
+      "canonical_stamp": "1.3.2+130de1d9a8d0e52c",
+      "repos_behind_canonical": [
+        {
+          "path": "scripts/expected-agent-kit-version",
+          "version": "1.1.0+5f476d66cf8d1b57",
+          "repo_hint": "benchmarks"
+        },
+        {
+          "path": "/Users/julian/Documents/coding-projects/roadmap/scripts/expected-agent-kit-version",
+          "version": "1.3.0+manual",
+          "repo_hint": "roadmap"
+        }
+      ],
+      "canonical_hint": "run ensure-org-agent-kit.py",
+      "downstream_agent": "agent_kit_maintainer"
     },
     "web_search_queries": [
       {
@@ -1202,13 +1519,29 @@
       },
       {
         "priority": "P2",
+        "action": "Sync agent-kit versions across repos",
+        "versions": [
+          {
+            "path": "scripts/expected-agent-kit-version",
+            "version": "1.1.0+5f476d66cf8d1b57",
+            "repo_hint": "benchmarks"
+          },
+          {
+            "path": "/Users/julian/Documents/coding-projects/roadmap/scripts/expected-agent-kit-version",
+            "version": "1.3.0+manual",
+            "repo_hint": "roadmap"
+          }
+        ]
+      },
+      {
+        "priority": "P2",
         "action": "Run web/Reddit searches (see web_search_queries); file issues with label explorer-finding",
         "note": "Use Cursor web search or manual review — script does not scrape Reddit"
       }
     ]
   },
   "org_ci_audit": {
-    "generated_at": "2026-05-17T20:19Z",
+    "generated_at": "2026-05-18T16:53Z",
     "org": "li-langverse",
     "required_workflow": "ci.yml",
     "repos_ok": [
@@ -1289,7 +1622,11 @@
         "release.yml",
         "ubsan-lic.yml"
       ],
-      "lip": [],
+      "lip": [
+        "ci.yml",
+        "ecosystem-upstream.yml",
+        "issue-feature-planning.yml"
+      ],
       "lis": [
         "branch-sync.yml",
         "ci.yml",
@@ -1311,7 +1648,7 @@
     "lic_monorepo_hint": "Run lic/scripts/ensure-package-ci.sh before push-official-package-repo.sh"
   },
   "org_agent_kit_audit": {
-    "generated_at": "2026-05-17T20:20Z",
+    "generated_at": "2026-05-18T16:54Z",
     "org": "li-langverse",
     "canonical_stamp": "1.3.2+130de1d9a8d0e52c",
     "roadmap_kit": "/Users/julian/Documents/coding-projects/roadmap/agent-kit",
@@ -1370,13 +1707,17 @@
         "repo": "lic",
         "present_locally": true,
         "local_path": "/Users/julian/Documents/coding-projects/li",
-        "status": "drift",
-        "cursor_stamp": "1.1.0+5f476d66cf8d1b57",
-        "expected_stamp": "1.1.0+5f476d66cf8d1b57",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
         "canonical_stamp": "1.3.2+130de1d9a8d0e52c",
-        "missing_rules": [],
-        "has_sync_script": true,
-        "has_agents_md": true,
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
         "fix": "cd /Users/julian/Documents/coding-projects/li && ../roadmap/scripts/install-agent-kit.sh lic"
       },
       {
@@ -1510,13 +1851,17 @@
         "repo": "lic",
         "present_locally": true,
         "local_path": "/Users/julian/Documents/coding-projects/li",
-        "status": "drift",
-        "cursor_stamp": "1.1.0+5f476d66cf8d1b57",
-        "expected_stamp": "1.1.0+5f476d66cf8d1b57",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
         "canonical_stamp": "1.3.2+130de1d9a8d0e52c",
-        "missing_rules": [],
-        "has_sync_script": true,
-        "has_agents_md": true,
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
         "fix": "cd /Users/julian/Documents/coding-projects/li && ../roadmap/scripts/install-agent-kit.sh lic"
       },
       {
@@ -1574,7 +1919,7 @@
     ]
   },
   "merge_plan": {
-    "generated_at": "2026-05-17T20:21Z",
+    "generated_at": "2026-05-18T16:56Z",
     "vision_order": "package CI / mirrors → benchmarks → lic → lip/lit/lis → roadmap",
     "ordering_rules": [
       "Repo tier: mirrors/httpd → benchmarks → lic → lip/lit/lis → roadmap (roadmap last)",
@@ -1588,26 +1933,153 @@
       "Progress: after every merge, remaining PRs must absorb latest main before their merge"
     ],
     "summary": {
-      "open_prs": 4,
+      "open_prs": 16,
       "merge_approved": 0,
       "gate_ready": 0,
-      "conflicting_with_main": 0,
+      "conflicting_with_main": 2,
       "auto_merge_candidates": 0,
-      "redundant_pairs": 0,
+      "redundant_pairs": 2,
       "stacks": 0,
-      "pair_risk_count": 0,
-      "repos_with_plans": 1
+      "pair_risk_count": 3,
+      "repos_with_plans": 6
     },
     "repo_merge_plans": [
       {
+        "repo": "benchmarks",
+        "base": "main",
+        "open_prs": 3,
+        "local_merge_order": [
+          "benchmarks#33",
+          "benchmarks#32",
+          "benchmarks#34"
+        ],
+        "safe_merge_order": [],
+        "safe_next": null,
+        "conflicting_with_main": [
+          {
+            "number": 34,
+            "url": "https://github.com/li-langverse/benchmarks/pull/34",
+            "title": "fix(security): security-cwe-audit preflight script",
+            "merge_state": "DIRTY",
+            "action": "Do not merge until rebased: `git fetch origin && git checkout <head> && git merge origin/main` — resolve conflicts preserving main + PR progress (see merge-conflict-resolution.md)"
+          },
+          {
+            "number": 32,
+            "url": "https://github.com/li-langverse/benchmarks/pull/32",
+            "title": "feat(briefing): swarm scorecard enrich + audit-refresh dispatch",
+            "merge_state": "DIRTY",
+            "action": "Do not merge until rebased: `git fetch origin && git checkout <head> && git merge origin/main` — resolve conflicts preserving main + PR progress (see merge-conflict-resolution.md)"
+          }
+        ],
+        "pair_risks": [
+          {
+            "repo": "benchmarks",
+            "base": "main",
+            "merge_first": "benchmarks#32",
+            "then_rebase_and_merge": "benchmarks#34",
+            "url_first": "https://github.com/li-langverse/benchmarks/pull/32",
+            "url_second": "https://github.com/li-langverse/benchmarks/pull/34",
+            "file_overlap": 1,
+            "reason": "~100% file overlap on `main`; merge #32 first, then merge `origin/main` into #34 (preserve both sides) before merging #34",
+            "resolution": "benchmarks/docs/ecosystem/merge-conflict-resolution.md"
+          }
+        ],
+        "stacks": [],
+        "progress_rule": "After each merge to main, remaining PRs must integrate latest main (merge or rebase) before merge — never discard main or open PR commits"
+      },
+      {
         "repo": "lic",
         "base": "main",
-        "open_prs": 4,
+        "open_prs": 8,
         "local_merge_order": [
+          "lic#47",
+          "lic#46",
+          "lic#45",
           "lic#43",
           "lic#40",
           "lic#37",
+          "lic#48",
           "lic#8"
+        ],
+        "safe_merge_order": [],
+        "safe_next": null,
+        "conflicting_with_main": [],
+        "pair_risks": [
+          {
+            "repo": "lic",
+            "base": "main",
+            "merge_first": "lic#47",
+            "then_rebase_and_merge": "lic#48",
+            "url_first": "https://github.com/li-langverse/lic/pull/47",
+            "url_second": "https://github.com/li-langverse/lic/pull/48",
+            "file_overlap": 0.75,
+            "reason": "~75% file overlap on `main`; merge #47 first, then merge `origin/main` into #48 (preserve both sides) before merging #48",
+            "resolution": "benchmarks/docs/ecosystem/merge-conflict-resolution.md"
+          },
+          {
+            "repo": "lic",
+            "base": "main",
+            "merge_first": "lic#40",
+            "then_rebase_and_merge": "lic#48",
+            "url_first": "https://github.com/li-langverse/lic/pull/40",
+            "url_second": "https://github.com/li-langverse/lic/pull/48",
+            "file_overlap": 1,
+            "reason": "~100% file overlap on `main`; merge #40 first, then merge `origin/main` into #48 (preserve both sides) before merging #48",
+            "resolution": "benchmarks/docs/ecosystem/merge-conflict-resolution.md"
+          }
+        ],
+        "stacks": [],
+        "progress_rule": "After each merge to main, remaining PRs must integrate latest main (merge or rebase) before merge — never discard main or open PR commits"
+      },
+      {
+        "repo": "lip",
+        "base": "main",
+        "open_prs": 1,
+        "local_merge_order": [
+          "lip#5"
+        ],
+        "safe_merge_order": [],
+        "safe_next": null,
+        "conflicting_with_main": [],
+        "pair_risks": [],
+        "stacks": [],
+        "progress_rule": "After each merge to main, remaining PRs must integrate latest main (merge or rebase) before merge — never discard main or open PR commits"
+      },
+      {
+        "repo": "lis",
+        "base": "main",
+        "open_prs": 1,
+        "local_merge_order": [
+          "lis#2"
+        ],
+        "safe_merge_order": [],
+        "safe_next": null,
+        "conflicting_with_main": [],
+        "pair_risks": [],
+        "stacks": [],
+        "progress_rule": "After each merge to main, remaining PRs must integrate latest main (merge or rebase) before merge — never discard main or open PR commits"
+      },
+      {
+        "repo": "lit",
+        "base": "main",
+        "open_prs": 1,
+        "local_merge_order": [
+          "lit#5"
+        ],
+        "safe_merge_order": [],
+        "safe_next": null,
+        "conflicting_with_main": [],
+        "pair_risks": [],
+        "stacks": [],
+        "progress_rule": "After each merge to main, remaining PRs must integrate latest main (merge or rebase) before merge — never discard main or open PR commits"
+      },
+      {
+        "repo": "roadmap",
+        "base": "main",
+        "open_prs": 2,
+        "local_merge_order": [
+          "roadmap#11",
+          "roadmap#10"
         ],
         "safe_merge_order": [],
         "safe_next": null,
@@ -1617,13 +2089,182 @@
         "progress_rule": "After each merge to main, remaining PRs must integrate latest main (merge or rebase) before merge — never discard main or open PR commits"
       }
     ],
-    "pair_risks": [],
+    "pair_risks": [
+      {
+        "repo": "lic",
+        "base": "main",
+        "merge_first": "lic#47",
+        "then_rebase_and_merge": "lic#48",
+        "url_first": "https://github.com/li-langverse/lic/pull/47",
+        "url_second": "https://github.com/li-langverse/lic/pull/48",
+        "file_overlap": 0.75,
+        "reason": "~75% file overlap on `main`; merge #47 first, then merge `origin/main` into #48 (preserve both sides) before merging #48",
+        "resolution": "benchmarks/docs/ecosystem/merge-conflict-resolution.md"
+      },
+      {
+        "repo": "lic",
+        "base": "main",
+        "merge_first": "lic#40",
+        "then_rebase_and_merge": "lic#48",
+        "url_first": "https://github.com/li-langverse/lic/pull/40",
+        "url_second": "https://github.com/li-langverse/lic/pull/48",
+        "file_overlap": 1,
+        "reason": "~100% file overlap on `main`; merge #40 first, then merge `origin/main` into #48 (preserve both sides) before merging #48",
+        "resolution": "benchmarks/docs/ecosystem/merge-conflict-resolution.md"
+      },
+      {
+        "repo": "benchmarks",
+        "base": "main",
+        "merge_first": "benchmarks#32",
+        "then_rebase_and_merge": "benchmarks#34",
+        "url_first": "https://github.com/li-langverse/benchmarks/pull/32",
+        "url_second": "https://github.com/li-langverse/benchmarks/pull/34",
+        "file_overlap": 1,
+        "reason": "~100% file overlap on `main`; merge #32 first, then merge `origin/main` into #34 (preserve both sides) before merging #34",
+        "resolution": "benchmarks/docs/ecosystem/merge-conflict-resolution.md"
+      }
+    ],
     "merge_first": null,
     "next_merge": null,
     "merge_sequence": [],
     "merge_order": [
       {
         "rank": 1,
+        "repo": "benchmarks",
+        "number": 33,
+        "url": "https://github.com/li-langverse/benchmarks/pull/33",
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "merge_approved": false,
+        "gate_ready": false,
+        "mergeable": "MERGEABLE",
+        "merge_state": "BLOCKED",
+        "priority_score": 230,
+        "auto_merge_ok": false,
+        "blocked_reason": null,
+        "order_reason": "rank 1; priority_score=230; awaiting merge-approved label"
+      },
+      {
+        "rank": 2,
+        "repo": "lip",
+        "number": 5,
+        "url": "https://github.com/li-langverse/lip/pull/5",
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "merge_approved": false,
+        "gate_ready": false,
+        "mergeable": "MERGEABLE",
+        "merge_state": "BLOCKED",
+        "priority_score": 250,
+        "auto_merge_ok": false,
+        "blocked_reason": null,
+        "order_reason": "rank 2; priority_score=250; awaiting merge-approved label"
+      },
+      {
+        "rank": 3,
+        "repo": "lit",
+        "number": 5,
+        "url": "https://github.com/li-langverse/lit/pull/5",
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "merge_approved": false,
+        "gate_ready": false,
+        "mergeable": "MERGEABLE",
+        "merge_state": "BLOCKED",
+        "priority_score": 250,
+        "auto_merge_ok": false,
+        "blocked_reason": null,
+        "order_reason": "rank 3; priority_score=250; awaiting merge-approved label"
+      },
+      {
+        "rank": 4,
+        "repo": "lis",
+        "number": 2,
+        "url": "https://github.com/li-langverse/lis/pull/2",
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "merge_approved": false,
+        "gate_ready": false,
+        "mergeable": "MERGEABLE",
+        "merge_state": "BLOCKED",
+        "priority_score": 255,
+        "auto_merge_ok": false,
+        "blocked_reason": null,
+        "order_reason": "rank 4; priority_score=255; awaiting merge-approved label"
+      },
+      {
+        "rank": 5,
+        "repo": "lic",
+        "number": 47,
+        "url": "https://github.com/li-langverse/lic/pull/47",
+        "title": "fix(lexer): '+' token fixes horner_pure_li pure_li red row (~72× → ~0.3×)",
+        "merge_approved": false,
+        "gate_ready": false,
+        "mergeable": "MERGEABLE",
+        "merge_state": "BLOCKED",
+        "priority_score": 280,
+        "auto_merge_ok": false,
+        "blocked_reason": null,
+        "order_reason": "rank 5; priority_score=280; awaiting merge-approved label"
+      },
+      {
+        "rank": 6,
+        "repo": "roadmap",
+        "number": 11,
+        "url": "https://github.com/li-langverse/roadmap/pull/11",
+        "title": "chore(roadmap): workspace sweep fallback",
+        "merge_approved": false,
+        "gate_ready": false,
+        "mergeable": "MERGEABLE",
+        "merge_state": "BLOCKED",
+        "priority_score": 340,
+        "auto_merge_ok": false,
+        "blocked_reason": null,
+        "order_reason": "rank 6; priority_score=340; awaiting merge-approved label"
+      },
+      {
+        "rank": 7,
+        "repo": "lic",
+        "number": 46,
+        "url": "https://github.com/li-langverse/lic/pull/46",
+        "title": "chore(security): downstream security-gate workflow template",
+        "merge_approved": false,
+        "gate_ready": false,
+        "mergeable": "MERGEABLE",
+        "merge_state": "BLOCKED",
+        "priority_score": 230,
+        "auto_merge_ok": false,
+        "blocked_reason": null,
+        "order_reason": "rank 7; priority_score=230; awaiting merge-approved label"
+      },
+      {
+        "rank": 8,
+        "repo": "roadmap",
+        "number": 10,
+        "url": "https://github.com/li-langverse/roadmap/pull/10",
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "merge_approved": false,
+        "gate_ready": false,
+        "mergeable": "MERGEABLE",
+        "merge_state": "BLOCKED",
+        "priority_score": 300,
+        "auto_merge_ok": false,
+        "blocked_reason": null,
+        "order_reason": "rank 8; priority_score=300; awaiting merge-approved label"
+      },
+      {
+        "rank": 9,
+        "repo": "lic",
+        "number": 45,
+        "url": "https://github.com/li-langverse/lic/pull/45",
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "merge_approved": false,
+        "gate_ready": false,
+        "mergeable": "MERGEABLE",
+        "merge_state": "BLOCKED",
+        "priority_score": 240,
+        "auto_merge_ok": false,
+        "blocked_reason": null,
+        "order_reason": "rank 9; priority_score=240; awaiting merge-approved label"
+      },
+      {
+        "rank": 10,
         "repo": "lic",
         "number": 43,
         "url": "https://github.com/li-langverse/lic/pull/43",
@@ -1635,10 +2276,10 @@
         "priority_score": 280,
         "auto_merge_ok": false,
         "blocked_reason": null,
-        "order_reason": "rank 1; priority_score=280; awaiting merge-approved label"
+        "order_reason": "rank 10; priority_score=280; awaiting merge-approved label"
       },
       {
-        "rank": 2,
+        "rank": 11,
         "repo": "lic",
         "number": 40,
         "url": "https://github.com/li-langverse/lic/pull/40",
@@ -1650,10 +2291,10 @@
         "priority_score": 245,
         "auto_merge_ok": false,
         "blocked_reason": null,
-        "order_reason": "rank 2; priority_score=245; awaiting merge-approved label"
+        "order_reason": "rank 11; priority_score=245; awaiting merge-approved label"
       },
       {
-        "rank": 3,
+        "rank": 12,
         "repo": "lic",
         "number": 37,
         "url": "https://github.com/li-langverse/lic/pull/37",
@@ -1665,10 +2306,10 @@
         "priority_score": 280,
         "auto_merge_ok": false,
         "blocked_reason": null,
-        "order_reason": "rank 3; priority_score=280; awaiting merge-approved label"
+        "order_reason": "rank 12; priority_score=280; awaiting merge-approved label"
       },
       {
-        "rank": 4,
+        "rank": 13,
         "repo": "lic",
         "number": 8,
         "url": "https://github.com/li-langverse/lic/pull/8",
@@ -1680,24 +2321,290 @@
         "priority_score": 280,
         "auto_merge_ok": false,
         "blocked_reason": null,
-        "order_reason": "rank 4; priority_score=280; awaiting merge-approved label"
+        "order_reason": "rank 13; priority_score=280; awaiting merge-approved label"
+      },
+      {
+        "rank": 14,
+        "repo": "benchmarks",
+        "number": 32,
+        "url": "https://github.com/li-langverse/benchmarks/pull/32",
+        "title": "feat(briefing): swarm scorecard enrich + audit-refresh dispatch",
+        "merge_approved": false,
+        "gate_ready": false,
+        "mergeable": "CONFLICTING",
+        "merge_state": "DIRTY",
+        "priority_score": 420,
+        "auto_merge_ok": false,
+        "blocked_reason": "conflicts with base — rebase onto main before merge",
+        "order_reason": "rank 14; priority_score=420; awaiting merge-approved label"
+      },
+      {
+        "rank": 15,
+        "repo": "lic",
+        "number": 48,
+        "url": "https://github.com/li-langverse/lic/pull/48",
+        "title": "chore(lic): Benchmark improver automated update",
+        "merge_approved": false,
+        "gate_ready": false,
+        "mergeable": "MERGEABLE",
+        "merge_state": "BLOCKED",
+        "priority_score": 245,
+        "auto_merge_ok": false,
+        "blocked_reason": "overlap with lic#40 (100% files); merge lic#40 first, then rebase lic#48 onto main",
+        "order_reason": "overlap with lic#40 (100% files); merge lic#40 first, then rebase lic#48 onto main"
+      },
+      {
+        "rank": 16,
+        "repo": "benchmarks",
+        "number": 34,
+        "url": "https://github.com/li-langverse/benchmarks/pull/34",
+        "title": "fix(security): security-cwe-audit preflight script",
+        "merge_approved": false,
+        "gate_ready": false,
+        "mergeable": "CONFLICTING",
+        "merge_state": "DIRTY",
+        "priority_score": 420,
+        "auto_merge_ok": false,
+        "blocked_reason": "merge benchmarks#32 blocked (conflicts with base); fix before #34; conflicts with base — rebase onto main before merge",
+        "order_reason": "merge benchmarks#32 blocked (conflicts with base); fix before #34"
       }
     ],
     "stacks": [],
-    "redundant": [],
-    "warnings": []
+    "redundant": [
+      {
+        "repo": "lic",
+        "pr_a": "lic#48",
+        "pr_b": "lic#40",
+        "url_a": "https://github.com/li-langverse/lic/pull/48",
+        "url_b": "https://github.com/li-langverse/lic/pull/40",
+        "overlap": 1,
+        "reasons": [
+          "100% file overlap"
+        ],
+        "suggested_action": "human: pick one PR or rebase the other"
+      },
+      {
+        "repo": "benchmarks",
+        "pr_a": "benchmarks#34",
+        "pr_b": "benchmarks#32",
+        "url_a": "https://github.com/li-langverse/benchmarks/pull/34",
+        "url_b": "https://github.com/li-langverse/benchmarks/pull/32",
+        "overlap": 1,
+        "reasons": [
+          "#34 branch includes all commits from #32",
+          "100% file overlap"
+        ],
+        "suggested_action": "close #32 after #34 merges"
+      }
+    ],
+    "warnings": [
+      "lic#48 vs lic#40: human: pick one PR or rebase the other",
+      "benchmarks#34 vs benchmarks#32: close #32 after #34 merges",
+      "~75% file overlap on `main`; merge #47 first, then merge `origin/main` into #48 (preserve both sides) before merging #48",
+      "~100% file overlap on `main`; merge #40 first, then merge `origin/main` into #48 (preserve both sides) before merging #48",
+      "~100% file overlap on `main`; merge #32 first, then merge `origin/main` into #34 (preserve both sides) before merging #34",
+      "benchmarks#34 CONFLICTING with main: rebase before merge",
+      "benchmarks#32 CONFLICTING with main: rebase before merge"
+    ]
   },
   "pr_program": {
-    "generated_at": "2026-05-17T19:51Z",
+    "generated_at": "2026-05-18T16:22Z",
     "merge_first": null,
     "summary": {
-      "open_prs": 4,
-      "ci_green": 0,
+      "open_prs": 17,
+      "ci_green": 6,
       "merge_approved": 0,
       "gate_ready_labeled": 0
     },
-    "recommended_merge_order": [],
+    "recommended_merge_order": [
+      {
+        "rank": 1,
+        "repo": "benchmarks",
+        "number": 33,
+        "url": "https://github.com/li-langverse/benchmarks/pull/33",
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "ci": "pass",
+        "action": "add merge-approved after review"
+      },
+      {
+        "rank": 2,
+        "repo": "lip",
+        "number": 5,
+        "url": "https://github.com/li-langverse/lip/pull/5",
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "ci": "pass",
+        "action": "add merge-approved after review"
+      },
+      {
+        "rank": 3,
+        "repo": "lit",
+        "number": 5,
+        "url": "https://github.com/li-langverse/lit/pull/5",
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "ci": "pass",
+        "action": "add merge-approved after review"
+      },
+      {
+        "rank": 4,
+        "repo": "lis",
+        "number": 2,
+        "url": "https://github.com/li-langverse/lis/pull/2",
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "ci": "pass",
+        "action": "add merge-approved after review"
+      },
+      {
+        "rank": 5,
+        "repo": "roadmap",
+        "number": 10,
+        "url": "https://github.com/li-langverse/roadmap/pull/10",
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "ci": "pass",
+        "action": "add merge-approved after review"
+      },
+      {
+        "rank": 6,
+        "repo": "roadmap",
+        "number": 11,
+        "url": "https://github.com/li-langverse/roadmap/pull/11",
+        "title": "chore(roadmap): workspace sweep fallback",
+        "ci": "pass",
+        "action": "add merge-approved after review"
+      }
+    ],
     "all_open": [
+      {
+        "repo": "benchmarks",
+        "number": 33,
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "url": "https://github.com/li-langverse/benchmarks/pull/33",
+        "base": "main",
+        "ci": "pass",
+        "draft": false,
+        "labels": [],
+        "merge_approved": false,
+        "gate_ready_with_approval": false,
+        "gate_blockers_if_approved": [
+          "merge_approved_label: missing label `merge-approved` (reviewer adds after standards pass)"
+        ],
+        "priority_score": 20
+      },
+      {
+        "repo": "lip",
+        "number": 5,
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "url": "https://github.com/li-langverse/lip/pull/5",
+        "base": "main",
+        "ci": "pass",
+        "draft": false,
+        "labels": [],
+        "merge_approved": false,
+        "gate_ready_with_approval": false,
+        "gate_blockers_if_approved": [
+          "merge_approved_label: missing label `merge-approved` (reviewer adds after standards pass)"
+        ],
+        "priority_score": 40
+      },
+      {
+        "repo": "lit",
+        "number": 5,
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "url": "https://github.com/li-langverse/lit/pull/5",
+        "base": "main",
+        "ci": "pass",
+        "draft": false,
+        "labels": [],
+        "merge_approved": false,
+        "gate_ready_with_approval": false,
+        "gate_blockers_if_approved": [
+          "merge_approved_label: missing label `merge-approved` (reviewer adds after standards pass)"
+        ],
+        "priority_score": 40
+      },
+      {
+        "repo": "lis",
+        "number": 2,
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "url": "https://github.com/li-langverse/lis/pull/2",
+        "base": "main",
+        "ci": "pass",
+        "draft": false,
+        "labels": [],
+        "merge_approved": false,
+        "gate_ready_with_approval": false,
+        "gate_blockers_if_approved": [
+          "merge_approved_label: missing label `merge-approved` (reviewer adds after standards pass)"
+        ],
+        "priority_score": 45
+      },
+      {
+        "repo": "roadmap",
+        "number": 10,
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "url": "https://github.com/li-langverse/roadmap/pull/10",
+        "base": "main",
+        "ci": "pass",
+        "draft": false,
+        "labels": [],
+        "merge_approved": false,
+        "gate_ready_with_approval": false,
+        "gate_blockers_if_approved": [
+          "merge_approved_label: missing label `merge-approved` (reviewer adds after standards pass)",
+          "governance_repo: `roadmap` requires human merge unless ALLOW_GOVERNANCE_MERGE=1"
+        ],
+        "priority_score": 90
+      },
+      {
+        "repo": "roadmap",
+        "number": 11,
+        "title": "chore(roadmap): workspace sweep fallback",
+        "url": "https://github.com/li-langverse/roadmap/pull/11",
+        "base": "main",
+        "ci": "pass",
+        "draft": false,
+        "labels": [],
+        "merge_approved": false,
+        "gate_ready_with_approval": false,
+        "gate_blockers_if_approved": [
+          "merge_approved_label: missing label `merge-approved` (reviewer adds after standards pass)",
+          "governance_repo: `roadmap` requires human merge unless ALLOW_GOVERNANCE_MERGE=1"
+        ],
+        "priority_score": 90
+      },
+      {
+        "repo": "benchmarks",
+        "number": 32,
+        "title": "feat(briefing): swarm scorecard enrich + audit-refresh dispatch",
+        "url": "https://github.com/li-langverse/benchmarks/pull/32",
+        "base": "main",
+        "ci": "none",
+        "draft": false,
+        "labels": [],
+        "merge_approved": false,
+        "gate_ready_with_approval": false,
+        "gate_blockers_if_approved": [
+          "merge_approved_label: missing label `merge-approved` (reviewer adds after standards pass)",
+          "ci_green: CI status is `none` and no fresh local-ci pass — run: python3 scripts/local-ci-sweep.py --repo benchmarks --pr 32"
+        ],
+        "priority_score": 120
+      },
+      {
+        "repo": "benchmarks",
+        "number": 34,
+        "title": "fix(security): security-cwe-audit preflight script",
+        "url": "https://github.com/li-langverse/benchmarks/pull/34",
+        "base": "main",
+        "ci": "none",
+        "draft": false,
+        "labels": [],
+        "merge_approved": false,
+        "gate_ready_with_approval": false,
+        "gate_blockers_if_approved": [
+          "merge_approved_label: missing label `merge-approved` (reviewer adds after standards pass)",
+          "ci_green: CI status is `none` and no fresh local-ci pass — run: python3 scripts/local-ci-sweep.py --repo benchmarks --pr 34"
+        ],
+        "priority_score": 120
+      },
       {
         "repo": "lic",
         "number": 8,
@@ -1750,6 +2657,91 @@
         "priority_score": 130
       },
       {
+        "repo": "lic",
+        "number": 43,
+        "title": "docs(numerics): red/near-limit SOTA map and bench repro (numerics_researcher)",
+        "url": "https://github.com/li-langverse/lic/pull/43",
+        "base": "main",
+        "ci": "fail",
+        "draft": false,
+        "labels": [],
+        "merge_approved": false,
+        "gate_ready_with_approval": false,
+        "gate_blockers_if_approved": [
+          "merge_approved_label: missing label `merge-approved` (reviewer adds after standards pass)",
+          "ci_green: CI status is `fail` and no fresh local-ci pass — run: python3 scripts/local-ci-sweep.py --repo lic --pr 43"
+        ],
+        "priority_score": 130
+      },
+      {
+        "repo": "lic",
+        "number": 45,
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "url": "https://github.com/li-langverse/lic/pull/45",
+        "base": "main",
+        "ci": "fail",
+        "draft": false,
+        "labels": [],
+        "merge_approved": false,
+        "gate_ready_with_approval": false,
+        "gate_blockers_if_approved": [
+          "merge_approved_label: missing label `merge-approved` (reviewer adds after standards pass)",
+          "ci_green: CI status is `fail` and no fresh local-ci pass — run: python3 scripts/local-ci-sweep.py --repo lic --pr 45"
+        ],
+        "priority_score": 130
+      },
+      {
+        "repo": "lic",
+        "number": 46,
+        "title": "chore(security): downstream security-gate workflow template",
+        "url": "https://github.com/li-langverse/lic/pull/46",
+        "base": "main",
+        "ci": "fail",
+        "draft": false,
+        "labels": [],
+        "merge_approved": false,
+        "gate_ready_with_approval": false,
+        "gate_blockers_if_approved": [
+          "merge_approved_label: missing label `merge-approved` (reviewer adds after standards pass)",
+          "ci_green: CI status is `fail` and no fresh local-ci pass — run: python3 scripts/local-ci-sweep.py --repo lic --pr 46"
+        ],
+        "priority_score": 130
+      },
+      {
+        "repo": "lic",
+        "number": 47,
+        "title": "fix(lexer): '+' token fixes horner_pure_li pure_li red row (~72× → ~0.3×)",
+        "url": "https://github.com/li-langverse/lic/pull/47",
+        "base": "main",
+        "ci": "fail",
+        "draft": false,
+        "labels": [],
+        "merge_approved": false,
+        "gate_ready_with_approval": false,
+        "gate_blockers_if_approved": [
+          "merge_approved_label: missing label `merge-approved` (reviewer adds after standards pass)",
+          "ci_green: CI status is `fail` and no fresh local-ci pass — run: python3 scripts/local-ci-sweep.py --repo lic --pr 47"
+        ],
+        "priority_score": 130
+      },
+      {
+        "repo": "lic",
+        "number": 48,
+        "title": "chore(lic): Benchmark improver automated update",
+        "url": "https://github.com/li-langverse/lic/pull/48",
+        "base": "main",
+        "ci": "pending",
+        "draft": false,
+        "labels": [],
+        "merge_approved": false,
+        "gate_ready_with_approval": false,
+        "gate_blockers_if_approved": [
+          "merge_approved_label: missing label `merge-approved` (reviewer adds after standards pass)",
+          "ci_green: CI status is `pending` and no fresh local-ci pass — run: python3 scripts/local-ci-sweep.py --repo lic --pr 48"
+        ],
+        "priority_score": 130
+      },
+      {
         "repo": "li-language",
         "number": 6,
         "title": "feat(benchmarks): expand tier-2 gaming-physics suite (5 kernels)",
@@ -1767,20 +2759,57 @@
         "priority_score": 135
       }
     ],
-    "plan_warnings": []
+    "plan_warnings": [
+      "benchmarks#34 vs benchmarks#32: close #32 after #34 merges",
+      "~100% file overlap on `main`; merge #32 first, then merge `origin/main` into #34 (preserve both sides) before merging #34",
+      "benchmarks#34 CONFLICTING with main: rebase before merge",
+      "benchmarks#32 CONFLICTING with main: rebase before merge"
+    ]
   },
   "pr_branch_hygiene": null,
   "ci_bug_triage": {
-    "generated_at": "2026-05-17T19:52Z",
+    "generated_at": "2026-05-18T16:22Z",
     "summary": {
       "local_ci_failures": 0,
       "bug_issues": 0,
-      "gha_failing_prs": 4,
-      "work_queue_size": 4
+      "gha_failing_prs": 8,
+      "work_queue_size": 8
     },
     "local_ci_failures": [],
     "bug_issues": [],
     "gha_failing_prs": [
+      {
+        "kind": "pr_ci",
+        "repo": "lic",
+        "number": 47,
+        "url": "https://github.com/li-langverse/lic/pull/47",
+        "title": "fix(lexer): '+' token fixes horner_pure_li pure_li red row (~72× → ~0.3×)",
+        "reason": "GitHub Actions checks failing"
+      },
+      {
+        "kind": "pr_ci",
+        "repo": "lic",
+        "number": 46,
+        "url": "https://github.com/li-langverse/lic/pull/46",
+        "title": "chore(security): downstream security-gate workflow template",
+        "reason": "GitHub Actions checks failing"
+      },
+      {
+        "kind": "pr_ci",
+        "repo": "lic",
+        "number": 45,
+        "url": "https://github.com/li-langverse/lic/pull/45",
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "reason": "GitHub Actions checks failing"
+      },
+      {
+        "kind": "pr_ci",
+        "repo": "lic",
+        "number": 43,
+        "url": "https://github.com/li-langverse/lic/pull/43",
+        "title": "docs(numerics): red/near-limit SOTA map and bench repro (numerics_researcher)",
+        "reason": "GitHub Actions checks failing"
+      },
       {
         "kind": "pr_ci",
         "repo": "lic",
@@ -1818,6 +2847,38 @@
       {
         "kind": "pr_ci",
         "repo": "lic",
+        "number": 47,
+        "url": "https://github.com/li-langverse/lic/pull/47",
+        "title": "fix(lexer): '+' token fixes horner_pure_li pure_li red row (~72× → ~0.3×)",
+        "reason": "GitHub Actions checks failing"
+      },
+      {
+        "kind": "pr_ci",
+        "repo": "lic",
+        "number": 46,
+        "url": "https://github.com/li-langverse/lic/pull/46",
+        "title": "chore(security): downstream security-gate workflow template",
+        "reason": "GitHub Actions checks failing"
+      },
+      {
+        "kind": "pr_ci",
+        "repo": "lic",
+        "number": 45,
+        "url": "https://github.com/li-langverse/lic/pull/45",
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "reason": "GitHub Actions checks failing"
+      },
+      {
+        "kind": "pr_ci",
+        "repo": "lic",
+        "number": 43,
+        "url": "https://github.com/li-langverse/lic/pull/43",
+        "title": "docs(numerics): red/near-limit SOTA map and bench repro (numerics_researcher)",
+        "reason": "GitHub Actions checks failing"
+      },
+      {
+        "kind": "pr_ci",
+        "repo": "lic",
         "number": 40,
         "url": "https://github.com/li-langverse/lic/pull/40",
         "title": "fix(codegen): '+' lexer and horner_pure_li benchmark (88× → ~1.5×)",
@@ -1849,45 +2910,90 @@
       }
     ]
   },
-  "security_cwe_audit": null,
+  "security_cwe_audit": {
+    "generated_at": "2026-05-18T16:22Z",
+    "catalog_path": null,
+    "summary": {
+      "catalog_entries": 0,
+      "catalog_gaps": 0,
+      "security_test_files": 0,
+      "repos_without_security_workflow": 8
+    },
+    "catalog_gaps": [],
+    "security_tests": [],
+    "repos": [
+      {
+        "repo": "lic",
+        "security_workflow": true,
+        "action": null
+      },
+      {
+        "repo": "lip",
+        "security_workflow": false,
+        "action": "add cve-catalog.yml or security gate workflow"
+      },
+      {
+        "repo": "lit",
+        "security_workflow": false,
+        "action": "add cve-catalog.yml or security gate workflow"
+      },
+      {
+        "repo": "lis",
+        "security_workflow": false,
+        "action": "add cve-catalog.yml or security gate workflow"
+      },
+      {
+        "repo": "benchmarks",
+        "security_workflow": false,
+        "action": "add cve-catalog.yml or security gate workflow"
+      },
+      {
+        "repo": "li-httpd",
+        "security_workflow": false,
+        "action": "add cve-catalog.yml or security gate workflow"
+      },
+      {
+        "repo": "li-net",
+        "security_workflow": false,
+        "action": "add cve-catalog.yml or security gate workflow"
+      },
+      {
+        "repo": "li-demo",
+        "security_workflow": false,
+        "action": "add cve-catalog.yml or security gate workflow"
+      },
+      {
+        "repo": "li-cursor-agents",
+        "security_workflow": false,
+        "action": "add cve-catalog.yml or security gate workflow"
+      }
+    ]
+  },
   "workspace_dirty_sweep": {
-    "generated_at": "2026-05-17T20:21Z",
+    "generated_at": "2026-05-18T16:56Z",
     "ecosystem_root": "/Users/julian/Documents/coding-projects",
-    "dirty_count": 3,
+    "dirty_count": 2,
     "dirty_repos": [
       {
         "path": "/Users/julian/Documents/coding-projects/benchmarks",
         "repo": "benchmarks",
         "org": "li-langverse",
-        "branch": "feat/catalog-tier2-physics-expansion",
-        "changed_files": 14,
+        "branch": "chore/agent-security_auditor-audit-script",
+        "changed_files": 13,
         "safe_files": [
-          "ata/latest/agent-briefing.json",
+          "data/latest/agent-briefing.json",
+          "data/latest/ci-bug-triage.json",
           "data/latest/ecosystem-audit.json",
           "data/latest/ecosystem-explorer.json",
+          "data/latest/issue-feature-triage.json",
+          "data/latest/org-agent-kit-audit.json",
           "data/latest/org-repo-ci-audit.json",
           "data/latest/plan-completion-audit.json",
           "data/latest/pr-merge-queue-plan.json",
           "data/latest/pr-program-run.json",
-          "scripts/agent-briefing.py",
-          "scripts/ecosystem-explorer.py",
-          "scripts/pr-merge-queue-plan.py",
-          "data/latest/ci-bug-triage.json",
-          "data/latest/issue-feature-triage.json",
-          "data/latest/org-agent-kit-audit.json",
-          "data/latest/workspace-dirty-sweep.json"
-        ],
-        "test_commands": []
-      },
-      {
-        "path": "/Users/julian/Documents/coding-projects/roadmap",
-        "repo": "roadmap",
-        "org": "li-langverse",
-        "branch": "feat/agent-kit-li-cursor-agents",
-        "changed_files": 2,
-        "safe_files": [
-          "scripts/apply-org-branch-protection.py",
-          "scripts/verify-org-branch-protection.py"
+          "data/latest/security-cwe-audit.json",
+          "data/latest/workspace-dirty-sweep.json",
+          "scripts/agent-briefing.py"
         ],
         "test_commands": []
       },
@@ -1896,22 +3002,10 @@
         "repo": "li-cursor-agents",
         "org": "li-langverse",
         "branch": "feat/agent-heap-control-plane",
-        "changed_files": 14,
+        "changed_files": 2,
         "safe_files": [
-          "ixtures/e2e-benchmarks/data/latest/agent-briefing.json",
-          "web/app.js",
-          "data/",
-          "docs/.mock-autoresearch-touch.md",
-          "docs/.mock-bench_improver-touch.md",
-          "docs/.mock-bug_fixer-touch.md",
-          "docs/.mock-ci_maintainer-touch.md",
-          "docs/.mock-code_implementer-touch.md",
-          "docs/.mock-docs_maintainer-touch.md",
-          "docs/.mock-numerics_researcher-touch.md",
-          "docs/.mock-security_auditor-touch.md",
-          "logs/",
-          "supabase/.branches/",
-          "supabase/.temp/"
+          "data/lanes/state.json",
+          "data/latest/agent-briefing.json"
         ],
         "test_commands": [
           "npm test"
@@ -2126,18 +3220,13 @@
   ],
   "recommended_agents": [
     {
-      "agent": "package_architect",
-      "reason": "swarm: 1 handoff(s) pending_placement",
-      "source": "swarm_scorecard"
-    },
-    {
       "agent": "proof_gap_researcher",
       "reason": "swarm: research goal provability_holes eligible (priority 9)",
       "source": "research_goals_status"
     },
     {
       "agent": "workspace_sweeper",
-      "reason": "3 sibling repo(s) with uncommitted work — fallback sweep"
+      "reason": "2 sibling repo(s) with uncommitted work — fallback sweep"
     },
     {
       "agent": "plan_verifier",
@@ -2152,12 +3241,12 @@
       "reason": "4 missing std modules"
     },
     {
-      "agent": "ci_maintainer",
-      "reason": "1 repos missing CI on main"
+      "agent": "agent_kit_maintainer",
+      "reason": "agent-kit version mismatch across sibling clones"
     },
     {
-      "agent": "agent_kit_maintainer",
-      "reason": "8 repos missing or drifted agent-kit"
+      "agent": "ci_maintainer",
+      "reason": "1 repos missing CI on main"
     },
     {
       "agent": "docs_maintainer",
@@ -2165,11 +3254,15 @@
     },
     {
       "agent": "bug_fixer",
-      "reason": "4 CI/bug item(s) in work queue (local-ci + issues + GHA red)"
+      "reason": "8 CI/bug item(s) in work queue (local-ci + issues + GHA red)"
     },
     {
       "agent": "code_implementer",
       "reason": "implement fixes from ci-bug-triage work queue"
+    },
+    {
+      "agent": "security_auditor",
+      "reason": "CWE/catalog gaps=0, repos missing security workflow=8"
     },
     {
       "agent": "numerics_researcher",
@@ -2186,7 +3279,7 @@
   ],
   "agent_pr_deliverable_gate": null,
   "agent_deliverable_gaps": {
-    "plan_open_items": 22,
+    "plan_open_items": 76,
     "incomplete_runs": 0,
     "agent_prs_blocked": 0,
     "numerics_without_evidence": 0,
@@ -2196,7 +3289,7 @@
   "agent_incomplete_runs": [],
   "agent_pr_deliverable_failures": [],
   "org_roadmap": {
-    "loaded_at": "2026-05-17T20:21Z",
+    "loaded_at": "2026-05-18T16:56Z",
     "vision_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/vision-and-roadmap.md",
     "engineering_standards_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/engineering-standards.md",
     "master_plan_url": "https://github.com/li-langverse/lic/blob/main/docs/superpowers/plans/2026-05-14-li-master-plan.md",
@@ -2207,8 +3300,8 @@
       "provable",
       "blazingly-fast"
     ],
-    "current_ph": "missing file: /Users/julian/Documents/coding-projects/lic/docs/superpowers/plans/2026-05-14-li-master-plan.md",
-    "master_plan_open_items": 22,
+    "current_ph": null,
+    "master_plan_open_items": 76,
     "roadmap_repo": "/Users/julian/Documents/coding-projects/roadmap",
     "vision_local": "/Users/julian/Documents/coding-projects/roadmap/docs/ecosystem/vision-and-roadmap.md"
   },
@@ -2274,12 +3367,12 @@
         "name": "Platform coordinator",
         "agents": [
           {
-            "agent": "ci_maintainer",
-            "reason": "1 repos missing CI on main"
+            "agent": "agent_kit_maintainer",
+            "reason": "agent-kit version mismatch across sibling clones"
           },
           {
-            "agent": "agent_kit_maintainer",
-            "reason": "8 repos missing or drifted agent-kit"
+            "agent": "ci_maintainer",
+            "reason": "1 repos missing CI on main"
           }
         ]
       }
@@ -2329,14 +3422,14 @@
       },
       {
         "coordinator": "coord_platform",
-        "agent": "ci_maintainer",
-        "reason": "1 repos missing CI on main",
+        "agent": "agent_kit_maintainer",
+        "reason": "agent-kit version mismatch across sibling clones",
         "priority": 50
       },
       {
         "coordinator": "coord_platform",
-        "agent": "agent_kit_maintainer",
-        "reason": "8 repos missing or drifted agent-kit",
+        "agent": "ci_maintainer",
+        "reason": "1 repos missing CI on main",
         "priority": 50
       }
     ],
@@ -2344,6 +3437,38 @@
   },
   "implementation_queue": {
     "work_queue": [
+      {
+        "kind": "pr_ci",
+        "repo": "lic",
+        "number": 47,
+        "url": "https://github.com/li-langverse/lic/pull/47",
+        "title": "fix(lexer): '+' token fixes horner_pure_li pure_li red row (~72× → ~0.3×)",
+        "reason": "GitHub Actions checks failing"
+      },
+      {
+        "kind": "pr_ci",
+        "repo": "lic",
+        "number": 46,
+        "url": "https://github.com/li-langverse/lic/pull/46",
+        "title": "chore(security): downstream security-gate workflow template",
+        "reason": "GitHub Actions checks failing"
+      },
+      {
+        "kind": "pr_ci",
+        "repo": "lic",
+        "number": 45,
+        "url": "https://github.com/li-langverse/lic/pull/45",
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "reason": "GitHub Actions checks failing"
+      },
+      {
+        "kind": "pr_ci",
+        "repo": "lic",
+        "number": 43,
+        "url": "https://github.com/li-langverse/lic/pull/43",
+        "title": "docs(numerics): red/near-limit SOTA map and bench repro (numerics_researcher)",
+        "reason": "GitHub Actions checks failing"
+      },
       {
         "kind": "pr_ci",
         "repo": "lic",
@@ -2403,40 +3528,12 @@
         "module": "std.plot",
         "ph_id": "PH-IO-5",
         "reason": "missing"
-      },
-      {
-        "kind": "swarm_handoff",
-        "reason": "handoff:936ea2fd-7a1b-4f3e-afd0-881e14b205bf",
-        "title": "cad_fundamentals",
-        "ph_id": "cad_fundamentals",
-        "repo": "lic"
-      },
-      {
-        "kind": "swarm_handoff",
-        "reason": "handoff:1c3a4d16-2dc7-41bd-aee5-398b8d224f0c",
-        "title": "cad_fundamentals",
-        "ph_id": "cad_fundamentals",
-        "repo": "lic"
-      },
-      {
-        "kind": "swarm_handoff",
-        "reason": "handoff:d3769bfe-dc00-4734-8446-b3eb7df0afea",
-        "title": "cad_fundamentals",
-        "ph_id": "cad_fundamentals",
-        "repo": "lic"
-      },
-      {
-        "kind": "swarm_handoff",
-        "reason": "handoff:f0673861-d120-4975-992c-d9e49b587195",
-        "title": "cad_fundamentals",
-        "ph_id": "cad_fundamentals",
-        "repo": "lic"
       }
     ],
     "sources": [
       "ci_bug_triage",
       "ecosystem_explorer.missing_std",
-      "agent_handoffs"
+      "security_cwe_audit"
     ]
   },
   "swarm_scorecard": {
@@ -2525,6 +3622,6 @@
     "missing_north_star_fit": [],
     "invalid_north_star_fit": []
   },
-  "swarm_enriched_at": "2026-05-18T16:15:04.816Z",
-  "swarm_recommendations_merged_at": "2026-05-18T16:15:04.816Z"
+  "swarm_enriched_at": "2026-05-18T16:56:15.119Z",
+  "swarm_recommendations_merged_at": "2026-05-18T16:56:15.119Z"
 }
