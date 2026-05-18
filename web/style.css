@@ -1161,6 +1161,40 @@ footer.footer-modes {
   letter-spacing: 0.06em;
 }
 
+.stats-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.75rem;
+}
+
+.stats-custom-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.stats-custom-range.hidden {
+  display: none;
+}
+
+.stats-custom-range input {
+  font: inherit;
+  padding: 0.25rem 0.4rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.agent-queue-list {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
 .toast {
   max-width: 28rem;
   padding: 0.45rem 0.75rem;

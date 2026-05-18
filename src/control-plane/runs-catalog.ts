@@ -14,8 +14,10 @@ import {
   getRolloutsForRun,
   listAgentRunHistory,
   listRunsGlobal,
+  listRunsGlobalInRange,
   type AgentRunHistoryRow,
 } from "../db/runs.js";
+import type { ParsedStatsTimeRange } from "./stats-time-range.js";
 import type { AgentRunInputRecord, AgentRunTrace } from "../agent-run-trace.js";
 import { filterProductionRuns, isMockCatalogEntry } from "./run-history.js";
 import { listToActivityItems, type ActivityListItem } from "./activity-summary.js";
@@ -79,22 +81,21 @@ function historyRowToCatalog(row: AgentRunHistoryRow): RunCatalogEntry {
   };
 }
 
-export interface ListRunsInRangeOptions {
-  since?: string;
-  until?: string;
-  limit?: number;
-}
-
-export function listRunsFromDiskInRange(options: ListRunsInRangeOptions = {}): RunCatalogEntry[] {
-  const all = listRunsFromDisk(Number.MAX_SAFE_INTEGER);
-  const sinceMs = options.since ? new Date(options.since).getTime() : 0;
-  const untilMs = options.until ? new Date(options.until).getTime() : Number.MAX_SAFE_INTEGER;
-  const filtered = all.filter((r) => {
-    const t = new Date(r.started_at).getTime();
-    return !Number.isNaN(t) && t >= sinceMs && t <= untilMs;
-  });
-  const cap = options.limit ?? filtered.length;
-  return filtered.slice(0, cap);
+export function listRunsFromDiskInRange(
+  options: { since?: Date | null; until?: Date | null; limit?: number } = {},
+): RunCatalogEntry[] {
+  const limit = options.limit ?? 10_000;
+  const sinceMs = options.since?.getTime() ?? null;
+  const untilMs = options.until?.getTime() ?? null;
+  const all = listRunsFromDisk(limit * 3);
+  return all
+    .filter((r) => {
+      const t = new Date(r.started_at).getTime();
+      if (sinceMs != null && t < sinceMs) return false;
+      if (untilMs != null && t > untilMs) return false;
+      return true;
+    })
+    .slice(0, limit);
 }
 
 export function listRunsFromDisk(limit = 80): RunCatalogEntry[] {
@@ -150,12 +151,23 @@ export function listRunsFromDisk(limit = 80): RunCatalogEntry[] {
 }
 
 export async function listRunsMerged(limit = 80): Promise<RunCatalogEntry[]> {
+  return listRunsMergedInRange({ limit });
+}
+
+export async function listRunsMergedInRange(
+  options: { since?: Date | null; until?: Date | null; limit?: number } = {},
+): Promise<RunCatalogEntry[]> {
+  const limit = options.limit ?? 10_000;
   if (useSupabaseStore()) {
     if (!dbEnabled()) return [];
-    const fromDb = await listRunsGlobal(limit);
+    const fromDb = await listRunsGlobalInRange({
+      since: options.since,
+      until: options.until,
+      limit,
+    });
     return filterProductionRuns(fromDb.map(historyRowToCatalog));
   }
-  return listRunsFromDisk(limit);
+  return listRunsFromDiskInRange({ since: options.since, until: options.until, limit });
 }
 
 /** Recent agent runs with prompt/output/action summaries for the Activity overview. */
@@ -316,6 +328,10 @@ export async function getAgentDetail(agentId: AgentId) {
   const flatTasks =
     (heapPlan?.flat_tasks as Array<{ agent: string; reason: string; coordinator: string }>) ?? [];
   const heapTask = flatTasks.find((t) => t.agent === agentId);
+
+  const { buildAgentWorkQueue } = await import("./agent-work-queue.js");
+  const workQueue = await buildAgentWorkQueue(cpState);
+  const agentQueue = workQueue.by_agent[agentId] ?? [];
   const recentTasks = cpState.recent_tasks.filter((t) => t.agentId === agentId).slice(-8).reverse();
   const activeRun = listActiveRuns().find((r) => r.agent_id === agentId && r.status === "running");
   const supervisorRunning =
@@ -347,8 +363,12 @@ export async function getAgentDetail(agentId: AgentId) {
     status,
     stopped,
     active_run: activeRun ?? null,
-    recommended_reason: rec?.reason ?? heapTask?.reason,
+    recommended_reason:
+      agentQueue.find((q) => q.status === "pending")?.reason ??
+      rec?.reason ??
+      heapTask?.reason,
     heap_coordinator: heapTask?.coordinator,
+    work_queue: agentQueue,
     recent_tasks: recentTasks,
     runs,
     history,

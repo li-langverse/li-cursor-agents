@@ -41,6 +41,7 @@ import { readFileSafe } from "./control-plane/safe-file-read.js";
 import { listActiveRuns } from "./control-plane/runtime.js";
 import { listSupervisorActivity } from "./control-plane/supervisor-activity.js";
 import { buildSwarmStatistics } from "./control-plane/swarm-statistics.js";
+import { parseStatsTimeRange } from "./control-plane/stats-time-range.js";
 import { agentLog } from "./agent-log.js";
 import { hydrateStateFromDb, loadState, loadStateForApi } from "./control-plane/state.js";
 import { assertStoreReady, configuredStore, dataStoreLabel, dbEnabled } from "./db/client.js";
@@ -74,7 +75,7 @@ export function defaultOpsPort(): number {
   return Number(process.env.LI_AGENTS_OPS_PORT ?? process.env.LI_AGENT_DASHBOARD_PORT ?? 9477);
 }
 
-let statisticsCache: { at: number; stats: SwarmStatistics } | null = null;
+let statisticsCache: { at: number; stats: SwarmStatistics; key: string } | null = null;
 const STATS_CACHE_MS = Number(process.env.LI_STATISTICS_CACHE_MS ?? 45_000);
 
 async function getSwarmStatisticsForApi(
@@ -82,16 +83,27 @@ async function getSwarmStatisticsForApi(
 ): Promise<SwarmStatistics> {
   const refresh = url.searchParams.get("refresh") === "1";
   const includeGh = url.searchParams.get("gh") === "1";
+  const timeRange = parseStatsTimeRange(url.searchParams);
+  const cacheKey = `${timeRange.preset}:${timeRange.since?.toISOString() ?? ""}:${timeRange.until.toISOString()}`;
   const now = Date.now();
-  if (!refresh && statisticsCache && now - statisticsCache.at < STATS_CACHE_MS) {
+  if (
+    !refresh &&
+    statisticsCache &&
+    statisticsCache.key === cacheKey &&
+    now - statisticsCache.at < STATS_CACHE_MS
+  ) {
     return statisticsCache.stats;
   }
-  const limit = Math.min(800, Math.max(50, Number(url.searchParams.get("runs") ?? 200)));
+  const limit = Math.min(
+    50_000,
+    Math.max(50, Number(url.searchParams.get("runs") ?? (timeRange.preset === "all" ? 10_000 : 2000))),
+  );
   const stats = await buildSwarmStatistics(limit, {
     runLimit: limit,
     skipGh: !includeGh,
+    timeRange,
   });
-  statisticsCache = { at: now, stats };
+  statisticsCache = { at: now, stats, key: cacheKey };
   return stats;
 }
 
@@ -373,6 +385,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     const snapshot = await buildAgentWorkQueue(state);
     json(res, 200, {
       queue: snapshot.items,
+      by_agent: snapshot.by_agent,
       generated_at: snapshot.generated_at,
       swarm: snapshot.swarm,
       briefing_hash: state.last_briefing_hash,

@@ -14,8 +14,29 @@ const ui = {
   openDrilldowns: new Set(),
   /** @type {Set<string>} user explicitly collapsed (overrides defaults) */
   closedDrilldowns: new Set(),
+  statsRange: "1d",
+  statsCustomSince: "",
+  statsCustomUntil: "",
 
 };
+
+function statisticsQueryString({ refresh = false } = {}) {
+  const params = new URLSearchParams();
+  params.set("range", ui.statsRange);
+  if (ui.statsRange === "custom") {
+    if (ui.statsCustomSince) params.set("since", ui.statsCustomSince);
+    if (ui.statsCustomUntil) params.set("until", ui.statsCustomUntil);
+  }
+  if (refresh) params.set("refresh", "1");
+  return params.toString();
+}
+
+async function loadStatistics() {
+  if (!ui.data) ui.data = {};
+  const qs = statisticsQueryString({ refresh: true });
+  ui.data.statisticsPayload = await fetchJson(`/api/statistics?${qs}`).catch(() => ({ statistics: null }));
+  renderSwarmStatistics();
+}
 
 const VIEW_META = {
   overview: { title: "Overview", subtitle: "Swarm status at a glance" },
@@ -214,7 +235,7 @@ async function loadDashboard() {
       fetchJson("/api/supervisor/activity").catch(() => ({ entries: [], loop_running: false })),
       fetchJson("/api/activity/recent?limit=25").catch(() => ({ items: [] })),
       fetchJson("/api/interventions").catch(() => ({ interventions: [] })),
-      fetchJson("/api/statistics").catch(() => ({ statistics: null })),
+      fetchJson(`/api/statistics?${statisticsQueryString()}`).catch(() => ({ statistics: null })),
       fetchJson("/api/handoffs?limit=30").catch(() => ({ handoffs: [] })),
       fetchJson("/api/swarm/briefing").catch(() => ({})),
       fetchJson("/api/queue").catch(() => ({ queue: [] })),
@@ -263,12 +284,13 @@ function renderSwarmStatistics() {
     }
     return;
   }
-  const runsNote = s.runs_scanned ? `${s.runs_scanned} runs scanned` : "";
+  const runsNote = s.runs_scanned != null ? `${s.runs_scanned} runs in range` : "";
+  const rangeNote = s.range_label ? `Window: ${s.range_label}` : "";
   const briefingNote = s.briefing_generated_at ? `Briefing ${s.briefing_generated_at}` : "";
-  const generatedNote = s.generated_at ? `Updated ${s.generated_at}` : "";
+  const generatedNote = s.generated_at ? `Updated ${formatTime(s.generated_at)}` : "";
   if (meta) {
     meta.textContent =
-      [runsNote, briefingNote, generatedNote].filter(Boolean).join(" · ") || "Swarm output metrics.";
+      [rangeNote, runsNote, briefingNote, generatedNote].filter(Boolean).join(" · ") || "Swarm output metrics.";
   }
   const items = [
     { label: "Actions taken", value: fmtNum(s.actions_taken), hint: "tool calls in traces", accent: true },

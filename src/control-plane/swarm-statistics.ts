@@ -5,11 +5,16 @@ import type { AgentRunTrace, AgentRunTraceFileEdit } from "../agent-run-trace.js
 import { extractPrUrls } from "./run-completion.js";
 import { readJson } from "./read-json.js";
 import { controlPlaneRoot } from "./paths.js";
-import { listRunsMerged, type RunCatalogEntry } from "./runs-catalog.js";
+import { listRunsMergedInRange, type RunCatalogEntry } from "./runs-catalog.js";
+import type { ParsedStatsTimeRange } from "./stats-time-range.js";
 import { resolveBenchmarksRoot } from "../preflight.js";
 
 export interface SwarmStatistics {
   generated_at: string;
+  range_preset?: string;
+  range_label?: string;
+  range_since?: string | null;
+  range_until?: string;
   runs_scanned: number;
   /** Tool calls across recorded runs */
   actions_taken: number;
@@ -290,9 +295,7 @@ export interface BuildSwarmStatisticsOptions {
   runLimit?: number;
   /** Skip `gh search` (blocks ~20s); use runs + briefing artifacts only. */
   skipGh?: boolean;
-  window?: StatisticsTimeWindow;
-  /** When false, do not update swarm-stats.json (range-scoped queries). */
-  updatePersisted?: boolean;
+  timeRange?: ParsedStatsTimeRange;
 }
 
 export async function buildSwarmStatistics(
@@ -301,80 +304,68 @@ export async function buildSwarmStatistics(
 ): Promise<SwarmStatistics> {
   const notes: string[] = [];
   const benchmarksRoot = resolveBenchmarksRoot();
-  const window = options.window;
-  const rangeScoped = Boolean(window && window.preset !== "all");
-  const runs = window
-    ? await listRunsMergedInRange({
-        since: window.since,
-        until: window.until,
-        limit: options.runLimit ?? 50_000,
-      })
-    : await listRunsMergedInRange({
-        limit: options.runLimit ?? runLimit,
-      });
+  const range = options.timeRange;
+  const limit = options.runLimit ?? runLimit;
+  const runs = await listRunsMergedInRange({
+    since: range?.since ?? null,
+    until: range?.until ?? new Date(),
+    limit: range?.preset === "all" ? Math.max(limit, 10_000) : limit,
+  });
+  if (range) {
+    notes.push(`runs filtered: ${range.label} (${runs.length} rows)`);
+  }
   const agg = aggregateRuns(runs);
 
-  const updatePersisted = options.updatePersisted ?? !rangeScoped;
   const persisted = loadPersisted();
-  if (updatePersisted) {
-    for (const k of agg.openedKeys) {
-      if (!persisted.opened_pr_keys.includes(k)) persisted.opened_pr_keys.push(k);
-    }
-    for (const k of agg.mergedKeys) {
-      if (!persisted.merged_pr_keys.includes(k)) persisted.merged_pr_keys.push(k);
-    }
-    for (const p of agg.packageRoots) {
-      if (!persisted.package_roots.includes(p)) persisted.package_roots.push(p);
-    }
-
-    for (const k of mergedFromBriefingArtifacts(benchmarksRoot)) {
-      if (!persisted.merged_pr_keys.includes(k)) persisted.merged_pr_keys.push(k);
-    }
-
-    const skipGh =
-      options.skipGh === true ||
-      process.env.LI_SWARM_STATS_SKIP_GH === "1" ||
-      process.env.LI_SWARM_STATS_SKIP_GH === "true";
-    if (!skipGh) {
-      const gh = fetchMergedViaGh();
-      if (gh.note) notes.push(gh.note);
-      for (const k of gh.keys) {
-        if (!persisted.merged_pr_keys.includes(k)) persisted.merged_pr_keys.push(k);
-      }
-    } else {
-      notes.push("gh merge search skipped (dashboard fast path — use ?gh=1 for full gh sweep)");
-    }
-
-    savePersisted(persisted);
-  } else {
-    notes.push(`Range-scoped stats (${window?.label ?? "window"}) — PR/package totals from runs in window only`);
+  for (const k of agg.openedKeys) {
+    if (!persisted.opened_pr_keys.includes(k)) persisted.opened_pr_keys.push(k);
   }
+  for (const k of agg.mergedKeys) {
+    if (!persisted.merged_pr_keys.includes(k)) persisted.merged_pr_keys.push(k);
+  }
+  for (const p of agg.packageRoots) {
+    if (!persisted.package_roots.includes(p)) persisted.package_roots.push(p);
+  }
+
+  for (const k of mergedFromBriefingArtifacts(benchmarksRoot)) {
+    if (!persisted.merged_pr_keys.includes(k)) persisted.merged_pr_keys.push(k);
+  }
+
+  const skipGh =
+    options.skipGh === true ||
+    process.env.LI_SWARM_STATS_SKIP_GH === "1" ||
+    process.env.LI_SWARM_STATS_SKIP_GH === "true";
+  if (!skipGh) {
+    const gh = fetchMergedViaGh();
+    if (gh.note) notes.push(gh.note);
+    for (const k of gh.keys) {
+      if (!persisted.merged_pr_keys.includes(k)) persisted.merged_pr_keys.push(k);
+    }
+  } else {
+    notes.push("gh merge search skipped (dashboard fast path — use ?refresh=1 for full gh sweep)");
+  }
+
+  savePersisted(persisted);
 
   const { open, generated_at } = openPrCountFromBriefing(benchmarksRoot);
   const agentOpen = agentOpenPrCount(benchmarksRoot);
 
-  const prs_opened = rangeScoped ? agg.openedKeys.size : Math.max(agg.openedKeys.size, persisted.opened_pr_keys.length);
-  const prs_merged = rangeScoped ? agg.mergedKeys.size : persisted.merged_pr_keys.length;
-  const packages_created = rangeScoped
-    ? agg.packageRoots.size
-    : Math.max(agg.packageRoots.size, persisted.package_roots.length);
-
   return {
     generated_at: new Date().toISOString(),
-    range: window?.label,
-    range_preset: window?.preset,
-    since: window?.since,
-    until: window?.until,
+    range_preset: range?.preset,
+    range_label: range?.label,
+    range_since: range?.since?.toISOString() ?? null,
+    range_until: (range?.until ?? new Date()).toISOString(),
     runs_scanned: agg.runs_scanned,
     actions_taken: agg.actions_taken,
     file_edits: agg.file_edits,
     lines_added: agg.lines_added,
     lines_deleted: agg.lines_deleted,
-    prs_opened,
+    prs_opened: Math.max(agg.openedKeys.size, persisted.opened_pr_keys.length),
     prs_open_now: open,
     agent_prs_open_now: agentOpen,
-    prs_merged,
-    packages_created,
+    prs_merged: persisted.merged_pr_keys.length,
+    packages_created: Math.max(agg.packageRoots.size, persisted.package_roots.length),
     briefing_generated_at: generated_at,
     notes,
   };

@@ -1,4 +1,5 @@
-import { buildHeapTaskQueue } from "../heap/task-queue.js";
+import { buildHeapPlan, parseHeapPlanFromBriefing, type HeapPlan } from "../heap/plan.js";
+import { taskFingerprint } from "../heap/task-queue.js";
 import { listHandoffs } from "../handoffs/handoff-store.js";
 import { buildImplementationQueue } from "../preflight/implementation-queue.js";
 import { runPreflight, resolveBenchmarksRoot } from "../preflight.js";
@@ -13,7 +14,7 @@ import { laneRuntimeSnapshot } from "../lanes/lane-runtime.js";
 export interface AgentWorkQueueItem {
   id: string;
   agent_id: AgentId | string;
-  source: "heap" | "handoff" | "research_focus" | "research_hypothesis" | "implementation";
+  source: "heap" | "handoff" | "research_focus" | "research_hypothesis" | "implementation" | "recommended";
   priority: number;
   reason: string;
   status: "pending" | "in_progress" | "blocked";
@@ -23,6 +24,8 @@ export interface AgentWorkQueueItem {
 export interface AgentWorkQueueSnapshot {
   generated_at: string;
   items: AgentWorkQueueItem[];
+  /** Per-agent pending/in-progress work (async workers pick from their list). */
+  by_agent: Record<string, AgentWorkQueueItem[]>;
   swarm: {
     async_swarm_running: boolean;
     handoff_run_in_progress: boolean;
@@ -30,28 +33,105 @@ export interface AgentWorkQueueSnapshot {
   };
 }
 
+function extractRecommended(briefing: unknown): Array<{ agent: string; reason: string }> {
+  if (!briefing || typeof briefing !== "object") return [];
+  const rec = (briefing as Record<string, unknown>).recommended_agents;
+  if (!Array.isArray(rec)) return [];
+  return rec.filter(
+    (r): r is { agent: string; reason: string } =>
+      r && typeof r === "object" && typeof r.agent === "string" && typeof r.reason === "string",
+  );
+}
+
+function heapPlanFromBriefing(briefing: unknown): HeapPlan {
+  let heapPlan = parseHeapPlanFromBriefing(briefing);
+  if (!heapPlan) {
+    heapPlan = buildHeapPlan(extractRecommended(briefing));
+  }
+  return heapPlan;
+}
+
+function pushHeapTasks(
+  items: AgentWorkQueueItem[],
+  heapPlan: HeapPlan,
+  seen: Set<string>,
+): void {
+  for (const ht of heapPlan.flat_tasks) {
+    const id = `heap:${ht.coordinator}:${ht.agent}:${taskFingerprint(ht.agent, ht.reason)}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
+    items.push({
+      id,
+      agent_id: ht.agent,
+      source: "heap",
+      priority: 50 + Math.min(10, ht.priority ?? 0),
+      reason: `[${ht.coordinator}] ${ht.reason}`,
+      status: "pending",
+      meta: { coordinator: ht.coordinator },
+    });
+  }
+}
+
+export function groupAgentWorkQueue(items: AgentWorkQueueItem[]): Record<string, AgentWorkQueueItem[]> {
+  const by: Record<string, AgentWorkQueueItem[]> = {};
+  for (const item of items) {
+    const id = String(item.agent_id);
+    (by[id] ??= []).push(item);
+  }
+  for (const key of Object.keys(by)) {
+    by[key].sort((a, b) => b.priority - a.priority);
+  }
+  return by;
+}
+
+/** Next pending item for an async worker (highest priority first). */
+export function pickNextWorkForAgent(
+  agentId: string,
+  snapshot: Pick<AgentWorkQueueSnapshot, "items" | "by_agent">,
+): AgentWorkQueueItem | null {
+  const list = snapshot.by_agent[agentId] ?? snapshot.items.filter((i) => i.agent_id === agentId);
+  return list.find((i) => i.status === "pending") ?? null;
+}
+
 export async function buildAgentWorkQueue(state: ControlPlaneState): Promise<AgentWorkQueueSnapshot> {
   const items: AgentWorkQueueItem[] = [];
+  const seen = new Set<string>();
   const benchmarksRoot = resolveBenchmarksRoot();
   const preflight = runPreflight(benchmarksRoot, false);
   const briefing = preflight.briefing ?? preflight;
-  const briefingHash = state.last_briefing_hash ?? "";
 
-  const { tasks } = buildHeapTaskQueue(briefing, state, {
-    briefingHash,
-    cooldownMs: Number(process.env.LI_AGENTS_COOLDOWN_MS ?? 300_000),
-    maxTasks: Number(process.env.LI_SUPERVISOR_MAX_TASKS ?? 8),
-  });
-  for (const t of tasks) {
+  const heapPlan = heapPlanFromBriefing(briefing);
+  pushHeapTasks(items, heapPlan, seen);
+
+  for (const rec of extractRecommended(briefing)) {
+    const id = `rec:${rec.agent}:${taskFingerprint(rec.agent, rec.reason)}`;
+    if (seen.has(id)) continue;
+    seen.add(id);
     items.push({
-      id: `heap:${t.fingerprint}`,
-      agent_id: t.agentId,
-      source: "heap",
-      priority: 50,
-      reason: t.reason,
+      id,
+      agent_id: rec.agent,
+      source: "recommended",
+      priority: 45,
+      reason: rec.reason,
       status: "pending",
-      meta: { coordinator: t.coordinator },
     });
+  }
+
+  const org = briefing as Record<string, unknown>;
+  const openPlan = (org.org_roadmap as Record<string, unknown> | undefined)?.master_plan_open_items;
+  if (typeof openPlan === "number" && openPlan > 0) {
+    const id = "plan:open_items";
+    if (!seen.has(id)) {
+      seen.add(id);
+      items.push({
+        id,
+        agent_id: "plan_verifier",
+        source: "recommended",
+        priority: 48,
+        reason: `${openPlan} master-plan open items`,
+        status: "pending",
+      });
+    }
   }
 
   const implQ = buildImplementationQueue(briefing);
@@ -68,20 +148,24 @@ export async function buildAgentWorkQueue(state: ControlPlaneState): Promise<Age
     });
   }
 
-  const handoffs = await listHandoffs({ status: ["pending", "pending_placement"], limit: 30 });
-  for (const h of handoffs) {
-    const agent =
-      h.status === "pending_placement" ? "package_architect" : (h.to_agents?.[0] ?? "code_implementer");
-    items.push({
-      id: `handoff:${h.handoff_id}`,
-      agent_id: agent,
-      source: "handoff",
-      priority: h.status === "pending_placement" ? 90 : 80,
-      reason:
-        typeof h.work?.summary === "string" ? h.work.summary : `handoff ${h.status}`,
-      status: "pending",
-      meta: { handoff_id: h.handoff_id, goal: h.research_goal_id ?? undefined },
-    });
+  try {
+    const handoffs = await listHandoffs({ status: ["pending", "pending_placement"], limit: 30 });
+    for (const h of handoffs) {
+      const agent =
+        h.status === "pending_placement" ? "package_architect" : (h.to_agents?.[0] ?? "code_implementer");
+      items.push({
+        id: `handoff:${h.handoff_id}`,
+        agent_id: agent,
+        source: "handoff",
+        priority: h.status === "pending_placement" ? 90 : 80,
+        reason:
+          typeof h.work?.summary === "string" ? h.work.summary : `handoff ${h.status}`,
+        status: "pending",
+        meta: { handoff_id: h.handoff_id, goal: h.research_goal_id ?? undefined },
+      });
+    }
+  } catch {
+    /* handoffs table may be missing — heap + recommended still populate queue */
   }
 
   for (const goal of loadResearchGoals()) {
@@ -135,6 +219,7 @@ export async function buildAgentWorkQueue(state: ControlPlaneState): Promise<Age
   return {
     generated_at: new Date().toISOString(),
     items,
+    by_agent: groupAgentWorkQueue(items),
     swarm: {
       async_swarm_running: isAsyncSwarmRunning(),
       handoff_run_in_progress: isHandoffRunInProgress(),
