@@ -75,7 +75,7 @@ if [[ ! -d dashboard-ui/node_modules ]]; then
   (cd dashboard-ui && npm install)
 fi
 
-echo "==> TypeScript build"
+echo "==> TypeScript build (control plane + Next native /api)"
 npm run build
 
 if [[ "${CURSOR_MOCK:-}" == "1" ]]; then
@@ -155,7 +155,7 @@ trap - INT TERM
 trap 'stop_api' EXIT INT TERM
 
 echo ""
-echo "  Dashboard UI:  http://127.0.0.1:${UI_PORT}/  (proxies /api → :${API_PORT})"
+  echo "  Dashboard UI:  http://127.0.0.1:${UI_PORT}/  (native GET /api/* → Supabase; control → :${API_PORT})"
 echo "  Control API:   http://127.0.0.1:${API_PORT}/"
 echo "  Store:         ${LI_CONTROL_PLANE_STORE:-$_store}  Supabase: ${SUPABASE_URL:-(disk)}"
   echo "  Async swarm:   ${LI_AUTO_START_ASYNC_SWARM} (set LI_AUTO_START_ASYNC_SWARM=1 to enable workers)"

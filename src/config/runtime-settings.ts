@@ -1,6 +1,8 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { controlPlaneRoot } from "../control-plane/paths.js";
+import { dbEnabled } from "../db/client.js";
+import { loadRuntimeSettingsFromDb, saveRuntimeSettingsToDb } from "../db/runtime-settings-db.js";
 import {
   getSettingDefinition,
   SETTINGS_SCHEMA,
@@ -56,7 +58,9 @@ function settingsPath(): string {
   return join(controlPlaneRoot(), "runtime-settings.json");
 }
 
-export function loadPersistedSettings(): Record<string, string> {
+let memorySettings: Record<string, string> | null = null;
+
+function readPersistedSettingsFromDisk(): Record<string, string> {
   const path = settingsPath();
   if (!existsSync(path)) return {};
   try {
@@ -67,7 +71,24 @@ export function loadPersistedSettings(): Record<string, string> {
   }
 }
 
+export async function hydrateRuntimeSettingsFromDb(): Promise<void> {
+  if (!dbEnabled()) return;
+  try {
+    const fromDb = await loadRuntimeSettingsFromDb();
+    if (Object.keys(fromDb).length > 0) memorySettings = fromDb;
+  } catch {
+    /* disk fallback */
+  }
+}
+
+export function loadPersistedSettings(): Record<string, string> {
+  if (memorySettings) return { ...memorySettings };
+  memorySettings = readPersistedSettingsFromDisk();
+  return { ...memorySettings };
+}
+
 function savePersistedSettings(values: Record<string, string>): void {
+  memorySettings = { ...values };
   const path = settingsPath();
   mkdirSync(controlPlaneRoot(), { recursive: true });
   writeFileSync(
@@ -75,6 +96,11 @@ function savePersistedSettings(values: Record<string, string>): void {
     JSON.stringify({ version: 1, updated_at: new Date().toISOString(), values }, null, 2),
     "utf8",
   );
+  if (dbEnabled()) {
+    void saveRuntimeSettingsToDb(values).catch(() => {
+      /* optional mirror */
+    });
+  }
 }
 
 function envValueForKey(key: string): string | undefined {

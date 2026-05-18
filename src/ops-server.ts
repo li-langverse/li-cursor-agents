@@ -41,7 +41,7 @@ import {
 } from "./control-plane/runs-catalog.js";
 import { readFileSafe } from "./control-plane/safe-file-read.js";
 import { listActiveRuns } from "./control-plane/runtime.js";
-import { listSupervisorActivity } from "./control-plane/supervisor-activity.js";
+import { listSupervisorActivityAsync } from "./control-plane/supervisor-activity.js";
 import { loadRecentRunSummariesAsync } from "./control-plane/build-report.js";
 import { loadObserverState } from "./observer/state.js";
 import { scanSwarmHealth } from "./observer/swarm-health.js";
@@ -52,6 +52,9 @@ import {
   installOpsProcessGuards,
   startOpsBackgroundServices,
 } from "./ops-server-lifecycle.js";
+import { hydrateBriefingFromDb } from "./briefing/load-cached-briefing.js";
+import { hydrateRuntimeSettingsFromDb } from "./config/runtime-settings.js";
+import { hydrateLaneStateFromDb } from "./lanes/lane-state.js";
 import { hydrateStateFromDb, loadState, loadStateForApi } from "./control-plane/state.js";
 import { assertStoreReady, configuredStore, dataStoreLabel, dbEnabled } from "./db/client.js";
 import type { ControlPlaneReport, ControlPlaneState } from "./control-plane/types.js";
@@ -198,8 +201,13 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
       `Agent backend: ${backend}${backend === "cursor-sdk" && !keyOk ? " (missing CURSOR_API_KEY — add to .env)" : ""}`,
     );
     if (dbEnabled()) {
-      void hydrateStateFromDb().catch((err) => {
-        agentLog("db", "ERROR", `hydrate state: ${err instanceof Error ? err.message : err}`);
+      void Promise.all([
+        hydrateStateFromDb(),
+        hydrateLaneStateFromDb(),
+        hydrateRuntimeSettingsFromDb(),
+        hydrateBriefingFromDb(),
+      ]).catch((err) => {
+        agentLog("db", "ERROR", `hydrate store: ${err instanceof Error ? err.message : err}`);
       });
       void probeAgentHandoffsTable();
     }
@@ -346,7 +354,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     json(res, 200, {
       loop_running: isSupervisorLoopRunning(),
       started_at: state.supervisor_loop_started_at ?? null,
-      entries: listSupervisorActivity(40),
+      entries: await listSupervisorActivityAsync(40),
     });
     return;
   }
@@ -648,7 +656,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       ...result,
       message,
       runtime: runtimeSnapshot(loopState),
-      activity: listSupervisorActivity(8),
+      activity: await listSupervisorActivityAsync(8),
     });
     return;
   }
@@ -660,7 +668,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       ok: true,
       ...stopped,
       runtime: runtimeSnapshot(stopState),
-      activity: listSupervisorActivity(5),
+      activity: await listSupervisorActivityAsync(5),
     });
     return;
   }
@@ -683,7 +691,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
         message: started.message,
         handoff_run: handoffRunStatus(),
         runtime: runtimeSnapshot(swarmState),
-        activity: listSupervisorActivity(12),
+        activity: await listSupervisorActivityAsync(12),
       });
       return;
     }
@@ -700,7 +708,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       message,
       ...result,
       runtime: runtimeSnapshot(swarmState),
-      activity: listSupervisorActivity(12),
+      activity: await listSupervisorActivityAsync(12),
     });
     return;
   }

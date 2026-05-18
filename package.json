@@ -4,6 +4,9 @@
   "description": "Local Cursor SDK agent runner for li-langverse (mock backend for CI)",
   "type": "module",
   "license": "Apache-2.0",
+  "exports": {
+    "./dashboard-api": "./dist/dashboard-api/index.js"
+  },
   "bin": {
     "li-agent": "./dist/cli/run-agent.js"
   },

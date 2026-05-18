@@ -5,6 +5,8 @@ import { enrichBriefingObject } from "../briefing/enrich-briefing-file.js";
 import { failHandoffsMissingNorthStar } from "../handoffs/handoff-hygiene.js";
 import { resolveBenchmarksRoot, runPreflight } from "../preflight.js";
 import { dispatchSwarmAuditRefresh } from "../benchmarks/dispatch-swarm-audit.js";
+import { saveLatestBriefingSnapshot } from "../db/briefing.js";
+import { setCachedBriefing } from "../briefing/load-cached-briefing.js";
 import { liveBriefingHash } from "../control-plane/live-interventions.js";
 import { loadState } from "../control-plane/state.js";
 import { buildAgentWorkQueue } from "../control-plane/agent-work-queue.js";
@@ -62,7 +64,11 @@ export async function maintenanceLaneTick(options?: {
   next.last_maintenance_tick_at = new Date().toISOString();
   saveLaneState(next);
 
+  setCachedBriefing(enriched);
   const briefingHash = liveBriefingHash(enriched);
+  void saveLatestBriefingSnapshot(enriched, briefingHash, briefingPath).catch(() => {
+    /* DB is primary read path for Next /api/heap */
+  });
   const cpState = { ...loadState(), last_briefing_hash: briefingHash };
   void buildAgentWorkQueue(cpState, { light: true }).catch(() => {
     /* denormalize queue rows for indexed GET /api/queue */

@@ -59,11 +59,13 @@ export async function saveReportToDb(
   if (briefing && report.briefing_hash) {
     const generated =
       (briefing as Record<string, unknown>).generated_at ?? report.briefing_generated_at ?? generatedAt;
+    await supabase.from("briefing_snapshots").update({ is_latest: false }).eq("is_latest", true);
     await supabase.from("briefing_snapshots").upsert({
       briefing_hash: report.briefing_hash,
       generated_at: String(generated),
       source_path: report.preflight.briefing_path ?? null,
       payload: briefing,
+      is_latest: true,
     });
   }
 
