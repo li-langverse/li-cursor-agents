@@ -168,8 +168,8 @@ function agentStatusMap(roster, report, runtime, statusPayload) {
     const activeRun = activeRuns.find((r) => r.agent_id === entry.id && r.status === "running");
     if (stopped.has(entry.id)) status = "stopped";
     else if (activeRun || currentSupervisor === entry.id) status = "running";
-    else if (handoffRun?.in_progress && handoffRun.current_agent === entry.id) status = "running";
-    else if (handoffRun?.in_progress && handoffPipeline.has(entry.id)) status = "queued";
+    else if (handoffRun?.in_progress && handoffPipeline.has(entry.id)) status = "running";
+    else if (handoffRun?.in_progress && swarmWorkers.has(entry.id)) status = "queued";
     else if (
       runtime?.async_swarm_running &&
       !handoffRun?.in_progress &&
@@ -488,6 +488,7 @@ function renderSidebar() {
 }
 
 function renderFooterControls(loopOn, activeRunCount = 0) {
+  const { runtime, status } = ui.data ?? {};
   const sup = $("#mode-supervisor");
   const par = $("#mode-parallel");
   const res = $("#mode-research-lane");
@@ -521,11 +522,16 @@ function renderFooterControls(loopOn, activeRunCount = 0) {
     }
   }
   if (par) {
-    par.disabled = false;
-    par.title = loopOn
-      ? "Supervisor mode is on — handoff run-all still runs one research → placement → implement cycle"
-      : "Research → placement → implement (one tick each; shows in Supervisor log + active runs)";
-    par.textContent = "Run all (handoff)";
+    const handoff = runtime?.handoff_run ?? status?.runtime?.handoff_run;
+    const handoffOn = Boolean(handoff?.in_progress);
+    par.disabled = handoffOn;
+    par.title = handoffOn
+      ? `Handoff in progress — ${handoff.current_agent ?? "starting"} (one SDK session at a time)`
+      : loopOn
+        ? "Supervisor mode is on — handoff run-all still runs one research → placement → implement cycle"
+        : "Research → placement → implement (sequential ticks; pipeline agents show as running)";
+    par.textContent = handoffOn ? "Handoff running…" : "Run all (handoff)";
+    par.className = handoffOn ? "btn ghost sm active" : "btn ghost sm";
   }
 }
 
@@ -548,7 +554,14 @@ function renderSupervisorActivity() {
     if (loopOn) {
       meta.textContent = `Running since ${formatTime(started)} · last completed tick ${lastTick ? formatTime(lastTick) : "pending…"}`;
     } else {
-      meta.textContent = "Footer: Supervisor mode runs agents on a schedule; Run all (parallel) spawns every leaf agent once.";
+      const handoff = rt.handoff_run;
+      if (handoff?.in_progress) {
+        const cur = handoff.current_agent ? ` · active: ${handoff.current_agent}` : "";
+        meta.textContent = `Handoff run-all in progress (research → placement → implement)${cur}. One agent uses the SDK at a time; pipeline agents show as Running.`;
+      } else {
+        meta.textContent =
+          "Run all (handoff) runs research → placement → implement once (sequential). Async swarm runs other agents on a schedule when enabled.";
+      }
     }
   }
 
