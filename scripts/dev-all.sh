@@ -97,14 +97,21 @@ for _port in "$API_PORT" "$UI_PORT"; do
   fi
 done
 
-PIDS=()
-cleanup() {
-  local pid
-  for pid in "${PIDS[@]}"; do
-    kill "$pid" 2>/dev/null || true
-  done
+API_PID=""
+stop_api() {
+  if [[ -n "$API_PID" ]]; then
+    kill "$API_PID" 2>/dev/null || true
+    API_PID=""
+  fi
 }
-trap cleanup EXIT INT TERM
+
+on_dev_all_signal() {
+  echo ""
+  echo "==> dev:all stopped — shutting down control-plane API (PID ${API_PID:-?})"
+  stop_api
+  exit 143
+}
+trap on_dev_all_signal INT TERM
 
 echo "==> Control-plane API http://127.0.0.1:${API_PORT}/ (LI_AUTO_START_ASYNC_SWARM=${LI_AUTO_START_ASYNC_SWARM})"
 env \
@@ -123,10 +130,22 @@ env \
   GH_TOKEN="${GH_TOKEN:-}" \
   GITHUB_TOKEN="${GITHUB_TOKEN:-}" \
   node dist/cli/serve-dashboard.js &
-PIDS+=($!)
+API_PID=$!
 
 echo "==> Waiting for API readiness (status + agents; progress below)…"
-LI_AGENT_DASHBOARD_PORT="$API_PORT" node "$ROOT/scripts/wait-dev-stack-ready.mjs"
+export LI_DEV_READY_TIMEOUT_MS="${LI_DEV_READY_TIMEOUT_MS:-120000}"
+if ! LI_AGENT_DASHBOARD_PORT="$API_PORT" node "$ROOT/scripts/wait-dev-stack-ready.mjs"; then
+  echo "" >&2
+  echo "ERROR: dev:all readiness failed — Next.js was not started." >&2
+  echo "       Control API is still up: http://127.0.0.1:${API_PORT}/ (PID ${API_PID})" >&2
+  echo "       Try: curl -s http://127.0.0.1:${API_PORT}/api/status | head" >&2
+  echo "       Or retry with a longer wait: LI_DEV_READY_TIMEOUT_MS=180000 npm run dev:all" >&2
+  echo "       Stop API: kill ${API_PID}" >&2
+  exit 1
+fi
+
+trap - INT TERM
+trap 'stop_api' EXIT INT TERM
 
 echo ""
 echo "  Dashboard UI:  http://127.0.0.1:${UI_PORT}/  (proxies /api → :${API_PORT})"
@@ -137,4 +156,5 @@ echo "  Ctrl+C stops API + UI"
 echo ""
 
 cd "$ROOT/dashboard-ui"
-exec npm run dev -- -p "$UI_PORT"
+npm run dev -- -p "$UI_PORT"
+stop_api
