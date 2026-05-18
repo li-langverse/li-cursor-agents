@@ -1,22 +1,26 @@
 /**
  * Async handoff flow without supervisor — research session + implement placement gate.
  */
-import { test, describe } from "node:test";
+import { test, describe, after, before } from "node:test";
 import assert from "node:assert/strict";
-import { mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
-import { agentsPackageRoot } from "../runner.js";
 import { createHandoff, listHandoffs, updateHandoff } from "../handoffs/handoff-store.js";
 import { pickImplementLaneTarget } from "../lanes/implement-lane.js";
 import { extractPackagePlacementFromOutput } from "../handoffs/post-run.js";
 import { handoffReadyForImplement } from "../handoffs/placement-validator.js";
+import { setupE2eEnv } from "./helpers.js";
 
 describe("async handoff e2e (disk, no supervisor)", () => {
-  test("placement gate: architect then implementer", async () => {
-    const dir = join(agentsPackageRoot(), "data", "handoffs");
-    mkdirSync(dir, { recursive: true });
-    writeFileSync(join(dir, "pending.jsonl"), "", "utf8");
+  let env: ReturnType<typeof setupE2eEnv>;
 
+  before(() => {
+    env = setupE2eEnv("v1");
+  });
+
+  after(() => {
+    env?.restoreEnv();
+  });
+
+  test("placement gate: architect then implementer", async () => {
     const h = await createHandoff({
       from_agent: "proof_gap_researcher",
       to_agents: ["package_architect", "code_implementer"],

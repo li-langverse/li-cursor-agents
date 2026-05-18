@@ -9,7 +9,8 @@ const HANDOFF_LIST_COLUMNS =
   "handoff_id, research_goal_id, from_agent, to_agents, status, domains, north_star_fit, package_placement, work, research_session_id, briefing_hash, source_run_id, created_at, updated_at, claimed_at, completed_at";
 import type { AgentHandoff, CreateHandoffInput, HandoffStatus } from "./types.js";
 
-const HANDOFFS_DIR = () => join(agentsPackageRoot(), "data", "handoffs");
+const HANDOFFS_DIR = () =>
+  process.env.LI_HANDOFFS_DIR?.trim() || join(agentsPackageRoot(), "data", "handoffs");
 const PENDING_JSONL = () => join(HANDOFFS_DIR(), "pending.jsonl");
 
 function nowIso(): string {
@@ -153,7 +154,8 @@ export async function listHandoffs(filter?: {
         q = q.in("status", statuses);
       }
       if (filter?.toAgent) {
-        q = q.contains("to_agents", [filter.toAgent]);
+        // jsonb array containment — string form avoids PostgREST "invalid input syntax for type json"
+        q = q.filter("to_agents", "cs", JSON.stringify([filter.toAgent]));
       }
       if (filter?.limit) q = q.limit(filter.limit);
       const { data, error } = await q;

@@ -307,9 +307,9 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
     { definition, rolloutPrUrls, preflight, extraEvidence },
   );
 
-  await applySwarmPostRunEffects(finalized, briefingHash);
   if (shouldPersistRunToHistory(finalized)) {
     await persistAgentRun({ run: finalized });
   }
+  await applySwarmPostRunEffects(finalized, briefingHash);
   return finalized;
 }

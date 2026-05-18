@@ -14,7 +14,9 @@ import type {
   ResearchSessionStatus,
 } from "./types.js";
 
-const SESSIONS_DIR = () => join(agentsPackageRoot(), "data", "research-sessions");
+const SESSIONS_DIR = () =>
+  process.env.LI_RESEARCH_SESSIONS_DIR?.trim() ||
+  join(agentsPackageRoot(), "data", "research-sessions");
 
 function nowIso(): string {
   return new Date().toISOString();
