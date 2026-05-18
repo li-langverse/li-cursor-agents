@@ -10,7 +10,7 @@ From repo root:
 npm run dev:all
 ```
 
-Starts Supabase (when Docker is available), builds TypeScript, control-plane API on **:9477**, and Next.js on **:3000** (`/api` proxied to the API). Swarm does **not** auto-start unless `LI_AUTO_START_ASYNC_SWARM=1` in `.env`.
+Starts Supabase (when Docker is available), builds TypeScript, control-plane API on **:9477** with **async swarm running**, verifies all core `/api/*` routes (including `agent_handoffs`), then Next.js on **:3000** (`/api` proxied to the API).
 
 Disk-only (no Docker): `LI_STACK_SKIP_SUPABASE=1 npm run dev:all`
 
