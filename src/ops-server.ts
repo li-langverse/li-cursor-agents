@@ -49,6 +49,8 @@ import { agentLog } from "./agent-log.js";
 import { hydrateStateFromDb, loadState, loadStateForApi } from "./control-plane/state.js";
 import { assertStoreReady, configuredStore, dataStoreLabel, dbEnabled } from "./db/client.js";
 import type { ControlPlaneReport, ControlPlaneState } from "./control-plane/types.js";
+import { listSettingsViews, patchSettings } from "./config/runtime-settings.js";
+import { SETTING_CATEGORIES } from "./config/settings-schema.js";
 import { runPreflight, resolveBenchmarksRoot } from "./preflight.js";
 import type { AgentId } from "./types.js";
 import type { SwarmStatistics } from "./control-plane/swarm-statistics.js";
@@ -327,6 +329,25 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       started_at: state.supervisor_loop_started_at ?? null,
       entries: listSupervisorActivity(40),
     });
+    return;
+  }
+
+  if (url.pathname === "/api/settings" && req.method === "GET") {
+    json(res, 200, { categories: SETTING_CATEGORIES, ...listSettingsViews() });
+    return;
+  }
+
+  if (url.pathname === "/api/settings" && req.method === "PATCH") {
+    const body = (await readJsonBody(req)) as {
+      values?: Record<string, string>;
+      reset_keys?: string[];
+    };
+    try {
+      const payload = patchSettings(body.values ?? {}, { resetKeys: body.reset_keys });
+      json(res, 200, { ok: true, categories: SETTING_CATEGORIES, ...payload });
+    } catch (e) {
+      json(res, 400, { error: e instanceof Error ? e.message : String(e) });
+    }
     return;
   }
 

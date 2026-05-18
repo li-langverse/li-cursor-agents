@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import { loadRuntimeSettings } from "./config/runtime-settings.js";
 
 function applyEnvFile(path: string): void {
   if (!existsSync(path)) return;
@@ -109,6 +110,7 @@ export function loadRuntimeEnv(): void {
   if (process.env.GH_TOKEN && !process.env.GITHUB_TOKEN) {
     process.env.GITHUB_TOKEN = process.env.GH_TOKEN;
   }
+  loadRuntimeSettings();
 }
 
 export function resolveCursorApiKey(): string | undefined {
