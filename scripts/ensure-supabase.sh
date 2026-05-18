@@ -107,3 +107,12 @@ if [[ "$_handoffs_code" != "200" ]]; then
   exit 1
 fi
 _log "==> Supabase: agent_handoffs table OK"
+
+_sessions_code="$(curl -sf -o /dev/null -w "%{http_code}" \
+  -H "apikey: $_sr" -H "Authorization: Bearer $_sr" \
+  "${API_URL}/rest/v1/research_sessions?select=session_id,hypotheses&limit=1" 2>/dev/null || echo "000")"
+if [[ "$_sessions_code" != "200" ]]; then
+  echo "ERROR: research_sessions.hypotheses missing (HTTP ${_sessions_code}) — run: npm run db:ensure" >&2
+  exit 1
+fi
+_log "==> Supabase: research_sessions.hypotheses OK"
