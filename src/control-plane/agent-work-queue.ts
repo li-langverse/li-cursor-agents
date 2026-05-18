@@ -2,6 +2,7 @@ import { buildHeapPlan, parseHeapPlanFromBriefing, type HeapPlan } from "../heap
 import { taskFingerprint } from "../heap/task-queue.js";
 import { listHandoffs } from "../handoffs/handoff-store.js";
 import { buildImplementationQueue } from "../preflight/implementation-queue.js";
+import { loadCachedBriefing } from "../briefing/load-cached-briefing.js";
 import { runPreflight, resolveBenchmarksRoot } from "../preflight.js";
 import { loadResearchGoals, resolveGoalAgent } from "../research-goals/load-goals.js";
 import { loadResearchSession } from "../research-sessions/session-store.js";
@@ -98,8 +99,11 @@ export async function buildAgentWorkQueue(state: ControlPlaneState): Promise<Age
   const items: AgentWorkQueueItem[] = [];
   const seen = new Set<string>();
   const benchmarksRoot = resolveBenchmarksRoot();
-  const preflight = runPreflight(benchmarksRoot, false);
-  const briefing = preflight.briefing ?? preflight;
+  let briefing: unknown = loadCachedBriefing();
+  if (!briefing || (typeof briefing === "object" && !Object.keys(briefing as object).length)) {
+    const preflight = runPreflight(benchmarksRoot, true);
+    briefing = preflight.briefing ?? preflight;
+  }
 
   const heapPlan = heapPlanFromBriefing(briefing);
   pushHeapTasks(items, heapPlan, seen);
