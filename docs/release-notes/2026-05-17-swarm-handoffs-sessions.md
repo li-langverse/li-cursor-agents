@@ -14,6 +14,7 @@ Adds DB/disk handoff and research-session stores, wires swarm mandate + handoffs
 ## Changed
 
 - `supabase/migrations/20260517151000_swarm_handoffs_sessions.sql` — `research_sessions`, `research_session_steps`, `agent_handoffs` (renamed from `20260517150000` — version collided with `interventions_latest`).
+- `supabase/migrations/20260517152000_research_sessions_hypotheses.sql` — adds `research_sessions.hypotheses` jsonb (required by research lane).
 - `src/handoffs/*`, `src/research-sessions/*`, `src/swarm/mandate.ts`, `config/swarm-mandate.md`.
 - `src/preflight/swarm-context.ts`, `src/preflight.ts`, `src/runner.ts` — mandate, handoffs, sessions, SDK mode prefix.
 - `src/agents/registry.ts`, `src/types.ts` — `package_architect`, `goal_researcher`, `proof_gap_researcher`, `stdlib_researcher`; `cursorSdkMode` on plan/debug agents.

@@ -27,6 +27,11 @@ export async function probeSupabaseRest(): Promise<RestHealthResult> {
           .select("handoff_id")
           .limit(1);
         if (handoffErr) throw new Error(handoffErr.message);
+        const { error: sessionErr } = await getSupabase()
+          .from("research_sessions")
+          .select("session_id, hypotheses")
+          .limit(1);
+        if (sessionErr) throw new Error(sessionErr.message);
       },
       { attempts: 3, baseDelayMs: 250 },
     );
