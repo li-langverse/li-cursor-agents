@@ -23,10 +23,33 @@ export interface SettingView {
   restartRequired?: boolean;
 }
 
+export interface SecretsStatus {
+  github: { configured: boolean; path_hint: string };
+  cursor_sdk: { configured: boolean };
+}
+
 export interface SettingsPayload {
   updated_at: string;
   settings: SettingView[];
   restart_required: boolean;
+  secrets: SecretsStatus;
+}
+
+function secretsStatus(): SecretsStatus {
+  const pkgHint = process.env.LI_GITHUB_ENV?.trim() || "../.env.github";
+  return {
+    github: {
+      configured: Boolean(process.env.GH_TOKEN?.trim() || process.env.GITHUB_TOKEN?.trim()),
+      path_hint: pkgHint,
+    },
+    cursor_sdk: {
+      configured: Boolean(
+        process.env.CURSOR_API_KEY?.trim() ||
+          process.env.CURSOR_SDK_KEY?.trim() ||
+          process.env.CURSOR_SDK?.trim(),
+      ),
+    },
+  };
 }
 
 function settingsPath(): string {
@@ -95,7 +118,12 @@ export function listSettingsViews(): SettingsPayload {
       restartRequired: def.restartRequired,
     };
   });
-  return { updated_at: new Date().toISOString(), settings, restart_required: restartRequired };
+  return {
+    updated_at: new Date().toISOString(),
+    settings,
+    restart_required: restartRequired,
+    secrets: secretsStatus(),
+  };
 }
 
 function normalizeBooleanInput(raw: string): string {

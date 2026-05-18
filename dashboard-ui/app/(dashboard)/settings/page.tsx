@@ -26,6 +26,10 @@ type SettingsResponse = {
   settings: SettingRow[];
   restart_required: boolean;
   updated_at: string;
+  secrets?: {
+    github: { configured: boolean; path_hint: string };
+    cursor_sdk: { configured: boolean };
+  };
 };
 
 export default function SettingsPage() {
@@ -110,8 +114,15 @@ export default function SettingsPage() {
           <h2>Runtime settings</h2>
           <p className="hint">
             Overrides persist in <code>data/control-plane/runtime-settings.json</code> and apply
-            immediately to this process. Secrets (API keys) stay in <code>.env</code>.
+            immediately. API keys stay in <code>li-cursor-agents/.env</code> and sibling{" "}
+            <code>{data?.secrets?.github.path_hint ?? "../.env.github"}</code> (GitHub).
           </p>
+          {data?.secrets ? (
+            <p className="hint secrets-status">
+              GitHub: {data.secrets.github.configured ? "configured" : "missing"} · Cursor SDK:{" "}
+              {data.secrets.cursor_sdk.configured ? "configured" : "missing"}
+            </p>
+          ) : null}
         </div>
         <div className="settings-actions">
           {dirtyKeys.length > 0 ? (
