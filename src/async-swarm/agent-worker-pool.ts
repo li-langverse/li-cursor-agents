@@ -17,10 +17,7 @@ import { resolveSpawnWorkflowRepo } from "../handoffs/resolve-spawn-workflow-rep
 import { agentsPackageRoot, runAgent, shouldUseMock } from "../runner.js";
 import { resolveBenchmarksRoot } from "../preflight.js";
 import type { AgentId } from "../types.js";
-import { debugSessionLog } from "../debug-session-log.js";
 import { workerConsole } from "../worker/worker-console.js";
-
-const workerFirstTickLogged = new Set<AgentId>();
 
 export {
   IMPLEMENT_LANE_AGENTS,
@@ -66,19 +63,6 @@ export async function agentWorkerTick(
   const next = pickNextWorkForAgent(agentId, queue);
   const proactive = next ? null : pickProactiveWorkForAgent(agentId);
   const work = next ?? proactive;
-  if (!workerFirstTickLogged.has(agentId)) {
-    workerFirstTickLogged.add(agentId);
-    debugSessionLog("H3", "agent-worker-pool.ts:tick", "first worker tick", {
-      agentId,
-      queueItems: queue.items.length,
-      pendingForAgent: (queue.by_agent[agentId] ?? []).filter((i) => i.status === "pending").length,
-      hasQueued: Boolean(next),
-      hasProactive: Boolean(proactive),
-      proactiveCadenceMs: Number(process.env.LI_PROACTIVE_AGENT_CADENCE_MS ?? 600_000),
-      willRun: Boolean(work),
-      skipReason: work ? null : "no queued work for this agent",
-    });
-  }
   if (!work) {
     return { skipped: true, skip_reason: "no queued work for this agent" };
   }
@@ -101,12 +85,6 @@ export async function agentWorkerTick(
   });
 
   if (proactive) recordProactiveAgentRun(agentId);
-
-  debugSessionLog("H3", "agent-worker-pool.ts:run", "worker runAgent finished", {
-    agentId,
-    kind: next ? "queued" : "proactive",
-    status: result.status,
-  });
 
   return { skipped: false, status: result.status };
 }
