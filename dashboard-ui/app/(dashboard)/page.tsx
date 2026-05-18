@@ -10,6 +10,7 @@ import { useDashboardCore, useRecentActivity } from "@/hooks/use-dashboard-data"
 import { buildAgentStatusMap } from "@/lib/agent-status";
 import { buildLiveAgentRows } from "@/lib/live-agents";
 import { overviewInSdkCount } from "@/lib/in-sdk-count";
+import { RichContent } from "@/components/content/rich-content";
 import type { ActivityListItem } from "@/lib/activity";
 
 export default function OverviewPage() {
@@ -121,8 +122,8 @@ export default function OverviewPage() {
               >
                 {item.agent_id}
               </button>
-              <span className={`queue-status queue-status-${item.status}`}> {item.status}</span> —{" "}
-              {item.reason}
+              <span className={`queue-status queue-status-${item.status}`}> {item.status}</span>
+              <RichContent text={item.reason} maxHeight={120} className="trace-block compact queue-reason" />
             </li>
           ))}
           {!(data?.queue?.queue?.length ?? 0) ? <li className="empty">Queue empty</li> : null}

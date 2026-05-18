@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { RichContent } from "@/components/content/rich-content";
 import { apiFetch } from "@/lib/api";
 import { formatTime } from "@/lib/format";
 import { runBackendLabel, statusLabel, type RunDetail } from "@/lib/activity";
@@ -18,10 +19,10 @@ function RunTraceBody({ detail }: { detail: RunDetail }) {
         {detail.run_input.system_prompt ? (
           <details>
             <summary>System prompt</summary>
-            <pre className="trace-pre">{detail.run_input.system_prompt}</pre>
+            <RichContent text={detail.run_input.system_prompt} maxHeight={360} className="trace-block" />
           </details>
         ) : null}
-        <pre className="trace-pre">{detail.run_input.user_message}</pre>
+        <RichContent text={detail.run_input.user_message} maxHeight={420} className="trace-block" />
       </section>,
     );
   }
@@ -30,7 +31,7 @@ function RunTraceBody({ detail }: { detail: RunDetail }) {
     parts.push(
       <section key="thinking" className="trace-section">
         <h4>Thinking</h4>
-        <pre className="trace-pre">{trace.thinking_text}</pre>
+        <RichContent text={trace.thinking_text} maxHeight={320} className="trace-block rich-thinking" />
       </section>,
     );
   }
@@ -60,9 +61,16 @@ function RunTraceBody({ detail }: { detail: RunDetail }) {
           {toolSteps.map((s, i) => {
             const m = s.message ?? {};
             const path = m.args?.path ?? m.args?.command ?? m.type;
+            const argsRaw =
+              m.args && typeof m.args === "object" ? JSON.stringify(m.args, null, 2) : undefined;
             return (
-              <li key={i}>
-                <code>{m.type}</code> {String(path).slice(0, 120)}
+              <li key={i} className="tool-step-item">
+                <div>
+                  <code>{m.type}</code> {String(path).slice(0, 120)}
+                </div>
+                {argsRaw ? (
+                  <RichContent text={argsRaw} maxHeight={180} className="trace-block compact" />
+                ) : null}
               </li>
             );
           })}
@@ -74,7 +82,11 @@ function RunTraceBody({ detail }: { detail: RunDetail }) {
   parts.push(
     <section key="output" className="trace-section">
       <h4>Assistant output</h4>
-      <pre className="trace-pre">{trace?.assistant_text ?? detail.output_preview ?? "(empty)"}</pre>
+      <RichContent
+        text={trace?.assistant_text ?? detail.output_preview}
+        maxHeight={480}
+        className="trace-block"
+      />
     </section>,
   );
 

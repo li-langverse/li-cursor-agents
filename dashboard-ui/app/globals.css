@@ -1030,3 +1030,201 @@ table.data-table tr:hover {
 .agent-status-line {
   margin: 0 0 0.75rem;
 }
+
+.trace-block {
+  margin-top: 0.45rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.trace-block.compact {
+  font-size: 0.88rem;
+}
+
+.rich-content.empty {
+  color: var(--muted);
+  font-style: italic;
+  margin: 0;
+}
+
+.rich-markdown {
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.rich-markdown > :first-child {
+  margin-top: 0;
+}
+
+.rich-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.rich-markdown h1,
+.rich-markdown h2,
+.rich-markdown h3,
+.rich-markdown h4 {
+  margin: 0.85rem 0 0.4rem;
+  line-height: 1.25;
+  font-weight: 600;
+}
+
+.rich-markdown h1 {
+  font-size: 1.15rem;
+}
+
+.rich-markdown h2 {
+  font-size: 1.05rem;
+}
+
+.rich-markdown h3,
+.rich-markdown h4 {
+  font-size: 0.95rem;
+}
+
+.rich-markdown p {
+  margin: 0.45rem 0;
+}
+
+.rich-markdown ul,
+.rich-markdown ol {
+  margin: 0.35rem 0 0.5rem;
+  padding-left: 1.25rem;
+}
+
+.rich-markdown li {
+  margin: 0.2rem 0;
+}
+
+.rich-markdown blockquote {
+  margin: 0.5rem 0;
+  padding: 0.35rem 0.65rem;
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
+}
+
+.rich-markdown a {
+  color: var(--accent);
+}
+
+.rich-inline-code {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.85em;
+  padding: 0.1rem 0.3rem;
+  border-radius: 4px;
+  background: rgba(110, 181, 255, 0.12);
+}
+
+.rich-pre {
+  margin: 0.5rem 0;
+  padding: 0.55rem 0.65rem;
+  overflow: auto;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.25);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.rich-pre code {
+  background: none;
+  padding: 0;
+}
+
+.rich-table-wrap {
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+
+.rich-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.rich-table th,
+.rich-table td {
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+}
+
+.rich-plain p {
+  margin: 0.35rem 0;
+  line-height: 1.5;
+  font-size: 0.9rem;
+}
+
+.rich-thinking {
+  opacity: 0.92;
+  border-style: dashed;
+}
+
+.rich-json {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.82rem;
+}
+
+.json-tree-list {
+  list-style: none;
+  margin: 0;
+  padding-left: 0.85rem;
+  border-left: 1px solid var(--border);
+}
+
+.json-tree-list > li {
+  margin: 0.25rem 0;
+}
+
+.json-key {
+  display: inline-block;
+  min-width: 4rem;
+  margin-right: 0.35rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.json-key::after {
+  content: ":";
+  margin-left: 0.1rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.json-string {
+  color: #a5d6a7;
+}
+
+.json-num {
+  color: #ffcc80;
+}
+
+.json-bool {
+  color: #90caf9;
+}
+
+.json-null {
+  color: var(--muted);
+}
+
+.json-muted {
+  color: var(--muted);
+}
+
+.tool-step-item {
+  margin-bottom: 0.65rem;
+}
+
+.intervention-item,
+.heap-task-item {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.intervention-item:last-child,
+.heap-task-item:last-child {
+  border-bottom: none;
+}

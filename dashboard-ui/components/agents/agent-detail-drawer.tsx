@@ -6,6 +6,7 @@ import { StatusDot } from "@/components/ui/badge";
 import { apiFetch, apiPost } from "@/lib/api";
 import { formatTime } from "@/lib/format";
 import { formatRunningFor } from "@/lib/live-agents";
+import { RichContent } from "@/components/content/rich-content";
 import { statusLabel } from "@/lib/agent-status";
 import type { AgentDetail, WorkQueueItem } from "@/lib/types";
 
@@ -29,7 +30,7 @@ function QueueSection({
           <li key={q.id} className={tone === "ok" ? "queue-in-progress" : undefined}>
             <span className={`queue-status queue-status-${q.status}`}>{q.status}</span>
             <span className="mono queue-source">{q.source}</span>
-            <p>{q.reason}</p>
+            <RichContent text={q.reason} maxHeight={200} className="trace-block compact" />
           </li>
         ))}
       </ul>
@@ -112,7 +113,9 @@ export function AgentDetailDrawer({
                 <section className="agent-detail-section live-run-card">
                   <h3>Active run</h3>
                   <p className="mono">{activeRun.run_id}</p>
-                  {activeRun.reason ? <p>{activeRun.reason}</p> : null}
+                  {activeRun.reason ? (
+                    <RichContent text={activeRun.reason} maxHeight={200} className="trace-block compact" />
+                  ) : null}
                   <p className="hint">
                     Started {formatTime(activeRun.started_at)}
                     {activeRun.started_at ? ` · ${formatRunningFor(activeRun.started_at)} elapsed` : ""}
@@ -129,7 +132,7 @@ export function AgentDetailDrawer({
               {detail.recommended_reason && !activeRun ? (
                 <section className="agent-detail-section">
                   <h3>Recommended</h3>
-                  <p>{detail.recommended_reason}</p>
+                  <RichContent text={detail.recommended_reason} maxHeight={240} className="trace-block" />
                 </section>
               ) : null}
 

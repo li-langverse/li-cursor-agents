@@ -1,7 +1,9 @@
 "use client";
 
+import { RichContent } from "@/components/content/rich-content";
 import { Badge } from "@/components/ui/badge";
 import { formatTime } from "@/lib/format";
+import { previewPlainText } from "@/lib/parse-display-content";
 import { runBackendLabel, statusLabel, type ActivityListItem } from "@/lib/activity";
 
 function ActionDrilldowns({ item, compact }: { item: ActivityListItem; compact?: boolean }) {
@@ -24,10 +26,10 @@ function ActionDrilldowns({ item, compact }: { item: ActivityListItem; compact?:
             {!compact && input.system_prompt ? (
               <details>
                 <summary>System prompt</summary>
-                <pre className="trace-pre">{input.system_prompt}</pre>
+                <RichContent text={input.system_prompt} maxHeight={320} className="trace-block" />
               </details>
             ) : null}
-            <pre className="trace-pre">{input.user_message}</pre>
+            <RichContent text={input.user_message} maxHeight={360} className="trace-block" />
           </>
         ) : (
           <p className="empty">No input recorded for this run.</p>
@@ -36,13 +38,13 @@ function ActionDrilldowns({ item, compact }: { item: ActivityListItem; compact?:
       {thinking && !compact ? (
         <details>
           <summary>Thinking</summary>
-          <pre className="trace-pre">{thinking}</pre>
+          <RichContent text={thinking} maxHeight={280} className="trace-block rich-thinking" />
         </details>
       ) : null}
       <details>
         <summary>Output</summary>
         {outputText ? (
-          <pre className="trace-pre">{outputText}</pre>
+          <RichContent text={outputText} maxHeight={400} className="trace-block" />
         ) : (
           <p className="empty">No assistant output recorded.</p>
         )}
@@ -69,9 +71,18 @@ function ActionDrilldowns({ item, compact }: { item: ActivityListItem; compact?:
               {toolSteps.map((s, i) => {
                 const m = s.message ?? {};
                 const target = m.args?.path ?? m.args?.command ?? m.type ?? "tool";
+                const argsRaw =
+                  m.args && typeof m.args === "object"
+                    ? JSON.stringify(m.args, null, 2)
+                    : undefined;
                 return (
-                  <li key={i}>
-                    <code>{m.type ?? "tool"}</code> {String(target).slice(0, 140)}
+                  <li key={i} className="tool-step-item">
+                    <div>
+                      <code>{m.type ?? "tool"}</code> {String(target).slice(0, 140)}
+                    </div>
+                    {argsRaw && !compact ? (
+                      <RichContent text={argsRaw} maxHeight={160} className="trace-block compact" />
+                    ) : null}
                   </li>
                 );
               })}
@@ -96,7 +107,8 @@ export function ActivityCard({
   onOpenTrace: (runId: string) => void;
 }) {
   const status = item.live ? "running" : item.status;
-  const preview = item.prompt_preview || item.output_snippet || item.action_summary || "—";
+  const preview =
+    previewPlainText(item.prompt_preview || item.output_snippet || item.action_summary) || "—";
   const backend = runBackendLabel(item);
 
   return (
