@@ -63,7 +63,7 @@ export function useDashboardCore() {
     queryKey: ["dashboard", "agents"],
     queryFn: async (): Promise<AgentsQueryResult> => {
       try {
-        const body = await apiFetch<AgentsPayload>("/api/agents", { timeoutMs: 20_000 });
+        const body = await apiFetch<AgentsPayload>("/api/agents", { timeoutMs: 8_000 });
         return { payload: normalizeAgentsPayload(body), fault: null };
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e);

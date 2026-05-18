@@ -28,11 +28,11 @@ export default function OverviewPage() {
   return (
     <>
       {swarmOn ? (
-        <motion className="swarm-banner" role="status">
+        <div className="swarm-banner" role="status">
           <span className="pulse" aria-hidden />
           <strong>Agents running</strong> — {onDuty} on duty · {runtime?.active_run_count ?? running} in SDK
           now · {data?.queue?.queue?.length ?? 0} queued tasks
-        </motion>
+        </div>
       ) : (
         <p className="hint">Click Start agents in the footer to run the swarm continuously.</p>
       )}
@@ -41,20 +41,20 @@ export default function OverviewPage() {
         <div className={`stat-card ${swarmOn ? "accent" : ""}`}>
           <div className="label">Swarm</div>
           <div className="value">{swarmOn ? "on" : "off"}</div>
-        </motion>
+        </div>
         <div className="stat-card accent">
           <div className="label">On duty</div>
           <div className="value">{onDuty}</div>
-        </motion>
+        </div>
         <div className="stat-card">
           <div className="label">In SDK</div>
           <div className="value">{runtime?.active_run_count ?? 0}</div>
-        </motion>
-        <motion className="stat-card">
+        </div>
+        <div className="stat-card">
           <div className="label">Queue items</div>
           <div className="value">{data?.queue?.queue?.length ?? 0}</div>
-        </motion>
-      </motion>
+        </div>
+      </div>
 
       <section className="panel">
         <div className="panel-head-row">
@@ -62,7 +62,7 @@ export default function OverviewPage() {
           <Link href="/activity" className="btn btn-ghost btn-sm">
             View all
           </Link>
-        </motion>
+        </div>
         <p className="hint">Prompts, outputs, and file/tool actions from the latest runs.</p>
         {activityQ.isLoading ? (
           <p className="loading-block">Loading recent actions…</p>

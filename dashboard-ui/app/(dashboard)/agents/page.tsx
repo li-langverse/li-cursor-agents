@@ -65,8 +65,8 @@ export default function AgentsPage() {
         <p className="loading-block">Loading agent roster…</p>
       ) : rosterCount === 0 ? (
         <p className="hint">
-          No agents in roster — check <code>/api/agents</code> on port 9477 (Next proxies{" "}
-          <code>/api/agents</code>).
+          No agents in roster — <code>/api/agents</code> is served natively by Next.js (run{" "}
+          <code>npm run build</code> in the repo root, then <code>npm run dev:all</code>).
         </p>
       ) : (
         <p className="hint">{rows.length} of {rosterCount} agents shown</p>

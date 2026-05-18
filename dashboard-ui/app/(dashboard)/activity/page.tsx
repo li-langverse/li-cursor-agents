@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import { ActivityFeed } from "@/components/activity/activity-feed";
 import { RunDrawer } from "@/components/activity/run-drawer";

@@ -1,5 +1,15 @@
 const DEFAULT_TIMEOUT_MS = 120_000;
 
+function apiFailureHint(path: string, timeoutMs: number): string {
+  if (path === "/api/agents" || path.startsWith("/api/agents/")) {
+    return `${path} timed out after ${timeoutMs / 1000}s — rebuild parent (npm run build) and restart Next (npm run dev:all). Roster is served natively by Next, not :9477.`;
+  }
+  if (path.startsWith("/api/")) {
+    return `${path} failed — ensure Next.js is running (npm run dev:all). POST actions may still need ops-server :9477.`;
+  }
+  return `${path} network error — check npm run dev:all`;
+}
+
 /** Optional direct control-plane URL (bypasses Next rewrite when set). */
 export function apiBase(): string {
   const raw = process.env.NEXT_PUBLIC_LI_AGENT_API_URL?.trim();
@@ -31,12 +41,10 @@ export async function apiFetch<T>(path: string, init?: ApiFetchOptions): Promise
     return (await res.json()) as T;
   } catch (e) {
     if (e instanceof Error && e.name === "AbortError") {
-      throw new Error(`${path} timed out after ${timeoutMs / 1000}s`);
+      throw new Error(apiFailureHint(path, timeoutMs));
     }
     if (e instanceof TypeError && /fetch/i.test(e.message)) {
-      throw new Error(
-        `${path} network error — is the control plane on :9477? (npm run dev:all or npm run dashboard)`,
-      );
+      throw new Error(apiFailureHint(path, timeoutMs));
     }
     throw e;
   } finally {
