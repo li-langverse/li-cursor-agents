@@ -166,28 +166,12 @@
           </section>
 
           <section id="view-statistics" class="view" aria-label="Statistics" hidden>
-            <div class="toolbar stats-toolbar">
-              <div class="filter-chips" id="stats-range-filters">
-                <button type="button" class="chip active" data-stats-range="1d">24h</button>
-                <button type="button" class="chip" data-stats-range="7d">7d</button>
-                <button type="button" class="chip" data-stats-range="30d">30d</button>
-                <button type="button" class="chip" data-stats-range="365d">1y</button>
-                <button type="button" class="chip" data-stats-range="all">All</button>
-                <button type="button" class="chip" data-stats-range="custom">Custom</button>
-              </div>
-              <div id="stats-custom-range" class="stats-custom-range hidden">
-                <label>From <input type="datetime-local" id="stats-since" /></label>
-                <label>To <input type="datetime-local" id="stats-until" /></label>
-                <button type="button" class="btn ghost sm" id="stats-apply-custom">Apply</button>
-              </div>
-              <button type="button" class="btn ghost sm" id="stats-refresh" title="Recompute statistics for selected range">Refresh stats</button>
-            </div>
             <p class="hint" id="swarm-stats-meta">Swarm output metrics from agent runs and briefing snapshots.</p>
-            <div id="swarm-stats-panel" class="panel">
+      <div id="swarm-stats-panel" class="panel">
               <h2>Swarm statistics</h2>
-              <p class="hint">Scans run history in Supabase (or disk) for the selected time window.</p>
+              <p class="hint">Aggregated from run traces, PR URLs in outputs, and persisted counters.</p>
               <div id="swarm-stat-cards" class="stat-cards swarm-stat-cards"></div>
-              <div id="swarm-stats-notes" class="swarm-stats-notes hidden"></div>
+                                          <div id="swarm-stats-notes" class="swarm-stats-notes hidden"></div>
             </div>
           </section>
 
