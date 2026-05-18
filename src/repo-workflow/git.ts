@@ -41,6 +41,12 @@ export function defaultBranch(org: string, repo: string, dryRun: boolean): strin
 
 export function gitStatusPorcelain(cloneDir: string, dryRun: boolean): string {
   if (dryRun) return " M .cursor/agent-kit-version\n";
-  const r = runCmd("git", ["status", "--porcelain"], cloneDir, false);
-  return r.ok ? r.stdout : "";
+  const proc = spawnSync("git", ["status", "--porcelain"], {
+    cwd: cloneDir,
+    encoding: "utf8",
+    env: process.env,
+  });
+  if (proc.status !== 0) return "";
+  // Do not trim: leading space on line 1 is part of the XY status prefix.
+  return (proc.stdout ?? "").replace(/\r\n/g, "\n").replace(/\r/g, "\n").replace(/\n+$/, "");
 }

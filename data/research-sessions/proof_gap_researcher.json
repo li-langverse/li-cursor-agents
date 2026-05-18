@@ -1,5 +1,5 @@
 {
-  "session_id": "f43a7e66-4a92-4d7f-927f-4f0af7949042",
+  "session_id": "395fc2f0-da19-4ae1-9140-ea257fd6da38",
   "agent_id": "proof_gap_researcher",
   "goal_id": "provability_holes",
   "cycle": 1,
@@ -8,12 +8,8 @@
     "kind": "synthesize_step",
     "target": "proof-gap digest"
   },
-  "queue": [
-    {
-      "kind": "synthesize_step",
-      "target": "proof-gap digest"
-    }
-  ],
+  "queue": [],
+  "hypotheses": [],
   "completed_steps": [
     {
       "id": "read_register-1",
@@ -24,6 +20,146 @@
       "id": "contract_tier-2",
       "summary": "mock_backend",
       "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-3",
+      "summary": "# Agent run: Proof gap researcher\n\n> `proof_gap_researcher` · governance · backend `cursor-sdk`\n\n## Run metadata\n\n| Fiel",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-4",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-5",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-6",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-7",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-8",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-9",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-10",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-11",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-12",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-13",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-14",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-15",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-16",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-17",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-18",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-19",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-20",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-21",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-22",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-23",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-24",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-25",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-26",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-27",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-28",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-29",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-30",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
     }
   ],
   "artifacts": {
@@ -31,8 +167,8 @@
   },
   "connections": [],
   "deferred_findings": [],
-  "last_run_id": "proof_gap_researcher-1779096545274",
+  "last_run_id": "proof_gap_researcher-1779100384337",
   "last_run_status": "finished",
-  "created_at": "2026-05-18T09:29:05.131Z",
-  "updated_at": "2026-05-18T09:29:05.275Z"
+  "created_at": "2026-05-18T10:20:03.110Z",
+  "updated_at": "2026-05-18T10:33:04.337Z"
 }
