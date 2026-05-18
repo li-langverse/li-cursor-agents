@@ -270,6 +270,18 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     preflightKeys: ["explorer", "briefing"],
     cursorSdkMode: "agent",
   },
+  {
+    id: "swarm_observer",
+    name: "Swarm observer",
+    description:
+      "Meta-agent: audits swarm health, failed handoffs, prompt/supervisor gaps; proposes self-healing fixes.",
+    category: "platform",
+    promptFile: "swarm-observer.md",
+    skills: ["explore-control-plane-db"],
+    needsWeb: false,
+    preflightKeys: ["briefing"],
+    cursorSdkMode: "plan",
+  },
 ];
 
 export function getAgent(id: string): AgentDefinition | undefined {

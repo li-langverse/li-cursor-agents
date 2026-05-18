@@ -15,7 +15,8 @@ export type InterventionKind =
   | "agent_error"
   | "agent_incomplete"
   | "implementation_gap"
-  | "heap_invalid";
+  | "heap_invalid"
+  | "swarm_degraded";
 
 export interface HumanIntervention {
   id: string;
@@ -75,6 +76,10 @@ export interface ControlPlaneState {
   runs_total: number;
   last_tick_at: string;
   last_error?: string;
+  /** Swarm observer: auto-retry budgets and last scan (self-healing). */
+  observer?: import("../observer/types.js").ObserverState;
+  /** Slim summary from last supervisor tick (dashboard). */
+  swarm_health?: import("../observer/types.js").SwarmHealthReport;
 }
 
 export interface ControlPlaneReport {
@@ -100,6 +105,7 @@ export interface ControlPlaneReport {
     blockers: string[];
   }>;
   recent_runs: AgentRunResult[];
+  swarm_health?: import("../observer/types.js").SwarmHealthReport;
   supervisor: {
     status: ControlPlaneState["supervisor_status"];
     runs_total: number;

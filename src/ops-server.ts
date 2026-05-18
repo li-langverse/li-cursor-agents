@@ -40,13 +40,16 @@ import {
 import { readFileSafe } from "./control-plane/safe-file-read.js";
 import { listActiveRuns } from "./control-plane/runtime.js";
 import { listSupervisorActivity } from "./control-plane/supervisor-activity.js";
+import { loadRecentRunSummariesAsync } from "./control-plane/build-report.js";
+import { loadObserverState } from "./observer/state.js";
+import { scanSwarmHealth } from "./observer/swarm-health.js";
 import { buildSwarmStatistics } from "./control-plane/swarm-statistics.js";
 import { defaultStatsRunLimit, parseStatsTimeRange } from "./control-plane/stats-time-range.js";
 import { agentLog } from "./agent-log.js";
 import { hydrateStateFromDb, loadState, loadStateForApi } from "./control-plane/state.js";
 import { assertStoreReady, configuredStore, dataStoreLabel, dbEnabled } from "./db/client.js";
 import type { ControlPlaneReport, ControlPlaneState } from "./control-plane/types.js";
-import { resolveBenchmarksRoot } from "./preflight.js";
+import { runPreflight, resolveBenchmarksRoot } from "./preflight.js";
 import type { AgentId } from "./types.js";
 import type { SwarmStatistics } from "./control-plane/swarm-statistics.js";
 import { buildSwarmScorecard, buildResearchGoalsStatus } from "./briefing/swarm-scorecard.js";
@@ -324,6 +327,19 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       started_at: state.supervisor_loop_started_at ?? null,
       entries: listSupervisorActivity(40),
     });
+    return;
+  }
+
+  if (url.pathname === "/api/swarm/health") {
+    const root = resolveBenchmarksRoot();
+    const preflight = root ? runPreflight(root, true) : { briefing: null, generated_at: "" };
+    const health = scanSwarmHealth({
+      state,
+      briefing: preflight.briefing,
+      observerState: loadObserverState(state),
+      recentRuns: await loadRecentRunSummariesAsync(16),
+    });
+    json(res, 200, health);
     return;
   }
 

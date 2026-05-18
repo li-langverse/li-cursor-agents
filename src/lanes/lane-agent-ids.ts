@@ -19,6 +19,7 @@ export function asyncWorkerAgentIds(): AgentId[] {
   return AGENT_REGISTRY.map((a) => a.id).filter(
     (id) =>
       id !== "orchestrator" &&
+      id !== "swarm_observer" &&
       !IMPLEMENT_LANE_AGENTS.has(id) &&
       !research.has(id),
   );

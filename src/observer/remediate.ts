@@ -1,0 +1,184 @@
+import { taskFingerprint } from "../heap/task-queue.js";
+import { canonicalAgentId } from "../agents/registry.js";
+import type { ControlPlaneState, QueuedAgentTask } from "../control-plane/types.js";
+import type { AgentRunResult } from "../types.js";
+import type { AgentId } from "../types.js";
+import type { ObserverState, RemediationAction, SwarmFinding } from "./types.js";
+
+const HEALER_AGENTS: Record<string, AgentId> = {
+  ci_red: "bug_fixer",
+  workspace_dirty: "workspace_sweeper",
+  implementation_gap: "implementation_gaps",
+};
+
+function extractRecommended(briefing: unknown): Array<{ agent: string; reason: string }> {
+  if (!briefing || typeof briefing !== "object") return [];
+  const rec = (briefing as Record<string, unknown>).recommended_agents;
+  return Array.isArray(rec) ? (rec as Array<{ agent: string; reason: string }>) : [];
+}
+
+function briefingHasRedBench(briefing: unknown): boolean {
+  if (!briefing || typeof briefing !== "object") return false;
+  const audit = (briefing as Record<string, unknown>).ecosystem_audit as
+    | Record<string, unknown>
+    | undefined;
+  const bench = audit?.benchmarks as Record<string, unknown> | undefined;
+  const red = bench?.red;
+  return Array.isArray(red) && red.length > 0;
+}
+
+function briefingWorkspaceDirty(briefing: unknown): boolean {
+  if (!briefing || typeof briefing !== "object") return false;
+  const sweep = (briefing as Record<string, unknown>).workspace_dirty_sweep as
+    | Record<string, unknown>
+    | undefined;
+  const repos = sweep?.repos_needing_sweep;
+  return Array.isArray(repos) && repos.length > 0;
+}
+
+export function buildRemediations(params: {
+  findings: SwarmFinding[];
+  briefing: unknown;
+  state: ControlPlaneState;
+  observerState: ObserverState;
+  runs: AgentRunResult[];
+  needsMetaObserver: boolean;
+}): RemediationAction[] {
+  const out: RemediationAction[] = [];
+  const stopped = new Set(params.state.stopped_agents ?? []);
+  const maxRetries = Number(process.env.LI_OBSERVER_MAX_RETRIES_PER_AGENT ?? 3);
+
+  const pushUnique = (action: RemediationAction) => {
+    if (stopped.has(action.agentId)) return;
+    if (out.some((a) => a.agentId === action.agentId && a.kind === action.kind)) return;
+    out.push(action);
+  };
+
+  for (const f of params.findings) {
+    if (!f.auto_healable || !f.agentId) continue;
+    if (f.kind === "agent_error_streak" || f.kind === "agent_incomplete") {
+      const count = params.observerState.retry_counts[f.agentId] ?? 0;
+      if (count >= maxRetries) continue;
+      pushUnique({
+        kind: "retry_agent",
+        agentId: f.agentId,
+        reason: `observer:auto-retry (${f.kind})`,
+        fingerprintSuffix: `:retry:${count + 1}`,
+      });
+    }
+  }
+
+  if (briefingHasRedBench(params.briefing)) {
+    const rec = extractRecommended(params.briefing);
+    const numericsAlreadyQueued = rec.some((r) => {
+      const id = canonicalAgentId(r.agent);
+      return id === "numerics_researcher" || id === "bench_improver" || id === "autoresearch";
+    });
+    if (!numericsAlreadyQueued) {
+      pushUnique({
+        kind: "dispatch_healer",
+        agentId: HEALER_AGENTS.ci_red,
+        reason: "observer:red benchmarks in briefing",
+      });
+    }
+  }
+
+  if (briefingWorkspaceDirty(params.briefing)) {
+    pushUnique({
+      kind: "dispatch_healer",
+      agentId: HEALER_AGENTS.workspace_dirty,
+      reason: "observer:workspace_dirty_sweep in briefing",
+    });
+  }
+
+  const gaps = (params.briefing as Record<string, unknown> | null)?.agent_deliverable_gaps as
+    | Record<string, number>
+    | undefined;
+  if (gaps && ((gaps.incomplete_runs ?? 0) > 0 || (gaps.plan_open_items ?? 0) > 0)) {
+    pushUnique({
+      kind: "dispatch_healer",
+      agentId: HEALER_AGENTS.implementation_gap,
+      reason: "observer:agent_deliverable_gaps in briefing",
+    });
+  }
+
+  const goalMismatch = params.findings.find((f) => f.kind === "goal_mismatch");
+  if (goalMismatch) {
+    const rec = extractRecommended(params.briefing);
+    const top = rec[0];
+    const id = top ? canonicalAgentId(top.agent) : undefined;
+    if (id) {
+      pushUnique({
+        kind: "retry_agent",
+        agentId: id,
+        reason: `observer:goal-align ${top.reason.slice(0, 120)}`,
+        fingerprintSuffix: ":goal-align",
+      });
+    }
+  }
+
+  if (params.needsMetaObserver) {
+    pushUnique({
+      kind: "schedule_meta_observer",
+      agentId: "swarm_observer",
+      reason: "observer:swarm degraded — meta audit",
+    });
+  }
+
+  return out.slice(0, Number(process.env.LI_OBSERVER_MAX_REMEDIATIONS_PER_TICK ?? 2));
+}
+
+export function remediationsToTasks(
+  actions: RemediationAction[],
+  briefingHash: string,
+): QueuedAgentTask[] {
+  return actions.map((a) => {
+    const base = taskFingerprint(a.agentId, a.reason);
+    const fp = a.fingerprintSuffix ? `${base}${a.fingerprintSuffix}` : base;
+    return {
+      fingerprint: fp,
+      agentId: a.agentId,
+      reason: a.reason,
+      source: "retry" as const,
+      coordinator: undefined,
+    };
+  });
+}
+
+export function recordRemediationOutcome(
+  observerState: ObserverState,
+  task: QueuedAgentTask,
+  status: string,
+): void {
+  if (task.source !== "retry") return;
+  const id = task.agentId;
+  if (status === "error") {
+    observerState.retry_counts[id] = (observerState.retry_counts[id] ?? 0) + 1;
+  } else if (status === "finished") {
+    observerState.retry_counts[id] = 0;
+  }
+}
+
+/** Retries/meta ahead of briefing work; healers fill remaining slots only. */
+export function mergeRemediationTasks(
+  existing: QueuedAgentTask[],
+  remediations: QueuedAgentTask[],
+  maxTotal: number,
+): QueuedAgentTask[] {
+  const seen = new Set(existing.map((t) => t.agentId));
+  const urgent = remediations.filter(
+    (t) => !seen.has(t.agentId) && !t.reason.startsWith("observer:red"),
+  );
+  const healers = remediations.filter(
+    (t) => !seen.has(t.agentId) && t.reason.startsWith("observer:red"),
+  );
+  for (const t of urgent) seen.add(t.agentId);
+  const merged = [...urgent, ...existing];
+  for (const t of healers) {
+    if (merged.length >= maxTotal) break;
+    if (seen.has(t.agentId)) continue;
+    merged.push(t);
+    seen.add(t.agentId);
+  }
+  return merged.slice(0, maxTotal);
+}

@@ -76,6 +76,7 @@ export function assembleReport(params: {
   tasksExecuted: number;
   tasksSkippedCooldown: number;
   recentRuns: AgentRunResult[];
+  swarmHealth?: import("../observer/types.js").SwarmHealthReport;
 }): ControlPlaneReport {
   return {
     generated_at: new Date().toISOString(),
@@ -87,6 +88,7 @@ export function assembleReport(params: {
     active_coordinator: params.activeCoordinator,
     interventions: params.interventions,
     recent_runs: params.recentRuns,
+    swarm_health: params.swarmHealth,
     supervisor: {
       status: params.state.supervisor_status,
       runs_total: params.state.runs_total,

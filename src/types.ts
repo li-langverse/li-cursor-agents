@@ -26,7 +26,8 @@ export type AgentId =
   | "package_architect"
   | "goal_researcher"
   | "proof_gap_researcher"
-  | "stdlib_researcher";
+  | "stdlib_researcher"
+  | "swarm_observer";
 
 /** @deprecated Briefing/fixtures may still use legacy ids — resolved in registry. */
 export type LegacyAgentId =

@@ -206,6 +206,21 @@ npm run agents:keep   # dashboard + supervisor (cursor-sdk if .env has key)
 
 **No cycles:** skips agent dispatch when briefing hash unchanged; per-task cooldown; max 2 agents per tick.
 
+### Swarm observer (self-healing)
+
+Every supervisor tick runs a **programmatic observer** before dispatch:
+
+| Signal | Auto-action |
+|--------|-------------|
+| Agent error streak (2+) | Retry with `observer:auto-retry` (per-agent budget, default 3) |
+| `agent_incomplete_runs` in briefing | Retry that agent |
+| Red benchmarks / dirty workspace / deliverable gaps | Dispatch `bug_fixer`, `workspace_sweeper`, or `implementation_gaps` |
+| High error rate or many failed agents | Schedule **`swarm_observer`** meta-agent (prompt audit) |
+
+Humans see **`swarm_degraded`** only when auto-heal is exhausted (e.g. missing API key, stuck supervisor). Dashboard: `GET /api/swarm/health`. Meta prompt: `prompts/swarm-observer.md`.
+
+Env: `LI_OBSERVER_MAX_RETRIES_PER_AGENT`, `LI_OBSERVER_MAX_REMEDIATIONS_PER_TICK`, `LI_OBSERVER_STALE_AGENT_MS`.
+
 Env: `LI_SUPERVISOR_INTERVAL_MS`, `LI_SUPERVISOR_COOLDOWN_MS`, `LI_AGENT_DASHBOARD_PORT` (9477).
 
 ## Link from benchmarks
