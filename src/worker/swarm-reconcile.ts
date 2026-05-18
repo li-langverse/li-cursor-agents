@@ -3,8 +3,18 @@ import { startAsyncSwarm, isAsyncSwarmRunning } from "../async-swarm/async-swarm
 import { loadState } from "../control-plane/state.js";
 import { loadWorkerStatusFromDb } from "../db/worker-status.js";
 import { dbEnabled } from "../db/client.js";
+import {
+  detachedSwarmEnabled,
+  externalSwarmRunnerEnabled,
+  isDetachedSwarmChildRunning,
+  spawnDetachedAsyncSwarm,
+} from "../swarm/detached-swarm-process.js";
 import { workerConsole } from "./worker-console.js";
 import { flushWorkerHeartbeat } from "./heartbeat-loop.js";
+
+function swarmActiveOnThisHost(): boolean {
+  return isAsyncSwarmRunning() || isDetachedSwarmChildRunning();
+}
 
 function envAutoStartSwarm(): boolean {
   return (
@@ -20,11 +30,16 @@ function envAutoStartSwarm(): boolean {
  */
 export async function reconcileSwarmAfterStartup(): Promise<void> {
   const state = loadState();
-  workerConsole("reconcile", "info", "swarm reconcile begin", `running=${isAsyncSwarmRunning()}`);
+  workerConsole(
+    "reconcile",
+    "info",
+    "swarm reconcile begin",
+    `running=${swarmActiveOnThisHost()} detached=${detachedSwarmEnabled()}`,
+  );
 
-  if (isAsyncSwarmRunning()) {
+  if (swarmActiveOnThisHost()) {
     await flushWorkerHeartbeat();
-    workerConsole("reconcile", "info", "swarm already running in-process — refreshed worker_status");
+    workerConsole("reconcile", "info", "swarm already running — refreshed worker_status");
     return;
   }
 
@@ -53,8 +68,26 @@ export async function reconcileSwarmAfterStartup(): Promise<void> {
     `shouldStart=${shouldStart} deferMs=${deferMs} envAutoStart=${envAutoStartSwarm()}`,
   );
 
+  if (shouldStart && externalSwarmRunnerEnabled() && !detachedSwarmEnabled()) {
+    workerConsole(
+      "reconcile",
+      "info",
+      "LI_SWARM_EXTERNAL=1 — swarm-dev.sh / agents:async-swarm owns startup",
+    );
+    await flushWorkerHeartbeat();
+    return;
+  }
+
   if (shouldStart) {
     const launch = async (): Promise<void> => {
+      if (detachedSwarmEnabled()) {
+        workerConsole("reconcile", "info", "spawning detached async swarm process…");
+        const r = spawnDetachedAsyncSwarm();
+        workerConsole("reconcile", "info", `detached async swarm: ${r.message}`);
+        agentLog("dashboard", "info", `detached async swarm: ${r.message}`);
+        await flushWorkerHeartbeat();
+        return;
+      }
       workerConsole("reconcile", "info", "starting async swarm (lanes + worker pool)…");
       const r = await startAsyncSwarm({ stopSupervisor: true });
       workerConsole("reconcile", "info", `async swarm: ${r.message}`);

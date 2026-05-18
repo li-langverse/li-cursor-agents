@@ -728,14 +728,24 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
 
   if (url.pathname === "/api/async-swarm/start" && req.method === "POST") {
     const mock = process.env.CURSOR_MOCK === "1";
-    const result = await startAsyncSwarm({ mock, stopSupervisor: true });
+    const { detachedSwarmEnabled, spawnDetachedAsyncSwarm } = await import(
+      "./swarm/detached-swarm-process.js"
+    );
+    const result = detachedSwarmEnabled()
+      ? spawnDetachedAsyncSwarm()
+      : await startAsyncSwarm({ mock, stopSupervisor: true });
     const st = await loadStateForApi();
     json(res, 200, { ok: result.started, ...result, runtime: runtimeSnapshot(st) });
     return;
   }
 
   if (url.pathname === "/api/async-swarm/stop" && req.method === "POST") {
-    const result = await stopAsyncSwarm();
+    const { detachedSwarmEnabled, stopDetachedAsyncSwarm } = await import(
+      "./swarm/detached-swarm-process.js"
+    );
+    const result = detachedSwarmEnabled()
+      ? stopDetachedAsyncSwarm()
+      : await stopAsyncSwarm();
     const st = await loadStateForApi();
     json(res, 200, { ok: result.stopped, ...result, runtime: runtimeSnapshot(st) });
     return;
@@ -743,7 +753,14 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
 
   if (url.pathname === "/api/swarm/stop-all" && req.method === "POST") {
     void stopSupervisorLoop();
-    void stopAsyncSwarm();
+    const { detachedSwarmEnabled, stopDetachedAsyncSwarm } = await import(
+      "./swarm/detached-swarm-process.js"
+    );
+    if (detachedSwarmEnabled()) {
+      stopDetachedAsyncSwarm();
+    } else {
+      void stopAsyncSwarm();
+    }
     const killed = await stopAllActiveRuns();
     const haltState = await loadStateForApi();
     json(res, 200, { ok: true, killed, runtime: runtimeSnapshot(haltState) });

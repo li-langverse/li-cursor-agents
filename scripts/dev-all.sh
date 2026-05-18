@@ -98,16 +98,21 @@ WORKER_LOG="$ROOT/logs/worker-dev.log"
 
 echo ""
 echo "  Architecture (like Majico dev:all):"
-echo "    worker  → http://127.0.0.1:${API_PORT}/  agents, swarm, SDK runs"
+echo "    worker  → http://127.0.0.1:${API_PORT}/  HTTP + control (SDK runs in swarm process)"
+echo "    swarm   → async-swarm.js (lanes + agent pool; may block its own process only)"
 echo "    ui      → http://127.0.0.1:${UI_PORT}/  Next.js (GET /api/* from Supabase)"
 echo "    worker log file: ${WORKER_LOG}"
 echo "  LI_AUTO_START_ASYNC_SWARM=${LI_AUTO_START_ASYNC_SWARM}"
+echo "  LI_SWARM_EXTERNAL=${LI_SWARM_EXTERNAL} (swarm-dev process)"
 echo ""
 
-# concurrently: two labeled servers in one terminal (cyan worker, green ui)
+chmod +x "$ROOT/scripts/swarm-dev.sh"
+
+# concurrently: worker HTTP, detached swarm (SDK), Next.js UI
 exec npx --yes concurrently@9.1.2 \
   --kill-others-on-fail \
-  --names "worker,ui" \
-  --prefix-colors "cyan,green" \
+  --names "worker,swarm,ui" \
+  --prefix-colors "cyan,magenta,green" \
   "bash \"$ROOT/scripts/worker-dev.sh\" 2>&1 | tee -a \"$WORKER_LOG\"" \
+  "bash \"$ROOT/scripts/swarm-dev.sh\"" \
   "bash \"$ROOT/scripts/ui-dev.sh\""

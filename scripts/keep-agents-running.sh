@@ -29,6 +29,8 @@ export GH_TOKEN GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
 unset CURSOR_MOCK
 export LI_AUTO_START_SUPERVISOR=0
 export LI_AUTO_START_ASYNC_SWARM=1
+export LI_SWARM_EXTERNAL=0
+export LI_SWARM_DETACHED=1
 
 _store="${LI_CONTROL_PLANE_STORE:-supabase}"
 [[ "${LI_STACK_SKIP_SUPABASE:-}" == "1" ]] && _store="disk"
