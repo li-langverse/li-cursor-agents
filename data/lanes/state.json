@@ -2,6 +2,12 @@
   "research_lane_enabled": true,
   "implement_lane_enabled": true,
   "goal_last_run_at": {},
-  "last_research_tick_at": "2026-05-18T12:36:55.344Z",
-  "last_maintenance_tick_at": "2026-05-18T21:02:15.912Z"
+  "last_research_tick_at": "2026-05-18T21:48:20.992Z",
+  "last_maintenance_tick_at": "2026-05-18T21:44:27.228Z",
+  "proactive_last_run_at": {
+    "orchestrator": "2026-05-18T21:42:01.400Z",
+    "pr_merger": "2026-05-18T21:48:20.924Z",
+    "pr_branch_opener": "2026-05-18T21:48:20.929Z",
+    "issue_planner": "2026-05-18T21:48:20.937Z"
+  }
 }
