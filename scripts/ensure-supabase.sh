@@ -40,8 +40,11 @@ if [[ "${LI_SUPABASE_DB_RESET:-}" == "1" ]]; then
   _log "==> Supabase: db reset (LI_SUPABASE_DB_RESET=1)"
   supabase db reset
 else
-  _log "==> Supabase: apply migrations (db push)"
-  supabase db push 2>/dev/null || supabase migration up 2>/dev/null || true
+  _log "==> Supabase: apply local migrations (migration up)"
+  if ! supabase migration up; then
+    echo "ERROR: supabase migration up failed — try: LI_SUPABASE_DB_RESET=1 npm run db:ensure" >&2
+    exit 1
+  fi
 fi
 
 API_URL="$(supabase status -o json 2>/dev/null | node -e "
@@ -93,3 +96,14 @@ if [[ -n "$_sr" ]]; then
   fi
   _log "==> Supabase: REST ready at ${API_URL}"
 fi
+
+# Verify handoffs migration — older DBs missed swarm file (duplicate 20260517150000 version)
+_handoffs_code="$(curl -sf -o /dev/null -w "%{http_code}" \
+  -H "apikey: $_sr" -H "Authorization: Bearer $_sr" \
+  "${API_URL}/rest/v1/agent_handoffs?select=handoff_id&limit=1" 2>/dev/null || echo "000")"
+if [[ "$_handoffs_code" != "200" ]]; then
+  echo "ERROR: public.agent_handoffs missing (HTTP ${_handoffs_code}) — run: npm run db:ensure" >&2
+  echo "       If migrations are stuck: LI_SUPABASE_DB_RESET=1 npm run db:ensure" >&2
+  exit 1
+fi
+_log "==> Supabase: agent_handoffs table OK"

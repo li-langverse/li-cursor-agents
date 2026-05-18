@@ -1,4 +1,5 @@
 -- Swarm handoffs + research sessions (database-first control plane)
+-- Renamed from 20260517150000 — that version was taken by interventions_latest.
 
 create table public.research_sessions (
   session_id text primary key,

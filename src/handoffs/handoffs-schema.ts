@@ -2,7 +2,7 @@ import { agentLog } from "../agent-log.js";
 import { dbEnabled } from "../db/client.js";
 import { listHandoffs } from "./handoff-store.js";
 
-/** PostgREST / Postgres errors when migration `20260517150000_swarm_handoffs_sessions.sql` was not applied. */
+/** PostgREST / Postgres errors when migration `20260517151000_swarm_handoffs_sessions.sql` was not applied. */
 export function isMissingAgentHandoffsTable(err: unknown): boolean {
   const msg = err instanceof Error ? err.message : String(err);
   return (
