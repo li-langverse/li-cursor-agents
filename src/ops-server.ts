@@ -193,6 +193,12 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
     const p = typeof addr === "object" && addr ? addr.port : port;
     const backend = agentBackendLabel();
     const keyOk = Boolean(resolveCursorApiKey());
+    void import("./backends/sdk-session-lock.js").then((m) => {
+      const reclaimed = m.reclaimAllStaleSdkSlots();
+      if (reclaimed > 0) {
+        agentLog("worker", "info", `reclaimed ${reclaimed} stale sdk-session lock(s) on startup`);
+      }
+    });
     startOpsBackgroundServices(currentApiState);
     agentLog("dashboard", "info", `Agent dashboard: http://127.0.0.1:${p}/`);
     agentLog(

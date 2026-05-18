@@ -50,6 +50,8 @@
     "test:swarm-full": "npm run build && CURSOR_MOCK=1 LI_CONTROL_PLANE_STORE=disk node --test dist/e2e/swarm-full.e2e.js dist/e2e/worker-swarm.e2e.js dist/e2e/swarm-handoff.e2e.js",
     "test:e2e": "npm run build && CURSOR_MOCK=1 LI_CONTROL_PLANE_STORE=disk node --test dist/e2e/heap.e2e.js dist/e2e/swarm-handoff.e2e.js dist/e2e/swarm-full.e2e.js dist/e2e/worker-swarm.e2e.js dist/e2e/agent-matrix.e2e.js dist/e2e/async-handoff.e2e.js dist/e2e/run-all-handoff.e2e.js",
     "test:e2e:sdk": "npm run build && env -u CURSOR_MOCK LI_E2E_SDK=1 node --test dist/e2e/sdk-live.e2e.js",
+    "test:e2e:sdk-parallel": "npm run build && env -u CURSOR_MOCK LI_E2E_SDK=1 LI_E2E_SDK_PARALLEL=1 node --test dist/e2e/sdk-parallel-live.e2e.js",
+    "test:sdk-lock": "npm run build && CURSOR_MOCK=1 node --test --test-concurrency=1 dist/backends/sdk-session-lock.test.js dist/backends/sdk-session-lock.stale.test.js dist/e2e/sdk-parallel-lock.e2e.js",
     "ci": "npm run build && CURSOR_MOCK=1 npm test && node dist/cli/run-agent.js --agent orchestrator --mock --dry-run && node dist/cli/supervisor.js --once --mock",
     "ci:local": "bash ../li-local-ci/bin/li-local-ci run li-cursor-agents-host --repo .",
     "ci:local:docker": "bash ../li-local-ci/bin/li-local-ci run li-cursor-agents --repo .",

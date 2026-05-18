@@ -14,6 +14,7 @@ import {
 import { loadState } from "../control-plane/state.js";
 import { asyncWorkerAgentIds } from "../lanes/lane-agent-ids.js";
 import { resolveSpawnWorkflowRepo } from "../handoffs/resolve-spawn-workflow-repo.js";
+import { isSdkSlotLockError, sdkSlotLikelyAvailable } from "../backends/sdk-session-lock.js";
 import { agentsPackageRoot, runAgent, shouldUseMock } from "../runner.js";
 import { resolveBenchmarksRoot } from "../preflight.js";
 import type { AgentId } from "../types.js";
@@ -75,11 +76,21 @@ export async function agentWorkerTick(
   }
 
   const mock = options?.mock ?? shouldUseMock(false);
+  if (!mock && !sdkSlotLikelyAvailable()) {
+    return {
+      skipped: true,
+      skip_reason: "sdk session slots busy (will retry next tick)",
+      pending_for_agent: pendingForAgent,
+    };
+  }
+
   const benchmarksRoot = resolveBenchmarksRoot();
   const packageRoot = agentsPackageRoot();
   const workflowRepo = await resolveSpawnWorkflowRepo(agentId);
 
-  const result = await runAgent({
+  let result;
+  try {
+    result = await runAgent({
     agentId,
     cwd: benchmarksRoot ?? packageRoot,
     benchmarksRoot,
@@ -89,7 +100,19 @@ export async function agentWorkerTick(
     extraInstruction: next
       ? `## Queued task\n\n${next.reason}\n\nSource: ${next.source} · id: ${next.id}`
       : `## Proactive run\n\n${proactive!.reason}\n\nSource: ${proactive!.source}`,
-  });
+    });
+  } catch (err) {
+    if (isSdkSlotLockError(err)) {
+      const msg = err instanceof Error ? err.message : String(err);
+      workerConsole(`pool:${agentId}`, "info", `skipped: ${msg}`);
+      return {
+        skipped: true,
+        skip_reason: "sdk session slots busy (will retry next tick)",
+        pending_for_agent: pendingForAgent,
+      };
+    }
+    throw err;
+  }
 
   if (proactive) recordProactiveAgentRun(agentId);
 
