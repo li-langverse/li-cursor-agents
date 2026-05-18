@@ -127,6 +127,7 @@ export function RunDrawer({ runId, onClose }: { runId: string | null; onClose: (
     queryKey: ["run-detail", runId],
     queryFn: () => apiFetch<RunDetail>(`/api/runs/${encodeURIComponent(runId!)}`, { timeoutMs: 20_000 }),
     enabled: Boolean(runId),
+    refetchInterval: (query) => (query.state.data?.live ? 2_000 : false),
   });
 
   if (!runId) return null;
@@ -162,6 +163,9 @@ export function RunDrawer({ runId, onClose }: { runId: string | null; onClose: (
         <div className="drawer-body">
           {isLoading ? <p className="loading-block">Loading trace…</p> : null}
           {error ? <p className="error-block">{(error as Error).message}</p> : null}
+          {data?.live && !data.run_trace && !data.run_input ? (
+            <p className="loading-block">Run started — waiting for prompt and SDK stream…</p>
+          ) : null}
           {data ? <RunTraceBody detail={data} /> : null}
         </div>
       </aside>

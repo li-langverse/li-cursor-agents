@@ -68,6 +68,12 @@ export function registerSupervisorRun(agentId: AgentId, reason: string, runId?: 
   return id;
 }
 
+export function patchActiveRun(runId: string, patch: Partial<ActiveAgentRun>): void {
+  const row = activeRuns.get(runId);
+  if (!row) return;
+  activeRuns.set(runId, { ...row, ...patch });
+}
+
 export function completeSupervisorRun(runId: string, status: AgentRunLifecycle): void {
   setRunStatus(runId, status);
   scheduleWorkerHeartbeat();

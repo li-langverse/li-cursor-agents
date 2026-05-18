@@ -2,6 +2,7 @@ import { join } from "node:path";
 import type { RunResult } from "@cursor/sdk";
 import { errorDetailFromUnknown } from "../agent-output-format.js";
 import { createTraceCollector, type AgentRunTrace } from "../agent-run-trace.js";
+import { createLiveTraceCollector } from "../control-plane/live-run-trace.js";
 import { allocateRunId, runOutputPath } from "../control-plane/run-paths.js";
 import {
   resolveCursorApiKey,
@@ -133,7 +134,9 @@ export class CursorSdkBackend implements AgentBackend {
           });
 
           const chunks: string[] = [];
-          const collector = createTraceCollector();
+          const collector = options.runId
+            ? createLiveTraceCollector(options.runId, outputPath)
+            : createTraceCollector();
           const run = await agent.send(fullPrompt, {
             local: force ? { force: true } : undefined,
             onStep: async ({ step }) => collector.onStep({ step }),

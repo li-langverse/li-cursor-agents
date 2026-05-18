@@ -1,3 +1,4 @@
+import type { AgentRunInputRecord, AgentRunTrace } from "../agent-run-trace.js";
 import type { CoordinatorId } from "../heap/coordinators.js";
 import type { HeapPlan, OrgRoadmapContext } from "../heap/plan.js";
 import type { AgentId, AgentRunResult, PreflightBundle } from "../types.js";
@@ -56,6 +57,10 @@ export interface ActiveAgentRun {
   started_at: string;
   status: AgentRunLifecycle;
   reason?: string;
+  /** Live snapshot for dashboard (prompt + partial SDK trace). */
+  output_path?: string;
+  run_input?: AgentRunInputRecord;
+  run_trace?: AgentRunTrace;
 }
 
 export interface ControlPlaneState {

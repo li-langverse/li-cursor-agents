@@ -41,6 +41,7 @@ import {
   hasActiveRunningTrack,
   registerSupervisorRun,
 } from "./control-plane/runtime.js";
+import { publishRunInputLive } from "./control-plane/live-run-trace.js";
 import { allocateRunId, runOutputPath } from "./control-plane/run-paths.js";
 import type { AgentRunLifecycle } from "./control-plane/types.js";
 import type { AgentId, AgentRunOptions, AgentRunResult } from "./types.js";
@@ -318,9 +319,21 @@ async function runAgentBody(
     mock,
   });
 
+  if (options.runId) {
+    publishRunInputLive(
+      options.runId,
+      runInput,
+      runOutputPath(definition.id, options.runId, mock),
+    );
+  }
+
   let result: AgentRunResult;
   try {
-    result = await backend.run(definition, systemPrompt, userMessage, { ...options, cwd: workCwd });
+    result = await backend.run(definition, systemPrompt, userMessage, {
+      ...options,
+      cwd: workCwd,
+      runId: options.runId,
+    });
   } catch (err) {
     const outputPath = runOutputPath(
       definition.id,

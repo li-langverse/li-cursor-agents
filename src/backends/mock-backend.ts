@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { buildMockDeliverable } from "../agent-output-format.js";
 import { buildMockTrace } from "../agent-run-trace.js";
+import { publishLiveTraceSnapshot, publishRunInputLive } from "../control-plane/live-run-trace.js";
 import { allocateRunId, runOutputPath } from "../control-plane/run-paths.js";
 import type { AgentBackend, AgentDefinition, AgentRunOptions, AgentRunResult } from "../types.js";
 
@@ -19,15 +20,24 @@ export class MockBackend implements AgentBackend {
     options: AgentRunOptions,
   ): Promise<AgentRunResult> {
     const start = Date.now();
-    const delayMs = Number(process.env.LI_MOCK_RUN_DELAY_MS ?? 0);
-    if (delayMs > 0) {
-      await new Promise((r) => setTimeout(r, delayMs));
-    }
     const outputPath = runOutputPath(
       definition.id,
       options.runId ?? allocateRunId(definition.id),
       true,
     );
+    const delayMs = Number(process.env.LI_MOCK_RUN_DELAY_MS ?? 0);
+    if (delayMs > 0 && options.runId) {
+      const staged = buildMockTrace({
+        definitionId: definition.id,
+        assistantText: "[mock] starting…",
+        userMessage,
+        cwd: options.cwd ?? "",
+      });
+      publishLiveTraceSnapshot(options.runId, outputPath, staged);
+      await new Promise((r) => setTimeout(r, Math.min(delayMs, 200)));
+    } else if (delayMs > 0) {
+      await new Promise((r) => setTimeout(r, delayMs));
+    }
 
     if (options.dryRun) {
       const dryText = `[dry-run] mock backend would run ${definition.id}`;

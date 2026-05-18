@@ -199,16 +199,23 @@ function catalogMdPathForRunId(runId: string): string {
 }
 
 function liveRunToCatalog(r: ActiveAgentRun): RunCatalogEntry {
+  const trace = r.run_trace;
+  const preview =
+    trace?.assistant_text?.slice(0, 320) ??
+    trace?.thinking_text?.slice(0, 200) ??
+    (r.run_input?.user_message ? r.run_input.user_message.slice(0, 200) : "_Running…_");
   return {
     run_id: r.run_id,
     agent_id: r.agent_id,
     started_at: r.started_at,
     status: r.status,
-    md_path: catalogMdPathForRunId(r.run_id),
+    md_path: r.output_path ?? catalogMdPathForRunId(r.run_id),
     reason: r.reason,
     live: true,
     pid: r.pid,
-    output_preview: "_Running…_",
+    output_preview: preview,
+    run_input: r.run_input,
+    run_trace: r.run_trace,
   };
 }
 
@@ -280,17 +287,7 @@ function readPreview(path: string, maxChars: number): string {
 export async function getRunDetail(runId: string): Promise<RunCatalogEntry | null> {
   const live = await findActiveRunById(runId);
   if (live) {
-    const entry = enrichCatalogFromSidecar({
-      run_id: live.run_id,
-      agent_id: live.agent_id,
-      started_at: live.started_at,
-      status: live.status,
-      md_path: catalogMdPathForRunId(runId),
-      reason: live.reason,
-      live: true,
-      pid: live.pid,
-      output_preview: "_Run in progress — output file not written yet._",
-    });
+    const entry = enrichCatalogFromSidecar(liveRunToCatalog(live));
     // #region agent log
     fetch("http://127.0.0.1:7746/ingest/994bad2f-5ad5-4c20-9cd2-19e851fc1d5c", {
       method: "POST",
