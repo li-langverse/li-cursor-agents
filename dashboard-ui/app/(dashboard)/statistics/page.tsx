@@ -16,10 +16,17 @@ export default function StatisticsPage() {
   const [range, setRange] = useState<StatsRange>("7d");
   const [since, setSince] = useState("");
   const [until, setUntil] = useState("");
-  const { data: stats, isFetching, refetch } = useStatistics(
+  const [forceRefresh, setForceRefresh] = useState(false);
+  const { data: stats, isFetching, isLoading, isError, error, refetch } = useStatistics(
     range,
     range === "custom" ? { since, until } : undefined,
+    { refresh: forceRefresh },
   );
+
+  const onRefresh = () => {
+    setForceRefresh(true);
+    void refetch().finally(() => setForceRefresh(false));
+  };
 
   return (
     <>
@@ -34,7 +41,7 @@ export default function StatisticsPage() {
             {r.label}
           </button>
         ))}
-        <button type="button" className="chip" disabled={isFetching} onClick={() => refetch()}>
+        <button type="button" className="chip" disabled={isFetching} onClick={onRefresh}>
           {isFetching ? "Refreshing…" : "Refresh"}
         </button>
       </div>
@@ -60,8 +67,12 @@ export default function StatisticsPage() {
         </div>
       ) : null}
 
+      {isError ? (
+        <p className="error-block">{(error as Error).message}</p>
+      ) : null}
+
       <p className="hint">
-        {stats?.range_label ? `Window: ${stats.range_label}` : ""}
+        {stats?.range_label ? `Window: ${stats.range_label}` : isLoading ? "Loading…" : ""}
         {stats?.runs_scanned != null ? ` · ${stats.runs_scanned} runs scanned` : ""}
       </p>
 
@@ -79,12 +90,14 @@ export default function StatisticsPage() {
           ].map(([label, value]) => (
             <div key={String(label)} className="stat-card">
               <div className="label">{label}</div>
-              <div className="value">{value?.toLocaleString?.() ?? value}</div>
+              <div className="value">{typeof value === "number" ? value.toLocaleString() : value}</div>
             </div>
           ))}
         </div>
+      ) : isLoading || isFetching ? (
+        <p className="loading-block">Loading statistics from database…</p>
       ) : (
-        <p className="loading-block">Loading statistics…</p>
+        <p className="empty">No statistics for this range.</p>
       )}
     </>
   );

@@ -52,3 +52,22 @@ export function parseStatsTimeRange(searchParams: URLSearchParams): ParsedStatsT
   };
   return { preset, since, until, label: labels[preset] ?? preset };
 }
+
+/** Default run scan caps — avoids loading huge `output_md` blobs for statistics. */
+export function defaultStatsRunLimit(preset: StatsRangePreset): number {
+  switch (preset) {
+    case "1d":
+      return 400;
+    case "7d":
+      return 1_500;
+    case "30d":
+      return 3_000;
+    case "365d":
+      return 8_000;
+    case "custom":
+      return 5_000;
+    case "all":
+    default:
+      return 10_000;
+  }
+}

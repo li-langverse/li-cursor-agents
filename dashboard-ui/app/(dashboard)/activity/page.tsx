@@ -1,20 +1,13 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { apiFetch } from "@/lib/api";
+import { useRecentActivity } from "@/hooks/use-dashboard-data";
 import { formatTime } from "@/lib/format";
 
 export default function ActivityPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["activity"],
-    queryFn: () =>
-      apiFetch<{ items: Array<{ run_id: string; agent_id: string; status: string; started_at: string; action_summary?: string }> }>(
-        "/api/activity/recent?limit=25",
-      ),
-    refetchInterval: 5000,
-  });
+  const { data, isLoading, isError, error } = useRecentActivity(25);
 
   if (isLoading) return <p className="loading-block">Loading activity…</p>;
+  if (isError) return <p className="error-block">{(error as Error).message}</p>;
 
   return (
     <section className="panel">

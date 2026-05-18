@@ -1,21 +1,13 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { apiFetch } from "@/lib/api";
+import { useHeapPlan } from "@/hooks/use-dashboard-data";
 
 export default function HeapPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["heap"],
-    queryFn: () =>
-      apiFetch<{ heap_plan?: { flat_tasks?: Array<{ id: string; agent_id: string; reason: string }> } }>(
-        "/api/briefing",
-      ),
-    refetchInterval: 10000,
-  });
-
+  const { data, isLoading, isError, error } = useHeapPlan();
   const tasks = data?.heap_plan?.flat_tasks ?? [];
 
   if (isLoading) return <p className="loading-block">Loading heap plan…</p>;
+  if (isError) return <p className="error-block">{(error as Error).message}</p>;
 
   return (
     <section className="panel">

@@ -78,7 +78,10 @@ function prKey(repo: string, num: number | string): string {
   return `${repo}#${num}`;
 }
 
-export function aggregateRunTraceStats(trace?: AgentRunTrace): {
+export function aggregateRunTraceStats(
+  trace?: AgentRunTrace,
+  meta?: Record<string, unknown> | null,
+): {
   tools: number;
   edits: number;
   lines_added: number;
@@ -89,6 +92,17 @@ export function aggregateRunTraceStats(trace?: AgentRunTrace): {
   let edits = 0;
   let lines_added = 0;
   let lines_deleted = 0;
+  if (!trace?.file_edits?.length && meta && typeof meta === "object") {
+    const tools = Number(meta.tool_call_count) || 0;
+    const editsFromMeta = Number(meta.file_edit_count) || 0;
+    return {
+      tools,
+      edits: editsFromMeta,
+      lines_added: Number(meta.lines_added) || 0,
+      lines_deleted: Number(meta.lines_deleted) || 0,
+      packageRoots,
+    };
+  }
   for (const e of trace?.file_edits ?? []) {
     edits++;
     lines_added += e.lines_added ?? 0;
@@ -259,7 +273,7 @@ function aggregateRuns(runs: RunCatalogEntry[]): Omit<
   const packageRoots = new Set<string>();
 
   for (const run of runs) {
-    const t = aggregateRunTraceStats(run.run_trace);
+    const t = aggregateRunTraceStats(run.run_trace, run.meta ?? null);
     actions_taken += t.tools;
     file_edits += t.edits;
     lines_added += t.lines_added;
@@ -310,6 +324,7 @@ export async function buildSwarmStatistics(
     since: range?.since ?? null,
     until: range?.until ?? new Date(),
     limit: range?.preset === "all" ? Math.max(limit, 10_000) : limit,
+    forStatistics: true,
   });
   if (range) {
     notes.push(`runs filtered: ${range.label} (${runs.length} rows)`);

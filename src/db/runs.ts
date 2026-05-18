@@ -29,6 +29,7 @@ export interface AgentRunHistoryRow {
   pr_urls?: string[] | null;
   run_input?: AgentRunResult["runInput"] | null;
   run_trace?: AgentRunResult["trace"] | null;
+  meta?: Record<string, unknown> | null;
   summary?: string;
   premature?: boolean;
 }
@@ -59,6 +60,7 @@ function rowToHistory(row: Record<string, unknown>): AgentRunHistoryRow {
     pr_urls: (row.pr_urls as string[]) ?? [],
     run_input: (row.run_input as AgentRunResult["runInput"]) ?? null,
     run_trace: (row.run_trace as AgentRunResult["trace"]) ?? null,
+    meta: (row.meta as Record<string, unknown>) ?? null,
     summary: summaryFromOutput(output),
     premature: completion?.premature ?? false,
   };
@@ -191,7 +193,16 @@ export interface ListRunsGlobalInRangeOptions {
   until?: Date | null;
   /** Max rows to return (paginates in pages of 500). */
   limit?: number;
+  /**
+   * Omit heavy columns (`output_md`, etc.) for statistics aggregation.
+   * Keeps `meta` + `run_trace` for tool/edit counts.
+   */
+  light?: boolean;
 }
+
+const RUNS_FULL_SELECT = "*";
+const RUNS_LIGHT_SELECT =
+  "run_id, agent_id, started_at, status, pr_urls, completion, meta, run_trace";
 
 /** Scan agent_runs history with optional time bounds (newest first). */
 export async function listRunsGlobalInRange(
@@ -200,14 +211,15 @@ export async function listRunsGlobalInRange(
   if (!dbEnabled()) return [];
 
   const max = Math.min(50_000, Math.max(1, options.limit ?? 10_000));
-  const pageSize = 500;
+  const pageSize = options.light ? 200 : 500;
+  const selectCols = options.light ? RUNS_LIGHT_SELECT : RUNS_FULL_SELECT;
   const out: AgentRunHistoryRow[] = [];
   let offset = 0;
 
   while (out.length < max) {
     let q = getSupabase()
       .from("agent_runs")
-      .select("*")
+      .select(selectCols)
       .neq("backend", "mock")
       .order("started_at", { ascending: false })
       .range(offset, offset + pageSize - 1);
@@ -221,7 +233,9 @@ export async function listRunsGlobalInRange(
 
     const { data, error } = await q;
     if (error) throw new Error(`listRunsGlobalInRange: ${error.message}`);
-    const batch = (data ?? []).map((row) => rowToHistory(row as Record<string, unknown>));
+    const batch = ((data ?? []) as unknown as Record<string, unknown>[]).map((row) =>
+      rowToHistory(row),
+    );
     if (!batch.length) break;
     out.push(...batch);
     if (batch.length < pageSize) break;

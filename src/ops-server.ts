@@ -41,7 +41,7 @@ import { readFileSafe } from "./control-plane/safe-file-read.js";
 import { listActiveRuns } from "./control-plane/runtime.js";
 import { listSupervisorActivity } from "./control-plane/supervisor-activity.js";
 import { buildSwarmStatistics } from "./control-plane/swarm-statistics.js";
-import { parseStatsTimeRange } from "./control-plane/stats-time-range.js";
+import { defaultStatsRunLimit, parseStatsTimeRange } from "./control-plane/stats-time-range.js";
 import { agentLog } from "./agent-log.js";
 import { hydrateStateFromDb, loadState, loadStateForApi } from "./control-plane/state.js";
 import { assertStoreReady, configuredStore, dataStoreLabel, dbEnabled } from "./db/client.js";
@@ -102,7 +102,10 @@ async function getSwarmStatisticsForApi(
   }
   const limit = Math.min(
     50_000,
-    Math.max(50, Number(url.searchParams.get("runs") ?? (timeRange.preset === "all" ? 10_000 : 2000))),
+    Math.max(
+      50,
+      Number(url.searchParams.get("runs") ?? defaultStatsRunLimit(timeRange.preset)),
+    ),
   );
   const stats = await buildSwarmStatistics(limit, {
     runLimit: limit,
@@ -451,8 +454,14 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
   }
 
   if (url.pathname === "/api/statistics" && req.method === "GET") {
-    const stats = await getSwarmStatisticsForApi(url);
-    json(res, 200, { statistics: stats, store });
+    try {
+      const stats = await getSwarmStatisticsForApi(url);
+      json(res, 200, { statistics: stats, store });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      agentLog("dashboard", "warn", `statistics failed: ${message}`);
+      json(res, 500, { error: message, statistics: null, store });
+    }
     return;
   }
 

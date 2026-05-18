@@ -45,6 +45,7 @@ export interface RunCatalogEntry {
   summary?: string;
   run_input?: AgentRunInputRecord;
   run_trace?: AgentRunTrace;
+  meta?: Record<string, unknown>;
   trace_events?: Array<{ seq: number; event_type: string; payload: unknown }>;
 }
 
@@ -78,6 +79,7 @@ function historyRowToCatalog(row: AgentRunHistoryRow): RunCatalogEntry {
     summary: row.summary,
     run_input: row.run_input ?? undefined,
     run_trace: row.run_trace ?? undefined,
+    meta: row.meta ?? undefined,
   };
 }
 
@@ -155,7 +157,13 @@ export async function listRunsMerged(limit = 80): Promise<RunCatalogEntry[]> {
 }
 
 export async function listRunsMergedInRange(
-  options: { since?: Date | null; until?: Date | null; limit?: number } = {},
+  options: {
+    since?: Date | null;
+    until?: Date | null;
+    limit?: number;
+    /** Lighter Supabase select (for statistics). */
+    forStatistics?: boolean;
+  } = {},
 ): Promise<RunCatalogEntry[]> {
   const limit = options.limit ?? 10_000;
   if (useSupabaseStore()) {
@@ -164,6 +172,7 @@ export async function listRunsMergedInRange(
       since: options.since,
       until: options.until,
       limit,
+      light: options.forStatistics,
     });
     return filterProductionRuns(fromDb.map(historyRowToCatalog));
   }

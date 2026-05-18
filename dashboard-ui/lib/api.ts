@@ -1,10 +1,32 @@
+const DEFAULT_TIMEOUT_MS = 120_000;
+
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(path, { cache: "no-store", ...init });
-  if (!res.ok) {
-    const err = (await res.json().catch(() => ({}))) as { error?: string };
-    throw new Error(err.error ?? `${path} ${res.status}`);
+  const timeoutMs = DEFAULT_TIMEOUT_MS;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const signal = init?.signal
+    ? (() => {
+        const outer = init.signal!;
+        outer.addEventListener("abort", () => controller.abort(), { once: true });
+        return controller.signal;
+      })()
+    : controller.signal;
+
+  try {
+    const res = await fetch(path, { cache: "no-store", ...init, signal });
+    if (!res.ok) {
+      const err = (await res.json().catch(() => ({}))) as { error?: string };
+      throw new Error(err.error ?? `${path} ${res.status}`);
+    }
+    return (await res.json()) as T;
+  } catch (e) {
+    if (e instanceof Error && e.name === "AbortError") {
+      throw new Error(`${path} timed out after ${timeoutMs / 1000}s`);
+    }
+    throw e;
+  } finally {
+    clearTimeout(timer);
   }
-  return res.json() as Promise<T>;
 }
 
 export function apiPost<T>(path: string, body?: unknown) {

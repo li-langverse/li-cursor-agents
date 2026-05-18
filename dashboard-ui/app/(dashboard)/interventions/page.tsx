@@ -1,26 +1,20 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { apiFetch } from "@/lib/api";
+import { useInterventions } from "@/hooks/use-dashboard-data";
 
 export default function InterventionsPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ["interventions"],
-    queryFn: () =>
-      apiFetch<{ interventions: Array<{ severity: string; title: string; detail: string }> }>(
-        "/api/interventions",
-      ),
-    refetchInterval: 8000,
-  });
+  const { data, isLoading, isError, error } = useInterventions();
 
   if (isLoading) return <p className="loading-block">Loading interventions…</p>;
+  if (isError) return <p className="error-block">{(error as Error).message}</p>;
 
   return (
     <section className="panel">
       <h2>Interventions</h2>
+      {data?.stale_warning ? <p className="hint">{data.stale_warning}</p> : null}
       <ul>
-        {(data?.interventions ?? []).map((iv, i) => (
-          <li key={i}>
+        {(data?.interventions ?? []).map((iv) => (
+          <li key={iv.id ?? `${iv.title}-${iv.detail}`}>
             <strong>[{iv.severity}]</strong> {iv.title} — {iv.detail}
           </li>
         ))}
