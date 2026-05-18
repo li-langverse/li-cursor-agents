@@ -38,7 +38,7 @@ export default function OverviewPage() {
         </div>
         <div className="stat-card">
           <div className="label">In SDK</div>
-          <div className="value">{runtime?.active_run_count ?? 0}</motion></div>
+          <div className="value">{runtime?.active_run_count ?? 0}</div>
         </div>
         <div className="stat-card">
           <div className="label">Queue items</div>

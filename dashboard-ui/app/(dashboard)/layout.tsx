@@ -51,7 +51,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           ))}
         </nav>
         {data ? (
-          <motion></motion>
           <div className="sidebar-meta hint">
             <p>Store: {data.status?.runtime?.store ?? "—"}</p>
             <p>SDK slots: {data.status?.runtime?.sdk_max_concurrent ?? "—"}</p>
