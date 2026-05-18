@@ -17,6 +17,10 @@ import { resolveSpawnWorkflowRepo } from "../handoffs/resolve-spawn-workflow-rep
 import { agentsPackageRoot, runAgent, shouldUseMock } from "../runner.js";
 import { resolveBenchmarksRoot } from "../preflight.js";
 import type { AgentId } from "../types.js";
+import { debugSessionLog } from "../debug-session-log.js";
+import { workerConsole } from "../worker/worker-console.js";
+
+const workerFirstTickLogged = new Set<AgentId>();
 
 export {
   IMPLEMENT_LANE_AGENTS,
@@ -62,6 +66,19 @@ export async function agentWorkerTick(
   const next = pickNextWorkForAgent(agentId, queue);
   const proactive = next ? null : pickProactiveWorkForAgent(agentId);
   const work = next ?? proactive;
+  if (!workerFirstTickLogged.has(agentId)) {
+    workerFirstTickLogged.add(agentId);
+    debugSessionLog("H3", "agent-worker-pool.ts:tick", "first worker tick", {
+      agentId,
+      queueItems: queue.items.length,
+      pendingForAgent: (queue.by_agent[agentId] ?? []).filter((i) => i.status === "pending").length,
+      hasQueued: Boolean(next),
+      hasProactive: Boolean(proactive),
+      proactiveCadenceMs: Number(process.env.LI_PROACTIVE_AGENT_CADENCE_MS ?? 600_000),
+      willRun: Boolean(work),
+      skipReason: work ? null : "no queued work for this agent",
+    });
+  }
   if (!work) {
     return { skipped: true, skip_reason: "no queued work for this agent" };
   }
@@ -84,6 +101,12 @@ export async function agentWorkerTick(
   });
 
   if (proactive) recordProactiveAgentRun(agentId);
+
+  debugSessionLog("H3", "agent-worker-pool.ts:run", "worker runAgent finished", {
+    agentId,
+    kind: next ? "queued" : "proactive",
+    status: result.status,
+  });
 
   return { skipped: false, status: result.status };
 }
@@ -110,15 +133,16 @@ function sleepUntil(abort: AbortSignal, ms: number): Promise<void> {
 
 async function agentWorkerLoop(agentId: AgentId, abort: AbortSignal, mock: boolean): Promise<void> {
   const startupDefer = Number(process.env.LI_WORKER_STARTUP_DEFER_MS ?? 0);
-  await sleepUntil(abort, startupDefer + (Math.abs(hashString(agentId)) % 20_000));
+  const stagger = Math.abs(hashString(agentId)) % 20_000;
+  const waitMs = startupDefer + stagger;
+  workerConsole(`pool:${agentId}`, "info", `worker loop started — first tick in ${waitMs}ms`);
+  await sleepUntil(abort, waitMs);
   while (!abort.aborted) {
     try {
       const tick = await agentWorkerTick(agentId, { mock });
-      agentLog(
-        `worker:${agentId}`,
-        tick.skipped ? "info" : "info",
-        tick.skipped ? `skipped: ${tick.skip_reason}` : `tick status=${tick.status}`,
-      );
+      const msg = tick.skipped ? `skipped: ${tick.skip_reason}` : `tick status=${tick.status}`;
+      workerConsole(`pool:${agentId}`, "info", msg);
+      agentLog(`worker:${agentId}`, "info", msg);
     } catch (err) {
       agentLog(
         `worker:${agentId}`,
@@ -137,6 +161,12 @@ export function startAgentWorkerPool(options?: { mock?: boolean }): {
 } {
   const agents = asyncWorkerAgentIds();
   const mock = options?.mock ?? shouldUseMock(false);
+  workerConsole(
+    "worker-pool",
+    "info",
+    `starting ${agents.length} agent loops`,
+    `defer_ms=${process.env.LI_WORKER_STARTUP_DEFER_MS ?? "0"} interval_ms=${process.env.LI_ASYNC_AGENT_INTERVAL_MS ?? "180000"}`,
+  );
   let started = 0;
   for (const agentId of agents) {
     if (workerAborts.has(agentId) && !workerAborts.get(agentId)!.signal.aborted) continue;

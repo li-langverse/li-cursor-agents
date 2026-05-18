@@ -16,10 +16,12 @@ export function researchLaneAgentIds(): Set<AgentId> {
 /** Leaf agents run by the async worker pool (lanes own research + implement). */
 export function asyncWorkerAgentIds(): AgentId[] {
   const research = researchLaneAgentIds();
+  const includeOrchestrator =
+    process.env.LI_ASYNC_WORKER_ORCHESTRATOR === "1" ||
+    process.env.LI_ASYNC_WORKER_ORCHESTRATOR === "true";
   return AGENT_REGISTRY.map((a) => a.id).filter(
     (id) =>
-      id !== "orchestrator" &&
-      id !== "swarm_observer" &&
+      (includeOrchestrator || id !== "orchestrator") &&
       !IMPLEMENT_LANE_AGENTS.has(id) &&
       !research.has(id),
   );

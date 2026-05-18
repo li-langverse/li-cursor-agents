@@ -1,4 +1,5 @@
 import { agentLog } from "../agent-log.js";
+import { workerConsole } from "../worker/worker-console.js";
 import { shouldUseMock } from "../runner.js";
 import { implementLaneIntervalMs, implementLaneTick } from "./implement-lane.js";
 import { maintenanceLaneIntervalMs, maintenanceLaneTick } from "./maintenance-lane.js";
@@ -34,17 +35,17 @@ function laneLoopStartupDelayMs(): number {
 }
 
 async function researchLoop(abort: AbortSignal, mock: boolean): Promise<void> {
-  await sleepUntil(abort, laneLoopStartupDelayMs());
+  const delay = laneLoopStartupDelayMs();
+  workerConsole("research-lane", "info", `loop started — first tick in ${delay}ms`);
+  await sleepUntil(abort, delay);
   while (!abort.aborted) {
     try {
       const tick = await researchLaneTick({ mock });
-      agentLog(
-        "research-lane",
-        tick.skipped ? "info" : "info",
-        tick.skipped
-          ? `skipped: ${tick.skip_reason}`
-          : `tick agent=${tick.agentId} goal=${tick.goalId ?? "—"} status=${tick.status}`,
-      );
+      const msg = tick.skipped
+        ? `skipped: ${tick.skip_reason}`
+        : `tick agent=${tick.agentId} goal=${tick.goalId ?? "—"} status=${tick.status}`;
+      workerConsole("research-lane", tick.skipped ? "info" : "info", msg);
+      agentLog("research-lane", "info", msg);
     } catch (err) {
       agentLog(
         "research-lane",
@@ -57,17 +58,17 @@ async function researchLoop(abort: AbortSignal, mock: boolean): Promise<void> {
 }
 
 async function implementLoop(abort: AbortSignal, mock: boolean): Promise<void> {
-  await sleepUntil(abort, laneLoopStartupDelayMs());
+  const delay = laneLoopStartupDelayMs();
+  workerConsole("implement-lane", "info", `loop started — first tick in ${delay}ms`);
+  await sleepUntil(abort, delay);
   while (!abort.aborted) {
     try {
       const tick = await implementLaneTick({ mock });
-      agentLog(
-        "implement-lane",
-        tick.skipped ? "info" : "info",
-        tick.skipped
-          ? `skipped: ${tick.skip_reason}`
-          : `tick agent=${tick.agentId} handoff=${tick.handoff_id?.slice(0, 8)} status=${tick.status}`,
-      );
+      const msg = tick.skipped
+        ? `skipped: ${tick.skip_reason}`
+        : `tick agent=${tick.agentId} handoff=${tick.handoff_id?.slice(0, 8)} status=${tick.status}`;
+      workerConsole("implement-lane", tick.skipped ? "info" : "info", msg);
+      agentLog("implement-lane", "info", msg);
     } catch (err) {
       agentLog(
         "implement-lane",

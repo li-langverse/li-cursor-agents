@@ -15,12 +15,14 @@ cd "$ROOT"
 export LI_AUTO_START_ASYNC_SWARM="${LI_AUTO_START_ASYNC_SWARM:-0}"
 export LI_AUTO_START_SUPERVISOR="${LI_AUTO_START_SUPERVISOR:-0}"
 export LI_MAINTENANCE_STARTUP_DELAY_MS="${LI_MAINTENANCE_STARTUP_DELAY_MS:-15000}"
-export LI_LANE_STARTUP_DELAY_MS="${LI_LANE_STARTUP_DELAY_MS:-5000}"
+export LI_LANE_STARTUP_DELAY_MS="${LI_LANE_STARTUP_DELAY_MS:-3000}"
 export LI_SWARM_RECONCILE_DEFER_MS="${LI_SWARM_RECONCILE_DEFER_MS:-2000}"
-export LI_WORKER_STARTUP_DEFER_MS="${LI_WORKER_STARTUP_DEFER_MS:-8000}"
+export LI_WORKER_STARTUP_DEFER_MS="${LI_WORKER_STARTUP_DEFER_MS:-3000}"
 export LI_QUEUE_CACHE_MS="${LI_QUEUE_CACHE_MS:-20000}"
 export LI_QUEUE_WARM_MS="${LI_QUEUE_WARM_MS:-25000}"
-export LI_ASYNC_AGENT_INTERVAL_MS="${LI_ASYNC_AGENT_INTERVAL_MS:-120000}"
+export LI_ASYNC_AGENT_INTERVAL_MS="${LI_ASYNC_AGENT_INTERVAL_MS:-90000}"
+export LI_PROACTIVE_AGENT_CADENCE_MS="${LI_PROACTIVE_AGENT_CADENCE_MS:-180000}"
+export LI_ASYNC_WORKER_ORCHESTRATOR="${LI_ASYNC_WORKER_ORCHESTRATOR:-1}"
 export LI_REPORT_CACHE_MS="${LI_REPORT_CACHE_MS:-30000}"
 
 # shellcheck source=env.defaults.sh
@@ -101,7 +103,10 @@ done
 
 API_PID=""
 stop_api() {
-  if [[ -n "$API_PID" ]]; then
+  # shellcheck source=free-port.sh
+  source "$ROOT/scripts/free-port.sh"
+  free_port "${API_PORT:-9477}" 8 2>/dev/null || true
+  if [[ -n "${API_PID:-}" ]]; then
     kill "$API_PID" 2>/dev/null || true
     API_PID=""
   fi
@@ -115,7 +120,11 @@ on_dev_all_signal() {
 }
 trap on_dev_all_signal INT TERM
 
-echo "==> Control-plane API http://127.0.0.1:${API_PORT}/ (LI_AUTO_START_ASYNC_SWARM=${LI_AUTO_START_ASYNC_SWARM})"
+WORKER_LOG="$ROOT/logs/worker-dev.log"
+mkdir -p "$ROOT/logs"
+
+echo "==> Control-plane worker http://127.0.0.1:${API_PORT}/ (LI_AUTO_START_ASYNC_SWARM=${LI_AUTO_START_ASYNC_SWARM})"
+echo "==> Worker logs: ${WORKER_LOG} (lines also prefixed [worker] below)"
 env \
   BENCHMARKS_ROOT="${BENCHMARKS_ROOT:-}" \
   LI_LOCAL_CI_ROOT="${LI_LOCAL_CI_ROOT:-}" \
@@ -127,6 +136,8 @@ env \
   LI_LANE_STARTUP_DELAY_MS="${LI_LANE_STARTUP_DELAY_MS}" \
   LI_SWARM_RECONCILE_DEFER_MS="${LI_SWARM_RECONCILE_DEFER_MS}" \
   LI_WORKER_STARTUP_DEFER_MS="${LI_WORKER_STARTUP_DEFER_MS}" \
+  LI_PROACTIVE_AGENT_CADENCE_MS="${LI_PROACTIVE_AGENT_CADENCE_MS}" \
+  LI_ASYNC_WORKER_ORCHESTRATOR="${LI_ASYNC_WORKER_ORCHESTRATOR}" \
   LI_SDK_MAX_CONCURRENT="${LI_SDK_MAX_CONCURRENT:-2}" \
   LI_QUEUE_CACHE_MS="${LI_QUEUE_CACHE_MS}" \
   LI_QUEUE_WARM_MS="${LI_QUEUE_WARM_MS}" \
@@ -137,7 +148,7 @@ env \
   CURSOR_API_KEY="${CURSOR_API_KEY:-}" \
   GH_TOKEN="${GH_TOKEN:-}" \
   GITHUB_TOKEN="${GITHUB_TOKEN:-}" \
-  node dist/cli/serve-dashboard.js &
+  node dist/cli/serve-dashboard.js 2>&1 | tee -a "$WORKER_LOG" | sed 's/^/[worker] /' &
 API_PID=$!
 
 _bind_start=$(date +%s)
@@ -183,7 +194,8 @@ echo ""
 echo "  Worker API:    http://127.0.0.1:${API_PORT}/  (npm run worker)"
 echo "  Store:         ${LI_CONTROL_PLANE_STORE:-$_store}  Supabase: ${SUPABASE_URL:-(disk)}"
   echo "  Async swarm:   ${LI_AUTO_START_ASYNC_SWARM} (set LI_AUTO_START_ASYNC_SWARM=1 to enable workers)"
-echo "  Ctrl+C stops API + UI"
+echo "  Worker log:    ${WORKER_LOG}  (live [worker] lines above when swarm runs)"
+echo "  Ctrl+C stops worker + UI"
 echo ""
 
 cd "$ROOT/dashboard-ui"
