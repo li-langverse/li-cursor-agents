@@ -32,7 +32,7 @@
     "test": "npm run build && LI_CONTROL_PLANE_STORE=disk CURSOR_MOCK=1 node --test 'dist/**/*.test.js' --test 'dist/e2e/*.e2e.js' && node scripts/test-log-timestamps.mjs",
     "test:log-timestamps": "npm run build && node scripts/test-log-timestamps.mjs",
     "test:dashboard-api": "npm run build && CURSOR_MOCK=1 node --test dist/e2e/dashboard-api.e2e.js dist/e2e/dashboard-live-runs.e2e.js dist/e2e/dashboard-run-trace.e2e.js dist/e2e/dashboard-next-tabs.e2e.js",
-    "test:dashboard-ui": "npm --prefix dashboard-ui run build",
+    "test:dashboard-ui": "node scripts/check-dashboard-no-motion.mjs && npm --prefix dashboard-ui run build",
     "smoke:dashboard": "node scripts/smoke-dashboard-api.mjs",
     "verify:dashboard": "npm run build && node scripts/verify-dashboard-live.mjs",
     "db:ensure": "bash scripts/ensure-supabase.sh",

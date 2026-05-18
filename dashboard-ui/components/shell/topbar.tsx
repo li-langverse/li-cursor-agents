@@ -26,7 +26,6 @@ export function Topbar({
 
   return (
     <header className="topbar">
-      <motion></motion>
       <div className="topbar-left">
         <h1>Li Agent Swarm</h1>
         <p className="subtitle">Control plane dashboard (Next.js)</p>
