@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { normalizeAgentsPayload } from "@/lib/agents-payload";
 import { parseStatusResponse } from "@/lib/status-payload";
+import type { ActivityListItem } from "@/lib/activity";
 import type {
   AgentsPayload,
   QueuePayload,
@@ -62,7 +63,7 @@ export function useDashboardCore() {
     queryKey: ["dashboard", "agents"],
     queryFn: async (): Promise<AgentsQueryResult> => {
       try {
-        const body = await apiFetch<AgentsPayload>("/api/agents", { timeoutMs: 12_000 });
+        const body = await apiFetch<AgentsPayload>("/api/agents", { timeoutMs: 20_000 });
         return { payload: normalizeAgentsPayload(body), fault: null };
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
@@ -71,6 +72,7 @@ export function useDashboardCore() {
     },
     refetchInterval: 8_000,
     retry: 2,
+    placeholderData: (prev) => prev,
   });
 
   const agentsReady =
@@ -194,15 +196,10 @@ export function useRecentActivity(limit = 25) {
   return useQuery({
     queryKey: ["activity", limit],
     queryFn: () =>
-      apiFetch<{
-        items: Array<{
-          run_id: string;
-          agent_id: string;
-          status: string;
-          started_at: string;
-          action_summary?: string;
-        }>;
-      }>(`/api/activity/recent?limit=${limit}`),
+      apiFetch<{ items: ActivityListItem[] }>(
+        `/api/activity/recent?limit=${limit}`,
+        { timeoutMs: 25_000 },
+      ),
     refetchInterval: 8_000,
   });
 }

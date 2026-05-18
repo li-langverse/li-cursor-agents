@@ -19,8 +19,16 @@ import {
   peekAgentWorkQueueSnapshot,
   scheduleAgentWorkQueueRefresh,
 } from "../control-plane/agent-work-queue.js";
-import { listRecentActivity } from "../control-plane/runs-catalog.js";
-import { listRunsMerged } from "../control-plane/runs-catalog.js";
+import {
+  getAgentDetail,
+  getAgentRunHistory,
+  getRunDetail,
+  listRecentActivity,
+  listRunsMerged,
+} from "../control-plane/runs-catalog.js";
+import { buildSwarmStatistics, type SwarmStatistics } from "../control-plane/swarm-statistics.js";
+import { defaultStatsRunLimit, parseStatsTimeRange } from "../control-plane/stats-time-range.js";
+import { agentLog } from "../agent-log.js";
 import { loadLiveInterventionsFromDb } from "../db/control-plane.js";
 import { loadLatestReportHybrid } from "../db/persist.js";
 import { listSupervisorActivityAsync } from "../control-plane/supervisor-activity.js";
@@ -57,19 +65,68 @@ import { dataStoreLabel, dbEnabled, configuredStore } from "../db/client.js";
 
 let envReady = false;
 let storeHydrated = false;
+let hydratePromise: Promise<void> | null = null;
+let statisticsCache: { at: number; stats: SwarmStatistics; key: string } | null = null;
+const STATS_CACHE_MS = Number(process.env.LI_STATISTICS_CACHE_MS ?? 45_000);
 
 async function ensureEnv(): Promise<void> {
-  if (envReady) return;
-  loadRuntimeEnv();
-  envReady = true;
-  if (storeHydrated || !dbEnabled()) return;
-  storeHydrated = true;
-  await Promise.all([
+  if (!envReady) {
+    loadRuntimeEnv();
+    envReady = true;
+  }
+  startStoreHydration();
+}
+
+/** Hydrate Supabase/disk caches without blocking dashboard polls (deduped). */
+function startStoreHydration(): void {
+  if (storeHydrated || !dbEnabled() || hydratePromise) return;
+  hydratePromise = Promise.all([
     hydrateStateFromDb(),
     hydrateLaneStateFromDb(),
     hydrateRuntimeSettingsFromDb(),
     hydrateBriefingFromDb(),
-  ]);
+  ])
+    .then(() => {
+      storeHydrated = true;
+    })
+    .catch((err) => {
+      hydratePromise = null;
+      agentLog(
+        "dashboard-api",
+        "warn",
+        `store hydration failed (reads may be stale): ${err instanceof Error ? err.message : String(err)}`,
+      );
+    });
+}
+
+async function getSwarmStatisticsForApi(url: URL): Promise<SwarmStatistics> {
+  const refresh = url.searchParams.get("refresh") === "1";
+  const includeGh = url.searchParams.get("gh") === "1";
+  const timeRange = parseStatsTimeRange(url.searchParams);
+  const cacheKey = `${timeRange.preset}:${timeRange.since?.toISOString() ?? ""}:${timeRange.until.toISOString()}`;
+  const now = Date.now();
+  if (
+    !refresh &&
+    statisticsCache &&
+    statisticsCache.key === cacheKey &&
+    now - statisticsCache.at < STATS_CACHE_MS
+  ) {
+    return statisticsCache.stats;
+  }
+  const limit = Math.min(
+    50_000,
+    Math.max(
+      50,
+      Number(url.searchParams.get("runs") ?? defaultStatsRunLimit(timeRange.preset)),
+    ),
+  );
+  const stats = await buildSwarmStatistics(limit, {
+    runLimit: limit,
+    skipGh: !includeGh,
+    timeRange,
+  });
+  statisticsCache = { at: now, stats, key: cacheKey };
+  return stats;
 }
 
 function jsonBody(data: unknown, status = 200): Response {
@@ -87,26 +144,19 @@ function currentState() {
   return isSupervisorLoopRunning() ? loadStateForApi() : loadState();
 }
 
-const NATIVE_GET = new Set([
-  "/api/status",
-  "/api/state",
-  "/api/agents",
-  "/api/coordinators",
-  "/api/runtime",
-  "/api/queue",
-  "/api/heap",
-  "/api/handoffs",
-  "/api/interventions",
-  "/api/report",
-  "/api/settings",
-  "/api/activity/recent",
-  "/api/runs",
-  "/api/supervisor/activity",
-]);
-
 async function handleNativeGet(pathname: string, url: URL): Promise<Response | null> {
-  const state = currentState();
   const store = dataStoreLabel();
+
+  if (pathname === "/api/agents") {
+    const state = currentState();
+    return jsonBody({ ...dashboardRosterSummary(), runtime: runtimeSnapshot(state) });
+  }
+
+  if (pathname === "/api/coordinators") {
+    return jsonBody({ coordinators: sortedCoordinators() });
+  }
+
+  const state = currentState();
   const runtime = runtimeSnapshot(state);
 
   if (pathname === "/api/status" || pathname === "/api/state") {
@@ -125,14 +175,6 @@ async function handleNativeGet(pathname: string, url: URL): Promise<Response | n
       sdk_ready: agentBackendLabel() === "cursor-sdk" && Boolean(resolveCursorApiKey()),
       lanes: laneRuntimeSnapshot(loadLaneState()),
     });
-  }
-
-  if (pathname === "/api/agents") {
-    return jsonBody({ ...dashboardRosterSummary(), runtime });
-  }
-
-  if (pathname === "/api/coordinators") {
-    return jsonBody({ coordinators: sortedCoordinators() });
   }
 
   if (pathname === "/api/runtime") {
@@ -189,6 +231,22 @@ async function handleNativeGet(pathname: string, url: URL): Promise<Response | n
         store,
       });
     }
+    if (!cached && !wait) {
+      scheduleAgentWorkQueueRefresh(state, options);
+      return jsonBody({
+        queue: [],
+        by_agent: {},
+        generated_at: new Date().toISOString(),
+        swarm: null,
+        briefing_hash: state.last_briefing_hash,
+        completed: state.recent_tasks,
+        stopped_agents: state.stopped_agents ?? [],
+        active_runs: runtime.active_runs,
+        queue_stale: true,
+        queue_building: true,
+        store,
+      });
+    }
     const snapshot = cached ?? (await buildAgentWorkQueue(state, options));
     return jsonBody({
       queue: snapshot.items,
@@ -228,9 +286,46 @@ async function handleNativeGet(pathname: string, url: URL): Promise<Response | n
     return jsonBody({ runs: await listRunsMerged(limit), store });
   }
 
+  const runDetailMatch = pathname.match(/^\/api\/runs\/([^/]+)$/);
+  if (runDetailMatch) {
+    const runId = decodeURIComponent(runDetailMatch[1]!);
+    const detail = await getRunDetail(runId);
+    if (!detail) return jsonBody({ error: "run not found" }, 404);
+    return jsonBody(detail);
+  }
+
   if (pathname === "/api/supervisor/activity") {
     const limit = Math.min(80, Math.max(1, Number(url.searchParams.get("limit") ?? 40)));
     return jsonBody({ entries: await listSupervisorActivityAsync(limit) });
+  }
+
+  if (pathname === "/api/statistics") {
+    try {
+      const stats = await getSwarmStatisticsForApi(url);
+      return jsonBody({ statistics: stats, store });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      agentLog("dashboard-api", "warn", `statistics failed: ${message}`);
+      return jsonBody({ error: message, statistics: null, store }, 500);
+    }
+  }
+
+  const agentHistoryMatch = pathname.match(/^\/api\/agents\/([^/]+)\/history$/);
+  if (agentHistoryMatch) {
+    const agentId = canonicalAgentId(decodeURIComponent(agentHistoryMatch[1]!));
+    if (!agentId) return jsonBody({ error: "unknown agent" }, 404);
+    const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit") ?? 50)));
+    const runs = await getAgentRunHistory(agentId, limit);
+    return jsonBody({ agent_id: agentId, runs, store: dbEnabled() ? "supabase" : "disk" });
+  }
+
+  const agentDetailMatch = pathname.match(/^\/api\/agents\/([^/]+)\/detail$/);
+  if (agentDetailMatch) {
+    const agentId = canonicalAgentId(decodeURIComponent(agentDetailMatch[1]!));
+    if (!agentId) return jsonBody({ error: "unknown agent" }, 404);
+    const detail = await getAgentDetail(agentId);
+    if (!detail) return jsonBody({ error: "agent not found" }, 404);
+    return jsonBody(detail);
   }
 
   return null;
@@ -437,7 +532,7 @@ async function proxyToOps(req: Request, apiPath: string): Promise<Response> {
       return jsonBody(
         {
           error:
-            "Control plane on :9477 is not running. Swarm/supervisor/agent controls run in Next natively — pull latest. Other actions need: npm run dashboard or npm run dev:all",
+            "Ops server on :9477 is not running. Read APIs are served by Next.js; start npm run dev:all for POST actions that still proxy to :9477.",
           path: apiPath,
         },
         503,
@@ -465,7 +560,7 @@ export async function handleDashboardRequest(req: Request, apiPath: string): Pro
   const url = new URL(req.url);
   const pathname = apiPath.startsWith("/") ? apiPath : `/${apiPath}`;
 
-  if (req.method === "GET" && NATIVE_GET.has(pathname)) {
+  if (req.method === "GET" && pathname.startsWith("/api/")) {
     try {
       const native = await handleNativeGet(pathname, url);
       if (native) return native;

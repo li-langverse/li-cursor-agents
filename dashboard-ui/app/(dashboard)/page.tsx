@@ -1,10 +1,18 @@
 "use client";
 
-import { useDashboardCore } from "@/hooks/use-dashboard-data";
+import Link from "next/link";
+import { useState } from "react";
+import { ActivityFeed } from "@/components/activity/activity-feed";
+import { RunDrawer } from "@/components/activity/run-drawer";
+import { useDashboardCore, useRecentActivity } from "@/hooks/use-dashboard-data";
 import { buildAgentStatusMap } from "@/lib/agent-status";
+import type { ActivityListItem } from "@/lib/activity";
 
 export default function OverviewPage() {
   const { data } = useDashboardCore();
+  const activityQ = useRecentActivity(4);
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+
   const runtime = data?.status?.runtime;
   const swarmOn = Boolean(runtime?.async_swarm_running);
   const statusMap = buildAgentStatusMap(data?.agents, data?.report, data?.status, data?.queue);
@@ -15,14 +23,16 @@ export default function OverviewPage() {
     if (v.status === "running") running++;
   }
 
+  const activityItems = (activityQ.data?.items ?? []) as ActivityListItem[];
+
   return (
     <>
       {swarmOn ? (
-        <div className="swarm-banner" role="status">
+        <motion className="swarm-banner" role="status">
           <span className="pulse" aria-hidden />
           <strong>Agents running</strong> — {onDuty} on duty · {runtime?.active_run_count ?? running} in SDK
           now · {data?.queue?.queue?.length ?? 0} queued tasks
-        </div>
+        </motion>
       ) : (
         <p className="hint">Click Start agents in the footer to run the swarm continuously.</p>
       )}
@@ -31,20 +41,40 @@ export default function OverviewPage() {
         <div className={`stat-card ${swarmOn ? "accent" : ""}`}>
           <div className="label">Swarm</div>
           <div className="value">{swarmOn ? "on" : "off"}</div>
-        </div>
+        </motion>
         <div className="stat-card accent">
           <div className="label">On duty</div>
           <div className="value">{onDuty}</div>
-        </div>
+        </motion>
         <div className="stat-card">
           <div className="label">In SDK</div>
           <div className="value">{runtime?.active_run_count ?? 0}</div>
-        </div>
-        <div className="stat-card">
+        </motion>
+        <motion className="stat-card">
           <div className="label">Queue items</div>
           <div className="value">{data?.queue?.queue?.length ?? 0}</div>
-        </div>
-      </div>
+        </motion>
+      </motion>
+
+      <section className="panel">
+        <div className="panel-head-row">
+          <h2>Recent agent actions</h2>
+          <Link href="/activity" className="btn btn-ghost btn-sm">
+            View all
+          </Link>
+        </motion>
+        <p className="hint">Prompts, outputs, and file/tool actions from the latest runs.</p>
+        {activityQ.isLoading ? (
+          <p className="loading-block">Loading recent actions…</p>
+        ) : (
+          <ActivityFeed
+            items={activityItems}
+            compact
+            emptyMessage="No recorded runs with prompts or traces yet."
+            onOpenTrace={setSelectedRunId}
+          />
+        )}
+      </section>
 
       <section className="panel">
         <h2>Work queue (top 12)</h2>
@@ -57,6 +87,8 @@ export default function OverviewPage() {
           {!(data?.queue?.queue?.length ?? 0) ? <li className="empty">Queue empty</li> : null}
         </ul>
       </section>
+
+      <RunDrawer runId={selectedRunId} onClose={() => setSelectedRunId(null)} />
     </>
   );
 }

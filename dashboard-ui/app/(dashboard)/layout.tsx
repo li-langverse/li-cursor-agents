@@ -79,8 +79,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           ) : null}
           {isError ? (
             <p className="error-block">
-              Cannot load agents — is the control plane running on port 9477?{" "}
-              <code>{agentsFault ?? (error as Error)?.message}</code>
+              Cannot load agents — <code>{agentsFault ?? (error as Error)?.message}</code>. Try{" "}
+              <code>npm run build</code> in the repo root, restart the dashboard, or check Supabase if
+              polls stay slow.
             </p>
           ) : null}
           {children}
