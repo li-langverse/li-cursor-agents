@@ -212,6 +212,18 @@ function liveRunToCatalog(r: ActiveAgentRun): RunCatalogEntry {
   };
 }
 
+/** In-process map (worker) + worker_status row (db-api on Next). */
+export async function findActiveRunById(runId: string): Promise<ActiveAgentRun | null> {
+  const inProc = listActiveRuns().find((r) => r.run_id === runId);
+  if (inProc) return inProc;
+  if (useSupabaseStore() && dbEnabled()) {
+    const worker = await loadWorkerStatusFromDb();
+    const fromWorker = worker?.active_runs?.find((r) => r.run_id === runId && r.status === "running");
+    if (fromWorker) return fromWorker;
+  }
+  return null;
+}
+
 async function listLiveRunCatalogEntries(): Promise<RunCatalogEntry[]> {
   const byId = new Map<string, ActiveAgentRun>();
   if (useSupabaseStore() && dbEnabled()) {
@@ -233,20 +245,6 @@ export async function listRecentActivity(limit = 30): Promise<ActivityListItem[]
   const history = (await listRunsMerged(limit + live.length)).filter((r) => !seen.has(r.run_id));
   const merged = [...live, ...history];
   merged.sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime());
-  // #region agent log
-  fetch("http://127.0.0.1:7746/ingest/994bad2f-5ad5-4c20-9cd2-19e851fc1d5c", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "898ce1" },
-    body: JSON.stringify({
-      sessionId: "898ce1",
-      hypothesisId: "B",
-      location: "runs-catalog.ts:listRecentActivity",
-      message: "activity merge",
-      data: { live: live.length, history: history.length, limit },
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
   return listToActivityItems(merged.slice(0, limit));
 }
 
@@ -280,9 +278,9 @@ function readPreview(path: string, maxChars: number): string {
 }
 
 export async function getRunDetail(runId: string): Promise<RunCatalogEntry | null> {
-  const live = listActiveRuns().find((r) => r.run_id === runId);
+  const live = await findActiveRunById(runId);
   if (live) {
-    return enrichCatalogFromSidecar({
+    const entry = enrichCatalogFromSidecar({
       run_id: live.run_id,
       agent_id: live.agent_id,
       started_at: live.started_at,
@@ -293,6 +291,27 @@ export async function getRunDetail(runId: string): Promise<RunCatalogEntry | nul
       pid: live.pid,
       output_preview: "_Run in progress — output file not written yet._",
     });
+    // #region agent log
+    fetch("http://127.0.0.1:7746/ingest/994bad2f-5ad5-4c20-9cd2-19e851fc1d5c", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "898ce1" },
+      body: JSON.stringify({
+        sessionId: "898ce1",
+        hypothesisId: "C",
+        location: "runs-catalog.ts:getRunDetail",
+        message: "live run detail",
+        data: {
+          runId,
+          agent_id: entry.agent_id,
+          has_trace: Boolean(entry.run_trace),
+          has_input: Boolean(entry.run_input),
+          md_exists: existsSync(entry.md_path),
+        },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+    return entry;
   }
 
   if (useSupabaseStore() && dbEnabled()) {
