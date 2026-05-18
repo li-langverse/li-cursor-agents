@@ -17,6 +17,8 @@
     "setup": "bash scripts/setup-local-env.sh",
     "agents:keep": "bash scripts/keep-agents-running.sh",
     "dashboard": "node dist/cli/serve-dashboard.js",
+    "dashboard:ui": "npm --prefix dashboard-ui run dev",
+    "dashboard:dev": "bash scripts/dashboard-dev.sh",
     "repo-workflow": "node dist/cli/repo-workflow.js",
     "workspace:sweep": "npm run build && node dist/cli/workspace-sweep.js",
     "agents:research-lane": "npm run build && node dist/cli/research-lane.js",
