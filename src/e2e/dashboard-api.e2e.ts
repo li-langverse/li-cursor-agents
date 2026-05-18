@@ -9,7 +9,7 @@ import type { Server } from "node:http";
 import { get, request } from "node:http";
 import { supervisorTick } from "../supervisor/loop.js";
 import { startOpsServer } from "../ops-server.js";
-import { setupE2eEnv, defaultTickOpts } from "./helpers.js";
+import { setupE2eEnv, defaultTickOpts, readReport } from "./helpers.js";
 import { listAgentsPublic } from "../agents/registry.js";
 
 function httpGetJson(port: number, path: string): Promise<{ status: number; body: unknown }> {
@@ -123,16 +123,24 @@ describe("dashboard drilldown API e2e", () => {
     const swarmBody = swarmRes.body as { scorecard?: Record<string, unknown> };
     assert.ok(swarmBody.scorecard);
 
+    const reportDisk = readReport(env.controlPlaneDir);
+    const recentRuns = reportDisk.recent_runs as Array<{ agentId: string; outputPath: string }>;
+    assert.ok(recentRuns.length >= 1, "supervisor tick produced runs in report");
+    const runId = recentRuns[0].outputPath.split("/").pop()!.replace(/\.md$/, "");
+    const agentId = recentRuns[0].agentId;
+
     const runsRes = await httpGetJson(port, "/api/runs");
     assert.equal(runsRes.status, 200);
     const runsPayload = runsRes.body as { runs?: Array<{ run_id: string; agent_id: string }> };
-    assert.ok(runsPayload.runs && runsPayload.runs.length >= 1, "disk runs from supervisor");
+    assert.ok(
+      !(runsPayload.runs ?? []).some((r) => r.run_id === runId),
+      "mock runs excluded from production run catalog",
+    );
 
-    const firstRun = runsPayload.runs![0];
-    const runDetailRes = await httpGetJson(port, `/api/runs/${encodeURIComponent(firstRun.run_id)}`);
+    const runDetailRes = await httpGetJson(port, `/api/runs/${encodeURIComponent(runId)}`);
     assert.equal(runDetailRes.status, 200);
     const runDetail = runDetailRes.body as { run_id: string; output_preview?: string };
-    assert.equal(runDetail.run_id, firstRun.run_id);
+    assert.equal(runDetail.run_id, runId);
     assert.ok(
       typeof runDetail.output_preview === "string" && runDetail.output_preview.length > 0,
       "run output drilldown",
@@ -151,13 +159,11 @@ describe("dashboard drilldown API e2e", () => {
         has_trace?: boolean;
       }>;
     };
-    assert.ok(actBody.items && actBody.items.length >= 1, "activity recent list");
-    const firstItem = actBody.items![0];
-    assert.equal(firstItem.run_id, firstRun.run_id);
-    assert.ok(typeof firstItem.action_summary === "string");
-    assert.ok(firstItem.has_trace || firstItem.prompt_preview, "activity summaries");
+    assert.ok(
+      !(actBody.items ?? []).some((i) => i.run_id === runId),
+      "mock runs excluded from activity feed",
+    );
 
-    const agentId = firstRun.agent_id;
     const agentDetailRes = await httpGetJson(
       port,
       `/api/agents/${encodeURIComponent(agentId)}/detail`,

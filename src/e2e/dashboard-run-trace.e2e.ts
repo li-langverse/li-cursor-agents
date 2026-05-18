@@ -96,6 +96,9 @@ describe("dashboard run trace e2e", () => {
     );
     assert.equal(history.status, 200);
     const histRuns = history.body.runs as Array<{ run_id: string }>;
-    assert.ok(histRuns.some((r) => r.run_id === runId));
+    assert.ok(
+      !histRuns.some((r) => r.run_id === runId),
+      "mock runs must not appear in production agent history",
+    );
   });
 });

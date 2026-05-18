@@ -127,3 +127,32 @@ export function finalizeAgentRun(
 
   return finalized;
 }
+
+/** Merge supervisor/metadata fields into the run JSON sidecar (mock + production). */
+export function writeRunSidecar(run: AgentRunResult): void {
+  if (!run.outputPath?.endsWith(".md")) return;
+  const jsonPath = run.outputPath.replace(/\.md$/, ".json");
+  try {
+    const prior = existsSync(jsonPath)
+      ? (JSON.parse(readFileSync(jsonPath, "utf8")) as Record<string, unknown>)
+      : {};
+    writeFileSync(
+      jsonPath,
+      JSON.stringify(
+        {
+          ...prior,
+          ...run,
+          reason: run.reason ?? prior.reason,
+          briefing_hash: run.briefing_hash ?? prior.briefing_hash,
+          fingerprint: run.fingerprint ?? prior.fingerprint,
+          coordinator: run.coordinator ?? prior.coordinator,
+        },
+        null,
+        2,
+      ) + "\n",
+      "utf8",
+    );
+  } catch {
+    writeFileSync(jsonPath, JSON.stringify(run, null, 2) + "\n", "utf8");
+  }
+}

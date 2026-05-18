@@ -59,8 +59,9 @@ export function startHandoffRunInBackground(options?: { mock?: boolean }): {
   handoffRunInProgress = true;
   currentHandoffAgent = null;
   lastHandoffError = null;
-  const resumeWorkers = isAsyncSwarmRunning();
-  if (resumeWorkers) {
+  const pauseWorkers =
+    process.env.LI_HANDOFF_PAUSE_WORKERS === "1" && isAsyncSwarmRunning();
+  if (pauseWorkers) {
     stopAgentWorkerPool();
     pushSupervisorActivity("info", "Paused agent worker pool for handoff run-all", {
       mode: "handoff_phases",
@@ -83,7 +84,7 @@ export function startHandoffRunInBackground(options?: { mock?: boolean }): {
     } finally {
       handoffRunInProgress = false;
       currentHandoffAgent = null;
-      if (resumeWorkers) {
+      if (pauseWorkers) {
         startAgentWorkerPool({ mock: options?.mock });
         pushSupervisorActivity("info", "Resumed agent worker pool after handoff run-all", {
           mode: "handoff_phases",

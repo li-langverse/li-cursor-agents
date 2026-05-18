@@ -8,6 +8,7 @@ import type { ControlPlaneReport, ControlPlaneState, HumanIntervention } from ".
 import { agentLog } from "../agent-log.js";
 import { persistReport } from "../db/persist.js";
 import { dbEnabled, useSupabaseStore } from "../db/client.js";
+import { isMockRun } from "./run-history.js";
 import { listRunsGlobal } from "../db/runs.js";
 
 export function writeReport(report: ControlPlaneReport, interventions: HumanIntervention[]): void {
@@ -20,18 +21,20 @@ export async function loadRecentRunSummariesAsync(limit = 12): Promise<AgentRunR
   if (useSupabaseStore()) {
     if (!dbEnabled()) return [];
     const rows = await listRunsGlobal(limit);
-    return rows.map(
-      (r): AgentRunResult => ({
-        agentId: r.agent_id as AgentRunResult["agentId"],
-        backend: (r.backend as AgentRunResult["backend"]) ?? "mock",
-        status: r.status as AgentRunResult["status"],
-        durationMs: r.duration_ms ?? 0,
-        outputPath: r.output_path ?? "",
-        outputText: r.output_md ?? undefined,
-        error: r.error ?? undefined,
-        completion: r.completion ?? undefined,
-      }),
-    );
+    return rows
+      .filter((r) => r.backend !== "mock")
+      .map(
+        (r): AgentRunResult => ({
+          agentId: r.agent_id as AgentRunResult["agentId"],
+          backend: (r.backend as AgentRunResult["backend"]) ?? "cursor-sdk",
+          status: r.status as AgentRunResult["status"],
+          durationMs: r.duration_ms ?? 0,
+          outputPath: r.output_path ?? "",
+          outputText: r.output_md ?? undefined,
+          error: r.error ?? undefined,
+          completion: r.completion ?? undefined,
+        }),
+      );
   }
   return loadRecentRunSummaries(limit);
 }
@@ -53,7 +56,7 @@ export function loadRecentRunSummaries(limit = 12): AgentRunResult[] {
   for (const f of files) {
     try {
       const raw = JSON.parse(readFileSync(join(dir, f), "utf8")) as AgentRunResult;
-      if (raw.agentId) out.push(raw);
+      if (raw.agentId && !isMockRun(raw)) out.push(raw);
     } catch {
       /* skip corrupt */
     }

@@ -1,4 +1,6 @@
 import { agentsPackageRoot, runAgent } from "../runner.js";
+import { writeRunSidecar } from "../control-plane/finalize-run.js";
+import { shouldPersistRunToHistory } from "../control-plane/run-history.js";
 import { persistAgentRun } from "../db/persist.js";
 import { hashBriefing } from "../control-plane/briefing-hash.js";
 import { assembleReport, loadRecentRunSummariesAsync, writeReport } from "../control-plane/build-report.js";
@@ -289,7 +291,10 @@ async function persistRunMeta(
     briefing_hash: briefingHash,
     coordinator: task.coordinator,
   };
-  await persistAgentRun({ run: enriched });
+  writeRunSidecar(enriched);
+  if (shouldPersistRunToHistory(enriched)) {
+    await persistAgentRun({ run: enriched });
+  }
 }
 
 function sleepMs(ms: number, signal?: AbortSignal): Promise<void> {

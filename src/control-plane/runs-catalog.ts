@@ -2,7 +2,7 @@ import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { getAgent } from "../agents/registry.js";
 import { coordinatorForLeaf } from "../heap/coordinators.js";
-import { runsDir } from "./paths.js";
+import { mockRunsDir, runsDir } from "./paths.js";
 import { isSupervisorLoopRunning, listActiveRuns } from "./runtime.js";
 import { loadState, loadStateForApi } from "./state.js";
 import { readJson } from "./read-json.js";
@@ -17,6 +17,7 @@ import {
   type AgentRunHistoryRow,
 } from "../db/runs.js";
 import type { AgentRunInputRecord, AgentRunTrace } from "../agent-run-trace.js";
+import { filterProductionRuns, isMockCatalogEntry } from "./run-history.js";
 import { listToActivityItems, type ActivityListItem } from "./activity-summary.js";
 import type { AgentId } from "../types.js";
 
@@ -103,6 +104,8 @@ export function listRunsFromDisk(limit = 80): RunCatalogEntry[] {
       }
     }
     const completion = meta.completion as RunCatalogEntry["completion"];
+    const backend = meta.backend as string | undefined;
+    if (backend === "mock") continue;
     const preview = readPreview(full, 600);
     entries.push({
       run_id: md.replace(/\.md$/, ""),
@@ -125,14 +128,14 @@ export function listRunsFromDisk(limit = 80): RunCatalogEntry[] {
   }
 
   entries.sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime());
-  return entries.slice(0, limit);
+  return filterProductionRuns(entries).slice(0, limit);
 }
 
 export async function listRunsMerged(limit = 80): Promise<RunCatalogEntry[]> {
   if (useSupabaseStore()) {
     if (!dbEnabled()) return [];
     const fromDb = await listRunsGlobal(limit);
-    return fromDb.map(historyRowToCatalog);
+    return filterProductionRuns(fromDb.map(historyRowToCatalog));
   }
   return listRunsFromDisk(limit);
 }
@@ -184,20 +187,40 @@ export async function getRunDetail(runId: string): Promise<RunCatalogEntry | nul
     return null;
   }
 
-  const dir = runsDir();
-  const md = join(dir, `${runId}.md`);
-  const jsonPath = join(dir, `${runId}.json`);
-  if (!existsSync(md)) return null;
+  let md: string | null = null;
+  let jsonPath: string | null = null;
+  for (const dir of [runsDir(), mockRunsDir()]) {
+    const candidate = join(dir, `${runId}.md`);
+    if (existsSync(candidate)) {
+      md = candidate;
+      jsonPath = join(dir, `${runId}.json`);
+      break;
+    }
+  }
+  if (!md) return null;
 
-  const all = listRunsFromDisk(200);
-  const row = all.find((r) => r.run_id === runId);
+  let row = listRunsFromDisk(200).find((r) => r.run_id === runId);
+  if (!row && isMockCatalogEntry({ run_id: runId, agent_id: "", started_at: "", status: "", md_path: md })) {
+    const parsed = parseRunBasename(`${runId}.md`);
+    if (parsed) {
+      row = {
+        run_id: runId,
+        agent_id: parsed.agentId,
+        started_at: isoFromTs(parsed.ts),
+        status: "finished",
+        backend: "mock",
+        md_path: md,
+        json_path: jsonPath && existsSync(jsonPath) ? jsonPath : undefined,
+      };
+    }
+  }
   if (!row) return null;
   try {
     row.output_preview = readFileSync(md, "utf8");
   } catch {
     /* empty */
   }
-  if (existsSync(jsonPath)) {
+  if (jsonPath && existsSync(jsonPath)) {
     try {
       const meta = JSON.parse(readFileSync(jsonPath, "utf8")) as Record<string, unknown>;
       row.run_input = meta.runInput as AgentRunInputRecord | undefined;
@@ -215,7 +238,7 @@ export async function listRunsForAgent(agentId: string, limit = 15): Promise<Run
     const fromDb = await listAgentRunHistory(agentId, limit);
     history = fromDb.map(historyRowToCatalog);
   } else {
-    history = listRunsFromDisk(200).filter((r) => r.agent_id === agentId);
+    history = filterProductionRuns(listRunsFromDisk(200).filter((r) => r.agent_id === agentId));
   }
 
   const live = listActiveRuns()

@@ -174,6 +174,7 @@ export async function listAgentRunHistory(agentId: string, limit = 50): Promise<
     .from("agent_runs")
     .select("*")
     .eq("agent_id", agentId)
+    .neq("backend", "mock")
     .order("started_at", { ascending: false })
     .limit(limit);
 
@@ -187,6 +188,7 @@ export async function listRunsGlobal(limit = 80): Promise<AgentRunHistoryRow[]> 
   const { data, error } = await getSupabase()
     .from("agent_runs")
     .select("*")
+    .neq("backend", "mock")
     .order("started_at", { ascending: false })
     .limit(limit);
 

@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import type { Server } from "node:http";
 import { get, request } from "node:http";
 import { startOpsServer } from "../ops-server.js";
-import { setupE2eEnv } from "./helpers.js";
+import { readReport, setupE2eEnv } from "./helpers.js";
 
 function httpGetJson(port: number, path: string): Promise<{ status: number; body: Record<string, unknown> }> {
   return new Promise((resolve, reject) => {
@@ -121,20 +121,25 @@ describe("dashboard live runs and trace e2e", () => {
       "no running agents after tick completes",
     );
 
-    const runsRes = await httpGetJson(port, "/api/runs");
-    const runs = (runsRes.body.runs as Array<{ run_id: string; agent_id: string; output_preview?: string }>) ?? [];
-    assert.ok(runs.length >= 1, "run catalog has completed runs");
+    const reportDisk = readReport(env.controlPlaneDir);
+    const recentRuns = reportDisk.recent_runs as Array<{ agentId: string; outputPath: string }>;
+    assert.ok(recentRuns.length >= 1, "tick produced runs in report");
+    const runId = recentRuns[0].outputPath.split("/").pop()!.replace(/\.md$/, "");
+    const agentId = recentRuns[0].agentId;
 
-    const first = runs[0];
-    const runDetail = await httpGetJson(port, `/api/runs/${encodeURIComponent(first.run_id)}`);
+    const runsRes = await httpGetJson(port, "/api/runs");
+    const runs = (runsRes.body.runs as Array<{ run_id: string }>) ?? [];
+    assert.ok(!runs.some((r) => r.run_id === runId), "mock runs excluded from run catalog");
+
+    const runDetail = await httpGetJson(port, `/api/runs/${encodeURIComponent(runId)}`);
     assert.equal(runDetail.status, 200);
     const detail = runDetail.body as { output_preview?: string; run_id: string };
-    assert.equal(detail.run_id, first.run_id);
+    assert.equal(detail.run_id, runId);
     assert.ok((detail.output_preview ?? "").length > 20, "run trace has output preview");
 
     const agentDetail = await httpGetJson(
       port,
-      `/api/agents/${encodeURIComponent(first.agent_id)}/detail`,
+      `/api/agents/${encodeURIComponent(agentId)}/detail`,
     );
     assert.equal(agentDetail.status, 200);
     const ad = agentDetail.body as {
@@ -143,16 +148,17 @@ describe("dashboard live runs and trace e2e", () => {
       history: Array<{ run_id: string; summary?: string }>;
     };
     assert.ok(["idle", "cooldown", "recommended"].includes(ad.status), `post-run status: ${ad.status}`);
-    assert.ok(ad.runs.length >= 1, "agent detail runs list");
-    assert.ok(ad.history.length >= 1, "agent history trace");
+    const agentRuns = ad.runs as Array<{ run_id: string }>;
+    assert.ok(!agentRuns.some((r) => r.run_id === runId), "mock excluded from agent runs");
+    assert.ok(!ad.history.some((r) => r.run_id === runId), "mock excluded from agent history");
 
     const historyRes = await httpGetJson(
       port,
-      `/api/agents/${encodeURIComponent(first.agent_id)}/history?limit=5`,
+      `/api/agents/${encodeURIComponent(agentId)}/history?limit=5`,
     );
     assert.equal(historyRes.status, 200);
     const hist = historyRes.body as { runs: Array<{ run_id: string }> };
-    assert.ok(hist.runs.some((r) => r.run_id === first.run_id), "history includes completed run");
+    assert.ok(!hist.runs.some((r) => r.run_id === runId), "mock excluded from history API");
   });
 
   test("spawned child run appears in runtime then trace", async () => {

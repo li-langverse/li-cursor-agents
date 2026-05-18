@@ -2,7 +2,6 @@
 
 import { agentLog } from "../agent-log.js";
 import { loadState } from "../control-plane/state.js";
-import { isHandoffRunInProgress } from "../lanes/handoff-run-coordinator.js";
 import { asyncWorkerAgentIds } from "../lanes/lane-agent-ids.js";
 import { resolveSpawnWorkflowRepo } from "../handoffs/resolve-spawn-workflow-repo.js";
 import { agentsPackageRoot, runAgent, shouldUseMock } from "../runner.js";
@@ -42,10 +41,6 @@ export async function agentWorkerTick(
   if ((state.stopped_agents ?? []).includes(agentId)) {
     return { skipped: true, skip_reason: "agent stopped" };
   }
-  if (isHandoffRunInProgress()) {
-    return { skipped: true, skip_reason: "handoff run-all in progress" };
-  }
-
   const mock = options?.mock ?? shouldUseMock(false);
   const benchmarksRoot = resolveBenchmarksRoot();
   const packageRoot = agentsPackageRoot();

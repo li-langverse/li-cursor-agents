@@ -9,6 +9,7 @@ import { resolveCursorApiKey } from "./env.js";
 import { hashBriefing } from "./control-plane/briefing-hash.js";
 import { finalizeAgentRun } from "./control-plane/finalize-run.js";
 import { applySwarmPostRunEffects } from "./handoffs/post-run.js";
+import { shouldPersistRunToHistory } from "./control-plane/run-history.js";
 import { persistAgentRun } from "./db/persist.js";
 import { runsDir } from "./control-plane/paths.js";
 import {
@@ -163,7 +164,9 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
         },
         { definition, rolloutPrUrls: prUrls, preflight, extraEvidence: ["workspace_sweep"] },
       );
-      await persistAgentRun({ run: finalized });
+      if (shouldPersistRunToHistory(finalized)) {
+        await persistAgentRun({ run: finalized });
+      }
       return finalized;
     }
     extra = [text, extra].filter(Boolean).join("\n\n");
@@ -223,7 +226,9 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
         },
         { definition, rolloutPrUrls: prUrls, preflight },
       );
-      await persistAgentRun({ run: finalized, rolloutRows: rollout });
+      if (shouldPersistRunToHistory(finalized)) {
+        await persistAgentRun({ run: finalized, rolloutRows: rollout });
+      }
       return finalized;
     }
   }
@@ -303,6 +308,8 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
   );
 
   await applySwarmPostRunEffects(finalized, briefingHash);
-  await persistAgentRun({ run: finalized });
+  if (shouldPersistRunToHistory(finalized)) {
+    await persistAgentRun({ run: finalized });
+  }
   return finalized;
 }

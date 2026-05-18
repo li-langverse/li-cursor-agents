@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { buildMockDeliverable } from "../agent-output-format.js";
 import { buildMockTrace } from "../agent-run-trace.js";
-import { runsDir } from "../control-plane/paths.js";
+import { mockRunsDir } from "../control-plane/paths.js";
 import type { AgentBackend, AgentDefinition, AgentRunOptions, AgentRunResult } from "../types.js";
 
 /**
@@ -23,7 +23,7 @@ export class MockBackend implements AgentBackend {
     if (delayMs > 0) {
       await new Promise((r) => setTimeout(r, delayMs));
     }
-    const outputPath = join(runsDir(), `${definition.id}-${Date.now()}.md`);
+    const outputPath = join(mockRunsDir(), `${definition.id}-${Date.now()}.md`);
 
     if (options.dryRun) {
       const dryText = `[dry-run] mock backend would run ${definition.id}`;
