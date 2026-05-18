@@ -59,7 +59,6 @@ export default function AgentsPage() {
 
   return (
     <>
-      <motion></motion>
       <div className="chip-row">
         {(["all", "running", "on_duty", "queued", "idle", "stopped"] as Filter[]).map((f) => (
           <button
@@ -111,7 +110,7 @@ export default function AgentsPage() {
             ) : null}
           </tbody>
         </table>
-      </motion></motion></motion></motion></motion></motion></motion></motion></div>
+      </div>
 
       {selectedId ? (
         <>

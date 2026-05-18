@@ -106,7 +106,6 @@ export default function SettingsPage() {
   return (
     <section className="panel settings-panel">
       <header className="settings-header">
-        <motion></motion>
         <div>
           <h2>Runtime settings</h2>
           <p className="hint">
@@ -142,7 +141,6 @@ export default function SettingsPage() {
         group.rows.length === 0 ? null : (
           <details key={group.id} className="settings-group" open={group.id === "supervisor"}>
             <summary>{group.label}</summary>
-            <motion></motion>
             <div className="settings-grid">
               {group.rows.map((row) => (
                 <label key={row.key} className="settings-row">

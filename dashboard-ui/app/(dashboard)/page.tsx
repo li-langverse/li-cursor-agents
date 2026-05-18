@@ -18,12 +18,11 @@ export default function OverviewPage() {
   return (
     <>
       {swarmOn ? (
-        <motion></motion>
         <div className="swarm-banner" role="status">
           <span className="pulse" aria-hidden />
           <strong>Agents running</strong> — {onDuty} on duty · {runtime?.active_run_count ?? running} in SDK
           now · {data?.queue?.queue?.length ?? 0} queued tasks
-        </motion></div>
+        </div>
       ) : (
         <p className="hint">Click Start agents in the footer to run the swarm continuously.</p>
       )}
@@ -39,7 +38,7 @@ export default function OverviewPage() {
         </div>
         <div className="stat-card">
           <div className="label">In SDK</div>
-          <div className="value">{runtime?.active_run_count ?? 0}</motion></div>
+          <div className="value">{runtime?.active_run_count ?? 0}</div>
         </div>
         <div className="stat-card">
           <div className="label">Queue items</div>
