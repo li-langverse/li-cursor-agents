@@ -51,13 +51,26 @@ function runLifecycleFromResult(status: AgentRunResult["status"]): AgentRunLifec
   return "error";
 }
 
+async function scheduleWorkerHeartbeatFromRunner(): Promise<void> {
+  try {
+    const m = await import("./worker/heartbeat-loop.js");
+    await m.flushWorkerHeartbeat();
+  } catch {
+    /* disk-only */
+  }
+}
+
 async function withRunAgentTracking(
   agentId: AgentId,
   fn: () => Promise<AgentRunResult>,
 ): Promise<AgentRunResult> {
-  if (hasActiveRunningTrack(agentId)) return fn();
+  if (hasActiveRunningTrack(agentId)) {
+    await scheduleWorkerHeartbeatFromRunner();
+    return fn();
+  }
 
   const runId = registerSupervisorRun(agentId, "runAgent");
+  await scheduleWorkerHeartbeatFromRunner();
   try {
     const result = await fn();
     completeSupervisorRun(runId, runLifecycleFromResult(result.status));

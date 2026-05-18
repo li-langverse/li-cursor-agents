@@ -21,6 +21,8 @@
     "agents:keep": "bash scripts/keep-agents-running.sh",
     "dashboard": "node dist/cli/serve-dashboard.js",
     "worker": "node dist/cli/serve-dashboard.js",
+    "dev:worker": "bash scripts/worker-dev.sh",
+    "dev:ui": "bash scripts/ui-dev.sh",
     "dashboard:ui": "npm --prefix dashboard-ui run dev",
     "dev:all": "bash scripts/dev-all.sh",
     "dashboard:dev": "bash scripts/dev-all.sh",

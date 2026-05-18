@@ -14,6 +14,13 @@ import {
 import { shouldUseMock } from "../runner.js";
 import { startAgentWorkerPool, stopAgentWorkerPool } from "./agent-worker-pool.js";
 import { isAsyncSwarmRunning, setAsyncSwarmRunning } from "./async-swarm-state.js";
+import { debugSessionLog } from "../debug-session-log.js";
+import { loadLaneState } from "../lanes/lane-state.js";
+import {
+  flushWorkerHeartbeat,
+  startWorkerHeartbeatLoop,
+  stopWorkerHeartbeatLoop,
+} from "../worker/heartbeat-loop.js";
 
 export { isAsyncSwarmRunning, asyncSwarmSnapshot } from "./async-swarm-state.js";
 
@@ -23,6 +30,8 @@ export async function startAsyncSwarm(options?: {
   stopSupervisor?: boolean;
 }): Promise<{ started: boolean; message: string; already_running?: boolean }> {
   if (isAsyncSwarmRunning()) {
+    startWorkerHeartbeatLoop();
+    await flushWorkerHeartbeat();
     return { started: false, already_running: true, message: "async swarm already running" };
   }
 
@@ -39,6 +48,7 @@ export async function startAsyncSwarm(options?: {
   const workers = startAgentWorkerPool({ mock });
 
   setAsyncSwarmRunning(true);
+  startWorkerHeartbeatLoop();
 
   const state = loadState();
   state.supervisor_loop_running = false;
@@ -56,6 +66,18 @@ export async function startAsyncSwarm(options?: {
 
   pushSupervisorActivity("info", message, { mode: "async_swarm", mock });
   agentLog("async-swarm", "info", message);
+  await flushWorkerHeartbeat();
+
+  const lane = loadLaneState();
+  debugSessionLog("H4", "async-swarm-runtime.ts:start", "async swarm started", {
+    workerCount: workers.agents.length,
+    research_lane_enabled: lane.research_lane_enabled,
+    implement_lane_enabled: lane.implement_lane_enabled,
+    workerStartupDeferMs: Number(process.env.LI_WORKER_STARTUP_DEFER_MS ?? 0),
+    workerIntervalMs: Number(process.env.LI_ASYNC_AGENT_INTERVAL_MS ?? 180_000),
+    laneStartupDelayMs: Number(process.env.LI_LANE_STARTUP_DELAY_MS ?? 5_000),
+    sdkMaxConcurrent: Number(process.env.LI_SDK_MAX_CONCURRENT ?? 1),
+  });
 
   return { started: true, message };
 }
@@ -71,6 +93,8 @@ export async function stopAsyncSwarm(): Promise<{ stopped: boolean; message: str
   const workers = stopAgentWorkerPool();
 
   setAsyncSwarmRunning(false);
+  stopWorkerHeartbeatLoop();
+  await flushWorkerHeartbeat();
 
   const message = `Async swarm stopped; ${workers.message}`;
   pushSupervisorActivity("info", message, { mode: "async_swarm" });

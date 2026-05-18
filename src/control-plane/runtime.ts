@@ -74,8 +74,8 @@ export function completeSupervisorRun(runId: string, status: AgentRunLifecycle):
 }
 
 function scheduleWorkerHeartbeat(): void {
-  void import("../worker/heartbeat.js")
-    .then((m) => m.persistWorkerHeartbeat(loadState()))
+  void import("../worker/heartbeat-loop.js")
+    .then((m) => m.flushWorkerHeartbeat())
     .catch(() => {
       /* disk-only store — no worker_status row */
     });

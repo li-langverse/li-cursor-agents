@@ -1,29 +1,18 @@
 #!/usr/bin/env bash
-# Full local stack for dashboard development (one command):
-#   Supabase + migrations → build → API :9477 → readiness → Next.js :3000
+# Full local stack (Majico-style): two processes — worker :9477 + Next UI :3000
 #
 # Usage:
 #   npm run dev:all
-#   LI_STACK_SKIP_SUPABASE=1 npm run dev:all
-#   LI_AUTO_START_ASYNC_SWARM=0 npm run dev:all   # API only, manual Start agents in UI
+#   npm run dev:worker    # worker only
+#   npm run dev:ui        # UI only (worker must be up)
 #
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-# Dashboard-first defaults (override in .env). Workers: LI_AUTO_START_ASYNC_SWARM=1
-export LI_AUTO_START_ASYNC_SWARM="${LI_AUTO_START_ASYNC_SWARM:-0}"
-export LI_AUTO_START_SUPERVISOR="${LI_AUTO_START_SUPERVISOR:-0}"
-export LI_MAINTENANCE_STARTUP_DELAY_MS="${LI_MAINTENANCE_STARTUP_DELAY_MS:-15000}"
-export LI_LANE_STARTUP_DELAY_MS="${LI_LANE_STARTUP_DELAY_MS:-3000}"
-export LI_SWARM_RECONCILE_DEFER_MS="${LI_SWARM_RECONCILE_DEFER_MS:-2000}"
-export LI_WORKER_STARTUP_DEFER_MS="${LI_WORKER_STARTUP_DEFER_MS:-3000}"
-export LI_QUEUE_CACHE_MS="${LI_QUEUE_CACHE_MS:-20000}"
-export LI_QUEUE_WARM_MS="${LI_QUEUE_WARM_MS:-25000}"
-export LI_ASYNC_AGENT_INTERVAL_MS="${LI_ASYNC_AGENT_INTERVAL_MS:-90000}"
-export LI_PROACTIVE_AGENT_CADENCE_MS="${LI_PROACTIVE_AGENT_CADENCE_MS:-180000}"
-export LI_ASYNC_WORKER_ORCHESTRATOR="${LI_ASYNC_WORKER_ORCHESTRATOR:-1}"
-export LI_REPORT_CACHE_MS="${LI_REPORT_CACHE_MS:-30000}"
+# shellcheck source=lib/dev-export-env.sh
+source "$ROOT/scripts/lib/dev-export-env.sh"
+dev_export_li_env
 
 # shellcheck source=env.defaults.sh
 source "$ROOT/scripts/env.defaults.sh"
@@ -92,8 +81,8 @@ if [[ -z "${CURSOR_API_KEY:-}" ]]; then
   echo "WARN: CURSOR_API_KEY unset — add to .env for live Cursor SDK runs" >&2
 fi
 
-API_PORT="${LI_AGENT_DASHBOARD_PORT:-9477}"
-UI_PORT="${LI_DASHBOARD_UI_PORT:-3000}"
+API_PORT="${LI_AGENT_DASHBOARD_PORT}"
+UI_PORT="${LI_DASHBOARD_UI_PORT}"
 
 # shellcheck source=free-port.sh
 source "$ROOT/scripts/free-port.sh"
@@ -101,109 +90,24 @@ for _port in "$API_PORT" "$UI_PORT"; do
   free_port "$_port" 15 || exit 1
 done
 
-API_PID=""
-stop_api() {
-  # shellcheck source=free-port.sh
-  source "$ROOT/scripts/free-port.sh"
-  free_port "${API_PORT:-9477}" 8 2>/dev/null || true
-  if [[ -n "${API_PID:-}" ]]; then
-    kill "$API_PID" 2>/dev/null || true
-    API_PID=""
-  fi
-}
+chmod +x "$ROOT/scripts/worker-dev.sh" "$ROOT/scripts/ui-dev.sh"
 
-on_dev_all_signal() {
-  echo ""
-  echo "==> dev:all stopped — shutting down control-plane API (PID ${API_PID:-?})"
-  stop_api
-  exit 143
-}
-trap on_dev_all_signal INT TERM
-
-WORKER_LOG="$ROOT/logs/worker-dev.log"
 mkdir -p "$ROOT/logs"
-
-echo "==> Control-plane worker http://127.0.0.1:${API_PORT}/ (LI_AUTO_START_ASYNC_SWARM=${LI_AUTO_START_ASYNC_SWARM})"
-echo "==> Worker logs: ${WORKER_LOG} (lines also prefixed [worker] below)"
-env \
-  BENCHMARKS_ROOT="${BENCHMARKS_ROOT:-}" \
-  LI_LOCAL_CI_ROOT="${LI_LOCAL_CI_ROOT:-}" \
-  LI_USE_LOCAL_CI="${LI_USE_LOCAL_CI:-1}" \
-  LI_CONTROL_PLANE_STORE="${LI_CONTROL_PLANE_STORE:-$_store}" \
-  LI_AUTO_START_ASYNC_SWARM="${LI_AUTO_START_ASYNC_SWARM}" \
-  LI_AUTO_START_SUPERVISOR="${LI_AUTO_START_SUPERVISOR}" \
-  LI_MAINTENANCE_STARTUP_DELAY_MS="${LI_MAINTENANCE_STARTUP_DELAY_MS}" \
-  LI_LANE_STARTUP_DELAY_MS="${LI_LANE_STARTUP_DELAY_MS}" \
-  LI_SWARM_RECONCILE_DEFER_MS="${LI_SWARM_RECONCILE_DEFER_MS}" \
-  LI_WORKER_STARTUP_DEFER_MS="${LI_WORKER_STARTUP_DEFER_MS}" \
-  LI_PROACTIVE_AGENT_CADENCE_MS="${LI_PROACTIVE_AGENT_CADENCE_MS}" \
-  LI_ASYNC_WORKER_ORCHESTRATOR="${LI_ASYNC_WORKER_ORCHESTRATOR}" \
-  LI_SDK_MAX_CONCURRENT="${LI_SDK_MAX_CONCURRENT:-2}" \
-  LI_QUEUE_CACHE_MS="${LI_QUEUE_CACHE_MS}" \
-  LI_QUEUE_WARM_MS="${LI_QUEUE_WARM_MS}" \
-  LI_ASYNC_AGENT_INTERVAL_MS="${LI_ASYNC_AGENT_INTERVAL_MS}" \
-  LI_REPORT_CACHE_MS="${LI_REPORT_CACHE_MS}" \
-  SUPABASE_URL="${SUPABASE_URL:-}" \
-  SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-}" \
-  CURSOR_API_KEY="${CURSOR_API_KEY:-}" \
-  GH_TOKEN="${GH_TOKEN:-}" \
-  GITHUB_TOKEN="${GITHUB_TOKEN:-}" \
-  node dist/cli/serve-dashboard.js 2>&1 | tee -a "$WORKER_LOG" | sed 's/^/[worker] /' &
-API_PID=$!
-
-_bind_start=$(date +%s)
-_bind_deadline=$((_bind_start + 20))
-while true; do
-  if curl -sf --max-time 2 "http://127.0.0.1:${API_PORT}/api/health" >/dev/null 2>&1; then
-    break
-  fi
-  if ! kill -0 "$API_PID" 2>/dev/null; then
-    echo "ERROR: control plane exited before binding :${API_PORT} (EADDRINUSE?)" >&2
-    wait "$API_PID" 2>/dev/null || true
-    exit 1
-  fi
-  _now=$(date +%s)
-  if ((_now >= _bind_deadline)); then
-    _holder=$(lsof -nP -iTCP:"${API_PORT}" -sTCP:LISTEN 2>/dev/null | tail -n +2 | head -3 || true)
-    echo "ERROR: control plane did not answer /api/health on :${API_PORT} within 20s." >&2
-    [[ -n "$_holder" ]] && echo "       Port holder: $_holder" >&2
-    echo "       Try: lsof -ti :${API_PORT} | xargs kill -9 && npm run dev:all" >&2
-    stop_api
-    exit 1
-  fi
-  sleep 0.25
-done
-
-echo "==> Waiting for API readiness (agents + runtime; progress below)…"
-export LI_DEV_READY_TIMEOUT_MS="${LI_DEV_READY_TIMEOUT_MS:-120000}"
-if ! LI_AGENT_DASHBOARD_PORT="$API_PORT" node "$ROOT/scripts/wait-dev-stack-ready.mjs"; then
-  echo "" >&2
-  echo "ERROR: dev:all readiness failed — Next.js was not started." >&2
-  echo "       Control API is still up: http://127.0.0.1:${API_PORT}/ (PID ${API_PID})" >&2
-  echo "       Try: curl -s http://127.0.0.1:${API_PORT}/api/status | head" >&2
-  echo "       Or retry with a longer wait: LI_DEV_READY_TIMEOUT_MS=180000 npm run dev:all" >&2
-  echo "       Stop API: kill ${API_PID}" >&2
-  exit 1
-fi
-
-trap - INT TERM
-trap 'stop_api' EXIT INT TERM
+WORKER_LOG="$ROOT/logs/worker-dev.log"
+: >"$WORKER_LOG"
 
 echo ""
-  echo "  Dashboard UI:  http://127.0.0.1:${UI_PORT}/  (GET /api/* → db-api/Supabase; POST → worker :${API_PORT})"
-echo "  Worker API:    http://127.0.0.1:${API_PORT}/  (npm run worker)"
-echo "  Store:         ${LI_CONTROL_PLANE_STORE:-$_store}  Supabase: ${SUPABASE_URL:-(disk)}"
-  echo "  Async swarm:   ${LI_AUTO_START_ASYNC_SWARM} (set LI_AUTO_START_ASYNC_SWARM=1 to enable workers)"
-echo "  Worker log:    ${WORKER_LOG}  (live [worker] lines above when swarm runs)"
-echo "  Ctrl+C stops worker + UI"
+echo "  Architecture (like Majico dev:all):"
+echo "    worker  → http://127.0.0.1:${API_PORT}/  agents, swarm, SDK runs"
+echo "    ui      → http://127.0.0.1:${UI_PORT}/  Next.js (GET /api/* from Supabase)"
+echo "    worker log file: ${WORKER_LOG}"
+echo "  LI_AUTO_START_ASYNC_SWARM=${LI_AUTO_START_ASYNC_SWARM}"
 echo ""
 
-cd "$ROOT/dashboard-ui"
-if ! npm run dev -- -p "$UI_PORT"; then
-  echo "" >&2
-  echo "WARN: Next.js exited — control API still on http://127.0.0.1:${API_PORT}/ (PID ${API_PID})" >&2
-  echo "      Press Ctrl+C to stop the API, or run: kill ${API_PID}" >&2
-  wait "$API_PID" 2>/dev/null || true
-  exit 1
-fi
-stop_api
+# concurrently: two labeled servers in one terminal (cyan worker, green ui)
+exec npx --yes concurrently@9.1.2 \
+  --kill-others-on-fail \
+  --names "worker,ui" \
+  --prefix-colors "cyan,green" \
+  "bash \"$ROOT/scripts/worker-dev.sh\" 2>&1 | tee -a \"$WORKER_LOG\"" \
+  "bash \"$ROOT/scripts/ui-dev.sh\""

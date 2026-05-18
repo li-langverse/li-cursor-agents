@@ -3,8 +3,8 @@ import { startAsyncSwarm, isAsyncSwarmRunning } from "../async-swarm/async-swarm
 import { loadState } from "../control-plane/state.js";
 import { loadWorkerStatusFromDb } from "../db/worker-status.js";
 import { dbEnabled } from "../db/client.js";
-import { persistWorkerHeartbeat } from "./heartbeat.js";
 import { workerConsole } from "./worker-console.js";
+import { flushWorkerHeartbeat } from "./heartbeat-loop.js";
 
 function envAutoStartSwarm(): boolean {
   return (
@@ -23,8 +23,8 @@ export async function reconcileSwarmAfterStartup(): Promise<void> {
   workerConsole("reconcile", "info", "swarm reconcile begin", `running=${isAsyncSwarmRunning()}`);
 
   if (isAsyncSwarmRunning()) {
-    await persistWorkerHeartbeat(state);
-    workerConsole("reconcile", "info", "swarm already running in-process — heartbeat only");
+    await flushWorkerHeartbeat();
+    workerConsole("reconcile", "info", "swarm already running in-process — refreshed worker_status");
     return;
   }
 
@@ -59,7 +59,7 @@ export async function reconcileSwarmAfterStartup(): Promise<void> {
       const r = await startAsyncSwarm({ stopSupervisor: true });
       workerConsole("reconcile", "info", `async swarm: ${r.message}`);
       agentLog("dashboard", "info", `async swarm startup: ${r.message}`);
-      await persistWorkerHeartbeat(loadState());
+      await flushWorkerHeartbeat();
     };
     if (deferMs > 0) {
       workerConsole("reconcile", "info", `deferring swarm start ${deferMs}ms for API readiness`);
@@ -81,5 +81,5 @@ export async function reconcileSwarmAfterStartup(): Promise<void> {
     "info",
     "swarm not auto-started — use dashboard Start agents or LI_AUTO_START_ASYNC_SWARM=1",
   );
-  await persistWorkerHeartbeat(loadState());
+  await flushWorkerHeartbeat();
 }
