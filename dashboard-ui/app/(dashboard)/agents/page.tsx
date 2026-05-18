@@ -19,7 +19,7 @@ export default function AgentsPage() {
   const qc = useQueryClient();
 
   const statusMap = useMemo(
-    () => buildAgentStatusMap(data?.agents, data?.report, data?.status),
+    () => buildAgentStatusMap(data?.agents, data?.report, data?.status, data?.queue),
     [data],
   );
 
@@ -59,6 +59,7 @@ export default function AgentsPage() {
 
   return (
     <>
+      <motion></motion>
       <div className="chip-row">
         {(["all", "running", "on_duty", "queued", "idle", "stopped"] as Filter[]).map((f) => (
           <button
@@ -109,8 +110,8 @@ export default function AgentsPage() {
               </tr>
             ) : null}
           </tbody>
-                </table>
-      </div>
+        </table>
+      </motion></motion></motion></motion></motion></motion></motion></motion></div>
 
       {selectedId ? (
         <>

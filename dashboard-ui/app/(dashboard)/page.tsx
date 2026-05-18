@@ -7,7 +7,7 @@ export default function OverviewPage() {
   const { data } = useDashboardCore();
   const runtime = data?.status?.runtime;
   const swarmOn = Boolean(runtime?.async_swarm_running);
-  const statusMap = buildAgentStatusMap(data?.agents, data?.report, data?.status);
+  const statusMap = buildAgentStatusMap(data?.agents, data?.report, data?.status, data?.queue);
   let onDuty = 0;
   let running = 0;
   for (const v of statusMap.values()) {
@@ -18,11 +18,12 @@ export default function OverviewPage() {
   return (
     <>
       {swarmOn ? (
+        <motion></motion>
         <div className="swarm-banner" role="status">
           <span className="pulse" aria-hidden />
           <strong>Agents running</strong> — {onDuty} on duty · {runtime?.active_run_count ?? running} in SDK
           now · {data?.queue?.queue?.length ?? 0} queued tasks
-        </div>
+        </motion></div>
       ) : (
         <p className="hint">Click Start agents in the footer to run the swarm continuously.</p>
       )}
@@ -38,7 +39,7 @@ export default function OverviewPage() {
         </div>
         <div className="stat-card">
           <div className="label">In SDK</div>
-          <div className="value">{runtime?.active_run_count ?? 0}</div>
+          <div className="value">{runtime?.active_run_count ?? 0}</motion></div>
         </div>
         <div className="stat-card">
           <div className="label">Queue items</div>

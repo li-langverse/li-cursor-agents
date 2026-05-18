@@ -1,7 +1,9 @@
 "use client";
 
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
+import { normalizeAgentsPayload } from "@/lib/agents-payload";
 import type {
   AgentsPayload,
   QueuePayload,
@@ -11,24 +13,74 @@ import type {
 
 export type StatsRange = "1d" | "7d" | "30d" | "365d" | "all" | "custom";
 
+const EMPTY_QUEUE: QueuePayload = { queue: [], by_agent: {} };
+
+/**
+ * Split queries so a slow /api/report or /api/queue does not block agents/status UI.
+ * (Previously Promise.all kept `data` undefined while /api/agents was already 200.)
+ */
 export function useDashboardCore() {
-  return useQuery({
-    queryKey: ["dashboard", "core"],
+  const statusQ = useQuery({
+    queryKey: ["dashboard", "status"],
+    queryFn: () =>
+      apiFetch<StatusPayload>("/api/status", { timeoutMs: 15_000 }).catch(
+        (e: Error): StatusPayload => ({ error: e.message }),
+      ),
+    refetchInterval: 4000,
+  });
+
+  const agentsQ = useQuery({
+    queryKey: ["dashboard", "agents"],
     queryFn: async () => {
-      const [status, agents, report, queue] = await Promise.all([
-        apiFetch<StatusPayload>("/api/status").catch(
-          (e: Error): StatusPayload => ({ error: e.message }),
-        ),
-        apiFetch<AgentsPayload>("/api/agents").catch(
-          (): AgentsPayload => ({ total: 0, roster: [] }),
-        ),
-        apiFetch<Record<string, unknown>>("/api/report").catch(() => ({})),
-        apiFetch<QueuePayload>("/api/queue").catch(() => ({ queue: [], by_agent: {} })),
-      ]);
-      return { status, agents, report, queue };
+      const body = await apiFetch<AgentsPayload>("/api/agents", { timeoutMs: 15_000 }).catch(
+        (): AgentsPayload => ({ total: 0, roster: [] }),
+      );
+      return normalizeAgentsPayload(body);
     },
     refetchInterval: 4000,
   });
+
+  const reportQ = useQuery({
+    queryKey: ["dashboard", "report"],
+    queryFn: () =>
+      apiFetch<Record<string, unknown>>("/api/report", { timeoutMs: 25_000 }).catch(() => ({})),
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  });
+
+  const queueQ = useQuery({
+    queryKey: ["dashboard", "queue"],
+    queryFn: () =>
+      apiFetch<QueuePayload>("/api/queue", { timeoutMs: 30_000 }).catch(() => EMPTY_QUEUE),
+    refetchInterval: 4000,
+  });
+
+  const data = useMemo(() => {
+    if (!agentsQ.isSuccess) return undefined;
+    return {
+      status: statusQ.data,
+      agents: agentsQ.data ?? normalizeAgentsPayload(undefined),
+      report: reportQ.data ?? {},
+      queue: queueQ.data ?? EMPTY_QUEUE,
+    };
+  }, [agentsQ.isSuccess, agentsQ.data, statusQ.data, reportQ.data, queueQ.data]);
+
+  const dataUpdatedAt = Math.max(
+    statusQ.dataUpdatedAt,
+    agentsQ.dataUpdatedAt,
+    reportQ.dataUpdatedAt,
+    queueQ.dataUpdatedAt,
+  );
+
+  return {
+    data,
+    isLoading: agentsQ.isLoading && !agentsQ.data,
+    isError: agentsQ.isError,
+    error: agentsQ.error,
+    dataUpdatedAt: dataUpdatedAt > 0 ? dataUpdatedAt : undefined,
+    isReportLoading: reportQ.isLoading,
+    isQueueLoading: queueQ.isLoading,
+  };
 }
 
 export function useStatistics(

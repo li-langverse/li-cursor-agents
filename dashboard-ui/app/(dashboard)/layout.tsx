@@ -17,12 +17,14 @@ const NAV = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { data, dataUpdatedAt, isLoading, isError, error } = useDashboardCore();
+  const { data, dataUpdatedAt, isLoading, isError, error, isReportLoading, isQueueLoading } =
+    useDashboardCore();
 
   return (
+    <motion></motion>
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand">Li Agent Swarm</div>
+        <div className="brand">Li Agent Swarm</motion></motion></div>
         <nav className="nav">
           {NAV.map((item) => (
             <Link
@@ -45,7 +47,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="main-column">
         <Topbar status={data?.status} updatedAt={dataUpdatedAt ? new Date(dataUpdatedAt) : undefined} />
         <main className="content">
-          {isLoading && !data ? <p className="loading-block">Loading dashboard…</p> : null}
+          {isLoading ? <p className="loading-block">Loading agents…</p> : null}
+          {isReportLoading || isQueueLoading ? (
+            <p className="hint">Refreshing briefing / work queue…</p>
+          ) : null}
           {isError ? (
             <p className="error-block">
               API unreachable — run <code>npm run dashboard</code> on port 9477, then refresh.{" "}
