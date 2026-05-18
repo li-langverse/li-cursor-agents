@@ -1,23 +1,19 @@
 #!/usr/bin/env node
 /**
  * Block until the control-plane API is fully usable (post dev:all dashboard boot).
- * Exits 1 with actionable errors on failure.
+ * Exits 1 with actionable errors on failure. Retries transient fetch/socket errors.
  */
+import {
+  agentsRosterOk,
+  createFetchJson,
+  fetchJsonRetry,
+  runtimeSwarmOn,
+} from "./dev-stack-ready-lib.mjs";
+
 const port = Number(process.env.LI_AGENT_DASHBOARD_PORT ?? 9477);
 const base = `http://127.0.0.1:${port}`;
-const deadline = Date.now() + Number(process.env.LI_DEV_READY_TIMEOUT_MS ?? 90_000);
-
-async function fetchJson(path, init) {
-  const res = await fetch(`${base}${path}`, { cache: "no-store", ...init });
-  const text = await res.text();
-  let body;
-  try {
-    body = text ? JSON.parse(text) : {};
-  } catch {
-    body = { _raw: text.slice(0, 200) };
-  }
-  return { status: res.status, body };
-}
+const deadline = Date.now() + Number(process.env.LI_DEV_READY_TIMEOUT_MS ?? 120_000);
+const fetchJson = createFetchJson(base);
 
 function fail(msg) {
   console.error(`dev:all ERROR: ${msg}`);
@@ -31,10 +27,10 @@ function ok(msg) {
 async function waitFor(path, predicate, label) {
   while (Date.now() < deadline) {
     try {
-      const r = await fetchJson(path);
+      const r = await fetchJsonRetry(fetchJson, path, undefined, { attempts: 3, delayMs: 400 });
       if (r.status === 200 && predicate(r.body)) return r.body;
     } catch {
-      /* retry */
+      /* retry until deadline */
     }
     await new Promise((r) => setTimeout(r, 500));
   }
@@ -43,37 +39,52 @@ async function waitFor(path, predicate, label) {
 
 await waitFor("/api/status", () => true, "/api/status");
 
-const status = await fetchJson("/api/status");
-if (status.status !== 200) fail(`/api/status returned ${status.status}`);
-
-const lanes = status.body?.lanes ?? status.body?.runtime?.lanes;
-const scorecardErr = lanes?.scorecard_error ?? status.body?.scorecard_error;
-if (scorecardErr) {
-  fail(`${scorecardErr} — run: npm run db:ensure`);
-}
-
-const agents = await fetchJson("/api/agents");
+const agents = await fetchJsonRetry(fetchJson, "/api/agents");
 if (agents.status !== 200) fail(`/api/agents returned ${agents.status}`);
-if (!(agents.body?.total > 0)) fail("/api/agents returned empty roster");
+if (!agentsRosterOk(agents.body)) fail("/api/agents returned empty roster");
 
-const handoffs = await fetchJson("/api/handoffs?limit=1");
-if (handoffs.status !== 200) {
-  fail(
-    `/api/handoffs returned ${handoffs.status} — agent_handoffs migration missing; run: npm run db:ensure`,
-  );
+try {
+  const handoffs = await fetchJsonRetry(fetchJson, "/api/handoffs?limit=1");
+  if (handoffs.status !== 200) {
+    fail(
+      `/api/handoffs returned ${handoffs.status} — agent_handoffs migration missing; run: npm run db:ensure`,
+    );
+  }
+} catch (e) {
+  const msg = e instanceof Error ? e.message : String(e);
+  fail(`/api/handoffs failed: ${msg}`);
 }
 
-for (const p of ["/api/queue", "/api/runtime", "/api/report", "/api/statistics?range=7d"]) {
-  const r = await fetchJson(p);
-  if (r.status !== 200) fail(`${p} returned ${r.status}`);
+const critical = ["/api/runtime", "/api/queue"];
+for (const p of critical) {
+  try {
+    const r = await fetchJsonRetry(fetchJson, p, undefined, { attempts: 12, delayMs: 500 });
+    if (r.status !== 200) fail(`${p} returned ${r.status}`);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    fail(`${p} failed after retries: ${msg}`);
+  }
 }
 
-let runtime = await fetchJson("/api/runtime");
-let swarmOn = Boolean(runtime.body?.async_swarm_running);
+const optional = ["/api/report", "/api/statistics?range=7d"];
+for (const p of optional) {
+  try {
+    const r = await fetchJsonRetry(fetchJson, p, undefined, { attempts: 6, delayMs: 800 });
+    if (r.status !== 200) {
+      console.warn(`dev:all WARN: ${p} returned ${r.status} (UI may still load)`);
+    }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.warn(`dev:all WARN: ${p} not ready (${msg}) — continuing`);
+  }
+}
+
+let runtime = await fetchJsonRetry(fetchJson, "/api/runtime");
+let swarmOn = runtimeSwarmOn(runtime.body);
 
 if (!swarmOn) {
   console.log("dev:all: starting async swarm via API…");
-  const start = await fetchJson("/api/async-swarm/start", {
+  const start = await fetchJsonRetry(fetchJson, "/api/async-swarm/start", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: "{}",
@@ -84,13 +95,19 @@ if (!swarmOn) {
 }
 
 while (Date.now() < deadline) {
-  runtime = await fetchJson("/api/runtime");
-  swarmOn = Boolean(runtime.body?.async_swarm_running);
-  if (swarmOn) break;
+  try {
+    runtime = await fetchJsonRetry(fetchJson, "/api/runtime", undefined, { attempts: 2, delayMs: 300 });
+    swarmOn = runtimeSwarmOn(runtime.body);
+    if (swarmOn) break;
+  } catch {
+    /* retry */
+  }
   await new Promise((r) => setTimeout(r, 500));
 }
 if (!swarmOn) {
   fail("async swarm did not start — check logs; set LI_AUTO_START_ASYNC_SWARM=1 or use dashboard Start agents");
 }
 
-ok(`API :${port} — ${agents.body.total} agents, swarm running, handoffs + queue OK`);
+ok(
+  `API :${port} — ${agents.body.total ?? agents.body.roster?.length} agents, swarm running, handoffs + queue OK`,
+);

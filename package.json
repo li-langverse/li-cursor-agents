@@ -33,6 +33,7 @@
     "test:log-timestamps": "npm run build && node scripts/test-log-timestamps.mjs",
     "test:dashboard-api": "npm run build && CURSOR_MOCK=1 node --test dist/e2e/dashboard-api.e2e.js dist/e2e/dashboard-live-runs.e2e.js dist/e2e/dashboard-run-trace.e2e.js dist/e2e/dashboard-next-tabs.e2e.js",
     "test:dashboard-ui": "node scripts/check-dashboard-no-motion.mjs && npm --prefix dashboard-ui run build",
+    "test:dev-stack-ready": "node --test scripts/dev-stack-ready-lib.test.mjs",
     "smoke:dashboard": "node scripts/smoke-dashboard-api.mjs",
     "verify:dashboard": "npm run build && node scripts/verify-dashboard-live.mjs",
     "db:ensure": "bash scripts/ensure-supabase.sh",

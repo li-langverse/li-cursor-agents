@@ -120,7 +120,8 @@ env \
   node dist/cli/serve-dashboard.js &
 PIDS+=($!)
 
-echo "==> Waiting for full API readiness…"
+echo "==> Waiting for full API readiness (retries transient socket errors)…"
+sleep 2
 LI_AGENT_DASHBOARD_PORT="$API_PORT" node "$ROOT/scripts/wait-dev-stack-ready.mjs"
 
 echo ""

@@ -25,6 +25,8 @@ import { formatHandoffPhasesSummary } from "./lanes/handoff-run-summary.js";
 import { resolveGoalImplementationRepo } from "./handoffs/goal-workflow.js";
 import { resolveSpawnWorkflowRepo } from "./handoffs/resolve-spawn-workflow-repo.js";
 import { sortedCoordinators } from "./heap/coordinators.js";
+import { parseHeapPlanFromBriefing, parseOrgRoadmapFromBriefing } from "./heap/plan.js";
+import { loadCachedBriefing } from "./briefing/load-cached-briefing.js";
 import { agentsPackageRoot, agentBackendLabel } from "./runner.js";
 import { resolveCursorApiKey } from "./env.js";
 import { interventionsPath, reportPath, statePath } from "./control-plane/paths.js";
@@ -371,9 +373,8 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     return;
   }
 
-  const report = await liveReportPayload();
-
   if (url.pathname === "/api/report") {
+    const report = await liveReportPayload();
     json(res, 200, report);
     return;
   }
@@ -460,9 +461,16 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
   }
 
   if (url.pathname === "/api/heap") {
-    const hp = (report as Record<string, unknown> | null)?.heap_plan ?? null;
-    const org = (report as Record<string, unknown> | null)?.org_roadmap ?? null;
-    json(res, 200, { heap_plan: hp, org_roadmap: org });
+    const briefing = loadCachedBriefing();
+    const heapPlan =
+      parseHeapPlanFromBriefing(briefing) ??
+      (briefing as Record<string, unknown>).heap_plan ??
+      null;
+    const org =
+      parseOrgRoadmapFromBriefing(briefing) ??
+      (briefing as Record<string, unknown>).org_roadmap ??
+      null;
+    json(res, 200, { heap_plan: heapPlan, org_roadmap: org });
     return;
   }
 
