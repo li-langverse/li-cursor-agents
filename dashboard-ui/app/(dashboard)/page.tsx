@@ -18,7 +18,6 @@ export default function OverviewPage() {
   return (
     <>
       {swarmOn ? (
-        
         <div className="swarm-banner" role="status">
           <span className="pulse" aria-hidden />
           <strong>Agents running</strong> — {onDuty} on duty · {runtime?.active_run_count ?? running} in SDK
@@ -28,7 +27,6 @@ export default function OverviewPage() {
         <p className="hint">Click Start agents in the footer to run the swarm continuously.</p>
       )}
 
-      
       <div className="stat-cards">
         <div className={`stat-card ${swarmOn ? "accent" : ""}`}>
           <div className="label">Swarm</div>

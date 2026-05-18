@@ -1,6 +1,6 @@
 # Agent swarm dashboard (Next.js)
 
-Next.js **15.5.18** UI for the li-cursor-agents control plane. `/api/*` is proxied to the existing Node server on port **9477**.
+Next.js **16.2.6** (May 2026 security release) UI for the li-cursor-agents control plane. `/api/*` is proxied to the existing Node server on port **9477**.
 
 ## Dev (two terminals)
 

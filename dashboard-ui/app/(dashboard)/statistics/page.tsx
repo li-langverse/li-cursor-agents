@@ -40,7 +40,6 @@ export default function StatisticsPage() {
       </div>
 
       {range === "custom" ? (
-        
         <div className="panel" style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
           <label>
             From{" "}
