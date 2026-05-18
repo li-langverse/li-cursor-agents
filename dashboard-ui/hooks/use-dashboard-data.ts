@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { normalizeAgentsPayload } from "@/lib/agents-payload";
+import { parseStatusResponse } from "@/lib/status-payload";
 import type {
   AgentsPayload,
   QueuePayload,
@@ -15,27 +16,36 @@ export type StatsRange = "1d" | "7d" | "30d" | "365d" | "all" | "custom";
 
 const EMPTY_QUEUE: QueuePayload = { queue: [], by_agent: {} };
 
+type AgentsQueryResult = { payload: AgentsPayload; fault: string | null };
+
 /**
  * Split queries so a slow /api/report or /api/queue does not block agents/status UI.
- * (Previously Promise.all kept `data` undefined while /api/agents was already 200.)
  */
 export function useDashboardCore() {
   const statusQ = useQuery({
     queryKey: ["dashboard", "status"],
-    queryFn: () =>
-      apiFetch<StatusPayload>("/api/status", { timeoutMs: 15_000 }).catch(
-        (e: Error): StatusPayload => ({ error: e.message }),
-      ),
+    queryFn: async () => {
+      try {
+        const raw = await apiFetch<Record<string, unknown>>("/api/status", { timeoutMs: 10_000 });
+        return { payload: parseStatusResponse(raw), fault: null as string | null };
+      } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        return { payload: {} as StatusPayload, fault: message };
+      }
+    },
     refetchInterval: 4000,
   });
 
   const agentsQ = useQuery({
     queryKey: ["dashboard", "agents"],
-    queryFn: async () => {
-      const body = await apiFetch<AgentsPayload>("/api/agents", { timeoutMs: 15_000 }).catch(
-        (): AgentsPayload => ({ total: 0, roster: [] }),
-      );
-      return normalizeAgentsPayload(body);
+    queryFn: async (): Promise<AgentsQueryResult> => {
+      try {
+        const body = await apiFetch<AgentsPayload>("/api/agents", { timeoutMs: 20_000 });
+        return { payload: normalizeAgentsPayload(body), fault: null };
+      } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        return { payload: normalizeAgentsPayload(undefined), fault: message };
+      }
     },
     refetchInterval: 4000,
   });
@@ -55,15 +65,23 @@ export function useDashboardCore() {
     refetchInterval: 4000,
   });
 
+  const agentsPayload = agentsQ.data?.payload;
+  const agentsFault = agentsQ.data?.fault ?? null;
+  const statusPayload = statusQ.data?.payload;
+  const statusFault = statusQ.data?.fault ?? null;
+
   const data = useMemo(() => {
-    if (!agentsQ.isSuccess) return undefined;
+    if (!agentsQ.isFetched) return undefined;
     return {
-      status: statusQ.data,
-      agents: agentsQ.data ?? normalizeAgentsPayload(undefined),
+      status: statusPayload,
+      agents: agentsPayload ?? normalizeAgentsPayload(undefined),
       report: reportQ.data ?? {},
       queue: queueQ.data ?? EMPTY_QUEUE,
     };
-  }, [agentsQ.isSuccess, agentsQ.data, statusQ.data, reportQ.data, queueQ.data]);
+  }, [agentsQ.isFetched, agentsPayload, statusPayload, reportQ.data, queueQ.data]);
+
+  const rosterCount = agentsPayload?.roster?.length ?? 0;
+  const agentsReachable = rosterCount > 0 && !agentsFault;
 
   const dataUpdatedAt = Math.max(
     statusQ.dataUpdatedAt,
@@ -74,12 +92,17 @@ export function useDashboardCore() {
 
   return {
     data,
-    isLoading: agentsQ.isLoading && !agentsQ.data,
-    isError: agentsQ.isError,
-    error: agentsQ.error,
+    isLoading: !agentsQ.isFetched,
+    isError: Boolean(agentsFault) && rosterCount === 0,
+    error: agentsFault ? new Error(agentsFault) : null,
     dataUpdatedAt: dataUpdatedAt > 0 ? dataUpdatedAt : undefined,
     isReportLoading: reportQ.isLoading,
     isQueueLoading: queueQ.isLoading,
+    statusFault,
+    agentsFault,
+    agentsReachable,
+    /** True when roster loaded but /api/status failed (show soft warning, not "API degraded"). */
+    statusDegraded: Boolean(statusFault) && agentsReachable,
   };
 }
 

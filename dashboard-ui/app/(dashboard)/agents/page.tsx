@@ -23,6 +23,8 @@ export default function AgentsPage() {
     [data],
   );
 
+  const rosterCount = data?.agents?.roster?.length ?? 0;
+
   const rows = useMemo(() => {
     const out: Array<{ id: string; name: string; status: string; reason?: string }> = [];
     for (const [id, info] of statusMap) {
@@ -59,6 +61,16 @@ export default function AgentsPage() {
 
   return (
     <>
+      {rosterCount === 0 && !data ? (
+        <p className="loading-block">Loading agent roster…</p>
+      ) : rosterCount === 0 ? (
+        <p className="hint">
+          No agents in roster — check <code>/api/agents</code> on port 9477 (Next proxies{" "}
+          <code>/api/agents</code>).
+        </p>
+      ) : (
+        <p className="hint">{rows.length} of {rosterCount} agents shown</p>
+      )}
       <div className="chip-row">
         {(["all", "running", "on_duty", "queued", "idle", "stopped"] as Filter[]).map((f) => (
           <button

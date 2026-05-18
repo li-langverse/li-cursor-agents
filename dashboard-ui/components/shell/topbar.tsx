@@ -10,9 +10,15 @@ import type { StatusPayload } from "@/lib/types";
 export function Topbar({
   status,
   updatedAt,
+  statusFault,
+  agentsFault,
+  agentsReachable,
 }: {
   status?: StatusPayload;
   updatedAt?: Date;
+  statusFault?: string | null;
+  agentsFault?: string | null;
+  agentsReachable?: boolean;
 }) {
   const qc = useQueryClient();
   const runtime = status?.runtime;
@@ -33,7 +39,19 @@ export function Topbar({
       <div className="topbar-right">
         <Badge tone={backend === "mock" ? "warn" : "ok"}>{backend}</Badge>
         <Badge tone={swarmOn ? "ok" : "default"}>{swarmOn ? "swarm on" : "swarm off"}</Badge>
-        {status?.error ? <Badge tone="danger">API degraded</Badge> : null}
+        {agentsFault && !agentsReachable ? (
+          <Badge tone="danger" title={agentsFault}>
+            Agents API down
+          </Badge>
+        ) : statusFault && !agentsReachable ? (
+          <Badge tone="danger" title={statusFault}>
+            Control plane unreachable
+          </Badge>
+        ) : statusFault && agentsReachable ? (
+          <Badge tone="warn" title={statusFault}>
+            Status poll slow
+          </Badge>
+        ) : null}
         <span className="updated">{updatedAt ? updatedAt.toLocaleTimeString() : ""}</span>
         <Button
           variant="ghost"

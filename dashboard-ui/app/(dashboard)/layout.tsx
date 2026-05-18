@@ -18,8 +18,18 @@ const NAV = [
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { data, dataUpdatedAt, isLoading, isError, error, isReportLoading, isQueueLoading } =
-    useDashboardCore();
+  const {
+    data,
+    dataUpdatedAt,
+    isLoading,
+    isError,
+    error,
+    isReportLoading,
+    isQueueLoading,
+    statusFault,
+    agentsFault,
+    statusDegraded,
+  } = useDashboardCore();
 
   return (
     <div className="app-shell">
@@ -40,26 +50,38 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Link>
           ))}
         </nav>
-        {data?.status?.runtime ? (
+        {data ? (
+          <motion></motion>
           <div className="sidebar-meta hint">
-            <p>Store: {data.status.runtime.store ?? "—"}</p>
-            <p>SDK slots: {data.status.runtime.sdk_max_concurrent ?? "—"}</p>
+            <p>Store: {data.status?.runtime?.store ?? "—"}</p>
+            <p>SDK slots: {data.status?.runtime?.sdk_max_concurrent ?? "—"}</p>
             <p>Queue: {data.queue?.queue?.length ?? 0}</p>
-            {data.agents?.roster?.length ? <p>Agents: {data.agents.roster.length}</p> : null}
+            <p>Agents: {data.agents?.roster?.length ?? 0}</p>
           </div>
         ) : null}
       </aside>
       <div className="main-column">
-        <Topbar status={data?.status} updatedAt={dataUpdatedAt ? new Date(dataUpdatedAt) : undefined} />
+        <Topbar
+          status={data?.status}
+          updatedAt={dataUpdatedAt ? new Date(dataUpdatedAt) : undefined}
+          statusFault={statusFault}
+          agentsFault={agentsFault}
+          agentsReachable={(data?.agents?.roster?.length ?? 0) > 0 && !agentsFault}
+        />
         <main className="content">
           {isLoading ? <p className="loading-block">Loading agents…</p> : null}
+          {statusDegraded ? (
+            <p className="hint">
+              Status poll failed ({statusFault}) — roster still loaded from <code>/api/agents</code>.
+            </p>
+          ) : null}
           {isReportLoading || isQueueLoading ? (
             <p className="hint">Refreshing briefing / work queue…</p>
           ) : null}
           {isError ? (
             <p className="error-block">
-              API unreachable — run <code>npm run dashboard</code> on port 9477, then refresh.{" "}
-              {(error as Error).message}
+              Cannot load agents — is the control plane running on port 9477?{" "}
+              <code>{agentsFault ?? (error as Error)?.message}</code>
             </p>
           ) : null}
           {children}
