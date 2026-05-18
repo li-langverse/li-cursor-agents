@@ -155,8 +155,8 @@ trap - INT TERM
 trap 'stop_api' EXIT INT TERM
 
 echo ""
-  echo "  Dashboard UI:  http://127.0.0.1:${UI_PORT}/  (native GET /api/* → Supabase; control → :${API_PORT})"
-echo "  Control API:   http://127.0.0.1:${API_PORT}/"
+  echo "  Dashboard UI:  http://127.0.0.1:${UI_PORT}/  (GET /api/* → db-api/Supabase; POST → worker :${API_PORT})"
+echo "  Worker API:    http://127.0.0.1:${API_PORT}/  (npm run worker)"
 echo "  Store:         ${LI_CONTROL_PLANE_STORE:-$_store}  Supabase: ${SUPABASE_URL:-(disk)}"
   echo "  Async swarm:   ${LI_AUTO_START_ASYNC_SWARM} (set LI_AUTO_START_ASYNC_SWARM=1 to enable workers)"
 echo "  Ctrl+C stops API + UI"

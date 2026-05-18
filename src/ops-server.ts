@@ -206,9 +206,12 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
         hydrateLaneStateFromDb(),
         hydrateRuntimeSettingsFromDb(),
         hydrateBriefingFromDb(),
-      ]).catch((err) => {
-        agentLog("db", "ERROR", `hydrate store: ${err instanceof Error ? err.message : err}`);
-      });
+      ])
+        .then(() => import("./worker/heartbeat.js"))
+        .then((m) => m.persistWorkerHeartbeat(loadState()))
+        .catch((err) => {
+          agentLog("db", "ERROR", `hydrate store: ${err instanceof Error ? err.message : err}`);
+        });
       void probeAgentHandoffsTable();
     }
     if (process.env.LI_AUTO_START_ASYNC_SWARM === "1" || process.env.LI_AUTO_START_ASYNC_SWARM === "true") {

@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { apiFetch } from "@/lib/api";
+import { apiFetch, apiPatch } from "@/lib/api";
 import { invalidateDashboardQueries } from "@/lib/invalidate-dashboard";
 import { Button } from "@/components/ui/button";
 
@@ -59,12 +59,7 @@ export default function SettingsPage() {
   );
 
   const saveMut = useMutation({
-    mutationFn: () =>
-      apiFetch<SettingsResponse>("/api/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ values: draft }),
-      }),
+    mutationFn: () => apiPatch<SettingsResponse>("/api/settings", { values: draft }),
     onSuccess: (body) => {
       setDraft({});
       setToast(
@@ -79,12 +74,7 @@ export default function SettingsPage() {
   });
 
   const resetMut = useMutation({
-    mutationFn: (keys: string[]) =>
-      apiFetch<SettingsResponse>("/api/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reset_keys: keys }),
-      }),
+    mutationFn: (keys: string[]) => apiPatch<SettingsResponse>("/api/settings", { reset_keys: keys }),
     onSuccess: (body) => {
       setDraft((d) => {
         const next = { ...d };

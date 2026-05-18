@@ -2,7 +2,7 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { apiFetch, apiPost } from "@/lib/api";
+import { apiPost } from "@/lib/api";
 import { invalidateDashboardQueries } from "@/lib/invalidate-dashboard";
 import { Button } from "@/components/ui/button";
 import type { StatusPayload } from "@/lib/types";
@@ -19,7 +19,7 @@ export function FooterControls({ status }: { status?: StatusPayload }) {
       if (swarmOn) {
         return apiPost<{ message?: string }>("/api/async-swarm/stop");
       }
-      await apiFetch("/api/supervisor/stop", { method: "POST" }).catch(() => {});
+      await apiPost("/api/supervisor/stop").catch(() => {});
       return apiPost<{ message?: string }>("/api/async-swarm/start", {});
     },
     onSuccess: (body) => {

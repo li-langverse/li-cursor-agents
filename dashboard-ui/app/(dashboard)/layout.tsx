@@ -80,8 +80,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {isError ? (
             <p className="error-block">
               Cannot load agents — <code>{agentsFault ?? (error as Error)?.message}</code>. Try{" "}
-              <code>npm run build</code> in the repo root, restart the dashboard, or check Supabase if
-              polls stay slow.
+              <code>npm run build</code>, <code>npm run dev:all</code>, or <code>npm run db:ensure</code>{" "}
+              (read API is Supabase-only; Start/Stop needs worker on :9477).
             </p>
           ) : null}
           {children}

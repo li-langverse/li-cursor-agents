@@ -5,7 +5,8 @@
   "type": "module",
   "license": "Apache-2.0",
   "exports": {
-    "./dashboard-api": "./dist/dashboard-api/index.js"
+    "./dashboard-api": "./dist/dashboard-api/index.js",
+    "./db-api": "./dist/db-api/index.js"
   },
   "bin": {
     "li-agent": "./dist/cli/run-agent.js"
@@ -20,6 +21,7 @@
     "setup": "bash scripts/setup-local-env.sh",
     "agents:keep": "bash scripts/keep-agents-running.sh",
     "dashboard": "node dist/cli/serve-dashboard.js",
+    "worker": "node dist/cli/serve-dashboard.js",
     "dashboard:ui": "npm --prefix dashboard-ui run dev",
     "dev:all": "bash scripts/dev-all.sh",
     "dashboard:dev": "bash scripts/dev-all.sh",
@@ -34,7 +36,8 @@
     "db:probe": "npm run build && node dist/cli/db-probe.js",
     "test": "npm run build && LI_CONTROL_PLANE_STORE=disk CURSOR_MOCK=1 node --test 'dist/**/*.test.js' --test 'dist/e2e/*.e2e.js' && node scripts/test-log-timestamps.mjs",
     "test:log-timestamps": "npm run build && node scripts/test-log-timestamps.mjs",
-    "test:dashboard-api": "npm run build && CURSOR_MOCK=1 node --test dist/e2e/dashboard-api.e2e.js dist/e2e/dashboard-live-runs.e2e.js dist/e2e/dashboard-run-trace.e2e.js dist/e2e/dashboard-next-tabs.e2e.js",
+    "test:db-api": "npm run build && CURSOR_MOCK=1 LI_CONTROL_PLANE_STORE=disk node --test dist/e2e/db-api.e2e.js",
+    "test:dashboard-api": "npm run build && CURSOR_MOCK=1 node --test dist/e2e/db-api.e2e.js dist/e2e/dashboard-api.e2e.js dist/e2e/dashboard-live-runs.e2e.js dist/e2e/dashboard-run-trace.e2e.js dist/e2e/dashboard-next-tabs.e2e.js",
     "test:dashboard-ui": "node scripts/check-dashboard-no-motion.mjs && npm --prefix dashboard-ui run build",
     "test:dev-stack-ready": "node --test scripts/dev-stack-ready-lib.test.mjs",
     "smoke:dashboard": "node scripts/smoke-dashboard-api.mjs",

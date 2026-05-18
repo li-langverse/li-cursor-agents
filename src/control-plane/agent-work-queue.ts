@@ -7,6 +7,7 @@ import { loadResearchGoals, resolveGoalAgent } from "../research-goals/load-goal
 import { listInProgressResearchSessions } from "../research-sessions/session-store.js";
 import { dbEnabled } from "../db/client.js";
 import { loadWorkQueueFromDb, syncWorkQueueToDb } from "../db/queued-tasks.js";
+import { saveWorkQueueSnapshotToDb } from "../db/work-queue-snapshot.js";
 import type { AgentId } from "../types.js";
 import type { ControlPlaneState } from "./types.js";
 import { isHandoffRunInProgress } from "../lanes/handoff-run-coordinator.js";
@@ -310,13 +311,7 @@ async function buildAgentWorkQueueInner(
 
   items.sort((a, b) => b.priority - a.priority);
 
-  if (dbEnabled() && state.last_briefing_hash && items.length > 0) {
-    void syncWorkQueueToDb(state.last_briefing_hash, items).catch(() => {
-      /* background denormalize for indexed dashboard reads */
-    });
-  }
-
-  return {
+  const snapshot: AgentWorkQueueSnapshot = {
     generated_at: new Date().toISOString(),
     items,
     by_agent: groupAgentWorkQueue(items),
@@ -326,6 +321,17 @@ async function buildAgentWorkQueueInner(
       lanes: laneRuntimeSnapshot(),
     },
   };
+
+  if (dbEnabled() && state.last_briefing_hash && items.length > 0) {
+    void syncWorkQueueToDb(state.last_briefing_hash, items).catch(() => {
+      /* background denormalize for indexed dashboard reads */
+    });
+    void saveWorkQueueSnapshotToDb(state.last_briefing_hash, snapshot).catch(() => {
+      /* materialized queue for read-only dashboard API */
+    });
+  }
+
+  return snapshot;
 }
 
 function dbRowsToQueueItems(
