@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { apiFetch, apiPost } from "@/lib/api";
+import { invalidateDashboardQueries } from "@/lib/invalidate-dashboard";
 import { Button } from "@/components/ui/button";
 import type { StatusPayload } from "@/lib/types";
 
@@ -11,7 +12,7 @@ export function FooterControls({ status }: { status?: StatusPayload }) {
   const swarmOn = Boolean(status?.runtime?.async_swarm_running);
   const [toast, setToast] = useState<string | null>(null);
 
-  const invalidate = () => qc.invalidateQueries({ queryKey: ["dashboard"] });
+  const invalidate = () => invalidateDashboardQueries(qc);
 
   const swarmMut = useMutation({
     mutationFn: async () => {

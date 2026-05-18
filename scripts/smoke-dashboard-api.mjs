@@ -33,6 +33,8 @@ const paths = [
   "/api/runtime",
   "/api/queue",
   "/api/statistics",
+  "/api/statistics?range=7d",
+  "/api/activity/recent?limit=5",
   "/api/handoffs",
   "/api/swarm/briefing",
   "/",
@@ -48,12 +50,25 @@ for (const p of paths) {
     const ok = r.status === 200;
     if (!ok) failed++;
     console.log(`${ok ? "OK" : "FAIL"} ${r.status} ${p}`);
-    if (p === "/api/statistics" && ok && r.body?.statistics) {
+    if (p.startsWith("/api/statistics") && ok && r.body?.statistics) {
       statsBody = r.body.statistics;
       const s = statsBody;
       console.log(
         `     → runs=${s.runs_scanned} actions=${s.actions_taken} prs_open=${s.prs_open_now}`,
       );
+    }
+    if (p === "/api/heap" && ok) {
+      const tasks = r.body?.heap_plan?.flat_tasks;
+      if (Array.isArray(tasks) && tasks.length) {
+        const first = tasks[0];
+        const agentField = first?.agent ?? first?.agent_id;
+        console.log(`     → heap flat_tasks=${tasks.length} agent=${agentField ?? "?"}`);
+        if (!agentField) failed++;
+      }
+    }
+    if (p === "/api/activity/recent?limit=5" && ok) {
+      const n = (r.body?.items ?? []).length;
+      console.log(`     → activity items=${n} store=${r.body?.store ?? "?"}`);
     }
     if (p === "/index.html" && ok) {
       const htmlRes = await fetch(`${base}/index.html`, { cache: "no-store" });

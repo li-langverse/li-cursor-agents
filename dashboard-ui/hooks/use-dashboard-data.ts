@@ -19,7 +19,9 @@ export function useDashboardCore() {
         apiFetch<StatusPayload>("/api/status").catch(
           (e: Error): StatusPayload => ({ error: e.message }),
         ),
-        apiFetch<AgentsPayload>("/api/agents"),
+        apiFetch<AgentsPayload>("/api/agents").catch(
+          (): AgentsPayload => ({ total: 0, roster: [] }),
+        ),
         apiFetch<Record<string, unknown>>("/api/report").catch(() => ({})),
         apiFetch<QueuePayload>("/api/queue").catch(() => ({ queue: [], by_agent: {} })),
       ]);
@@ -95,7 +97,8 @@ export function useHeapPlan() {
     queryKey: ["heap"],
     queryFn: () =>
       apiFetch<{
-        heap_plan?: { flat_tasks?: Array<{ id: string; agent_id: string; reason: string }> };
+        heap_plan?: { flat_tasks?: Array<{ agent: string; coordinator: string; reason: string }> };
+        org_roadmap?: Record<string, unknown>;
       }>("/api/heap"),
     refetchInterval: 10_000,
   });

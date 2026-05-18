@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { apiPost } from "@/lib/api";
+import { invalidateDashboardQueries } from "@/lib/invalidate-dashboard";
 import type { StatusPayload } from "@/lib/types";
 
 export function Topbar({
@@ -20,11 +21,12 @@ export function Topbar({
 
   const refreshBriefing = useMutation({
     mutationFn: () => apiPost("/api/briefing/refresh"),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
+    onSuccess: () => invalidateDashboardQueries(qc),
   });
 
   return (
     <header className="topbar">
+      <motion></motion>
       <div className="topbar-left">
         <h1>Li Agent Swarm</h1>
         <p className="subtitle">Control plane dashboard (Next.js)</p>
@@ -42,7 +44,7 @@ export function Topbar({
         >
           Refresh briefing
         </Button>
-        <Button variant="ghost" size="sm" onClick={() => qc.invalidateQueries({ queryKey: ["dashboard"] })}>
+        <Button variant="ghost" size="sm" onClick={() => invalidateDashboardQueries(qc)}>
           ↻
         </Button>
       </div>
