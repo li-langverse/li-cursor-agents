@@ -2,23 +2,23 @@
 
 Next.js **16.2.6** (May 2026 security release) UI for the li-cursor-agents control plane. `/api/*` is proxied to the existing Node server on port **9477**.
 
+## Dev (one command)
+
+From repo root:
+
+```bash
+npm run dev:all
+```
+
+Starts Supabase (when Docker is available), builds TypeScript, control-plane API on **:9477**, and Next.js on **:3000** (`/api` proxied to the API). Swarm does **not** auto-start unless `LI_AUTO_START_ASYNC_SWARM=1` in `.env`.
+
+Disk-only (no Docker): `LI_STACK_SKIP_SUPABASE=1 npm run dev:all`
+
 ## Dev (two terminals)
 
 ```bash
-# Terminal 1 — API
-cd li-cursor-agents
-export LI_CONTROL_PLANE_STORE=supabase   # or disk
-npm run build && npm run dashboard
-
-# Terminal 2 — UI
-npm run dashboard:ui
-# http://localhost:3000
-```
-
-Or one command (starts API in background):
-
-```bash
-npm run dashboard:dev
+npm run build && npm run dashboard    # :9477
+npm run dashboard:ui                  # :3000
 ```
 
 ## Production UI only

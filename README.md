@@ -39,6 +39,14 @@ npm run agents:keep
 
 Defaults (override in `.env`): `LI_USE_LOCAL_CI=1`, `LI_LOCAL_CI_SWEEP_LIMIT=2`, `LI_SUPERVISOR_MAX_TASKS=2`, **Supabase on** (`LI_STACK_SKIP_SUPABASE=0`; needs Docker).
 
+## Quick start (dashboard dev)
+
+```bash
+npm run setup
+cp .env.example .env          # add CURSOR_API_KEY
+npm run dev:all               # Supabase + API :9477 + Next.js UI :3000
+```
+
 ## Quick start (full local stack)
 
 ```bash
