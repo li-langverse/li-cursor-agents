@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Full local stack for dashboard development (one command):
-#   Supabase + migrations → build → API :9477 (async swarm on) → readiness checks → Next.js :3000
+#   Supabase + migrations → build → API :9477 → readiness → Next.js :3000
 #
 # Usage:
 #   npm run dev:all

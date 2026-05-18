@@ -5,17 +5,9 @@ import {
   peekAgentWorkQueueSnapshot,
   resetAgentWorkQueueCacheForTests,
 } from "./agent-work-queue.js";
-import type { ControlPlaneState } from "./types.js";
+import { DEFAULT_STATE } from "./types.js";
 
-const state: ControlPlaneState = {
-  version: 1,
-  runs_total: 0,
-  updated_at: "2026-01-01T00:00:00.000Z",
-  last_tick_at: "",
-  recent_tasks: [],
-  stopped_agents: [],
-  last_preflight_at: "",
-};
+const state = { ...DEFAULT_STATE, updated_at: "2026-01-01T00:00:00.000Z" };
 
 test("peekAgentWorkQueueSnapshot returns cache after build", async () => {
   resetAgentWorkQueueCacheForTests();
