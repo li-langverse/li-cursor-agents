@@ -238,7 +238,8 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       store,
       agent_backend: agentBackendLabel(),
       sdk_ready: agentBackendLabel() === "cursor-sdk" && Boolean(resolveCursorApiKey()),
-      lanes: await buildLanesStatusPayload(),
+      // Fast path: scorecard belongs on /api/swarm/briefing — do not block dashboard polls.
+      lanes: laneRuntimeSnapshot(loadLaneState()),
     });
     return;
   }
