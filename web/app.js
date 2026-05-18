@@ -205,7 +205,10 @@ async function loadDashboard() {
   const [report, status, roster, runsPayload, supervisorActivity, activityPayload, interventionsPayload, statisticsPayload, handoffsPayload, swarmBriefingPayload, workQueuePayload] =
     await Promise.all([
       fetchJson("/api/report").catch(() => ({})),
-      fetchJson("/api/status"),
+      fetchJson("/api/status").catch((e) => {
+        console.warn("/api/status failed — agents list may be stale:", e.message);
+        return { runtime: {}, error: e.message };
+      }),
       fetchJson("/api/agents"),
       fetchJson("/api/runs").catch(() => ({ runs: [], active: [] })),
       fetchJson("/api/supervisor/activity").catch(() => ({ entries: [], loop_running: false })),
@@ -672,7 +675,6 @@ function renderStatCards() {
   const { report, runtime, roster, runsPayload, status } = ui.data;
   const statusMap = agentStatusMap(roster, report, runtime, status);
   let running = 0;
-  let onDuty = 0;
   let recommended = 0;
   let queued = 0;
   let stopped = 0;
@@ -680,7 +682,6 @@ function renderStatCards() {
   let cooldown = 0;
   for (const v of statusMap.values()) {
     if (v.status === "running") running++;
-    if (v.status === "on_duty") onDuty++;
     if (v.status === "queued") queued++;
     if (v.status === "recommended") recommended++;
     if (v.status === "stopped") stopped++;
@@ -689,26 +690,20 @@ function renderStatCards() {
   }
   const interventions = report?.interventions?.length ?? 0;
   const runs = runsPayload?.runs?.length ?? 0;
-  const swarmOn = Boolean(runtime?.async_swarm_running);
-  const sdkActive = runtime?.active_run_count ?? running;
+  const gaps = briefingGaps(report);
+  const gapTotal =
+    (gaps?.incomplete_runs ?? 0) +
+    (gaps?.agent_prs_blocked ?? 0) +
+    (gaps?.numerics_without_evidence ?? 0);
 
-  if (swarmOn) {
-    $("#stat-cards").innerHTML = `
-    <div class="stat-card accent swarm-on"><div class="label">Swarm</div><div class="value">on</div></div>
-    <div class="stat-card accent"><div class="label">On duty</div><div class="value">${onDuty}</div></div>
-    <div class="stat-card"><div class="label">In SDK now</div><div class="value">${sdkActive}</div></div>
-    <div class="stat-card"><div class="label">Queued</div><div class="value">${queued}</div></div>
-    <div class="stat-card"><div class="label">Interventions</div><div class="value">${interventions}</div></div>
-    <div class="stat-card"><div class="label">Run artifacts</div><div class="value">${runs}</div></div>`;
-  } else {
-    $("#stat-cards").innerHTML = `
+  $("#stat-cards").innerHTML = `
     <div class="stat-card accent"><div class="label">Running</div><div class="value">${running}</div></div>
     <div class="stat-card"><div class="label">Queued</div><div class="value">${queued}</div></div>
     <div class="stat-card"><div class="label">Stopped</div><div class="value">${stopped}</div></div>
     <div class="stat-card"><div class="label">Interventions</div><div class="value">${interventions}</div></div>
     <div class="stat-card"><div class="label">Run artifacts</div><div class="value">${runs}</div></div>`;
-  }
 }
+
 function renderLiveActivity() {
   const { report, runtime, runsPayload } = ui.data;
   const feed = $("#live-activity");
@@ -810,7 +805,7 @@ function renderAgentsTable() {
   }
 
   rows.sort((a, b) => {
-    const order = { running: 0, queued: 0, on_duty: 1, recommended: 2, cooldown: 3, idle: 4, stopped: 5 };
+    const order = { running: 0, recommended: 1, queued: 1, cooldown: 2, idle: 3, stopped: 4 };
     return (order[a.info.status] ?? 9) - (order[b.info.status] ?? 9);
   });
 
@@ -1137,7 +1132,6 @@ async function refresh() {
     renderAgentBackendUi();
     renderSupervisorActivity();
     renderStatCards();
-    renderSwarmStatusUi();
     renderSwarmStatistics();
     renderLiveActivity();
     renderQueue();

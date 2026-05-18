@@ -95,6 +95,33 @@ async function getSwarmStatisticsForApi(
   return stats;
 }
 
+/** Scorecard uses Supabase handoffs — must not break /api/status polling. */
+async function safeSwarmScorecard(): Promise<Awaited<ReturnType<typeof buildSwarmScorecard>> | null> {
+  try {
+    return await buildSwarmScorecard();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    agentLog("dashboard", "warn", `swarm scorecard skipped: ${msg}`);
+    return null;
+  }
+}
+
+async function buildLanesStatusPayload(): Promise<
+  ReturnType<typeof laneRuntimeSnapshot> & {
+    scorecard?: Awaited<ReturnType<typeof buildSwarmScorecard>>;
+    scorecard_error?: string;
+  }
+> {
+  const scorecard = await safeSwarmScorecard();
+  if (scorecard) {
+    return { ...laneRuntimeSnapshot(loadLaneState()), scorecard };
+  }
+  return {
+    ...laneRuntimeSnapshot(loadLaneState()),
+    scorecard_error: "handoffs table unavailable — run npm run db:ensure",
+  };
+}
+
 export function startOpsServer(port: number): ReturnType<typeof createServer> {
   assertStoreReady();
   const packageRoot = agentsPackageRoot();
@@ -179,19 +206,17 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       store,
       agent_backend: agentBackendLabel(),
       sdk_ready: agentBackendLabel() === "cursor-sdk" && Boolean(resolveCursorApiKey()),
-      lanes: {
-        ...laneRuntimeSnapshot(loadLaneState()),
-        scorecard: await buildSwarmScorecard(),
-      },
+      lanes: await buildLanesStatusPayload(),
     });
     return;
   }
 
   if (url.pathname === "/api/lanes" && req.method === "GET") {
+    const scorecard = await safeSwarmScorecard();
     json(res, 200, {
       state: loadLaneState(),
       runtime: laneRuntimeSnapshot(),
-      scorecard: await buildSwarmScorecard(),
+      ...(scorecard ? { scorecard } : {}),
     });
     return;
   }
