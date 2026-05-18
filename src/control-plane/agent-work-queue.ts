@@ -102,7 +102,7 @@ export interface BuildAgentWorkQueueOptions {
 
 const QUEUE_CACHE_MS = Number(process.env.LI_QUEUE_CACHE_MS ?? 5_000);
 let queueCache: { at: number; key: string; snapshot: AgentWorkQueueSnapshot } | null = null;
-let queueBuildInFlight: Promise<AgentWorkQueueSnapshot> | null = null;
+let queueBuildInFlight: { key: string; promise: Promise<AgentWorkQueueSnapshot> } | null = null;
 
 export function resetAgentWorkQueueCacheForTests(): void {
   queueCache = null;
@@ -264,12 +264,15 @@ export async function buildAgentWorkQueue(
   if (queueCache && queueCache.key === key && now - queueCache.at < QUEUE_CACHE_MS) {
     return queueCache.snapshot;
   }
-  if (!queueBuildInFlight) {
-    queueBuildInFlight = buildAgentWorkQueueInner(state, options).finally(() => {
-      queueBuildInFlight = null;
-    });
+  if (!queueBuildInFlight || queueBuildInFlight.key !== key) {
+    queueBuildInFlight = {
+      key,
+      promise: buildAgentWorkQueueInner(state, options).finally(() => {
+        queueBuildInFlight = null;
+      }),
+    };
   }
-  const snapshot = await queueBuildInFlight;
+  const snapshot = await queueBuildInFlight.promise;
   queueCache = { at: Date.now(), key, snapshot };
   return snapshot;
 }
