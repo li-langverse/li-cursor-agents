@@ -2,12 +2,13 @@
   "research_lane_enabled": true,
   "implement_lane_enabled": true,
   "goal_last_run_at": {},
-  "last_research_tick_at": "2026-05-18T21:48:20.992Z",
-  "last_maintenance_tick_at": "2026-05-18T21:44:27.228Z",
+  "last_research_tick_at": "2026-05-18T23:03:01.952Z",
+  "last_maintenance_tick_at": "2026-05-18T22:44:39.231Z",
   "proactive_last_run_at": {
-    "orchestrator": "2026-05-18T21:42:01.400Z",
-    "pr_merger": "2026-05-18T21:48:20.924Z",
-    "pr_branch_opener": "2026-05-18T21:48:20.929Z",
-    "issue_planner": "2026-05-18T21:48:20.937Z"
+    "orchestrator": "2026-05-18T23:03:01.908Z",
+    "pr_merger": "2026-05-18T23:03:01.903Z",
+    "pr_branch_opener": "2026-05-18T22:30:53.303Z",
+    "issue_planner": "2026-05-18T22:44:39.165Z",
+    "swarm_observer": "2026-05-18T22:29:36.410Z"
   }
 }
