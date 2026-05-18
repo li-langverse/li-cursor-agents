@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Block until the control-plane API is usable for the Next.js dashboard.
- * Progress logs + per-request timeouts so dev:all never hangs silently.
+ * Progress logs + per-request timeouts; global wall clock so dev:all cannot run forever.
  */
 import {
   agentsRosterOk,
@@ -12,14 +12,23 @@ import {
 
 const port = Number(process.env.LI_AGENT_DASHBOARD_PORT ?? 9477);
 const base = `http://127.0.0.1:${port}`;
-const deadline = Date.now() + Number(process.env.LI_DEV_READY_TIMEOUT_MS ?? 90_000);
+const startedAt = Date.now();
+const deadline = startedAt + Number(process.env.LI_DEV_READY_TIMEOUT_MS ?? 120_000);
 const fetchTimeoutMs = Number(process.env.LI_DEV_READY_FETCH_MS ?? 12_000);
 const fetchJson = createFetchJson(base, { defaultTimeoutMs: fetchTimeoutMs });
 const autoSwarm =
   process.env.LI_AUTO_START_ASYNC_SWARM === "1" || process.env.LI_AUTO_START_ASYNC_SWARM === "true";
+const checkQueue = process.env.LI_DEV_READY_CHECK_QUEUE === "1";
+/** Fewer retries than smoke tests — dev:all must fail fast before the global deadline. */
+const READY_RETRY = { attempts: 5, delayMs: 400 };
+
+function remainingMs() {
+  return deadline - Date.now();
+}
 
 function fail(msg) {
-  console.error(`dev:all ERROR: ${msg}`);
+  const elapsed = Math.round((Date.now() - startedAt) / 1000);
+  console.error(`dev:all ERROR (${elapsed}s): ${msg}`);
   process.exit(1);
 }
 
@@ -31,22 +40,38 @@ function log(step) {
   console.log(`dev:all: ${step}`);
 }
 
+function assertTimeLeft(label) {
+  if (remainingMs() <= 0) {
+    fail(
+      `timed out after ${Math.round((Date.now() - startedAt) / 1000)}s waiting for ${label} on :${port}`,
+    );
+  }
+}
+
 async function probe(path, init, label) {
+  assertTimeLeft(label);
   log(`${label}…`);
   try {
-    return await fetchJsonRetry(fetchJson, path, init, { attempts: 8, delayMs: 400 });
+    return await fetchJsonRetry(fetchJson, path, init, READY_RETRY);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     fail(`${label} failed: ${msg}`);
   }
 }
 
+let lastHeartbeat = 0;
 while (Date.now() < deadline) {
   try {
     const r = await fetchJson("/api/status", { timeoutMs: 8_000 });
     if (r.status === 200) break;
   } catch {
     /* server still booting */
+  }
+  const now = Date.now();
+  if (now - lastHeartbeat >= 5_000) {
+    const elapsed = Math.round((now - startedAt) / 1000);
+    log(`still waiting for /api/status (${elapsed}s / ${Math.round((deadline - startedAt) / 1000)}s max)…`);
+    lastHeartbeat = now;
   }
   await new Promise((r) => setTimeout(r, 400));
 }
@@ -75,7 +100,7 @@ if (runtime.status !== 200) fail(`/api/runtime returned ${runtime.status}`);
 let swarmOn = runtimeSwarmOn(runtime.body);
 if (!swarmOn && autoSwarm) {
   log("async swarm flag not on /api/runtime yet (LI_AUTO_START_ASYNC_SWARM=1 — waiting briefly)…");
-  const swarmDeadline = Date.now() + 15_000;
+  const swarmDeadline = Math.min(Date.now() + 12_000, deadline);
   while (Date.now() < swarmDeadline) {
     try {
       const rt = await fetchJson("/api/runtime", { timeoutMs: 5_000 });
@@ -107,13 +132,15 @@ if (!swarmOn) {
   console.warn("dev:all WARN: async_swarm_running not confirmed — UI may still work");
 }
 
-try {
-  const queue = await probe("/api/queue?light=1", { timeoutMs: 20_000 }, "GET /api/queue?light=1");
-  if (queue.status !== 200) {
-    console.warn(`dev:all WARN: /api/queue returned ${queue.status}`);
+if (checkQueue) {
+  try {
+    const queue = await probe("/api/queue?light=1", { timeoutMs: 12_000 }, "GET /api/queue?light=1");
+    if (queue.status !== 200) {
+      console.warn(`dev:all WARN: /api/queue returned ${queue.status}`);
+    }
+  } catch (e) {
+    console.warn(`dev:all WARN: queue check skipped (${e instanceof Error ? e.message : e})`);
   }
-} catch (e) {
-  console.warn(`dev:all WARN: queue check skipped (${e instanceof Error ? e.message : e})`);
 }
 
 ok(

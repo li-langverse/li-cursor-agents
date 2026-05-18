@@ -43,7 +43,7 @@ export async function agentWorkerTick(
     return { skipped: true, skip_reason: "agent stopped" };
   }
 
-  const queue = await buildAgentWorkQueue(state);
+  const queue = await buildAgentWorkQueue(state, { light: true });
   const next = pickNextWorkForAgent(agentId, queue);
   if (!next) {
     return { skipped: true, skip_reason: "no queued work for this agent" };
