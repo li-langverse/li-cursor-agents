@@ -15,6 +15,9 @@ export interface RuntimePayload {
   sdk_max_concurrent?: number;
   sdk_sessions_active?: number;
   stopped_agents?: string[];
+  current_supervisor_agent?: string | null;
+  supervisor_loop_running?: boolean;
+  supervisor_loop_started_at?: string | null;
   lanes?: Record<string, unknown>;
 }
 
@@ -70,11 +73,24 @@ export interface SwarmStatistics {
 }
 
 export interface AgentDetail {
-  agent: RosterEntry;
+  agent: RosterEntry & { description?: string; category?: string };
   status: string;
   stopped: boolean;
   recommended_reason?: string;
   work_queue?: WorkQueueItem[];
-  active_run?: { run_id: string; pid?: number; started_at: string } | null;
+  active_run?: {
+    run_id: string;
+    pid?: number;
+    started_at: string;
+    reason?: string;
+    status?: string;
+  } | null;
   runs?: Array<{ run_id: string; status: string; started_at: string }>;
+  recent_tasks?: Array<{
+    agentId: string;
+    status: string;
+    finished_at: string;
+    reason?: string;
+  }>;
+  history?: unknown;
 }

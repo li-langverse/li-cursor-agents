@@ -904,3 +904,129 @@ table.data-table tr:hover {
   padding: 0.2rem 0;
   font-size: 0.85rem;
 }
+
+.panel-live {
+  border-color: rgba(74, 222, 128, 0.35);
+}
+
+.live-count {
+  display: inline-block;
+  min-width: 1.25rem;
+  padding: 0.1rem 0.45rem;
+  margin-left: 0.35rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  background: rgba(74, 222, 128, 0.2);
+  color: var(--ok);
+}
+
+.live-agents-table-wrap {
+  overflow-x: auto;
+}
+
+.live-agents-table .live-detail-cell {
+  max-width: 280px;
+  font-size: 0.88rem;
+}
+
+.live-actions-cell {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.live-actions-cell .btn {
+  margin-left: 0.25rem;
+}
+
+.linkish {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+}
+
+.linkish:hover {
+  text-decoration: underline;
+}
+
+.live-topbar-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.agent-detail-section {
+  margin-bottom: 1rem;
+}
+
+.agent-detail-section h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.95rem;
+}
+
+.live-run-card {
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--radius);
+  background: rgba(74, 222, 128, 0.08);
+  border: 1px solid rgba(74, 222, 128, 0.25);
+}
+
+.agent-queue-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.agent-queue-list li {
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.agent-queue-list li:last-child {
+  border-bottom: none;
+}
+
+.queue-in-progress {
+  border-left: 3px solid var(--ok);
+  padding-left: 0.5rem;
+}
+
+.queue-status {
+  display: inline-block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: 0.35rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  background: var(--border);
+}
+
+.queue-status-in_progress {
+  background: rgba(74, 222, 128, 0.2);
+  color: var(--ok);
+}
+
+.queue-status-pending {
+  background: rgba(230, 162, 60, 0.2);
+  color: var(--warn);
+}
+
+.queue-source {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.agent-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.agent-status-line {
+  margin: 0 0 0.75rem;
+}

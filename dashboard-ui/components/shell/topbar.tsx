@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { apiPost } from "@/lib/api";
 import { invalidateDashboardQueries } from "@/lib/invalidate-dashboard";
+import Link from "next/link";
 import type { StatusPayload } from "@/lib/types";
 
 export function Topbar({
@@ -13,12 +14,14 @@ export function Topbar({
   statusFault,
   agentsFault,
   agentsReachable,
+  liveCount = 0,
 }: {
   status?: StatusPayload;
   updatedAt?: Date;
   statusFault?: string | null;
   agentsFault?: string | null;
   agentsReachable?: boolean;
+  liveCount?: number;
 }) {
   const qc = useQueryClient();
   const runtime = status?.runtime;
@@ -44,6 +47,11 @@ export function Topbar({
         <Badge tone={swarmOn ? "ok" : agentsReachable ? "default" : "warn"}>
           {swarmOn ? "swarm on" : agentsReachable ? "swarm off" : "swarm unknown"}
         </Badge>
+        {liveCount > 0 ? (
+          <Link href="/agents?filter=running" className="btn btn-ghost btn-sm live-topbar-link">
+            <span className="pulse" aria-hidden /> {liveCount} live
+          </Link>
+        ) : null}
         {agentsFault && !agentsReachable ? (
           <Badge tone="danger" title={agentsFault}>
             Agents API down

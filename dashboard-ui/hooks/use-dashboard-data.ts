@@ -55,7 +55,10 @@ export function useDashboardCore() {
         return { payload: {} as StatusPayload, fault: message };
       }
     },
-    refetchInterval: 5_000,
+    refetchInterval: (query) => {
+      const rt = query.state.data?.payload?.runtime;
+      return rt?.async_swarm_running ? 3_000 : 5_000;
+    },
     retry: 1,
   });
 

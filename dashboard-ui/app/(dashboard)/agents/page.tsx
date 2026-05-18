@@ -1,63 +1,67 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useMemo, useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { RunDrawer } from "@/components/activity/run-drawer";
+import { AgentDetailDrawer } from "@/components/agents/agent-detail-drawer";
+import { LiveAgentsPanel, LiveAgentsPanelHeader } from "@/components/live/live-agents-panel";
 import { StatusDot } from "@/components/ui/badge";
 import { useDashboardCore } from "@/hooks/use-dashboard-data";
-import { apiFetch, apiPost } from "@/lib/api";
 import { buildAgentStatusMap, statusLabel } from "@/lib/agent-status";
-import type { AgentDetail } from "@/lib/types";
+import { buildLiveAgentRows } from "@/lib/live-agents";
 
 type Filter = "all" | "running" | "on_duty" | "queued" | "idle" | "stopped";
 
-export default function AgentsPage() {
+function AgentsPageInner() {
   const { data } = useDashboardCore();
+  const searchParams = useSearchParams();
   const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const qc = useQueryClient();
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const f = searchParams.get("filter");
+    if (f === "running" || f === "on_duty" || f === "queued" || f === "idle" || f === "stopped") {
+      setFilter(f);
+    }
+  }, [searchParams]);
 
   const statusMap = useMemo(
     () => buildAgentStatusMap(data?.agents, data?.report, data?.status, data?.queue),
     [data],
   );
 
+  const liveRows = useMemo(
+    () => buildLiveAgentRows(data?.agents, data?.status, data?.queue, statusMap),
+    [data, statusMap],
+  );
+
   const rosterCount = data?.agents?.roster?.length ?? 0;
 
   const rows = useMemo(() => {
-    const out: Array<{ id: string; name: string; status: string; reason?: string }> = [];
+    const out: Array<{ id: string; name: string; status: string; reason?: string; runId?: string }> =
+      [];
+    const activeByAgent = new Map(
+      (data?.status?.runtime?.active_runs ?? [])
+        .filter((r) => r.status === "running")
+        .map((r) => [r.agent_id, r.run_id]),
+    );
     for (const [id, info] of statusMap) {
       if (filter !== "all" && info.status !== filter) continue;
       const entry = data?.agents?.roster?.find((r) => r.id === id);
       const hay = `${id} ${entry?.name ?? ""} ${info.reason ?? ""}`.toLowerCase();
       if (search && !hay.includes(search.toLowerCase())) continue;
-      out.push({ id, name: entry?.name ?? id, status: info.status, reason: info.reason });
+      out.push({
+        id,
+        name: entry?.name ?? id,
+        status: info.status,
+        reason: info.reason,
+        runId: activeByAgent.get(id),
+      });
     }
     return out.sort((a, b) => a.id.localeCompare(b.id));
   }, [statusMap, filter, search, data]);
-
-  const detailQ = useQuery({
-    queryKey: ["agent", selectedId],
-    queryFn: () => apiFetch<AgentDetail>(`/api/agents/${encodeURIComponent(selectedId!)}/detail`),
-    enabled: Boolean(selectedId),
-  });
-
-  const actionMut = useMutation({
-    mutationFn: async ({ action, agentId }: { action: string; agentId: string }) => {
-      const path =
-        action === "start"
-          ? `/api/agents/${agentId}/start`
-          : action === "stop"
-            ? `/api/agents/${agentId}/stop`
-            : `/api/agents/${agentId}/resume`;
-      await apiPost(path);
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["dashboard"] });
-      qc.invalidateQueries({ queryKey: ["agent", selectedId] });
-    },
-  });
 
   return (
     <>
@@ -71,6 +75,25 @@ export default function AgentsPage() {
       ) : (
         <p className="hint">{rows.length} of {rosterCount} agents shown</p>
       )}
+
+      {liveRows.length > 0 ? (
+        <section className="panel panel-live">
+          <LiveAgentsPanelHeader count={liveRows.length} />
+          <LiveAgentsPanel
+            rows={liveRows}
+            compact
+            onOpenRun={(runId) => {
+              setSelectedId(null);
+              setSelectedRunId(runId);
+            }}
+            onOpenAgent={(id) => {
+              setSelectedRunId(null);
+              setSelectedId(id);
+            }}
+          />
+        </section>
+      ) : null}
+
       <div className="chip-row">
         {(["all", "running", "on_duty", "queued", "idle", "stopped"] as Filter[]).map((f) => (
           <button
@@ -97,13 +120,16 @@ export default function AgentsPage() {
               <th>Agent</th>
               <th>Status</th>
               <th>Task</th>
+              <th />
             </tr>
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.id} onClick={() => setSelectedId(r.id)}>
+              <tr key={r.id}>
                 <td>
-                  <span className="mono">{r.id}</span>
+                  <button type="button" className="linkish mono" onClick={() => setSelectedId(r.id)}>
+                    {r.id}
+                  </button>
                   <br />
                   <span className="hint">{r.name}</span>
                 </td>
@@ -111,11 +137,22 @@ export default function AgentsPage() {
                   <StatusDot status={r.status} /> {statusLabel(r.status)}
                 </td>
                 <td>{(r.reason ?? "—").slice(0, 80)}</td>
+                <td className="live-actions-cell">
+                  {r.runId ? (
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={() => setSelectedRunId(r.runId!)}
+                    >
+                      Trace
+                    </button>
+                  ) : null}
+                </td>
               </tr>
             ))}
             {!rows.length ? (
               <tr>
-                <td colSpan={3} className="empty">
+                <td colSpan={4} className="empty">
                   No agents match
                 </td>
               </tr>
@@ -124,57 +161,23 @@ export default function AgentsPage() {
         </table>
       </div>
 
-      {selectedId ? (
-        <>
-          <div className="drawer-backdrop" onClick={() => setSelectedId(null)} />
-          <aside className="drawer">
-            <header className="drawer-header">
-              <div>
-                <h2 className="mono">{selectedId}</h2>
-                {detailQ.isLoading ? <p className="hint">Loading…</p> : null}
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => setSelectedId(null)}>
-                Close
-              </Button>
-            </header>
-            <div className="drawer-body">
-              {detailQ.data ? (
-                <>
-                  <p>
-                    <StatusDot status={detailQ.data.status} /> {statusLabel(detailQ.data.status)}
-                  </p>
-                  <h3>Queue ({detailQ.data.work_queue?.length ?? 0})</h3>
-                  <ul>
-                    {(detailQ.data.work_queue ?? []).map((q) => (
-                      <li key={q.id}>
-                        [{q.source}] {q.reason}
-                      </li>
-                    ))}
-                  </ul>
-                  <div style={{ display: "flex", gap: "0.5rem", marginTop: "1rem" }}>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      loading={actionMut.isPending && actionMut.variables?.action === "start"}
-                      onClick={() => actionMut.mutate({ action: "start", agentId: selectedId })}
-                    >
-                      Start
-                    </Button>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      loading={actionMut.isPending && actionMut.variables?.action === "stop"}
-                      onClick={() => actionMut.mutate({ action: "stop", agentId: selectedId })}
-                    >
-                      Stop
-                    </Button>
-                  </div>
-                </>
-              ) : null}
-            </div>
-          </aside>
-        </>
-      ) : null}
+      <RunDrawer runId={selectedRunId} onClose={() => setSelectedRunId(null)} />
+      <AgentDetailDrawer
+        agentId={selectedId}
+        onClose={() => setSelectedId(null)}
+        onOpenRun={(runId) => {
+          setSelectedId(null);
+          setSelectedRunId(runId);
+        }}
+      />
     </>
+  );
+}
+
+export default function AgentsPage() {
+  return (
+    <Suspense fallback={<p className="loading-block">Loading agents…</p>}>
+      <AgentsPageInner />
+    </Suspense>
   );
 }

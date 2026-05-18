@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMemo } from "react";
 import { useDashboardCore } from "@/hooks/use-dashboard-data";
+import { buildLiveAgentRows } from "@/lib/live-agents";
 import { FooterControls } from "@/components/shell/footer-controls";
 import { Topbar } from "@/components/shell/topbar";
 
@@ -31,6 +33,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     isReportLoading,
   } = useDashboardCore();
 
+  const liveCount = useMemo(
+    () => buildLiveAgentRows(data?.agents, data?.status, data?.queue).length,
+    [data],
+  );
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -54,6 +61,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <div className="sidebar-meta hint">
             <p>Store: {data.status?.runtime?.store ?? "—"}</p>
             <p>SDK slots: {data.status?.runtime?.sdk_max_concurrent ?? "—"}</p>
+            <p>Live: {liveCount}</p>
             <p>Queue: {data.queue?.queue?.length ?? 0}</p>
             <p>Agents: {data.agents?.roster?.length ?? 0}</p>
           </div>
@@ -66,6 +74,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           statusFault={statusFault}
           agentsFault={agentsFault}
           agentsReachable={agentsReachable}
+          liveCount={liveCount}
         />
         <main className="content">
           {isLoading ? <p className="loading-block">Loading agents…</p> : null}
