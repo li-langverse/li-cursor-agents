@@ -1,9 +1,12 @@
 import type { AgentsPayload, QueuePayload, StatusPayload } from "./types";
 
-function agentsWithPendingQueue(queue: QueuePayload | undefined): Set<string> {
+function agentsWithQueueStatus(
+  queue: QueuePayload | undefined,
+  status: string,
+): Set<string> {
   const ids = new Set<string>();
   for (const item of queue?.queue ?? []) {
-    if (item.status === "pending") ids.add(String(item.agent_id));
+    if (item.status === status) ids.add(String(item.agent_id));
   }
   return ids;
 }
@@ -32,7 +35,8 @@ export function buildAgentStatusMap(
   const runtime = status?.runtime ?? roster?.runtime;
   const activeRuns = runtime?.active_runs ?? [];
   const stopped = new Set(runtime?.stopped_agents ?? []);
-  const queued = agentsWithPendingQueue(queue);
+  const queued = agentsWithQueueStatus(queue, "pending");
+  const inProgress = agentsWithQueueStatus(queue, "in_progress");
   const rec = new Map(
     ((report?.recommended_agents as Array<{ agent: string; reason: string }>) ?? []).map((r) => [
       r.agent,
@@ -46,6 +50,7 @@ export function buildAgentStatusMap(
     const activeRun = activeRuns.find((r) => r.agent_id === entry.id && r.status === "running");
     if (stopped.has(entry.id)) s = "stopped";
     else if (activeRun) s = "running";
+    else if (inProgress.has(entry.id)) s = "running";
     else if (queued.has(entry.id)) s = "queued";
     else if (runtime?.async_swarm_running) {
       if (activeRuns.some((r) => r.agent_id === entry.id)) s = "running";

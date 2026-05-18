@@ -36,8 +36,37 @@ import {
   agentUsesGuaranteedPush,
   beginRepoWorkflowSession,
 } from "./repo-workflow/workspace-session.js";
-import type { AgentRunOptions, AgentRunResult } from "./types.js";
+import {
+  completeSupervisorRun,
+  hasActiveRunningTrack,
+  registerSupervisorRun,
+} from "./control-plane/runtime.js";
+import type { AgentRunLifecycle } from "./control-plane/types.js";
+import type { AgentId, AgentRunOptions, AgentRunResult } from "./types.js";
 import type { RepoWorkflowSession } from "./repo-workflow/workspace-session.js";
+
+function runLifecycleFromResult(status: AgentRunResult["status"]): AgentRunLifecycle {
+  if (status === "finished") return "finished";
+  if (status === "cancelled") return "cancelled";
+  return "error";
+}
+
+async function withRunAgentTracking(
+  agentId: AgentId,
+  fn: () => Promise<AgentRunResult>,
+): Promise<AgentRunResult> {
+  if (hasActiveRunningTrack(agentId)) return fn();
+
+  const runId = registerSupervisorRun(agentId, "runAgent");
+  try {
+    const result = await fn();
+    completeSupervisorRun(runId, runLifecycleFromResult(result.status));
+    return result;
+  } catch (err) {
+    completeSupervisorRun(runId, "error");
+    throw err;
+  }
+}
 
 /** li-cursor-agents package root (where prompts/ lives). */
 export function agentsPackageRoot(): string {
@@ -84,6 +113,13 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
     throw new Error(`Unknown agent: ${options.agentId} (see npm run agents:list)`);
   }
 
+  return withRunAgentTracking(definition.id, async () => runAgentBody(options, definition));
+}
+
+async function runAgentBody(
+  options: AgentRunOptions,
+  definition: NonNullable<ReturnType<typeof getAgent>>,
+): Promise<AgentRunResult> {
   const packageRoot = agentsPackageRoot();
   const benchmarksRoot = resolveBenchmarksRoot(options.benchmarksRoot);
   const preflight = runPreflight(benchmarksRoot, true);

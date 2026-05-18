@@ -13,6 +13,7 @@ import { loadState, saveState } from "./state.js";
 import type { ActiveAgentRun, AgentRunLifecycle, ControlPlaneState } from "./types.js";
 import type { AgentId } from "../types.js";
 import { asyncSwarmSnapshot } from "../async-swarm/async-swarm-state.js";
+import { computeInSdkCount } from "./active-run-metrics.js";
 import { sdkMaxConcurrent, sdkSessionInProcessActive } from "../backends/sdk-session-lock.js";
 import { handoffRunStatus } from "../lanes/handoff-run-coordinator.js";
 import { runHandoffPhasedSwarm } from "../lanes/run-handoff-phases.js";
@@ -45,6 +46,12 @@ export function listActiveRuns(): ActiveAgentRun[] {
   );
 }
 
+export function hasActiveRunningTrack(agentId: AgentId): boolean {
+  return [...activeRuns.values()].some(
+    (r) => r.agent_id === agentId && r.status === "running",
+  );
+}
+
 /** Track in-process supervisor runs (same map as spawnAgentRun child processes). */
 export function registerSupervisorRun(agentId: AgentId, reason: string): string {
   const runId = `${agentId}-supervisor-${Date.now()}`;
@@ -56,12 +63,22 @@ export function registerSupervisorRun(agentId: AgentId, reason: string): string 
     status: "running",
     reason,
   });
+  scheduleWorkerHeartbeat();
   return runId;
 }
 
 export function completeSupervisorRun(runId: string, status: AgentRunLifecycle): void {
   setRunStatus(runId, status);
+  scheduleWorkerHeartbeat();
   setTimeout(() => clearRun(runId), 30_000);
+}
+
+function scheduleWorkerHeartbeat(): void {
+  void import("../worker/heartbeat.js")
+    .then((m) => m.persistWorkerHeartbeat(loadState()))
+    .catch(() => {
+      /* disk-only store — no worker_status row */
+    });
 }
 
 export function isSupervisorLoopRunning(): boolean {
@@ -122,7 +139,7 @@ export function runtimeSnapshot(state: ControlPlaneState) {
     stopped_agents: state.stopped_agents ?? [],
     current_supervisor_agent: state.current_supervisor_agent ?? null,
     active_runs: listActiveRuns(),
-    active_run_count: activeRuns.size,
+    active_run_count: computeInSdkCount(listActiveRuns(), sdkSessionInProcessActive()),
     ...asyncSwarmSnapshot(),
     handoff_run: handoffRunStatus(),
     sdk_max_concurrent: sdkMaxConcurrent(),

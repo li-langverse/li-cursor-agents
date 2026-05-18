@@ -1,3 +1,4 @@
+import { computeInSdkCount } from "../control-plane/active-run-metrics.js";
 import type { ControlPlaneState } from "../control-plane/types.js";
 import type { WorkerStatusRow } from "../db/worker-status.js";
 import { defaultWorkerStatus } from "../db/worker-status.js";
@@ -18,7 +19,7 @@ export function runtimeSnapshotFromDb(
     stopped_agents: state.stopped_agents ?? [],
     current_supervisor_agent: state.current_supervisor_agent ?? null,
     active_runs: w.active_runs,
-    active_run_count: w.active_runs.length,
+    active_run_count: computeInSdkCount(w.active_runs, w.sdk_sessions_active),
     async_swarm_running: w.async_swarm_running,
     handoff_run: w.handoff_run,
     sdk_max_concurrent: w.sdk_max_concurrent ?? Number(process.env.LI_SDK_MAX_CONCURRENT ?? 2),

@@ -6,6 +6,7 @@ import { ActivityFeed } from "@/components/activity/activity-feed";
 import { RunDrawer } from "@/components/activity/run-drawer";
 import { useDashboardCore, useRecentActivity } from "@/hooks/use-dashboard-data";
 import { buildAgentStatusMap } from "@/lib/agent-status";
+import { overviewInSdkCount } from "@/lib/in-sdk-count";
 import type { ActivityListItem } from "@/lib/activity";
 
 export default function OverviewPage() {
@@ -22,6 +23,7 @@ export default function OverviewPage() {
     if (v.status === "on_duty") onDuty++;
     if (v.status === "running") running++;
   }
+  const inSdk = overviewInSdkCount(runtime, running);
 
   const activityItems = (activityQ.data?.items ?? []) as ActivityListItem[];
 
@@ -30,7 +32,7 @@ export default function OverviewPage() {
       {swarmOn ? (
         <div className="swarm-banner" role="status">
           <span className="pulse" aria-hidden />
-          <strong>Agents running</strong> — {onDuty} on duty · {runtime?.active_run_count ?? running} in SDK
+          <strong>Agents running</strong> — {onDuty} on duty · {inSdk} in SDK
           now · {data?.queue?.queue?.length ?? 0} queued tasks
         </div>
       ) : (
@@ -48,7 +50,7 @@ export default function OverviewPage() {
         </div>
         <div className="stat-card">
           <div className="label">In SDK</div>
-          <div className="value">{runtime?.active_run_count ?? 0}</div>
+          <div className="value">{inSdk}</div>
         </div>
         <div className="stat-card">
           <div className="label">Queue items</div>

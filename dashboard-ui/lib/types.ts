@@ -13,6 +13,7 @@ export interface RuntimePayload {
   store?: string;
   agent_backend?: string;
   sdk_max_concurrent?: number;
+  sdk_sessions_active?: number;
   stopped_agents?: string[];
   lanes?: Record<string, unknown>;
 }
