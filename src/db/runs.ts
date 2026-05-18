@@ -183,17 +183,48 @@ export async function listAgentRunHistory(agentId: string, limit = 50): Promise<
 }
 
 export async function listRunsGlobal(limit = 80): Promise<AgentRunHistoryRow[]> {
+  return listRunsGlobalInRange({ limit });
+}
+
+export interface ListRunsGlobalInRangeOptions {
+  since?: string;
+  until?: string;
+  /** Max rows to return (safety cap). Default 50_000. */
+  limit?: number;
+  pageSize?: number;
+}
+
+/** Paginate through agent_runs for statistics and exports. */
+export async function listRunsGlobalInRange(
+  options: ListRunsGlobalInRangeOptions = {},
+): Promise<AgentRunHistoryRow[]> {
   if (!dbEnabled()) return [];
 
-  const { data, error } = await getSupabase()
-    .from("agent_runs")
-    .select("*")
-    .neq("backend", "mock")
-    .order("started_at", { ascending: false })
-    .limit(limit);
+  const cap = options.limit ?? 50_000;
+  const pageSize = Math.min(1000, Math.max(50, options.pageSize ?? 500));
+  const out: AgentRunHistoryRow[] = [];
+  let offset = 0;
 
-  if (error) throw new Error(`listRunsGlobal: ${error.message}`);
-  return (data ?? []).map((row) => rowToHistory(row as Record<string, unknown>));
+  while (out.length < cap) {
+    let q = getSupabase()
+      .from("agent_runs")
+      .select("*")
+      .neq("backend", "mock")
+      .order("started_at", { ascending: false })
+      .range(offset, offset + pageSize - 1);
+    if (options.since) q = q.gte("started_at", options.since);
+    if (options.until) q = q.lte("started_at", options.until);
+
+    const { data, error } = await q;
+    if (error) throw new Error(`listRunsGlobalInRange: ${error.message}`);
+    const batch = (data ?? []).map((row) => rowToHistory(row as Record<string, unknown>));
+    if (!batch.length) break;
+    out.push(...batch);
+    if (batch.length < pageSize) break;
+    offset += pageSize;
+  }
+
+  return out.slice(0, cap);
 }
 
 export async function getRunById(runId: string): Promise<AgentRunHistoryRow | null> {

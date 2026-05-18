@@ -79,6 +79,24 @@ function historyRowToCatalog(row: AgentRunHistoryRow): RunCatalogEntry {
   };
 }
 
+export interface ListRunsInRangeOptions {
+  since?: string;
+  until?: string;
+  limit?: number;
+}
+
+export function listRunsFromDiskInRange(options: ListRunsInRangeOptions = {}): RunCatalogEntry[] {
+  const all = listRunsFromDisk(Number.MAX_SAFE_INTEGER);
+  const sinceMs = options.since ? new Date(options.since).getTime() : 0;
+  const untilMs = options.until ? new Date(options.until).getTime() : Number.MAX_SAFE_INTEGER;
+  const filtered = all.filter((r) => {
+    const t = new Date(r.started_at).getTime();
+    return !Number.isNaN(t) && t >= sinceMs && t <= untilMs;
+  });
+  const cap = options.limit ?? filtered.length;
+  return filtered.slice(0, cap);
+}
+
 export function listRunsFromDisk(limit = 80): RunCatalogEntry[] {
   const dir = runsDir();
   let files: string[] = [];
