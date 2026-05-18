@@ -169,8 +169,8 @@ function collectOrgRepos(b: Record<string, unknown>): string[] {
 
 function pushSecurityOrgWork(items: AgentWorkQueueItem[], seen: Set<string>, b: Record<string, unknown>): void {
   const sec = b.security_cwe_audit as Record<string, unknown> | undefined;
-  const gaps = sec?.catalog_gaps;
-  if (Array.isArray(gaps)) {
+  const gaps = Array.isArray(sec?.catalog_gaps) ? sec.catalog_gaps : [];
+  if (gaps.length) {
     for (const g of gaps.slice(0, 6)) {
       if (!g || typeof g !== "object") continue;
       const row = g as Record<string, unknown>;
@@ -210,7 +210,7 @@ function pushSecurityOrgWork(items: AgentWorkQueueItem[], seen: Set<string>, b: 
         meta: { repo },
       });
     }
-  } else if (!gaps?.length) {
+  } else if (!gaps.length) {
     pushItem(items, seen, {
       id: "security:org:run-audit",
       agent_id: "security_auditor",
@@ -229,7 +229,8 @@ function pushEcosystemMaintainerWork(
   b: Record<string, unknown>,
 ): void {
   const kit = b.org_agent_kit_audit as Record<string, unknown> | undefined;
-  for (const raw of (kit?.repos_needing_sync ?? []).slice(0, 8) as unknown[]) {
+  const kitSync = Array.isArray(kit?.repos_needing_sync) ? kit.repos_needing_sync : [];
+  for (const raw of kitSync.slice(0, 8) as unknown[]) {
     const repo = typeof raw === "string" ? raw : String((raw as Record<string, unknown>)?.repo ?? "");
     if (!repo) continue;
     const status = typeof raw === "object" ? String((raw as Record<string, unknown>).status ?? "drift") : "drift";
@@ -245,7 +246,8 @@ function pushEcosystemMaintainerWork(
   }
 
   const orgCi = b.org_ci_audit as Record<string, unknown> | undefined;
-  for (const row of (orgCi?.repos_missing_ci ?? []).slice(0, 4) as Array<Record<string, unknown>>) {
+  const missingCi = Array.isArray(orgCi?.repos_missing_ci) ? orgCi.repos_missing_ci : [];
+  for (const row of missingCi.slice(0, 4) as Array<Record<string, unknown>>) {
     const repo = String(row.repo ?? "");
     if (!repo) continue;
     pushItem(items, seen, {
