@@ -221,7 +221,9 @@ Humans see **`swarm_degraded`** only when auto-heal is exhausted (e.g. missing A
 
 Env: `LI_OBSERVER_MAX_RETRIES_PER_AGENT`, `LI_OBSERVER_MAX_REMEDIATIONS_PER_TICK`, `LI_OBSERVER_STALE_AGENT_MS`.
 
-Env: `LI_SUPERVISOR_INTERVAL_MS`, `LI_SUPERVISOR_COOLDOWN_MS`, `LI_AGENT_DASHBOARD_PORT` (9477).
+**Dashboard → Settings** edits all runtime knobs (supervisor, observer, SDK, local CI, lanes, …). Values persist to `data/control-plane/runtime-settings.json` and apply immediately to the running ops server (restart only for port / store).
+
+Env fallbacks: `LI_SUPERVISOR_INTERVAL_MS`, `LI_AGENTS_COOLDOWN_MS`, `LI_AGENT_DASHBOARD_PORT` (9477).
 
 ## Link from benchmarks
 

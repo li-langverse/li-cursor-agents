@@ -484,3 +484,118 @@ table.data-table tr:hover {
   color: #fecaca;
   background: rgba(127, 29, 29, 0.25);
 }
+
+.settings-panel {
+  max-width: 960px;
+}
+
+.settings-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.settings-actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.settings-group {
+  margin-bottom: 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.settings-group summary {
+  cursor: pointer;
+  padding: 0.65rem 0.85rem;
+  font-weight: 600;
+}
+
+.settings-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0 0.85rem 0.85rem;
+}
+
+.settings-row {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.65rem;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+.settings-label {
+  font-weight: 600;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.settings-desc {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.settings-control {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.settings-control input,
+.settings-control select {
+  min-width: 12rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+}
+
+.settings-key {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.source-badge {
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.source-ui {
+  background: rgba(110, 181, 255, 0.2);
+  color: var(--accent);
+}
+
+.source-env {
+  background: rgba(74, 222, 128, 0.15);
+  color: var(--ok);
+}
+
+.source-default {
+  background: rgba(139, 156, 179, 0.2);
+  color: var(--muted);
+}
+
+.source-restart {
+  background: rgba(230, 162, 60, 0.2);
+  color: var(--warn);
+}
+
+.warn-hint {
+  color: var(--warn);
+  margin-bottom: 0.75rem;
+}
