@@ -40,8 +40,8 @@ function RunTraceBody({ detail }: { detail: RunDetail }) {
       <section key="edits" className="trace-section">
         <h4>Files touched ({trace.file_edits.length})</h4>
         <ul className="simple-list">
-          {trace.file_edits.map((f) => (
-            <li key={`${f.path}-${f.tool}`}>
+          {trace.file_edits.map((f, i) => (
+            <li key={`${i}-${f.path}-${f.tool}`}>
               <code>{f.path}</code> · {f.tool}
               {f.ok === false ? " · failed" : ""}
             </li>

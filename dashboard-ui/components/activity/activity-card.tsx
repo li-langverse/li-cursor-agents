@@ -53,8 +53,8 @@ function ActionDrilldowns({ item, compact }: { item: ActivityListItem; compact?:
           <>
             <h5>File edits ({edits.length})</h5>
             <ul className="simple-list">
-              {edits.map((f) => (
-                <li key={`${f.path}-${f.tool}`}>
+              {edits.map((f, i) => (
+                <li key={`${i}-${f.path}-${f.tool}`}>
                   <code>{f.path}</code> · {f.tool}
                   {f.ok === false ? " · failed" : ""}
                 </li>
