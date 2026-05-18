@@ -51,6 +51,12 @@ import type { AgentId } from "./types.js";
 import type { SwarmStatistics } from "./control-plane/swarm-statistics.js";
 import { buildSwarmScorecard, buildResearchGoalsStatus } from "./briefing/swarm-scorecard.js";
 import { listHandoffs } from "./handoffs/handoff-store.js";
+import {
+  agentHandoffsTableUnavailable,
+  isMissingAgentHandoffsTable,
+  noteAgentHandoffsUnavailable,
+  probeAgentHandoffsTable,
+} from "./handoffs/handoffs-schema.js";
 import { loadSwarmBriefingSnapshot } from "./ops/swarm-briefing-snapshot.js";
 import { researchLaneTick } from "./lanes/research-lane.js";
 import { implementLaneTick } from "./lanes/implement-lane.js";
@@ -109,9 +115,14 @@ async function getSwarmStatisticsForApi(
 
 /** Scorecard uses Supabase handoffs — must not break /api/status polling. */
 async function safeSwarmScorecard(): Promise<Awaited<ReturnType<typeof buildSwarmScorecard>> | null> {
+  if (agentHandoffsTableUnavailable()) return null;
   try {
     return await buildSwarmScorecard();
   } catch (err) {
+    if (isMissingAgentHandoffsTable(err)) {
+      noteAgentHandoffsUnavailable(err);
+      return null;
+    }
     const msg = err instanceof Error ? err.message : String(err);
     agentLog("dashboard", "warn", `swarm scorecard skipped: ${msg}`);
     return null;
@@ -170,6 +181,7 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
       void hydrateStateFromDb().catch((err) => {
         agentLog("db", "ERROR", `hydrate state: ${err instanceof Error ? err.message : err}`);
       });
+      void probeAgentHandoffsTable();
     }
     if (process.env.LI_AUTO_START_ASYNC_SWARM === "1" || process.env.LI_AUTO_START_ASYNC_SWARM === "true") {
       void startAsyncSwarm({ stopSupervisor: true }).then((r) => {
