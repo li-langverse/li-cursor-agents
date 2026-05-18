@@ -12,7 +12,6 @@ import {
   buildGoalWorkflowExtra,
   resolveGoalImplementationRepo,
 } from "../handoffs/goal-workflow.js";
-import { withGlobalSdkSessionLock } from "../backends/sdk-session-lock.js";
 import { resolveBenchmarksRoot } from "../preflight.js";
 import { agentsPackageRoot, runAgent, shouldUseMock } from "../runner.js";
 import { isHandoffRunInProgress } from "./handoff-run-coordinator.js";
@@ -112,17 +111,15 @@ export async function implementLaneTick(options?: {
   }
   let result;
   try {
-    result = await withGlobalSdkSessionLock(() =>
-      runAgent({
-        agentId: target.agentId,
-        cwd: benchmarksRoot ?? packageRoot,
-        benchmarksRoot,
-        mock: Boolean(mock),
-        dryRun: Boolean(options?.dryRun),
-        workflowRepo,
-        extraInstruction: handoffInstruction(target.handoff),
-      }),
-    );
+    result = await runAgent({
+      agentId: target.agentId,
+      cwd: benchmarksRoot ?? packageRoot,
+      benchmarksRoot,
+      mock: Boolean(mock),
+      dryRun: Boolean(options?.dryRun),
+      workflowRepo,
+      extraInstruction: handoffInstruction(target.handoff),
+    });
   } finally {
     if (workflowRepo) {
       if (prevPrTitle === undefined) delete process.env.LI_REPO_WORKFLOW_PR_TITLE;

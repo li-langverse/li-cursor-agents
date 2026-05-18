@@ -1,6 +1,5 @@
 import { agentsPackageRoot, runAgent, shouldUseMock } from "../runner.js";
 import { resolveBenchmarksRoot, runPreflight } from "../preflight.js";
-import { withGlobalSdkSessionLock } from "../backends/sdk-session-lock.js";
 import {
   loadResearchGoals,
   pickNextGoal,
@@ -97,16 +96,14 @@ export async function researchLaneTick(options?: {
   const benchmarksRoot = resolveBenchmarksRoot(options?.benchmarksRoot);
   const packageRoot = agentsPackageRoot();
   const mock = options?.mock ?? shouldUseMock(false);
-  const result = await withGlobalSdkSessionLock(() =>
-    runAgent({
-      agentId: target.agentId,
-      cwd: benchmarksRoot ?? packageRoot,
-      benchmarksRoot,
-      mock: Boolean(mock),
-      dryRun: Boolean(options?.dryRun),
-      extraInstruction: target.extra,
-    }),
-  );
+  const result = await runAgent({
+    agentId: target.agentId,
+    cwd: benchmarksRoot ?? packageRoot,
+    benchmarksRoot,
+    mock: Boolean(mock),
+    dryRun: Boolean(options?.dryRun),
+    extraInstruction: target.extra,
+  });
 
   if (target.goal?.id) {
     recordGoalRun(loadLaneState(), target.goal.id);

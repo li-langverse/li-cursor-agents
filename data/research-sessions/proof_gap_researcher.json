@@ -1,0 +1,38 @@
+{
+  "session_id": "f43a7e66-4a92-4d7f-927f-4f0af7949042",
+  "agent_id": "proof_gap_researcher",
+  "goal_id": "provability_holes",
+  "cycle": 1,
+  "status": "in_progress",
+  "current_focus": {
+    "kind": "synthesize_step",
+    "target": "proof-gap digest"
+  },
+  "queue": [
+    {
+      "kind": "synthesize_step",
+      "target": "proof-gap digest"
+    }
+  ],
+  "completed_steps": [
+    {
+      "id": "read_register-1",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "contract_tier-2",
+      "summary": "mock_backend",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    }
+  ],
+  "artifacts": {
+    "progress_md": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+  },
+  "connections": [],
+  "deferred_findings": [],
+  "last_run_id": "proof_gap_researcher-1779096545274",
+  "last_run_status": "finished",
+  "created_at": "2026-05-18T09:29:05.131Z",
+  "updated_at": "2026-05-18T09:29:05.275Z"
+}

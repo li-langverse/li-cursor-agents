@@ -58,7 +58,8 @@ export LI_SUPERVISOR_INTERVAL_MS="${LI_SUPERVISOR_INTERVAL_MS:-120000}"
 export LI_AGENTS_COOLDOWN_MS="${LI_AGENTS_COOLDOWN_MS:-300000}"
 export LI_SUPERVISOR_MAX_TASKS="${LI_SUPERVISOR_MAX_TASKS:-2}"
 
-# Cursor SDK: one session at a time + retries on instant error
+# Cursor SDK: parallel sessions (async swarm) + gap when max=1 + retries on instant error
+export LI_SDK_MAX_CONCURRENT="${LI_SDK_MAX_CONCURRENT:-4}"
 export LI_SDK_SESSION_GAP_MS="${LI_SDK_SESSION_GAP_MS:-8000}"
 export LI_SDK_MAX_ATTEMPTS="${LI_SDK_MAX_ATTEMPTS:-3}"
 export LI_SDK_RETRY_BACKOFF_MS="${LI_SDK_RETRY_BACKOFF_MS:-4000}"

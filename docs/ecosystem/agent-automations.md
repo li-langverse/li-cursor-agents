@@ -9,7 +9,7 @@ No supervisor tick queue. On dashboard start (`LI_AUTO_START_ASYNC_SWARM=1`):
 | Research lane | Goal-directed research (continuous) |
 | Implement lane | Architect + `code_implementer` handoffs |
 | Maintenance lane | Briefing enrich + scorecards (no LLM) |
-| Agent worker pool | All other registry agents on staggered intervals (parallel loops; SDK lock serializes runs) |
+| Agent worker pool | All other registry agents on staggered intervals (`LI_SDK_MAX_CONCURRENT` parallel SDK slots, default 4) |
 
 ```bash
 npm run agents:async-swarm          # foreground (Ctrl+C stops)

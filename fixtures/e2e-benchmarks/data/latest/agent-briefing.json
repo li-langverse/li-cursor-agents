@@ -43,7 +43,7 @@
     ]
   },
   "org_roadmap": {
-    "loaded_at": "2026-05-17T09:20Z",
+    "loaded_at": "2026-05-18T09:30Z",
     "vision_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/vision-and-roadmap.md",
     "engineering_standards_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/engineering-standards.md",
     "master_plan_url": "https://github.com/li-langverse/lic/blob/main/docs/superpowers/plans/2026-05-14-li-master-plan.md",
@@ -102,5 +102,34 @@
       }
     ],
     "validation_errors": []
+  },
+  "implementation_queue": {
+    "work_queue": [],
+    "sources": []
+  },
+  "swarm_scorecard": {
+    "pending_handoffs": 0,
+    "pending_placement": 0,
+    "ready_to_implement": 0,
+    "by_domain": {
+      "ecosystem": 1
+    },
+    "active_research_session": null,
+    "research_lane_enabled": true,
+    "implement_lane_enabled": true
+  },
+  "research_goals_status": [
+    {
+      "goal_id": "provability_holes",
+      "title": "Proof gaps (fixture)",
+      "agent": "proof_gap_researcher",
+      "priority": 9,
+      "eligible": true
+    }
+  ],
+  "provability_scorecard": {
+    "open_plan_findings": 0,
+    "provability_goal_priority": 9,
+    "trigger_goal_id": "provability_holes"
   }
 }
