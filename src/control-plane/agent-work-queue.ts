@@ -10,6 +10,7 @@ import type { ControlPlaneState } from "./types.js";
 import { isHandoffRunInProgress } from "../lanes/handoff-run-coordinator.js";
 import { isAsyncSwarmRunning } from "../async-swarm/async-swarm-state.js";
 import { laneRuntimeSnapshot } from "../lanes/lane-runtime.js";
+import { pushBriefingDerivedWorkItems } from "./briefing-work-items.js";
 
 export interface AgentWorkQueueItem {
   id: string;
@@ -167,6 +168,8 @@ export async function buildAgentWorkQueue(state: ControlPlaneState): Promise<Age
   } catch {
     /* handoffs table may be missing — heap + recommended still populate queue */
   }
+
+  pushBriefingDerivedWorkItems(items, seen, briefing);
 
   for (const goal of loadResearchGoals()) {
     if (goal.enabled === false) continue;
