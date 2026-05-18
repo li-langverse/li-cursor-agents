@@ -16,6 +16,9 @@ function parsePort(argv: string[]): number {
 }
 
 const server = startOpsServer(parsePort(process.argv.slice(2)));
-server.on("error", (err) => {
+server.on("error", (err: NodeJS.ErrnoException) => {
   console.error("[dashboard] HTTP server error:", err.message);
+  if (err.code === "EADDRINUSE" || err.code === "EACCES") {
+    process.exit(1);
+  }
 });

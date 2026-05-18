@@ -244,6 +244,11 @@ function currentApiState(): ReturnType<typeof loadState> {
 }
 
 async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): Promise<void> {
+  if (url.pathname === "/api/health") {
+    json(res, 200, { ok: true, ts: new Date().toISOString() });
+    return;
+  }
+
   const state = currentApiState();
   const store = dataStoreLabel();
   const runtime = runtimeSnapshot(state);

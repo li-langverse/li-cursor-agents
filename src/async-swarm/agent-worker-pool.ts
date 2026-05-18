@@ -7,6 +7,10 @@ import {
   pickNextWorkForAgent,
   scheduleAgentWorkQueueRefresh,
 } from "../control-plane/agent-work-queue.js";
+import {
+  pickProactiveWorkForAgent,
+  recordProactiveAgentRun,
+} from "../control-plane/proactive-agent-work.js";
 import { loadState } from "../control-plane/state.js";
 import { asyncWorkerAgentIds } from "../lanes/lane-agent-ids.js";
 import { resolveSpawnWorkflowRepo } from "../handoffs/resolve-spawn-workflow-repo.js";
@@ -56,7 +60,9 @@ export async function agentWorkerTick(
     scheduleAgentWorkQueueRefresh(state, lightOpts);
   }
   const next = pickNextWorkForAgent(agentId, queue);
-  if (!next) {
+  const proactive = next ? null : pickProactiveWorkForAgent(agentId);
+  const work = next ?? proactive;
+  if (!work) {
     return { skipped: true, skip_reason: "no queued work for this agent" };
   }
 
@@ -72,8 +78,12 @@ export async function agentWorkerTick(
     mock,
     dryRun: false,
     workflowRepo,
-    extraInstruction: `## Queued task\n\n${next.reason}\n\nSource: ${next.source} · id: ${next.id}`,
+    extraInstruction: next
+      ? `## Queued task\n\n${next.reason}\n\nSource: ${next.source} · id: ${next.id}`
+      : `## Proactive run\n\n${proactive!.reason}\n\nSource: ${proactive!.source}`,
   });
+
+  if (proactive) recordProactiveAgentRun(agentId);
 
   return { skipped: false, status: result.status };
 }

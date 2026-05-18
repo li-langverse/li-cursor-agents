@@ -15,6 +15,8 @@ cd "$ROOT"
 export LI_AUTO_START_ASYNC_SWARM="${LI_AUTO_START_ASYNC_SWARM:-0}"
 export LI_AUTO_START_SUPERVISOR="${LI_AUTO_START_SUPERVISOR:-0}"
 export LI_MAINTENANCE_STARTUP_DELAY_MS="${LI_MAINTENANCE_STARTUP_DELAY_MS:-15000}"
+export LI_LANE_STARTUP_DELAY_MS="${LI_LANE_STARTUP_DELAY_MS:-5000}"
+export LI_SWARM_RECONCILE_DEFER_MS="${LI_SWARM_RECONCILE_DEFER_MS:-2000}"
 export LI_WORKER_STARTUP_DEFER_MS="${LI_WORKER_STARTUP_DEFER_MS:-8000}"
 export LI_QUEUE_CACHE_MS="${LI_QUEUE_CACHE_MS:-20000}"
 export LI_QUEUE_WARM_MS="${LI_QUEUE_WARM_MS:-25000}"
@@ -91,13 +93,10 @@ fi
 API_PORT="${LI_AGENT_DASHBOARD_PORT:-9477}"
 UI_PORT="${LI_DASHBOARD_UI_PORT:-3000}"
 
-# Free ports from a previous dev:all
+# shellcheck source=free-port.sh
+source "$ROOT/scripts/free-port.sh"
 for _port in "$API_PORT" "$UI_PORT"; do
-  if lsof -ti ":$_port" >/dev/null 2>&1; then
-    echo "==> Stopping process on :$_port"
-    lsof -ti ":$_port" | xargs kill 2>/dev/null || true
-    sleep 1
-  fi
+  free_port "$_port" 15 || exit 1
 done
 
 API_PID=""
@@ -125,6 +124,8 @@ env \
   LI_AUTO_START_ASYNC_SWARM="${LI_AUTO_START_ASYNC_SWARM}" \
   LI_AUTO_START_SUPERVISOR="${LI_AUTO_START_SUPERVISOR}" \
   LI_MAINTENANCE_STARTUP_DELAY_MS="${LI_MAINTENANCE_STARTUP_DELAY_MS}" \
+  LI_LANE_STARTUP_DELAY_MS="${LI_LANE_STARTUP_DELAY_MS}" \
+  LI_SWARM_RECONCILE_DEFER_MS="${LI_SWARM_RECONCILE_DEFER_MS}" \
   LI_WORKER_STARTUP_DEFER_MS="${LI_WORKER_STARTUP_DEFER_MS}" \
   LI_SDK_MAX_CONCURRENT="${LI_SDK_MAX_CONCURRENT:-2}" \
   LI_QUEUE_CACHE_MS="${LI_QUEUE_CACHE_MS}" \
@@ -139,7 +140,30 @@ env \
   node dist/cli/serve-dashboard.js &
 API_PID=$!
 
-echo "==> Waiting for API readiness (status + agents; progress below)…"
+_bind_start=$(date +%s)
+_bind_deadline=$((_bind_start + 20))
+while true; do
+  if curl -sf --max-time 2 "http://127.0.0.1:${API_PORT}/api/health" >/dev/null 2>&1; then
+    break
+  fi
+  if ! kill -0 "$API_PID" 2>/dev/null; then
+    echo "ERROR: control plane exited before binding :${API_PORT} (EADDRINUSE?)" >&2
+    wait "$API_PID" 2>/dev/null || true
+    exit 1
+  fi
+  _now=$(date +%s)
+  if ((_now >= _bind_deadline)); then
+    _holder=$(lsof -nP -iTCP:"${API_PORT}" -sTCP:LISTEN 2>/dev/null | tail -n +2 | head -3 || true)
+    echo "ERROR: control plane did not answer /api/health on :${API_PORT} within 20s." >&2
+    [[ -n "$_holder" ]] && echo "       Port holder: $_holder" >&2
+    echo "       Try: lsof -ti :${API_PORT} | xargs kill -9 && npm run dev:all" >&2
+    stop_api
+    exit 1
+  fi
+  sleep 0.25
+done
+
+echo "==> Waiting for API readiness (agents + runtime; progress below)…"
 export LI_DEV_READY_TIMEOUT_MS="${LI_DEV_READY_TIMEOUT_MS:-120000}"
 if ! LI_AGENT_DASHBOARD_PORT="$API_PORT" node "$ROOT/scripts/wait-dev-stack-ready.mjs"; then
   echo "" >&2

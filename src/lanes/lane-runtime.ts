@@ -28,7 +28,13 @@ export function laneRuntimeSnapshot(state: LaneStateFile = loadLaneState()) {
   };
 }
 
+function laneLoopStartupDelayMs(): number {
+  const n = Number(process.env.LI_LANE_STARTUP_DELAY_MS ?? 5_000);
+  return Number.isFinite(n) && n >= 0 ? n : 5_000;
+}
+
 async function researchLoop(abort: AbortSignal, mock: boolean): Promise<void> {
+  await sleepUntil(abort, laneLoopStartupDelayMs());
   while (!abort.aborted) {
     try {
       const tick = await researchLaneTick({ mock });
@@ -51,6 +57,7 @@ async function researchLoop(abort: AbortSignal, mock: boolean): Promise<void> {
 }
 
 async function implementLoop(abort: AbortSignal, mock: boolean): Promise<void> {
+  await sleepUntil(abort, laneLoopStartupDelayMs());
   while (!abort.aborted) {
     try {
       const tick = await implementLaneTick({ mock });

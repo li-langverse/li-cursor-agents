@@ -38,9 +38,28 @@ export async function reconcileSwarmAfterStartup(): Promise<void> {
     }
   }
 
+  const deferMs = Number(process.env.LI_SWARM_RECONCILE_DEFER_MS ?? 0);
+
   if (shouldStart) {
-    const r = await startAsyncSwarm({ stopSupervisor: true });
-    agentLog("dashboard", "info", `async swarm startup: ${r.message}`);
+    const launch = async (): Promise<void> => {
+      const r = await startAsyncSwarm({ stopSupervisor: true });
+      agentLog("dashboard", "info", `async swarm startup: ${r.message}`);
+      await persistWorkerHeartbeat(loadState());
+    };
+    if (deferMs > 0) {
+      setTimeout(() => {
+        void launch().catch((err) => {
+          agentLog(
+            "dashboard",
+            "ERROR",
+            `deferred swarm start: ${err instanceof Error ? err.message : err}`,
+          );
+        });
+      }, deferMs).unref();
+      return;
+    }
+    await launch();
+    return;
   }
 
   await persistWorkerHeartbeat(loadState());

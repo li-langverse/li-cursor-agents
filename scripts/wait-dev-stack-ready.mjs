@@ -62,7 +62,7 @@ async function probe(path, init, label) {
 let lastHeartbeat = 0;
 while (Date.now() < deadline) {
   try {
-    const r = await fetchJson("/api/status", { timeoutMs: 8_000 });
+    const r = await fetchJson("/api/health", { timeoutMs: 3_000 });
     if (r.status === 200) break;
   } catch {
     /* server still booting */
@@ -70,13 +70,25 @@ while (Date.now() < deadline) {
   const now = Date.now();
   if (now - lastHeartbeat >= 5_000) {
     const elapsed = Math.round((now - startedAt) / 1000);
-    log(`still waiting for /api/status (${elapsed}s / ${Math.round((deadline - startedAt) / 1000)}s max)…`);
+    log(`still waiting for /api/health (${elapsed}s / ${Math.round((deadline - startedAt) / 1000)}s max)…`);
     lastHeartbeat = now;
   }
   await new Promise((r) => setTimeout(r, 400));
 }
 if (Date.now() >= deadline) {
-  fail(`/api/status not ready on :${port} — is the control plane running?`);
+  fail(`/api/health not ready on :${port} — is the control plane running?`);
+}
+
+log("API process is up — checking /api/status…");
+try {
+  const statusProbe = await fetchJson("/api/status", { timeoutMs: 15_000 });
+  if (statusProbe.status !== 200) {
+    console.warn(`dev:all WARN: /api/status returned ${statusProbe.status} (continuing)`);
+  }
+} catch (e) {
+  console.warn(
+    `dev:all WARN: /api/status slow on boot (${e instanceof Error ? e.message : e}) — continuing`,
+  );
 }
 
 const agents = await probe("/api/agents", { timeoutMs: 10_000 }, "GET /api/agents");
