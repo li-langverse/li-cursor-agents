@@ -15,15 +15,16 @@ cd "$ROOT"
 sdk_matrix_load_env "$ROOT"
 sdk_matrix_require_api_key
 
-PER_AGENT_TIMEOUT="${AGENT_TIMEOUT_SEC:-720}"
+PER_AGENT_TIMEOUT="${AGENT_TIMEOUT_SEC:-1200}"
 TIMING_FILE="${LI_SDK_MATRIX_TIMING_FILE:-$ROOT/logs/sdk-matrix/timing-sequential.jsonl}"
 RESULTS_FILE="${LI_SDK_MATRIX_RESULTS:-$ROOT/logs/sdk-matrix/isolated-results.jsonl}"
 LOG_DIR="${LI_E2E_SDK_LOG_DIR:-$ROOT/logs/sdk-matrix}"
 mkdir -p "$LOG_DIR"
 touch "$TIMING_FILE" "$RESULTS_FILE"
 
-echo "==> build"
+echo "==> build (once)"
 npm run build
+export LI_SDK_MATRIX_SKIP_BUILD=1
 
 sdk_matrix_stop_control_plane
 sdk_matrix_reclaim_locks "$ROOT"
@@ -83,12 +84,12 @@ while IFS= read -r agent; do
   AGENT_LOG="${LOG_DIR}/isolated-${agent}.log"
   set +e
   if command -v timeout >/dev/null 2>&1; then
-    timeout "$PER_AGENT_TIMEOUT" env VERIFY_AGENT="$agent" \
+    timeout "$PER_AGENT_TIMEOUT" env VERIFY_AGENT="$agent" LI_SDK_MATRIX_SKIP_BUILD=1 \
       npm run test:verify-all-agents-sdk-stream \
       >"$AGENT_LOG" 2>&1
     RC=$?
   elif command -v gtimeout >/dev/null 2>&1; then
-    gtimeout "$PER_AGENT_TIMEOUT" env VERIFY_AGENT="$agent" \
+    gtimeout "$PER_AGENT_TIMEOUT" env VERIFY_AGENT="$agent" LI_SDK_MATRIX_SKIP_BUILD=1 \
       npm run test:verify-all-agents-sdk-stream \
       >"$AGENT_LOG" 2>&1
     RC=$?

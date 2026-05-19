@@ -16,8 +16,12 @@ cd "$ROOT"
 sdk_matrix_load_env "$ROOT"
 sdk_matrix_require_api_key
 
-echo "==> build"
-npm run build
+if [[ "${LI_SDK_MATRIX_SKIP_BUILD:-}" != "1" ]]; then
+  echo "==> build"
+  npm run build
+else
+  echo "==> build skipped (LI_SDK_MATRIX_SKIP_BUILD=1)"
+fi
 
 sdk_matrix_stop_control_plane
 sdk_matrix_reclaim_locks "$ROOT"
