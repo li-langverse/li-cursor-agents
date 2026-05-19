@@ -112,7 +112,12 @@ export function buildFormattedOutput(p: FormatAgentOutputParams): string {
     sections.push("", formatErrorMarkdown({ message: p.error.trim() }));
   }
 
-  sections.push("", "---", `_Formatted by li-cursor-agents · ${new Date().toISOString()}_`);
+  sections.push(
+    "",
+    "---",
+    `_Formatted by li-cursor-agents · ${new Date().toISOString()}_`,
+    `<!-- li-agent-role: ${p.definition.id} -->`,
+  );
   return sections.join("\n");
 }
 

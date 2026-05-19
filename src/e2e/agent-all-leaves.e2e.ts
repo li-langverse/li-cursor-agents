@@ -24,6 +24,7 @@ import {
   pollRunDetailUntil,
   reapplyE2eStore,
 } from "./all-leaves-shared.js";
+import { auditAgentRun, assertAgentAudit } from "./agent-role-audit.js";
 import { setupE2eEnv } from "./helpers.js";
 
 describe("all leaf agents — mock run + live stream + parallel", () => {
@@ -78,6 +79,10 @@ describe("all leaf agents — mock run + live stream + parallel", () => {
         assert.ok(result.outputPath.endsWith(".md"));
         assert.ok(result.runInput, `${def.id}: runInput`);
         assert.ok(result.trace, `${def.id}: trace`);
+        assertAgentAudit(
+          auditAgentRun(def.id, result, { benchmarksRoot: env.benchmarksRoot }),
+          `all-leaves ${def.id}`,
+        );
 
         reapplyE2eStore(env);
         const runId = result.outputPath.split("/").pop()!.replace(/\.md$/, "");
@@ -270,9 +275,18 @@ describe("all leaf agents — mock run + live stream + parallel", () => {
     const fulfilled = results.filter((r) => r.status === "fulfilled") as Array<
       PromiseFulfilledResult<Awaited<ReturnType<typeof runAgent>>>
     >;
-    assert.ok(
-      fulfilled.length >= ALL_LEAF_AGENTS.length * 0.85,
-      `expected ≥85% parallel mock runs ok, got ${fulfilled.length}/${ALL_LEAF_AGENTS.length}`,
+    assert.equal(
+      fulfilled.length,
+      ALL_LEAF_AGENTS.length,
+      `expected all parallel mock runs ok, got ${fulfilled.length}/${ALL_LEAF_AGENTS.length}`,
     );
+    for (const r of fulfilled) {
+      assertAgentAudit(
+        auditAgentRun(r.value.agentId as (typeof ALL_LEAF_AGENTS)[number]["id"], r.value, {
+          benchmarksRoot: env.benchmarksRoot,
+        }),
+        "all-leaves parallel",
+      );
+    }
   });
 });
