@@ -127,7 +127,7 @@ export function RunDrawer({ runId, onClose }: { runId: string | null; onClose: (
     queryKey: ["run-detail", runId],
     queryFn: () => apiFetch<RunDetail>(`/api/runs/${encodeURIComponent(runId!)}`, { timeoutMs: 20_000 }),
     enabled: Boolean(runId),
-    refetchInterval: (query) => (query.state.data?.live ? 2_000 : false),
+    refetchInterval: (query) => (query.state.data?.live ? 1_000 : false),
   });
 
   if (!runId) return null;

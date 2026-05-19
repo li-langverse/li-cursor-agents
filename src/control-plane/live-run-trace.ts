@@ -9,9 +9,12 @@ import {
 import { slimTraceForList } from "./activity-summary.js";
 import { patchActiveRun } from "./runtime.js";
 
-function liveTraceFlushMs(): number {
-  const n = Number(process.env.LI_LIVE_TRACE_FLUSH_MS ?? 1_500);
-  return Number.isFinite(n) && n >= 200 ? Math.min(10_000, n) : 1_500;
+/** 0 = flush every SDK delta/step (immediate dashboard stream). */
+export function liveTraceFlushMs(): number {
+  const raw = process.env.LI_LIVE_TRACE_FLUSH_MS?.trim();
+  if (raw === "0" || raw === "immediate") return 0;
+  const n = Number(raw ?? 150);
+  return Number.isFinite(n) && n >= 0 ? Math.min(10_000, Math.floor(n)) : 150;
 }
 
 function scheduleWorkerHeartbeat(): void {
@@ -81,6 +84,7 @@ export function createLiveTraceCollector(
   const inner = createTraceCollector();
   const assistantChunks: string[] = [];
   let lastFlush = 0;
+  const flushIntervalMs = liveTraceFlushMs();
 
   const flush = () => {
     const trace = inner.peek(assistantChunks.join(""));
@@ -99,6 +103,7 @@ export function createLiveTraceCollector(
           tool_calls: trace.tool_call_count,
           thinking_len: trace.thinking_text.length,
           assistant_len: trace.assistant_text.length,
+          flushIntervalMs,
         },
         timestamp: Date.now(),
       }),
@@ -106,9 +111,9 @@ export function createLiveTraceCollector(
     // #endregion
   };
 
-  const maybeFlush = () => {
+  const maybeFlush = (immediate = false) => {
     const now = Date.now();
-    if (now - lastFlush >= liveTraceFlushMs()) {
+    if (immediate || flushIntervalMs === 0 || now - lastFlush >= flushIntervalMs) {
       lastFlush = now;
       flush();
     }
@@ -117,14 +122,14 @@ export function createLiveTraceCollector(
   return {
     onStep: ({ step }) => {
       inner.onStep({ step });
-      maybeFlush();
+      maybeFlush(flushIntervalMs === 0);
     },
     onDelta: ({ update }) => {
       inner.onDelta({ update });
       if (update.type === "text-delta" && "text" in update) {
         assistantChunks.push(String((update as { text: string }).text));
       }
-      maybeFlush();
+      maybeFlush(flushIntervalMs === 0 || update.type === "text-delta");
     },
     finalize: (assistantText: string) => {
       flush();

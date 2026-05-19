@@ -30,8 +30,13 @@ export function sdkMaxConcurrent(): number {
 }
 
 export function sdkSlotMaxWaitMs(): number {
+  const raw = process.env.LI_SDK_SLOT_MAX_WAIT_MS?.trim().toLowerCase();
+  if (raw === "0" || raw === "unlimited" || raw === "infinity") {
+    return Number.POSITIVE_INFINITY;
+  }
   const n = Number(process.env.LI_SDK_SLOT_MAX_WAIT_MS ?? 600_000);
-  if (!Number.isFinite(n) || n < 5_000) return 600_000;
+  if (!Number.isFinite(n) || n <= 0) return Number.POSITIVE_INFINITY;
+  if (n < 5_000) return 600_000;
   return Math.min(3_600_000, Math.floor(n));
 }
 
@@ -189,7 +194,7 @@ async function acquireFileSlot(maxSlots: number, maxWaitMs = sdkSlotMaxWaitMs())
       if (tryAcquireSlot(slot)) return slot;
     }
     polls++;
-    if (Date.now() - start > maxWaitMs) {
+    if (maxWaitMs !== Number.POSITIVE_INFINITY && Date.now() - start > maxWaitMs) {
       const diag = sdkSlotsDiagnostics();
       // #region agent log
       fetch("http://127.0.0.1:7746/ingest/994bad2f-5ad5-4c20-9cd2-19e851fc1d5c", {

@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getAgent } from "./agents/registry.js";
 import { MockBackend } from "./backends/mock-backend.js";
+import { isSdkSlotLockError } from "./backends/sdk-session-lock.js";
 import { buildMockTrace, buildRunInput } from "./agent-run-trace.js";
 import { resolveCursorApiKey } from "./env.js";
 import { hashBriefing } from "./control-plane/briefing-hash.js";
@@ -335,6 +336,9 @@ async function runAgentBody(
       runId: options.runId,
     });
   } catch (err) {
+    if (isSdkSlotLockError(err)) {
+      throw err;
+    }
     const outputPath = runOutputPath(
       definition.id,
       options.runId ?? allocateRunId(definition.id),
