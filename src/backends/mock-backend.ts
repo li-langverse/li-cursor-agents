@@ -2,7 +2,10 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { buildMockDeliverable } from "../agent-output-format.js";
 import { buildMockTrace } from "../agent-run-trace.js";
-import { publishLiveTraceSnapshot, publishRunInputLive } from "../control-plane/live-run-trace.js";
+import {
+  createLiveTraceCollector,
+  publishLiveTraceSnapshot,
+} from "../control-plane/live-run-trace.js";
 import { allocateRunId, runOutputPath } from "../control-plane/run-paths.js";
 import type { AgentBackend, AgentDefinition, AgentRunOptions, AgentRunResult } from "../types.js";
 
@@ -26,7 +29,28 @@ export class MockBackend implements AgentBackend {
       true,
     );
     const delayMs = Number(process.env.LI_MOCK_RUN_DELAY_MS ?? 0);
-    if (delayMs > 0 && options.runId) {
+    const liveStream =
+      Boolean(options.runId) &&
+      (process.env.LI_MOCK_LIVE_STREAM === "1" || process.env.LI_MOCK_LIVE_STREAM === "true");
+    const streamCollector = liveStream
+      ? createLiveTraceCollector(options.runId!, outputPath)
+      : null;
+
+    if (streamCollector) {
+      const marker = `mock-stream-${definition.id}`;
+      streamCollector.onDelta({
+        update: { type: "text-delta", text: `start-${marker}-` } as {
+          type: "text-delta";
+          text: string;
+        },
+      });
+      if (delayMs > 0) {
+        await new Promise((r) => setTimeout(r, Math.min(delayMs, 500)));
+      }
+      streamCollector.onDelta({
+        update: { type: "text-delta", text: "mid-" } as { type: "text-delta"; text: string },
+      });
+    } else if (delayMs > 0 && options.runId) {
       const staged = buildMockTrace({
         definitionId: definition.id,
         assistantText: "[mock] starting…",
@@ -41,6 +65,14 @@ export class MockBackend implements AgentBackend {
 
     if (options.dryRun) {
       const dryText = `[dry-run] mock backend would run ${definition.id}`;
+      const trace = streamCollector
+        ? streamCollector.finalize(dryText)
+        : buildMockTrace({
+            definitionId: definition.id,
+            assistantText: dryText,
+            userMessage,
+            cwd: options.cwd,
+          });
       return {
         agentId: definition.id,
         backend: "mock",
@@ -48,17 +80,28 @@ export class MockBackend implements AgentBackend {
         durationMs: Date.now() - start,
         outputPath,
         outputText: dryText,
-        trace: buildMockTrace({
-          definitionId: definition.id,
-          assistantText: dryText,
-          userMessage,
-          cwd: options.cwd,
-        }),
+        trace,
       };
     }
 
     const briefing = extractBriefing(userMessage);
     const deliverable = buildMockDeliverable(definition, briefing, userMessage);
+
+    if (streamCollector) {
+      streamCollector.onDelta({
+        update: { type: "text-delta", text: "done" } as { type: "text-delta"; text: string },
+      });
+      const trace = streamCollector.finalize(deliverable);
+      return {
+        agentId: definition.id,
+        backend: "mock",
+        status: "finished",
+        durationMs: Date.now() - start,
+        outputText: deliverable,
+        outputPath,
+        trace,
+      };
+    }
 
     if (definition.guaranteedPush && options.cwd) {
       const docsDir = join(options.cwd, "docs");

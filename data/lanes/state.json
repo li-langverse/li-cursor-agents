@@ -3,12 +3,21 @@
   "implement_lane_enabled": true,
   "goal_last_run_at": {},
   "last_research_tick_at": "2026-05-18T23:03:01.952Z",
-  "last_maintenance_tick_at": "2026-05-18T22:44:39.231Z",
+  "last_maintenance_tick_at": "2026-05-19T07:28:26.820Z",
   "proactive_last_run_at": {
     "orchestrator": "2026-05-18T23:03:01.908Z",
-    "pr_merger": "2026-05-18T23:03:01.903Z",
-    "pr_branch_opener": "2026-05-18T22:30:53.303Z",
-    "issue_planner": "2026-05-18T22:44:39.165Z",
-    "swarm_observer": "2026-05-18T22:29:36.410Z"
+    "pr_merger": "2026-05-19T07:25:44.528Z",
+    "pr_branch_opener": "2026-05-19T07:25:44.527Z",
+    "issue_planner": "2026-05-19T07:25:44.527Z",
+    "swarm_observer": "2026-05-19T07:25:44.528Z",
+    "agent_kit_maintainer": "2026-05-19T07:25:44.526Z",
+    "workspace_sweeper": "2026-05-19T07:25:44.527Z",
+    "plan_verifier": "2026-05-19T07:25:44.527Z",
+    "implementation_gaps": "2026-05-19T07:25:44.527Z",
+    "autoresearch": "2026-05-19T07:25:44.528Z",
+    "bench_improver": "2026-05-19T07:25:44.528Z",
+    "docs_maintainer": "2026-05-19T07:25:44.528Z",
+    "ci_maintainer": "2026-05-19T07:25:44.528Z",
+    "bug_fixer": "2026-05-19T07:25:44.528Z"
   }
 }
