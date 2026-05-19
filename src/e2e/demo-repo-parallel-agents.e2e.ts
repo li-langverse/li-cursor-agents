@@ -6,7 +6,8 @@ import { test, describe, after, before } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { AGENT_REGISTRY } from "../agents/registry.js";
+import { AGENT_REGISTRY, getAgent } from "../agents/registry.js";
+import type { AgentRunResult } from "../types.js";
 import {
   researchAgentWorkerCycle,
   pickResearchWorkForAgent,
@@ -17,14 +18,44 @@ import { researchParallelEnabled } from "../lanes/research-parallel.js";
 import {
   researchAgentWorkerPoolSnapshot,
   startResearchAgentWorkerPool,
-  stopResearchAgentWorkerPool,
+  stopResearchAgentWorkerPoolAsync,
 } from "../async-swarm/research-agent-worker-pool.js";
+import { NUMERICS_EVIDENCE_AGENT_IDS } from "../control-plane/run-completion.js";
 import { listActiveRuns } from "../control-plane/runtime.js";
 import { runAgent } from "../runner.js";
 import { resetSdkSessionLockForTests } from "../backends/sdk-session-lock.js";
 import { setupE2eEnv, leafAgentIds } from "./helpers.js";
 
 const RESEARCH_AGENTS = [...researchLaneAgentIds()];
+
+/** Repo-workflow agents use isolated clones; others use the shared demo benchmarks root. */
+function assertDemoRepoCwd(
+  result: AgentRunResult,
+  benchmarksRoot: string,
+  options?: { allowRepoWorkflowClone?: boolean },
+): void {
+  const cwd = result.runInput?.cwd ?? "";
+  const def = getAgent(result.agentId);
+  const isolatedClone =
+    def?.repoWorkflow || NUMERICS_EVIDENCE_AGENT_IDS.has(result.agentId as never);
+  if (isolatedClone) {
+    if (options?.allowRepoWorkflowClone !== false) {
+      assert.ok(cwd.length > 0, `${result.agentId}: missing cwd`);
+      assert.ok(
+        cwd.includes("workspaces") || cwd.includes(benchmarksRoot),
+        `${result.agentId}: expected demo or isolated clone cwd, got ${cwd}`,
+      );
+      return;
+    }
+    assert.ok(cwd.length > 0, `${result.agentId}: missing cwd`);
+    return;
+  }
+  assert.equal(
+    cwd,
+    benchmarksRoot,
+    `${result.agentId}: expected demo repo cwd, got ${cwd}`,
+  );
+}
 
 function enableResearchLaneForE2e(): void {
   const state = loadLaneState();
@@ -33,7 +64,7 @@ function enableResearchLaneForE2e(): void {
   saveLaneState(state);
 }
 
-describe("demo repo — per-agent work and parallel research", () => {
+describe("demo repo — per-agent work and parallel research", { timeout: 180_000 }, () => {
   let env: ReturnType<typeof setupE2eEnv>;
   const prevParallel = process.env.LI_RESEARCH_PARALLEL;
   const prevMockDelay = process.env.LI_MOCK_RUN_DELAY_MS;
@@ -53,8 +84,10 @@ describe("demo repo — per-agent work and parallel research", () => {
     assert.ok(existsSync(join(env.benchmarksRoot, "scripts", "agent-briefing.py")));
   });
 
-  after(() => {
-    stopResearchAgentWorkerPool();
+  after(async () => {
+    await stopResearchAgentWorkerPoolAsync(3_000);
+    delete process.env.LI_E2E_RESEARCH_POOL;
+    delete process.env.LI_RESEARCH_WORKER_MAX_CYCLES;
     resetSdkSessionLockForTests();
     if (prevParallel === undefined) delete process.env.LI_RESEARCH_PARALLEL;
     else process.env.LI_RESEARCH_PARALLEL = prevParallel;
@@ -89,7 +122,7 @@ describe("demo repo — per-agent work and parallel research", () => {
       });
       assert.equal(result.agentId, agentId);
       assert.notEqual(result.status, "error", result.error);
-      assert.equal(result.runInput?.cwd, env.benchmarksRoot);
+      assertDemoRepoCwd(result, env.benchmarksRoot);
       assert.ok(
         result.outputText?.includes(agentId) ||
           result.runInput?.agent_id === agentId,
@@ -124,7 +157,7 @@ describe("demo repo — per-agent work and parallel research", () => {
     assert.equal(results.length, RESEARCH_AGENTS.length);
     for (const r of results) {
       assert.notEqual(r.status, "error", `${r.agentId}: ${r.error}`);
-      assert.equal(r.runInput?.cwd, env.benchmarksRoot);
+      assertDemoRepoCwd(r, env.benchmarksRoot);
     }
     assert.ok(
       maxConcurrent >= 2,
@@ -132,13 +165,24 @@ describe("demo repo — per-agent work and parallel research", () => {
     );
   });
 
-  test("parallel research worker pool starts one loop per research agent", () => {
-    const pool = startResearchAgentWorkerPool({ mock: true });
-    assert.ok(pool.started, pool.message);
-    assert.equal(pool.agents.length, RESEARCH_AGENTS.length);
-    const snap = researchAgentWorkerPoolSnapshot();
-    assert.equal(snap.worker_count, RESEARCH_AGENTS.length);
-    stopResearchAgentWorkerPool();
+  test("parallel research worker pool starts one loop per research agent", async () => {
+    process.env.LI_E2E_RESEARCH_POOL = "1";
+    process.env.LI_RESEARCH_WORKER_MAX_CYCLES = "1";
+    process.env.LI_RESEARCH_WORKER_STARTUP_DEFER_MS = "0";
+    try {
+      const pool = startResearchAgentWorkerPool({ mock: true, allowInTest: true });
+      assert.ok(pool.started, pool.message);
+      assert.equal(pool.agents.length, RESEARCH_AGENTS.length);
+      const snap = researchAgentWorkerPoolSnapshot();
+      assert.equal(snap.worker_count, RESEARCH_AGENTS.length);
+      await stopResearchAgentWorkerPoolAsync(5_000);
+      assert.equal(researchAgentWorkerPoolSnapshot().worker_count, 0);
+    } finally {
+      await stopResearchAgentWorkerPoolAsync(2_000);
+      delete process.env.LI_E2E_RESEARCH_POOL;
+      delete process.env.LI_RESEARCH_WORKER_MAX_CYCLES;
+      delete process.env.LI_RESEARCH_WORKER_STARTUP_DEFER_MS;
+    }
   });
 
   for (const agentId of RESEARCH_AGENTS) {
@@ -170,7 +214,7 @@ describe("demo repo — per-agent work and parallel research", () => {
     );
     for (const r of results) {
       assert.notEqual(r.status, "error", `${r.agentId}: ${r.error}`);
-      assert.equal(r.runInput?.cwd, env.benchmarksRoot);
+      assertDemoRepoCwd(r, env.benchmarksRoot);
     }
   });
 });

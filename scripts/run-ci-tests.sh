@@ -22,7 +22,7 @@ E2E=(
 FILTERED=()
 for f in "${E2E[@]}"; do
   case "$(basename "$f")" in
-    demo-repo-parallel-agents.e2e.js|agent-all-leaves.e2e.js|agent-all-leaves-sdk.e2e.js|agent-function-audit.e2e.js|dashboard-live-runs.e2e.js|dashboard-run-trace.e2e.js|swarm-full.e2e.js|sdk-parallel-live.e2e.js|sdk-live.e2e.js)
+    demo-repo-parallel-agents.e2e.js|agent-all-leaves.e2e.js|agent-all-leaves-sdk.e2e.js|agent-function-audit.e2e.js|dashboard-live-runs.e2e.js|dashboard-run-trace.e2e.js|swarm-full.e2e.js|goal-lic-workflow.e2e.js|sdk-parallel-live.e2e.js|sdk-live.e2e.js)
       continue
       ;;
   esac

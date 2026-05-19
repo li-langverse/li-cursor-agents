@@ -49,5 +49,11 @@ export function nextContinuousLoopDelayMs(options: {
     if (isSlotBusySkipReason(options.skip_reason)) return continuousSlotRetryMs();
     return options.idleMs;
   }
-  return options.hasMoreWork ? continuousAfterRunMs() : options.idleMs;
+  if (options.hasMoreWork) {
+    const after = continuousAfterRunMs();
+    // Avoid tight spin when more session steps remain (common in mock e2e).
+    const minMore = Number(process.env.LI_CONTINUOUS_MIN_MORE_MS ?? 250);
+    return Math.max(after, Number.isFinite(minMore) && minMore > 0 ? minMore : 250);
+  }
+  return options.idleMs;
 }

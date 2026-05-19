@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, readFileSync, existsSync, writeFileSync } from "node:fs";
+import { cpSync, mkdirSync, mkdtempSync, rmSync, readFileSync, existsSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
@@ -29,7 +29,16 @@ export function setupE2eEnv(variant: "v1" | "v2" = "v1"): E2eEnv {
   mkdirSync(handoffsDir, { recursive: true });
   mkdirSync(researchSessionsDir, { recursive: true });
   writeFileSync(join(handoffsDir, "pending.jsonl"), "", "utf8");
-  const benchmarksRoot = join(pkg, "fixtures", "e2e-benchmarks");
+  const benchmarksRoot = mkdtempSync(join(tmpdir(), "li-agents-bench-"));
+  cpSync(join(pkg, "fixtures", "e2e-benchmarks"), benchmarksRoot, { recursive: true });
+  const briefingPath = join(benchmarksRoot, "data", "latest", "agent-briefing.json");
+  const variantBriefing =
+    variant === "v2"
+      ? join(pkg, "fixtures", "e2e-swarm-briefing-v2.json")
+      : join(pkg, "fixtures", "e2e-swarm-briefing-v1.json");
+  if (existsSync(variantBriefing)) {
+    cpSync(variantBriefing, briefingPath);
+  }
 
   const useSupabase = process.env.LI_E2E_USE_SUPABASE === "1";
   const prev: Record<string, string | undefined> = {
@@ -96,6 +105,7 @@ export function setupE2eEnv(variant: "v1" | "v2" = "v1"): E2eEnv {
       }
       rmSync(controlPlaneDir, { recursive: true, force: true });
       rmSync(runsDir, { recursive: true, force: true });
+      rmSync(benchmarksRoot, { recursive: true, force: true });
     },
   };
 }
