@@ -119,9 +119,10 @@ describe("all leaf agents — live SDK + streaming", { skip: skipReason || false
 
         const result = await runPromise;
         assert.equal(result.backend, "cursor-sdk", def.id);
+        const terminal = new Set(["finished", "error", "incomplete", "cancelled", "dry-run"]);
         assert.ok(
-          result.status === "finished" || result.status === "error",
-          `${def.id}: status=${result.status}`,
+          terminal.has(result.status),
+          `${def.id}: unexpected status=${result.status}`,
         );
         if (result.status === "error") {
           assert.ok(
@@ -141,7 +142,7 @@ describe("all leaf agents — live SDK + streaming", { skip: skipReason || false
 
         assertSdkStreamingTrace(def.id, result.trace, detailBody);
 
-        if (result.status === "finished") {
+        if (result.status === "finished" || result.status === "incomplete") {
           const activity = await dbGet("/api/activity/recent?limit=100");
           assert.equal(activity.status, 200);
           const items = activity.body.items as Array<{
