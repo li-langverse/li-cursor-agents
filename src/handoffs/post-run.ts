@@ -14,7 +14,12 @@ import {
 import { advanceResearchSession, loadResearchSession } from "../research-sessions/session-store.js";
 import { loadResearchGoals, northStarFitForGoal } from "../research-goals/load-goals.js";
 import { enqueueImplementationHandoff } from "./implementation-handoff.js";
+import { enqueueUxRemediationHandoff } from "./ui-ux-remediation.js";
 import { applyOrgRepoOnboarderPostRun } from "./org-repo-onboarding.js";
+import {
+  buildRemediationManifest,
+  isUiUxTesterAgent,
+} from "../ux-audit/remediation-manifest.js";
 import { runIdFromOutputPath } from "../db/persist.js";
 import type { AgentId, AgentRunResult } from "../types.js";
 
@@ -149,6 +154,29 @@ export async function applyPackageArchitectPostRun(result: AgentRunResult): Prom
   }
 }
 
+export async function applyUxTesterPostRun(
+  result: AgentRunResult,
+  briefing: unknown,
+  briefingHash?: string,
+): Promise<void> {
+  if (!isUiUxTesterAgent(result.agentId)) return;
+  const b =
+    briefing && typeof briefing === "object" ? (briefing as Record<string, unknown>) : null;
+  const manifest = buildRemediationManifest(result.agentId as AgentId, b);
+  const runId = runIdFromOutputPath(result.outputPath);
+  for (const item of manifest.implementation_queue) {
+    if (item.kind !== "ui_remediation" && item.kind !== "ux_remediation") continue;
+    const issue = manifest.issues.find((i) => i.title === item.title);
+    if (issue?.priority !== "P0") continue;
+    await enqueueUxRemediationHandoff({
+      item,
+      fromAgent: result.agentId,
+      briefingHash,
+      sourceRunId: runId,
+    });
+  }
+}
+
 export async function applySwarmPostRunEffects(
   result: AgentRunResult,
   briefing: unknown,
@@ -157,4 +185,5 @@ export async function applySwarmPostRunEffects(
   await applyResearchPostRun(result, briefingHash);
   await applyPackageArchitectPostRun(result);
   await applyOrgRepoOnboarderPostRun(result, briefing, briefingHash);
+  await applyUxTesterPostRun(result, briefing, briefingHash);
 }

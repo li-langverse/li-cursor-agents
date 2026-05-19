@@ -42,7 +42,14 @@ jobs:
           from pathlib import Path
           p = Path("fixtures/e2e-benchmarks/data/latest/agent-briefing.json")
           d = json.loads(p.read_text())
-          for key in ("swarm_scorecard", "research_goals_status", "handoff_audit", "heap_plan"):
+          for key in (
+              "swarm_scorecard",
+              "research_goals_status",
+              "handoff_audit",
+              "heap_plan",
+              "ui_audit",
+              "ux_audit",
+          ):
               assert key in d, f"missing {key}"
           print("ok:", list(d.keys())[:8], "...")
           PY
