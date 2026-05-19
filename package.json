@@ -53,6 +53,7 @@
     "test:e2e:agent-audit": "npm run build && CURSOR_MOCK=1 LI_CONTROL_PLANE_STORE=disk node --test dist/e2e/agent-function-audit.e2e.js dist/e2e/agent-role-audit.test.js",
     "test:e2e:all-leaves-sdk": "npm run build && env -u CURSOR_MOCK LI_E2E_SDK=1 LI_E2E_SDK_ALL_LEAVES=1 LI_LIVE_TRACE_FLUSH_MS=0 LI_WORKSPACE_SWEEP_FORCE_LLM=1 node --test --test-concurrency=1 dist/e2e/agent-all-leaves-sdk.e2e.js",
     "test:verify-all-agents-sdk-stream": "bash scripts/verify-all-agents-sdk-stream.sh",
+    "test:sdk-matrix-isolated": "bash scripts/sdk-matrix-isolated.sh",
     "test:verify-all-agents-sdk-parallel": "bash scripts/verify-all-agents-sdk-parallel.sh",
     "compare:sdk-matrix-timing": "node scripts/compare-sdk-matrix-timing.mjs",
     "test:dashboard-api": "npm run build && CURSOR_MOCK=1 LI_CONTROL_PLANE_STORE=disk LI_PERSIST_MOCK_RUNS=1 node --test dist/e2e/db-api.e2e.js dist/e2e/worker-swarm.e2e.js dist/e2e/dashboard-api.e2e.js dist/e2e/dashboard-live-runs.e2e.js dist/e2e/dashboard-run-trace.e2e.js dist/e2e/dashboard-next-tabs.e2e.js dist/e2e/agent-function-audit.e2e.js",
