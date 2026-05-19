@@ -3,6 +3,10 @@ import { dirname, join } from "node:path";
 import { enrichBriefingWithScorecards } from "./swarm-scorecard.js";
 import { auditHandoffsNorthStar } from "../handoffs/handoff-audit.js";
 import { mergeSwarmRecommendations } from "./swarm-recommendations.js";
+import {
+  mergeRemediationQueueFromManifest,
+  mergeUxAuditRecommendations,
+} from "./ux-audit-recommendations.js";
 import { mergeHandoffsIntoImplementationQueue } from "../preflight/implementation-queue-handoffs.js";
 
 export async function enrichBriefingObject(
@@ -12,7 +16,10 @@ export async function enrichBriefingObject(
   enriched.handoff_audit = await auditHandoffsNorthStar();
   enriched.implementation_queue = await mergeHandoffsIntoImplementationQueue(enriched);
   enriched.swarm_enriched_at = new Date().toISOString();
-  return mergeSwarmRecommendations(enriched);
+  let out = mergeSwarmRecommendations(enriched);
+  out = mergeUxAuditRecommendations(out);
+  out = mergeRemediationQueueFromManifest(out);
+  return out;
 }
 
 export interface EnrichBriefingFileResult {

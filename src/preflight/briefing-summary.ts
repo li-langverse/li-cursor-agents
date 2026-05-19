@@ -64,6 +64,22 @@ export function compactBriefingForPrompt(briefing: unknown): string {
     implementation_queue: Array.isArray(b.implementation_queue)
       ? (b.implementation_queue as unknown[]).slice(0, 8)
       : undefined,
+    ui_audit: b.ui_audit
+      ? {
+          summary: (b.ui_audit as Record<string, unknown>).summary,
+          targets: Array.isArray((b.ui_audit as Record<string, unknown>).targets)
+            ? ((b.ui_audit as Record<string, unknown>).targets as unknown[]).slice(0, 6)
+            : undefined,
+        }
+      : undefined,
+    ux_audit: b.ux_audit
+      ? {
+          summary: (b.ux_audit as Record<string, unknown>).summary,
+          targets: Array.isArray((b.ux_audit as Record<string, unknown>).targets)
+            ? ((b.ux_audit as Record<string, unknown>).targets as unknown[]).slice(0, 6)
+            : undefined,
+        }
+      : undefined,
     org_new_repos_discovery: summarizeOrgNewReposDiscovery(b.org_new_repos_discovery),
     preflight_runs: summarizePreflightRuns(b.preflight_runs),
   };

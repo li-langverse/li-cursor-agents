@@ -1,6 +1,10 @@
-import type { AgentDefinition } from "./types.js";
+import type { AgentDefinition, AgentId } from "./types.js";
 import type { AgentRunCompletionMeta, AgentRunResult, PreflightBundle } from "./types.js";
 import type { AgentRunTrace } from "./agent-run-trace.js";
+import {
+  buildRemediationManifest,
+  formatRemediationDeliverableSection,
+} from "./ux-audit/remediation-manifest.js";
 
 export interface AgentRunErrorDetail {
   name?: string;
@@ -152,6 +156,13 @@ export function buildMockDeliverable(
       return buildNumericsMockBody(definition.id, briefing);
     case "org_repo_onboarder":
       return buildOrgRepoOnboarderMockBody(briefing);
+    case "docs_ui_tester":
+    case "docs_ux_tester":
+    case "gui_ui_tester":
+    case "gui_ux_tester":
+    case "tui_ui_tester":
+    case "tui_ux_tester":
+      return buildUiUxTesterMockBody(definition.id, briefing);
     default:
       return buildGenericMockBody(definition, briefing, userMessage);
   }
@@ -455,6 +466,28 @@ function buildNumericsMockBody(agentId: string, briefing: Record<string, unknown
     "## Findings (mock)",
     "- Compare tier-1 rows vs cpp reference",
     "- File issue if ratio > 1.2× policy",
+  ].join("\n");
+}
+
+function buildUiUxTesterMockBody(agentId: string, briefing: Record<string, unknown> | null): string {
+  const manifest = buildRemediationManifest(agentId as AgentId, briefing);
+  const kind = agentId.includes("_ui_") ? "ui" : "ux";
+  const auditKey = kind === "ui" ? "ui_audit" : "ux_audit";
+  const audit = briefing?.[auditKey] as Record<string, unknown> | undefined;
+  const failing = (audit?.summary as Record<string, number> | undefined)?.failing ?? manifest.issues.length;
+  return [
+    "## Executive summary",
+    `- **${agentId}** ${kind.toUpperCase()} audit pass (mock).`,
+    `- Failing targets in briefing: **${failing}**`,
+    `- Remediation issues (mock): **${manifest.issues.length}**`,
+    "",
+    formatRemediationDeliverableSection(manifest),
+    "",
+    "## SOTA reference (mock)",
+    kind === "ux" ? "- Ran 3+ web queries against ux-harness/sota/manifest.yaml (mock URLs logged)." : "- UI metrics from ui-audit.json artifacts.",
+    "",
+    "## Digest",
+    `- benchmarks/docs/ecosystem/ux-digests/${new Date().toISOString().slice(0, 10)}-${agentId.split("_")[0]}-${kind}.md`,
   ].join("\n");
 }
 

@@ -80,6 +80,16 @@ goals:
     uses_research_session: true
     handoff_to: [package_architect, code_implementer]
 
+  - id: ui_ux_quality
+    title: Internal UI/UX vs SOTA (docs, GUI, TUI)
+    domains: [ecosystem, web]
+    agent: gui_ux_tester
+    priority: 5
+    cadence_hours: 48
+    allow_implementation: false
+    enabled: true
+    handoff_to: [code_implementer, docs_maintainer, issue_planner]
+
   - id: provability_holes
     title: Proof holes — compiler, contracts, trusted axioms
     domains: [ecosystem]

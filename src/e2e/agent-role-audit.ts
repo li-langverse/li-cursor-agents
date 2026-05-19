@@ -38,6 +38,12 @@ const ROLE_CONTENT: Partial<Record<AgentId, RegExp[]>> = {
   proof_gap_researcher: [/proof|provability|trusted|G-/i],
   stdlib_researcher: [/std|li-std|ecosystem/i],
   swarm_observer: [/swarm|handoff|self-healing|meta-agent/i],
+  docs_ui_tester: [/ui-audit|remediation|contrast|baseline|axe/i],
+  docs_ux_tester: [/ux-audit|SOTA|journey|friction|rubric/i],
+  gui_ui_tester: [/ui-audit|remediation|pixel|dashboard/i],
+  gui_ux_tester: [/ux-audit|SOTA|journey|empty.state/i],
+  tui_ui_tester: [/ui-audit|remediation|terminal|TUI/i],
+  tui_ux_tester: [/ux-audit|SOTA|journey|Textual/i],
 };
 
 const CATEGORY_FALLBACK: Record<string, RegExp[]> = {

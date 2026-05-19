@@ -7,7 +7,8 @@ export type CoordinatorId =
   | "coord_ecosystem"
   | "coord_pull_requests"
   | "coord_numerics"
-  | "coord_platform";
+  | "coord_platform"
+  | "coord_ux";
 
 export interface CoordinatorDefinition {
   id: CoordinatorId;
@@ -70,6 +71,21 @@ export const COORDINATOR_REGISTRY: CoordinatorDefinition[] = [
     leafAgents: ["ci_maintainer", "agent_kit_maintainer", "workspace_sweeper", "swarm_observer"],
     priority: 50,
     promptFile: "coord-platform.md",
+  },
+  {
+    id: "coord_ux",
+    name: "UX coordinator",
+    description: "Docs/GUI/TUI UI+UX audits vs SOTA; remediation queue for implementers.",
+    leafAgents: [
+      "docs_ui_tester",
+      "docs_ux_tester",
+      "gui_ui_tester",
+      "gui_ux_tester",
+      "tui_ui_tester",
+      "tui_ux_tester",
+    ],
+    priority: 45,
+    promptFile: "coord-ux.md",
   },
 ];
 

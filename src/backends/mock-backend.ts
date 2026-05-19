@@ -8,6 +8,8 @@ import {
 } from "../control-plane/live-run-trace.js";
 import { allocateRunId, runOutputPath } from "../control-plane/run-paths.js";
 import type { AgentBackend, AgentDefinition, AgentRunOptions, AgentRunResult } from "../types.js";
+import type { AgentId } from "../types.js";
+import { isUiUxTesterAgent, writeRemediationManifest } from "../ux-audit/remediation-manifest.js";
 
 /**
  * CI-safe mock: no CURSOR_API_KEY, no LLM calls.
@@ -86,6 +88,10 @@ export class MockBackend implements AgentBackend {
 
     const briefing = extractBriefing(userMessage);
     const deliverable = buildMockDeliverable(definition, briefing, userMessage);
+
+    if (isUiUxTesterAgent(definition.id)) {
+      writeRemediationManifest(definition.id as AgentId, briefing);
+    }
 
     if (streamCollector) {
       streamCollector.onDelta({

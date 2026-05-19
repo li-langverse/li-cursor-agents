@@ -1,5 +1,7 @@
 node_modules/
 dist/
+ux-harness/artifacts/
+ux-harness/**/__pycache__/
 data/runs/
 data/workspaces/
 # e2e temp runs use LI_RUNS_DIR outside repo

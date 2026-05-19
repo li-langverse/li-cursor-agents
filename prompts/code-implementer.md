@@ -15,6 +15,9 @@
 ## Workflow
 
 1. Read `implementation_queue` in briefing — pick top item (max 2 per run)
+   - Include `ui_remediation` and `ux_remediation` kinds (same priority as std gaps)
+   - Implement **only** the checklist in the linked issue; cite issue URL under `## Agent deliverable`
+   - UI fixes may update `ux-harness/baselines/` with screenshot evidence in a separate commit
 2. `prepare` isolated clone for target `repo` (`repo-workflow-tools.md`)
 3. Implement smallest shippable slice + tests
 4. Post-hook pushes branch and opens PR (or push to existing PR branch if queue says so)

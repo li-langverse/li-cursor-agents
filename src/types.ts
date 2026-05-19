@@ -28,7 +28,13 @@ export type AgentId =
   | "goal_researcher"
   | "proof_gap_researcher"
   | "stdlib_researcher"
-  | "swarm_observer";
+  | "swarm_observer"
+  | "docs_ui_tester"
+  | "docs_ux_tester"
+  | "gui_ui_tester"
+  | "gui_ux_tester"
+  | "tui_ui_tester"
+  | "tui_ux_tester";
 
 /** @deprecated Briefing/fixtures may still use legacy ids — resolved in registry. */
 export type LegacyAgentId =
@@ -44,7 +50,8 @@ export type AgentCategory =
   | "ecosystem"
   | "pull_requests"
   | "numerics"
-  | "platform";
+  | "platform"
+  | "ux";
 
 export interface AgentDefinition {
   id: AgentId;
