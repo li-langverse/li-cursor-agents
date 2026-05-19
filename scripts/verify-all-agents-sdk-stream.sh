@@ -25,7 +25,9 @@ sdk_matrix_reclaim_locks "$ROOT"
 SDK_LOG_DIR="${LI_E2E_SDK_LOG_DIR:-$ROOT/logs/sdk-matrix}"
 TIMING_FILE="${LI_SDK_MATRIX_TIMING_FILE:-$SDK_LOG_DIR/timing-sequential.jsonl}"
 mkdir -p "$SDK_LOG_DIR"
-rm -f "$TIMING_FILE"
+if [[ -z "${VERIFY_AGENT:-}" && "${LI_SDK_MATRIX_APPEND_TIMING:-}" != "1" ]]; then
+  rm -f "$TIMING_FILE"
+fi
 touch "$TIMING_FILE"
 
 echo "==> env: disk store, single SDK slot, sequential (one agent per process)"
