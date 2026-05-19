@@ -39,21 +39,23 @@ export function LiveStreamFeed({ detail }: { detail: RunDetail }) {
 
   if (!rows.length) {
     return (
-      <section className="trace-section live-stream-feed">
+      <section className="trace-section live-stream-feed" data-testid="live-stream-feed">
         <h4>Live stream</h4>
-        <p className="hint">Waiting for SDK deltas…</p>
+        <p className="hint" data-testid="live-stream-waiting">
+          Waiting for SDK deltas…
+        </p>
       </section>
     );
   }
 
   return (
-    <section className="trace-section live-stream-feed">
+    <section className="trace-section live-stream-feed" data-testid="live-stream-feed">
       <h4>
         Live stream <span className="hint">({rows.length} events)</span>
       </h4>
       <ol className="live-delta-list">
         {rows.slice(-80).map((row) => (
-          <li key={row.key} className="live-delta-item">
+          <li key={row.key} className="live-delta-item" data-testid="live-delta-item">
             <div className="live-delta-head">
               <code>{row.label}</code>
               {row.at ? <time className="hint mono">{row.at}</time> : null}

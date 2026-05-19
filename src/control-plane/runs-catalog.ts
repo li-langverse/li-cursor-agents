@@ -13,6 +13,7 @@ import { dbEnabled, useDiskStore, useSupabaseStore } from "../db/client.js";
 import {
   getRunById,
   getRunningRunById,
+  listRunningAgentRuns,
   getRunEvents,
   getRolloutsForRun,
   listAgentRunHistory,
@@ -251,6 +252,20 @@ async function listLiveRunCatalogEntries(): Promise<RunCatalogEntry[]> {
     for (const r of worker?.active_runs ?? []) {
       if (r.status === "running") byId.set(r.run_id, r);
     }
+    for (const row of await listRunningAgentRuns(30)) {
+      if (byId.has(row.run_id)) continue;
+      byId.set(row.run_id, {
+        run_id: row.run_id,
+        agent_id: row.agent_id as AgentId,
+        pid: 0,
+        started_at: row.started_at,
+        status: "running",
+        reason: row.reason ?? undefined,
+        run_input: row.run_input ?? undefined,
+        run_trace: row.run_trace ?? undefined,
+        output_path: row.output_path ?? undefined,
+      });
+    }
   }
   for (const r of listActiveRuns()) {
     if (r.status === "running") byId.set(r.run_id, r);
@@ -338,6 +353,13 @@ export async function getRunDetail(runId: string): Promise<RunCatalogEntry | nul
   }
 
   if (useSupabaseStore() && dbEnabled()) {
+    const running = await getRunningRunById(runId);
+    if (running) {
+      let entry = historyRowToCatalog(running);
+      entry.live = true;
+      entry = enrichCatalogFromSidecar(entry);
+      return attachLiveTraceEvents(runId, entry);
+    }
     const row = await getRunById(runId);
     if (row) {
       const entry = historyRowToCatalog(row);
@@ -349,6 +371,30 @@ export async function getRunDetail(runId: string): Promise<RunCatalogEntry | nul
       const prFromRollout = rollouts.map((r) => r.pr_url).filter((u): u is string => Boolean(u));
       if (prFromRollout.length && !entry.pr_urls?.length) entry.pr_urls = prFromRollout;
       return entry;
+    }
+  }
+
+  for (const dir of [runsDir(), mockRunsDir()]) {
+    const jsonOnly = join(dir, `${runId}.json`);
+    if (!existsSync(jsonOnly)) continue;
+    try {
+      const meta = JSON.parse(readFileSync(jsonOnly, "utf8")) as Record<string, unknown>;
+      const status = String(meta.status ?? "running");
+      const parsed = parseRunBasename(`${runId}.md`);
+      const entry: RunCatalogEntry = {
+        run_id: runId,
+        agent_id: (meta.agentId as string) ?? parsed?.agentId ?? runId.split("-")[0] ?? runId,
+        started_at: parsed ? isoFromTs(parsed.ts) : new Date().toISOString(),
+        status,
+        live: status === "running",
+        md_path: join(dir, `${runId}.md`),
+        json_path: jsonOnly,
+        run_input: (meta.runInput ?? meta.run_input) as AgentRunInputRecord | undefined,
+        run_trace: (meta.trace ?? meta.run_trace) as AgentRunTrace | undefined,
+      };
+      return enrichCatalogFromSidecar(entry);
+    } catch {
+      /* try next dir */
     }
   }
 

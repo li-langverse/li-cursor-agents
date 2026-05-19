@@ -143,7 +143,7 @@ export function RunDrawer({ runId, onClose }: { runId: string | null; onClose: (
   return (
     <>
       <button type="button" className="drawer-backdrop" aria-label="Close run trace" onClick={onClose} />
-      <aside className="drawer" role="dialog" aria-labelledby="run-drawer-title">
+      <aside className="drawer" role="dialog" aria-labelledby="run-drawer-title" data-testid="run-drawer">
         <header className="drawer-header">
           <div>
             <h2 id="run-drawer-title">

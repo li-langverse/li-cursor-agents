@@ -257,6 +257,21 @@ export async function getRunById(runId: string): Promise<AgentRunHistoryRow | nu
   return rowToHistory(data as Record<string, unknown>);
 }
 
+/** All in-progress runs (for dashboard live list when worker is not in-process). */
+export async function listRunningAgentRuns(limit = 30): Promise<AgentRunHistoryRow[]> {
+  if (!dbEnabled()) return [];
+
+  const { data, error } = await getSupabase()
+    .from("agent_runs")
+    .select("*")
+    .eq("status", "running")
+    .order("started_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw new Error(`listRunningAgentRuns: ${error.message}`);
+  return (data ?? []).map((row) => rowToHistory(row as Record<string, unknown>));
+}
+
 /** Live run row persisted by live-stream-persist (status still running). */
 export async function getRunningRunById(runId: string): Promise<AgentRunHistoryRow | null> {
   if (!dbEnabled()) return null;
