@@ -1,6 +1,7 @@
 """MkDocs docs surface adapter."""
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 from sota.rubric import min_rubric_score, rubric_failing
@@ -10,6 +11,9 @@ from .static_site import audit_static_site, resolve_site_dir
 
 
 def _site_dir(target: TargetConfig, agents_root: Path) -> Path:
+    lic_root = os.environ.get("LIC_ROOT")
+    if lic_root:
+        return (Path(lic_root).resolve() / "site")
     paths = target.raw.get("paths") or {}
     return resolve_site_dir(agents_root, str(paths.get("site_dir", "../lic/site")))
 
