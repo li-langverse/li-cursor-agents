@@ -48,6 +48,7 @@ export function setupE2eEnv(variant: "v1" | "v2" = "v1"): E2eEnv {
     LI_RESEARCH_SESSIONS_DIR: process.env.LI_RESEARCH_SESSIONS_DIR,
     LI_CURSOR_AGENTS_ROOT: process.env.LI_CURSOR_AGENTS_ROOT,
     E2E_BRIEFING_VARIANT: process.env.E2E_BRIEFING_VARIANT,
+    E2E_BRIEFING_PRESERVE: process.env.E2E_BRIEFING_PRESERVE,
     BENCHMARKS_ROOT: process.env.BENCHMARKS_ROOT,
     CURSOR_MOCK: process.env.CURSOR_MOCK,
     LI_CONTROL_PLANE_STORE: process.env.LI_CONTROL_PLANE_STORE,
@@ -64,6 +65,7 @@ export function setupE2eEnv(variant: "v1" | "v2" = "v1"): E2eEnv {
   process.env.LI_RESEARCH_SESSIONS_DIR = researchSessionsDir;
   process.env.LI_CURSOR_AGENTS_ROOT = pkg;
   process.env.E2E_BRIEFING_VARIANT = variant;
+  process.env.E2E_BRIEFING_PRESERVE = "1";
   process.env.BENCHMARKS_ROOT = benchmarksRoot;
   process.env.LI_CONTROL_PLANE_STORE = useSupabase ? "supabase" : "disk";
   process.env.LI_SWARM_MERGE_RECOMMENDATIONS = "0";
