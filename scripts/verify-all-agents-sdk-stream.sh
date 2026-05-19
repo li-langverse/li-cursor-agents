@@ -56,7 +56,11 @@ npm run build
 stop_control_plane
 reclaim_sdk_locks
 
+SDK_LOG_DIR="${LI_E2E_SDK_LOG_DIR:-$ROOT/logs/sdk-matrix}"
+mkdir -p "$SDK_LOG_DIR"
 echo "==> env: disk store, single SDK slot, no mock"
+echo "==> agent output logs: ${SDK_LOG_DIR}/all.log (and one file per agent)"
+export LI_E2E_SDK_LOG_DIR="$SDK_LOG_DIR"
 export LI_E2E_SDK=1
 export LI_E2E_SDK_ALL_LEAVES=1
 export LI_LIVE_TRACE_FLUSH_MS=0

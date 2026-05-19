@@ -1,7 +1,16 @@
 import assert from "node:assert/strict";
+import { appendFileSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { AGENT_REGISTRY } from "../agents/registry.js";
 import type { AgentRunTrace } from "../agent-run-trace.js";
+import {
+  NUMERICS_EVIDENCE_AGENT_IDS,
+  REPO_WORKFLOW_AGENT_IDS,
+  RESEARCH_HANDOFF_AGENT_IDS,
+} from "../control-plane/run-completion.js";
 import { handleDbApiRequest } from "../db-api/index.js";
+import type { AgentRunResult } from "../types.js";
 import { leafAgentIds } from "./helpers.js";
 
 /** Every leaf agent (orchestrator excluded from matrix coverage). */
@@ -120,6 +129,69 @@ export async function pollUntilLiveStreamVisible(
   throw new Error(
     `timed out after ${maxMs}ms waiting for live SDK stream on agent ${agentId}`,
   );
+}
+
+/** Prompt that passes completion audit (length, deliverable checklist, role-specific skips). */
+export function sdkMatrixExtraInstruction(agentId: string): string {
+  const lines = [
+    "SDK matrix smoke test — read-only. Do not open PRs, commit, push, or edit repository files.",
+    "Line 1 of your reply MUST start with OK-.",
+    "Write at least 150 words: one paragraph on what this agent does in the li-langverse swarm.",
+    "End with this exact section (keep the checked box):",
+    "## Agent deliverable",
+    "- [x] SDK matrix smoke completed",
+  ];
+  if (REPO_WORKFLOW_AGENT_IDS.has(agentId)) {
+    lines.push("State clearly: no changes needed for this smoke test (no PR).");
+  }
+  if (NUMERICS_EVIDENCE_AGENT_IDS.has(agentId)) {
+    lines.push(
+      "Name a real evidence path you would use in production, e.g. li-tests/manifest.toml or benchmarks/.",
+    );
+  }
+  if (RESEARCH_HANDOFF_AGENT_IDS.has(agentId)) {
+    lines.push(
+      "If you mention handoff, include north_star_fit: domain=smoke-test pillar=verification.",
+    );
+  }
+  return lines.join("\n");
+}
+
+export function sdkMatrixLogDir(): string {
+  const dir =
+    process.env.LI_E2E_SDK_LOG_DIR?.trim() ||
+    join(process.env.LI_CURSOR_AGENTS_ROOT ?? process.cwd(), "logs", "sdk-matrix");
+  mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+/** Console + per-agent log file so matrix runs are inspectable without opening .md artifacts. */
+export function logSdkMatrixRun(agentId: string, result: AgentRunResult, label?: string): void {
+  const gaps = result.completion?.gaps ?? [];
+  const evidence = result.completion?.evidence ?? [];
+  const assistant = (result.trace?.assistant_text ?? "").trim();
+  const outputHead = (result.outputText ?? "").trim().slice(0, 5000);
+  const block = [
+    "",
+    "──────── sdk-matrix output ────────",
+    label ? `${label} agent=${agentId}` : `agent=${agentId}`,
+    `status=${result.status} backend=${result.backend} duration_ms=${result.durationMs}`,
+    `stream: deltas=${result.trace?.deltas?.length ?? 0} steps=${result.trace?.steps?.length ?? 0} tools=${result.trace?.tool_call_count ?? 0}`,
+    gaps.length ? `completion_gaps: ${gaps.join(" | ")}` : "completion_gaps: (none)",
+    evidence.length ? `completion_evidence: ${evidence.join(" | ")}` : "",
+    `output_path: ${result.outputPath}`,
+    "--- trace assistant_text ---",
+    assistant || "(empty)",
+    "--- formatted output (head) ---",
+    outputHead || "(empty)",
+    "────────────────────────────────────",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  console.log(block);
+  const dir = sdkMatrixLogDir();
+  appendFileSync(join(dir, `${agentId}.log`), `${block}\n`, "utf8");
+  appendFileSync(join(dir, "all.log"), `${block}\n`, "utf8");
 }
 
 export function assertSdkStreamingTrace(

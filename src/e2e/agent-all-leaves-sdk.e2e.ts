@@ -23,9 +23,12 @@ import {
   assertAllLeavesRegistered,
   assertSdkStreamingTrace,
   dbGet,
+  logSdkMatrixRun,
   pollUntilLiveStreamVisible,
   reapplyE2eStore,
   runDetailHasLiveStream,
+  sdkMatrixExtraInstruction,
+  sdkMatrixLogDir,
   traceHasLiveStream,
 } from "./all-leaves-shared.js";
 import { setupE2eEnv } from "./helpers.js";
@@ -64,6 +67,7 @@ describe("all leaf agents — live SDK + streaming", { skip: skipReason || false
     console.log(
       `[sdk-matrix] setup ok — ${ALL_LEAF_AGENTS.length} leaf agents, store=${process.env.LI_CONTROL_PLANE_STORE ?? "disk"}`,
     );
+    console.log(`[sdk-matrix] output logs → ${sdkMatrixLogDir()}/all.log`);
   });
 
   after(() => {
@@ -99,8 +103,7 @@ describe("all leaf agents — live SDK + streaming", { skip: skipReason || false
           benchmarksRoot: env.benchmarksRoot,
           mock: false,
           dryRun: false,
-          extraInstruction:
-            "Reply with exactly one short line starting with OK-. No tools unless required. Do not open PRs.",
+          extraInstruction: sdkMatrixExtraInstruction(def.id),
         });
 
         let sawRunning = false;
@@ -153,17 +156,19 @@ describe("all leaf agents — live SDK + streaming", { skip: skipReason || false
           throw streamPollError ?? new Error(`${def.id}: no live stream in memory, API, or final trace`);
         }
         assert.equal(result.backend, "cursor-sdk", def.id);
-        const terminal = new Set(["finished", "error", "incomplete", "cancelled", "dry-run"]);
-        assert.ok(
-          terminal.has(result.status),
-          `${def.id}: unexpected status=${result.status}`,
-        );
+        logSdkMatrixRun(def.id, result, label);
+
         if (result.status === "error") {
           assert.ok(
             !isSdkSlotLockError(result.error),
             `${def.id}: slot lock: ${result.error}`,
           );
         }
+        assert.equal(
+          result.status,
+          "finished",
+          `${def.id}: expected status=finished (completion audit); gaps=${(result.completion?.gaps ?? []).join("; ") || "none"}`,
+        );
 
         assert.ok(
           sawRunning || traceHasLiveStream(result.trace),
@@ -179,7 +184,7 @@ describe("all leaf agents — live SDK + streaming", { skip: skipReason || false
 
         assertSdkStreamingTrace(def.id, result.trace, detailBody);
 
-        if (result.status === "finished" || result.status === "incomplete") {
+        {
           const activity = await dbGet("/api/activity/recent?limit=100");
           assert.equal(activity.status, 200);
           const items = activity.body.items as Array<{
