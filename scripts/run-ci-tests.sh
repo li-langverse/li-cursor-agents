@@ -22,14 +22,22 @@ E2E=(
 FILTERED=()
 for f in "${E2E[@]}"; do
   case "$(basename "$f")" in
-    demo-repo-parallel-agents.e2e.js|agent-all-leaves.e2e.js|agent-all-leaves-sdk.e2e.js|agent-function-audit.e2e.js|dashboard-live-runs.e2e.js|dashboard-run-trace.e2e.js|swarm-full.e2e.js|goal-lic-workflow.e2e.js|sdk-parallel-live.e2e.js|sdk-live.e2e.js)
+    demo-repo-parallel-agents.e2e.js|agent-all-leaves.e2e.js|agent-all-leaves-sdk.e2e.js|agent-function-audit.e2e.js|agent-matrix.e2e.js|agent-parallel-pool.e2e.js|agent-activity-pipeline.e2e.js|agent-live-stream-supabase.e2e.js|dashboard-live-runs.e2e.js|dashboard-run-trace.e2e.js|swarm-full.e2e.js|goal-lic-workflow.e2e.js|run-all-handoff.e2e.js|sdk-parallel-live.e2e.js|sdk-live.e2e.js)
       continue
       ;;
   esac
   FILTERED+=("$f")
 done
 
-node --test --test-concurrency=1 dist/**/*.test.js "${FILTERED[@]}"
+UNIT=()
+for f in dist/**/*.test.js; do
+  case "$(basename "$f")" in
+    run-handoff-phases-force.test.js|handoff-phased-run.test.js|handoff-run-coordinator.test.js|research-lane.test.js) continue ;;
+  esac
+  UNIT+=("$f")
+done
+
+node --test --test-concurrency=1 "${UNIT[@]}" "${FILTERED[@]}"
 node scripts/test-log-timestamps.mjs
 python3 ux-harness/tests/test_harness.py
 python3 ux-harness/tests/test_static_site.py
