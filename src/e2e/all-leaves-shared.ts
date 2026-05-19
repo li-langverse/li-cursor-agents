@@ -159,6 +159,11 @@ export function sdkMatrixExtraInstruction(agentId: string): string {
       "Read-only: do not edit trusted.lean or any repo file; discussing trusted.lean in the queue is fine.",
     );
   }
+  if (agentId === "agent_kit_maintainer") {
+    lines.push(
+      "Do not run agent-kit rollout, sync scripts, or edit any files. Reply in chat only with the OK- line and deliverable section.",
+    );
+  }
   return lines.join("\n");
 }
 

@@ -235,7 +235,12 @@ async function runAgentBody(
     extra = [text, extra].filter(Boolean).join("\n\n");
   }
 
-  if (definition.id === "agent_kit_maintainer" && benchmarksRoot && preflight.briefing) {
+  if (
+    definition.id === "agent_kit_maintainer" &&
+    benchmarksRoot &&
+    preflight.briefing &&
+    !process.env.LI_SDK_MATRIX_MODE?.trim()
+  ) {
     const rollout = rolloutAgentKitPrs(benchmarksRoot, preflight.briefing, {
       dryRun: mock || options.dryRun,
     });
