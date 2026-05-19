@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "targets": [
+    {
+      "id": "lic-docs",
+      "repo": "lic",
+      "surface": "docs",
+      "surface_class": "docs",
+      "adapter": "docs",
+      "paths": { "site_dir": "../lic/site", "mkdocs_config": "../lic/mkdocs.yml" },
+      "journeys": [
+        { "id": "first_reading_path", "steps": ["home", "language-design", "verification"] },
+        { "id": "mobile_nav", "steps": ["home_mobile", "nav_drawer"] }
+      ]
+    },
+    {
+      "id": "agents-dashboard",
+      "repo": "li-cursor-agents",
+      "surface": "gui",
+      "surface_class": "gui_app",
+      "adapter": "web_gui",
+      "url": "http://127.0.0.1:3000",
+      "journeys": [
+        { "id": "agents_list_empty", "steps": ["open_agents", "check_empty_state"] },
+        { "id": "live_stream", "steps": ["open_run", "read_stream"] }
+      ]
+    },
+    {
+      "id": "lic-tetris",
+      "repo": "lic",
+      "surface": "gui",
+      "surface_class": "gui_app",
+      "adapter": "native_gui",
+      "paths": { "example": "../lic/examples/tetris" },
+      "skip_on_platform": ["darwin"],
+      "journeys": [
+        { "id": "play_session", "steps": ["start", "mid_game", "game_over"] }
+      ]
+    },
+    {
+      "id": "gui-gen-fixture",
+      "repo": "li-cursor-agents",
+      "surface": "gui",
+      "surface_class": "gui_gen",
+      "adapter": "web_gui",
+      "fixture": "ux-harness/fixtures/gui-gen-demo.html",
+      "journeys": [
+        { "id": "gen_preview_loop", "steps": ["prompt", "preview", "edit"] }
+      ]
+    },
+    {
+      "id": "tui-app-fixture",
+      "repo": "li-cursor-agents",
+      "surface": "tui",
+      "surface_class": "tui_app",
+      "adapter": "tui",
+      "fixture": "ux-harness/fixtures/tui-demo.sh",
+      "journeys": [
+        { "id": "key_nav_help", "steps": ["launch", "tab_help", "quit"] }
+      ]
+    },
+    {
+      "id": "tui-gen-fixture",
+      "repo": "li-cursor-agents",
+      "surface": "tui",
+      "surface_class": "tui_gen",
+      "adapter": "tui",
+      "fixture": "ux-harness/fixtures/tui-gen-demo.sh",
+      "journeys": [
+        { "id": "cli_to_tui", "steps": ["run_generator", "capture_screen"] }
+      ]
+    }
+  ]
+}

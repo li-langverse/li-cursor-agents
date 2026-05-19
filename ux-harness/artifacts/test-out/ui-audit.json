@@ -1,0 +1,132 @@
+{
+  "generated_at": "2026-05-19T12:47:39.348170+00:00",
+  "platform": "Darwin",
+  "summary": {
+    "total": 6,
+    "failing": 2,
+    "passing": 3,
+    "skipped": 1
+  },
+  "targets": [
+    {
+      "target_id": "lic-docs",
+      "repo": "lic",
+      "surface": "docs",
+      "surface_class": "docs",
+      "status": "fail",
+      "artifacts": [
+        "/Users/julian/Documents/coding-projects/li-cursor-agents/ux-harness/artifacts/lic-docs/home.png"
+      ],
+      "axe_violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": 2
+        }
+      ],
+      "pixel_diff": {
+        "max_ratio": 0.06,
+        "threshold": 0.04
+      },
+      "contrast_failures": [
+        {
+          "selector": ".md-nav",
+          "ratio": 3.2
+        }
+      ],
+      "baseline_status": "drift",
+      "tokens_deviation": [],
+      "broken_links": 1
+    },
+    {
+      "target_id": "agents-dashboard",
+      "repo": "li-cursor-agents",
+      "surface": "gui",
+      "surface_class": "gui_app",
+      "status": "fail",
+      "artifacts": [
+        "/Users/julian/Documents/coding-projects/li-cursor-agents/ux-harness/artifacts/agents-dashboard/home.png"
+      ],
+      "axe_violations": [
+        {
+          "id": "color-contrast",
+          "impact": "serious",
+          "nodes": 2
+        }
+      ],
+      "pixel_diff": {
+        "max_ratio": 0.06,
+        "threshold": 0.04
+      },
+      "contrast_failures": [],
+      "baseline_status": "drift",
+      "tokens_deviation": [],
+      "broken_links": 0
+    },
+    {
+      "target_id": "lic-tetris",
+      "repo": "lic",
+      "surface": "gui",
+      "surface_class": "gui_app",
+      "status": "skip",
+      "skip_reason": "skipped on Darwin"
+    },
+    {
+      "target_id": "gui-gen-fixture",
+      "repo": "li-cursor-agents",
+      "surface": "gui",
+      "surface_class": "gui_gen",
+      "status": "pass",
+      "artifacts": [
+        "/Users/julian/Documents/coding-projects/li-cursor-agents/ux-harness/artifacts/gui-gen-fixture/home.png"
+      ],
+      "axe_violations": [],
+      "pixel_diff": {
+        "max_ratio": 0.0,
+        "threshold": 0.04
+      },
+      "contrast_failures": [],
+      "baseline_status": "ok",
+      "tokens_deviation": [],
+      "broken_links": 0
+    },
+    {
+      "target_id": "tui-app-fixture",
+      "repo": "li-cursor-agents",
+      "surface": "tui",
+      "surface_class": "tui_app",
+      "status": "pass",
+      "artifacts": [
+        "/Users/julian/Documents/coding-projects/li-cursor-agents/ux-harness/artifacts/tui-app-fixture/home.png"
+      ],
+      "axe_violations": [],
+      "pixel_diff": {
+        "max_ratio": 0.0,
+        "threshold": 0.04
+      },
+      "contrast_failures": [],
+      "baseline_status": "ok",
+      "tokens_deviation": [],
+      "broken_links": 0
+    },
+    {
+      "target_id": "tui-gen-fixture",
+      "repo": "li-cursor-agents",
+      "surface": "tui",
+      "surface_class": "tui_gen",
+      "status": "pass",
+      "artifacts": [
+        "/Users/julian/Documents/coding-projects/li-cursor-agents/ux-harness/artifacts/tui-gen-fixture/home.png"
+      ],
+      "axe_violations": [],
+      "pixel_diff": {
+        "max_ratio": 0.0,
+        "threshold": 0.04
+      },
+      "contrast_failures": [],
+      "baseline_status": "ok",
+      "tokens_deviation": [],
+      "broken_links": 0
+    }
+  ]
+}
