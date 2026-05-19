@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -19,6 +20,10 @@ def load_json(name: str) -> dict | None:
 
 
 def main() -> int:
+    if os.environ.get("E2E_BRIEFING_PRESERVE") == "1" and OUT.is_file():
+        print(json.dumps({"ok": True, "path": str(OUT), "preserved": True}))
+        return 0
+
     sys.path.insert(0, str(Path(__file__).resolve().parent))
     from heap_plan import build_heap_plan  # noqa: E402
 
