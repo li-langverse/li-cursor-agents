@@ -29,6 +29,7 @@ import {
   evaluateNextMerge,
 } from "../merge/auto-merge-gate.js";
 import { runLocalCiSweepForMergeAgents } from "../local-ci/sweep.js";
+import { maybePruneWorkspaces } from "../repo-workflow/workspace-prune.js";
 import { enrichBriefingObject } from "../briefing/enrich-briefing-file.js";
 import { runPreflight, resolveBenchmarksRoot } from "../preflight.js";
 import type { AgentRunResult, PreflightBundle } from "../types.js";
@@ -304,6 +305,7 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
 
   const pruneAgeMs = Math.max(options.cooldownMs * 2, 86_400_000);
   pruneRecentTasks(state, 80, pruneAgeMs);
+  maybePruneWorkspaces();
   state.supervisor_status = "idle";
   state.current_supervisor_agent = undefined;
   state.last_tick_at = new Date().toISOString();

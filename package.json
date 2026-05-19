@@ -28,6 +28,7 @@
     "dashboard:dev": "bash scripts/dev-all.sh",
     "repo-workflow": "node dist/cli/repo-workflow.js",
     "workspace:sweep": "npm run build && node dist/cli/workspace-sweep.js",
+    "workspace:prune": "npm run build && node dist/cli/workspace-prune.js",
     "agents:research-lane": "npm run build && node dist/cli/research-lane.js",
     "agents:implement-lane": "npm run build && node dist/cli/implement-lane.js",
     "agents:maintenance-lane": "npm run build && node dist/cli/maintenance-lane.js",

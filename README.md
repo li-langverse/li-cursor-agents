@@ -19,6 +19,8 @@ Org drift audit (feeds **agent_kit_maintainer**): `python3 ../benchmarks/scripts
 
 Platform agents (`agent_kit_maintainer`, `ci_maintainer`, `docs_maintainer`) use **isolated workspaces** under `data/workspaces/` — not your sibling checkout.
 
+Stale clones are pruned automatically (default: **20** max per repo, **5** always kept, delete older than **7 days**). Manual: `npm run workspace:prune` (`--dry-run`, `--force` for dirty clones).
+
 Requires `GH_TOKEN` in `../.env.github` (see lic `scripts/with-github-env.sh`).
 
 ```bash

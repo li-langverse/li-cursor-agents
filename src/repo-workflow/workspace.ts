@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
 import { defaultBranch, runCmd } from "./git.js";
+import { maybePruneWorkspaces } from "./workspace-prune.js";
 import type { PrepareWorkspaceResult, RepoWorkflowOptions } from "./types.js";
 
 const GOVERNANCE_REPOS = new Set(["roadmap"]);
@@ -78,6 +79,8 @@ export function prepareIsolatedClone(
   }
 
   runCmd("git", ["checkout", "-B", options.branchName], cloneDir, false);
+
+  maybePruneWorkspaces({ workspaceRoot: options.workspaceRoot });
 
   return { ok: true, cloneDir, baseBranch, branch: options.branchName };
 }

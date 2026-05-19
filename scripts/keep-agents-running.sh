@@ -61,6 +61,9 @@ fi
 
 "$ROOT/scripts/ensure-native-modules.sh"
 npm run build >/dev/null 2>&1
+if [[ "${LI_WORKSPACE_PRUNE:-always}" != "never" ]]; then
+  LI_WORKSPACE_PRUNE_INTERVAL_MS=0 "$NODE_BIN" "$ROOT/dist/cli/workspace-prune.js" 2>/dev/null | tail -3 || true
+fi
 
 PORT="$LI_AGENT_DASHBOARD_PORT"
 if curl -sf "http://127.0.0.1:${PORT}/api/status" >/dev/null 2>&1; then
