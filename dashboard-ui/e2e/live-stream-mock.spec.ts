@@ -86,6 +86,39 @@ test.describe("live stream UI (mocked API)", () => {
     });
   });
 
+  test("run drawer shows thinking and output when trace has no deltas yet", async ({ page }) => {
+    await page.route(`**/api/runs/${encodeURIComponent(RUN_ID)}`, async (route) => {
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          run_id: RUN_ID,
+          agent_id: "bug_fixer",
+          status: "running",
+          live: true,
+          started_at: new Date().toISOString(),
+          run_trace: {
+            thinking_text: "Analyzing briefing for heap gaps…",
+            assistant_text: "Partial output line",
+            tool_call_count: 1,
+            steps: [
+              {
+                type: "toolCall",
+                message: { type: "read", args: { path: "data/latest/agent-briefing.json" } },
+              },
+            ],
+            deltas: [],
+          },
+        }),
+      });
+    });
+
+    await page.goto(`/activity?run=${encodeURIComponent(RUN_ID)}`);
+    await expect(page.getByTestId("live-stream-feed")).toBeVisible();
+    await expect(page.getByTestId("live-stream-thinking")).toContainText("Analyzing briefing");
+    await expect(page.getByTestId("live-stream-assistant")).toContainText("Partial output");
+    await expect(page.getByTestId("live-stream-waiting")).toHaveCount(0);
+  });
+
   test("run drawer shows live stream deltas while run is live", async ({ page }) => {
     await page.goto(`/activity?run=${encodeURIComponent(RUN_ID)}`);
 

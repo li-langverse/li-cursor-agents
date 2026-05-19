@@ -894,6 +894,33 @@ table.data-table tr:hover {
   white-space: normal;
 }
 
+.live-stream-feed .live-stream-panel {
+  margin-top: 0.75rem;
+}
+
+.live-stream-feed .live-stream-panel h5 {
+  margin: 0 0 0.35rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.live-stream-feed .live-stream-status {
+  margin: 0.25rem 0 0;
+}
+
+.live-stream-feed .live-stream-raw {
+  margin-top: 0.75rem;
+}
+
+.live-stream-feed .live-stream-raw summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
 .live-stream-feed .live-delta-list {
   list-style: none;
   padding: 0;

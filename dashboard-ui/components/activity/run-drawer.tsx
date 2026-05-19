@@ -30,9 +30,7 @@ function RunTraceBody({ detail }: { detail: RunDetail }) {
 
   if (detail.live) {
     parts.push(<LiveStreamFeed key="live-stream" detail={detail} />);
-  }
-
-  if (trace?.thinking_text) {
+  } else if (trace?.thinking_text) {
     parts.push(
       <section key="thinking" className="trace-section">
         <h4>Thinking</h4>
@@ -58,7 +56,7 @@ function RunTraceBody({ detail }: { detail: RunDetail }) {
   }
 
   const toolSteps = (trace?.steps ?? []).filter((s) => s.type === "toolCall");
-  if (toolSteps.length) {
+  if (toolSteps.length && !detail.live) {
     parts.push(
       <section key="tools" className="trace-section">
         <h4>Tool steps ({trace?.tool_call_count ?? toolSteps.length})</h4>
@@ -84,16 +82,18 @@ function RunTraceBody({ detail }: { detail: RunDetail }) {
     );
   }
 
-  parts.push(
-    <section key="output" className="trace-section">
-      <h4>Assistant output</h4>
-      <RichContent
-        text={trace?.assistant_text ?? detail.output_preview}
-        maxHeight={480}
-        className="trace-block"
-      />
-    </section>,
-  );
+  if (!detail.live) {
+    parts.push(
+      <section key="output" className="trace-section">
+        <h4>Assistant output</h4>
+        <RichContent
+          text={trace?.assistant_text ?? detail.output_preview}
+          maxHeight={480}
+          className="trace-block"
+        />
+      </section>,
+    );
+  }
 
   if (detail.completion) {
     parts.push(
