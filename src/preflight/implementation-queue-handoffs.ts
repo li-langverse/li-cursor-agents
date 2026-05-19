@@ -1,16 +1,17 @@
 import { listHandoffs } from "../handoffs/handoff-store.js";
 import { resolveGoalImplementationRepo } from "../handoffs/goal-workflow.js";
 import { handoffReadyForImplement } from "../handoffs/placement-validator.js";
-import type { ImplementationQueue, WorkQueueItem } from "./implementation-queue.js";
+import {
+  normalizeImplementationQueue,
+  type ImplementationQueue,
+  type WorkQueueItem,
+} from "./implementation-queue.js";
 
 /** Append claimable code_implementer handoffs to implementation_queue.work_queue. */
 export async function mergeHandoffsIntoImplementationQueue(
   briefing: Record<string, unknown>,
 ): Promise<ImplementationQueue> {
-  const base =
-    briefing.implementation_queue && typeof briefing.implementation_queue === "object"
-      ? (briefing.implementation_queue as ImplementationQueue)
-      : { work_queue: [], sources: [] };
+  const base = normalizeImplementationQueue(briefing.implementation_queue);
 
   const items: WorkQueueItem[] = [...base.work_queue];
   const sources = new Set(base.sources ?? []);

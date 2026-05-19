@@ -32,3 +32,10 @@ test("mergeHandoffsIntoImplementationQueue includes ready implement handoffs", a
   assert.ok(row);
   assert.equal(row!.repo, "lic");
 });
+
+test("mergeHandoffsIntoImplementationQueue accepts legacy array implementation_queue", async () => {
+  const q = await mergeHandoffsIntoImplementationQueue({
+    implementation_queue: [{ kind: "ui_remediation", repo: "lic", reason: "legacy-row" }],
+  });
+  assert.ok(q.work_queue.some((w) => w.reason === "legacy-row"));
+});

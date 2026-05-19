@@ -31,7 +31,7 @@ def main() -> int:
         "recommended_agents": rec,
         "ui_audit": load_json("ui-audit.json"),
         "ux_audit": load_json("ux-audit.json"),
-        "implementation_queue": load_json("implementation_queue.json") or [],
+        "implementation_queue": load_json("implementation_queue.json") or {"work_queue": [], "sources": []},
         "org_roadmap": {
             "vision_url": "https://github.com/li-langverse/roadmap",
             "pillars": ["provable"],

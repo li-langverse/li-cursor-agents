@@ -16,13 +16,54 @@ export interface ImplementationQueue {
   sources: string[];
 }
 
+/** Accept legacy briefing shapes where implementation_queue was a bare array. */
+export function normalizeImplementationQueue(raw: unknown): ImplementationQueue {
+  if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+    const o = raw as Record<string, unknown>;
+    const work_queue = Array.isArray(o.work_queue)
+      ? (o.work_queue.filter((r) => r && typeof r === "object") as WorkQueueItem[])
+      : [];
+    const sources = Array.isArray(o.sources)
+      ? o.sources.filter((s): s is string => typeof s === "string")
+      : [];
+    return { work_queue, sources };
+  }
+  if (Array.isArray(raw)) {
+    const work_queue = raw.filter((r) => r && typeof r === "object") as WorkQueueItem[];
+    return {
+      work_queue,
+      sources: work_queue.length ? ["legacy_implementation_queue"] : [],
+    };
+  }
+  return { work_queue: [], sources: [] };
+}
+
 export function buildImplementationQueue(briefing: unknown): ImplementationQueue {
   if (!briefing || typeof briefing !== "object") {
     return { work_queue: [], sources: [] };
   }
   const b = briefing as Record<string, unknown>;
-  const items: WorkQueueItem[] = [];
-  const sources: string[] = [];
+  const seeded = normalizeImplementationQueue(b.implementation_queue);
+  const items: WorkQueueItem[] = [...seeded.work_queue];
+  const sources: string[] = [...seeded.sources];
+
+  const manifest = b.remediation_manifest as Record<string, unknown> | undefined;
+  const fromManifest = manifest?.implementation_queue;
+  if (Array.isArray(fromManifest)) {
+    for (const row of fromManifest) {
+      if (!row || typeof row !== "object") continue;
+      const kind = String((row as Record<string, unknown>).kind ?? "");
+      if (kind !== "ui_remediation" && kind !== "ux_remediation") continue;
+      const reason = String(
+        (row as Record<string, unknown>).remediation_summary ??
+          (row as Record<string, unknown>).title ??
+          "",
+      );
+      if (reason && items.some((w) => w.reason === reason)) continue;
+      items.push(row as WorkQueueItem);
+    }
+    if (fromManifest.length) sources.push("remediation_manifest");
+  }
 
   const ciBug = b.ci_bug_triage as Record<string, unknown> | undefined;
   if (ciBug?.work_queue && Array.isArray(ciBug.work_queue)) {

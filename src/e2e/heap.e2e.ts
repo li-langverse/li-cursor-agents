@@ -18,6 +18,14 @@ describe("heap planner (Agentron-style)", () => {
     assert.ok(plan.priority_order.length <= MAX_COORDINATORS_PER_ROOT);
   });
 
+  test("coord_ux includes six UI/UX testers", () => {
+    const ux = COORDINATOR_REGISTRY.find((c) => c.id === "coord_ux");
+    assert.ok(ux);
+    assert.equal(ux!.leafAgents.length, 6);
+    assert.ok(ux!.leafAgents.includes("docs_ui_tester"));
+    assert.ok(ux!.leafAgents.includes("gui_ux_tester"));
+  });
+
   test("15 leaf agents fit under coordinator caps", () => {
     const rec = [
       { agent: "pr_alignment", reason: "a" },
