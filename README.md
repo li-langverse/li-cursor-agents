@@ -126,7 +126,10 @@ See [docs/cloud-agent-secrets.md](docs/cloud-agent-secrets.md).
 
 ```bash
 npm run test:e2e              # CI-safe: mock backend, fixture briefing, dashboard API
-LI_E2E_SDK=1 npm run test:e2e:sdk   # real SDK (requires .env key)
+LI_E2E_SDK=1 npm run test:e2e:sdk   # real SDK smoke (orchestrator)
+LI_E2E_SDK=1 LI_E2E_SDK_ALL_LEAVES=1 npm run test:e2e:all-leaves-sdk   # every leaf agent + live onDelta stream
+npm run test:playwright:mock        # browser: live stream UI (mocked API)
+LI_PLAYWRIGHT_USE_SUPABASE=1 npm run test:playwright:integration   # browser + local test DB
 ```
 
 Covers: heap caps → preflight → task queue → agent runs → report/interventions → anti-cycle → goal shift → **agent-matrix** (mock per leaf) → dashboard `/api/report` + `/api/heap`.
@@ -140,6 +143,9 @@ Covers: heap caps → preflight → task queue → agent runs → report/interve
 | `BENCHMARKS_ROOT` | Path to `li-langverse/benchmarks` for preflight |
 | `CURSOR_MODEL` | Default `default` (Cursor **Auto**); pin e.g. `gpt-5-mini` if needed |
 | `LI_E2E_SDK=1` | Run live SDK e2e tests |
+| `LI_E2E_SDK_ALL_LEAVES=1` | With `LI_E2E_SDK=1`, run **all leaf agents** (not default CI) |
+| `LI_E2E_SDK_STREAM_WAIT_MS` | Max wait per agent for live stream (default 240000) |
+| `LI_LIVE_TRACE_FLUSH_MS=0` | Immediate flush to dashboard/db-api (used in stream e2e) |
 
 ## CI policy
 

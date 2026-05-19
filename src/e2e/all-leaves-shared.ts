@@ -1,4 +1,6 @@
+import assert from "node:assert/strict";
 import { AGENT_REGISTRY } from "../agents/registry.js";
+import type { AgentRunTrace } from "../agent-run-trace.js";
 import { handleDbApiRequest } from "../db-api/index.js";
 import { leafAgentIds } from "./helpers.js";
 
@@ -63,5 +65,84 @@ export async function pollRunDetailUntil(
 function assertStatusOk(status: number, runId: string): void {
   if (status !== 200) {
     throw new Error(`GET /api/runs/${runId} → ${status}`);
+  }
+}
+
+/** Finest-grain SDK stream visible in run_trace (onDelta / onStep collector). */
+export function traceHasLiveStream(trace?: AgentRunTrace | null): boolean {
+  if (!trace) return false;
+  if ((trace.deltas?.length ?? 0) > 0) return true;
+  if (trace.thinking_text?.trim()) return true;
+  if (trace.assistant_text?.trim()) return true;
+  if ((trace.steps?.length ?? 0) > 0) return true;
+  return false;
+}
+
+export function runDetailHasLiveStream(body: Record<string, unknown>): boolean {
+  return traceHasLiveStream(body.run_trace as AgentRunTrace | undefined);
+}
+
+/** Poll in-process + db-api until live stream appears (same Node process as worker). */
+export async function pollUntilLiveStreamVisible(
+  agentId: string,
+  opts?: { maxMs?: number; intervalMs?: number },
+): Promise<{ runId: string; fromMemory: boolean; detail?: Record<string, unknown> }> {
+  const maxMs = opts?.maxMs ?? 180_000;
+  const intervalMs = opts?.intervalMs ?? 400;
+  const { listActiveRuns } = await import("../control-plane/runtime.js");
+  const start = Date.now();
+
+  while (Date.now() - start < maxMs) {
+    const running = listActiveRuns().filter(
+      (r) => r.agent_id === agentId && r.status === "running",
+    );
+    if (running.length > 0) {
+      const runId = running[0]!.run_id;
+      if (traceHasLiveStream(running[0]!.run_trace)) {
+        return { runId, fromMemory: true };
+      }
+      try {
+        const detail = await pollRunDetailUntil(
+          runId,
+          (b) => b.live === true && runDetailHasLiveStream(b),
+          { maxMs: Math.min(3_000, maxMs - (Date.now() - start)), intervalMs: 80 },
+        );
+        if (runDetailHasLiveStream(detail)) {
+          return { runId, fromMemory: false, detail };
+        }
+      } catch {
+        /* run detail not ready */
+      }
+    }
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+
+  throw new Error(
+    `timed out after ${maxMs}ms waiting for live SDK stream on agent ${agentId}`,
+  );
+}
+
+export function assertSdkStreamingTrace(
+  agentId: string,
+  trace: AgentRunTrace | undefined,
+  detail?: Record<string, unknown>,
+): void {
+  const merged = trace ?? (detail?.run_trace as AgentRunTrace | undefined);
+  assert.ok(
+    traceHasLiveStream(merged),
+    `${agentId}: expected SDK live stream in trace (deltas, thinking, assistant text, or tool steps)`,
+  );
+  const deltas = merged?.deltas ?? [];
+  const steps = merged?.steps ?? [];
+  assert.ok(
+    deltas.length > 0 || steps.length > 0,
+    `${agentId}: expected onDelta deltas and/or onStep steps (finest-grain stream), got deltas=${deltas.length} steps=${steps.length}`,
+  );
+  if (deltas.length > 0) {
+    const types = [...new Set(deltas.map((d) => d.type))];
+    assert.ok(
+      types.some((t) => t.includes("delta") || t.includes("tool-call")),
+      `${agentId}: expected stream delta types, got: ${types.join(", ")}`,
+    );
   }
 }
