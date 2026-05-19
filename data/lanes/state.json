@@ -2,18 +2,14 @@
   "research_lane_enabled": true,
   "implement_lane_enabled": true,
   "goal_last_run_at": {
-    "numerics_sota": "2026-05-19T08:00:03.465Z",
-    "simulation_techniques": "2026-05-19T08:00:03.520Z",
-    "ecosystem_gaps": "2026-05-19T08:00:06.825Z",
-    "stdlib_ecosystem": "2026-05-19T08:00:06.888Z",
-    "ai_ecosystem": "2026-05-19T08:01:50.006Z",
-    "provability_holes": "2026-05-19T08:02:34.258Z"
+    "numerics_sota": "2026-05-19T08:54:44.638Z",
+    "simulation_techniques": "2026-05-19T08:54:44.685Z"
   },
-  "last_research_tick_at": "2026-05-19T08:13:38.084Z",
-  "last_implement_tick_at": "2026-05-19T07:59:46.200Z",
-  "last_maintenance_tick_at": "2026-05-19T08:01:47.040Z",
+  "last_research_tick_at": "2026-05-19T09:11:50.615Z",
+  "last_implement_tick_at": "2026-05-19T08:54:29.180Z",
+  "last_maintenance_tick_at": "2026-05-19T08:54:41.449Z",
   "proactive_last_run_at": {
-    "bench_improver": "2026-05-19T08:00:02.103Z",
-    "bug_fixer": "2026-05-19T08:00:02.690Z"
+    "bench_improver": "2026-05-19T08:54:43.052Z",
+    "bug_fixer": "2026-05-19T08:54:43.388Z"
   }
 }

@@ -12,7 +12,7 @@ import { ALL_LEAF_AGENTS, assertAllLeavesRegistered } from "./all-leaves-shared.
 import { auditAgentRun, assertAgentAudit } from "./agent-role-audit.js";
 import { setupE2eEnv } from "./helpers.js";
 
-describe("agent function audit — isolation and parallel (demo repo, mock)", () => {
+describe("agent function audit — isolation and parallel (demo repo, mock)", { concurrency: 1 }, () => {
   let env: ReturnType<typeof setupE2eEnv>;
   const prevConcurrent = process.env.LI_SDK_MAX_CONCURRENT;
   const prevMockDelay = process.env.LI_MOCK_RUN_DELAY_MS;

@@ -128,8 +128,16 @@ export function createLiveTraceCollector(
       maybeFlush(flushIntervalMs === 0 || update.type === "text-delta");
     },
     finalize: (assistantText: string) => {
-      flush();
-      return inner.finalize(assistantText);
+      const streamed = assistantChunks.join("");
+      const merged = streamed.length > 0 ? streamed + assistantText : assistantText;
+      maybeFlush(true);
+      const trace = inner.finalize(merged);
+      publishLiveTraceSnapshot(runId, outputPath, trace, runInput);
+      void flushLiveTraceToDb(runId, trace, {
+        runInput,
+        agentId: runInput?.agent_id,
+      });
+      return trace;
     },
   };
 }
