@@ -154,6 +154,11 @@ export function sdkMatrixExtraInstruction(agentId: string): string {
       "If you mention handoff, include north_star_fit: domain=smoke-test pillar=verification.",
     );
   }
+  if (agentId === "code_implementer" || agentId === "package_architect") {
+    lines.push(
+      "Read-only: do not edit trusted.lean or any repo file; discussing trusted.lean in the queue is fine.",
+    );
+  }
   return lines.join("\n");
 }
 

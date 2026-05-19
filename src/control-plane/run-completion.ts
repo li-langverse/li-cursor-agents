@@ -81,12 +81,46 @@ export interface AuditRunCompletionInput {
 const TRUSTED_LEAN_RE = /trusted\.lean/i;
 const TRUSTED_APPROVED_RE = /trusted-change-approved|trusted_change_approved/i;
 
-export function outputTouchesTrustedLean(text: string, trace?: AgentRunTrace): boolean {
-  if (TRUSTED_LEAN_RE.test(text)) return true;
+function traceEditsTrustedLean(trace?: AgentRunTrace): boolean {
   for (const edit of trace?.file_edits ?? []) {
-    if (TRUSTED_LEAN_RE.test(edit.path)) return true;
+    if (!TRUSTED_LEAN_RE.test(edit.path)) continue;
+    const wrote =
+      edit.tool === "edit" ||
+      edit.tool === "write" ||
+      (edit.lines_added ?? 0) > 0 ||
+      (edit.lines_removed ?? 0) > 0;
+    if (wrote) return true;
   }
   return false;
+}
+
+/** True when the run claims or performs a trusted.lean change without approval metadata. */
+export function outputTouchesTrustedLean(text: string, trace?: AgentRunTrace): boolean {
+  if (traceEditsTrustedLean(trace)) return true;
+  if (!TRUSTED_LEAN_RE.test(text)) return false;
+  if (TRUSTED_APPROVED_RE.test(text)) return false;
+  return /\b(edit|modify|change|patch|commit|update|wrote|fixed)\b.*trusted\.lean/i.test(text);
+}
+
+function isSdkMatrixSmoke(): boolean {
+  return Boolean(process.env.LI_SDK_MATRIX_MODE?.trim());
+}
+
+function passesSdkMatrixSmokeAudit(outputText: string): { ok: boolean; gaps: string[] } {
+  const gaps: string[] = [];
+  if (!/^OK-/m.test(outputText)) {
+    gaps.push("SDK matrix smoke: reply must include a line starting with OK-");
+  }
+  if (outputText.length < 120) {
+    gaps.push("SDK matrix smoke: output too short");
+  }
+  const checked =
+    hasCheckedDeliverableItems(outputText) ||
+    /-\s*\[x\]\s*SDK matrix smoke completed/i.test(outputText);
+  if (!checked) {
+    gaps.push("SDK matrix smoke: need ## Agent deliverable with - [x] SDK matrix smoke completed");
+  }
+  return { ok: gaps.length === 0, gaps };
 }
 
 export function auditRunCompletion(input: AuditRunCompletionInput): AgentRunCompletion {
@@ -94,6 +128,24 @@ export function auditRunCompletion(input: AuditRunCompletionInput): AgentRunComp
   const gaps: string[] = [];
   const evidence: string[] = [];
   const pr_urls = [...new Set([...extractPrUrls(outputText), ...(rolloutPrUrls ?? [])])];
+
+  if (isSdkMatrixSmoke()) {
+    const smoke = passesSdkMatrixSmokeAudit(outputText);
+    if (smoke.ok) {
+      evidence.push("sdk_matrix_smoke");
+      if (NUMERICS_EVIDENCE_AGENT_IDS.has(agentId) && hasNumericsTestEvidence(outputText)) {
+        evidence.push("numerics_bench_or_test_evidence_in_output");
+      }
+    }
+    return {
+      complete: smoke.ok,
+      premature: !smoke.ok,
+      pr_urls,
+      deliverable_checked: hasCheckedDeliverableItems(outputText),
+      gaps: smoke.gaps,
+      evidence,
+    };
+  }
 
   if (mock || backend === "mock") {
     if (REPO_WORKFLOW_AGENT_IDS.has(agentId) && pr_urls.length === 0 && !SKIP_RE.test(outputText)) {

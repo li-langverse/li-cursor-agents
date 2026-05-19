@@ -38,7 +38,9 @@ export function finalizeAgentRun(
 ): AgentRunResult {
   const definition = options?.definition ?? getAgent(result.agentId);
   const rawText = readOutputText(result);
-  const bodyForAudit = deliverableBody(rawText) || rawText;
+  const bodyForAudit = process.env.LI_SDK_MATRIX_MODE?.trim()
+    ? rawText
+    : deliverableBody(rawText) || rawText;
 
   const completion: AgentRunCompletion = auditRunCompletion({
     agentId: result.agentId,

@@ -51,6 +51,13 @@ echo ""
 FAIL=0
 IDX=0
 for agent in "${AGENTS[@]}"; do
+  if [[ "${VERIFY_SKIP_PASSED:-}" == "1" && -f "$TIMING_FILE" ]]; then
+    if grep -q "\"agent\":\"${agent}\".*\"status\":\"finished\"" "$TIMING_FILE" 2>/dev/null ||
+      grep -q "\"status\":\"finished\".*\"agent\":\"${agent}\"" "$TIMING_FILE" 2>/dev/null; then
+      echo "==> skip ${agent} (already finished in ${TIMING_FILE})"
+      continue
+    fi
+  fi
   IDX=$((IDX + 1))
   AGENT_START=$(date +%s)
   echo ""
