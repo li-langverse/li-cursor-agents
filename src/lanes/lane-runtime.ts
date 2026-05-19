@@ -4,7 +4,13 @@ import { shouldUseMock } from "../runner.js";
 import { implementLaneIntervalMs, implementLaneTick } from "./implement-lane.js";
 import { maintenanceLaneIntervalMs, maintenanceLaneTick } from "./maintenance-lane.js";
 import { loadLaneState, saveLaneState, type LaneStateFile } from "./lane-state.js";
+import { researchParallelEnabled } from "./research-parallel.js";
 import { researchLaneIntervalMs, researchLaneTick } from "./research-lane.js";
+import {
+  researchAgentWorkerPoolSnapshot,
+  startResearchAgentWorkerPool,
+  stopResearchAgentWorkerPool,
+} from "../async-swarm/research-agent-worker-pool.js";
 
 let researchAbort: AbortController | null = null;
 let implementAbort: AbortController | null = null;
@@ -17,7 +23,9 @@ export function laneRuntimeSnapshot(state: LaneStateFile = loadLaneState()) {
   return {
     research_lane_enabled: state.research_lane_enabled,
     implement_lane_enabled: state.implement_lane_enabled,
-    research_lane_running: researchAbort !== null && !researchAbort.signal.aborted,
+    research_lane_running:
+      (researchAbort !== null && !researchAbort.signal.aborted) ||
+      researchAgentWorkerPoolSnapshot().running,
     implement_lane_running: implementAbort !== null && !implementAbort.signal.aborted,
     maintenance_lane_running: maintenanceAbort !== null && !maintenanceAbort.signal.aborted,
     last_research_tick_at: state.last_research_tick_at ?? null,
@@ -102,7 +110,8 @@ export function startResearchLaneLoop(options?: { mock?: boolean }): {
   started: boolean;
   message: string;
 } {
-  if (researchAbort && !researchAbort.signal.aborted) {
+  const poolRunning = researchAgentWorkerPoolSnapshot().running;
+  if ((researchAbort && !researchAbort.signal.aborted) || poolRunning) {
     return { started: false, message: "research lane already running" };
   }
   const state = loadLaneState();
@@ -110,20 +119,31 @@ export function startResearchLaneLoop(options?: { mock?: boolean }): {
   saveLaneState(state);
 
   const mock = options?.mock ?? shouldUseMock(false);
+  if (researchParallelEnabled()) {
+    const pool = startResearchAgentWorkerPool({ mock });
+    return {
+      started: pool.started,
+      message: pool.message,
+    };
+  }
+
   researchAbort = new AbortController();
   researchPromise = researchLoop(researchAbort.signal, mock).finally(() => {
     researchAbort = null;
     researchPromise = null;
   });
-  return { started: true, message: "research lane loop started" };
+  return { started: true, message: "research lane loop started (serial)" };
 }
 
 export function stopResearchLaneLoop(): { stopped: boolean; message: string } {
+  const pool = stopResearchAgentWorkerPool();
   if (!researchAbort) {
-    return { stopped: false, message: "research lane not running" };
+    return pool.stopped
+      ? { stopped: true, message: pool.message }
+      : { stopped: false, message: "research lane not running" };
   }
   researchAbort.abort();
-  return { stopped: true, message: "research lane stopping" };
+  return { stopped: true, message: `research lane stopping; ${pool.message}` };
 }
 
 export function startImplementLaneLoop(options?: { mock?: boolean }): {

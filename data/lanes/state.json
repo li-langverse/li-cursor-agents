@@ -1,23 +1,19 @@
 {
   "research_lane_enabled": true,
   "implement_lane_enabled": true,
-  "goal_last_run_at": {},
-  "last_research_tick_at": "2026-05-18T23:03:01.952Z",
-  "last_maintenance_tick_at": "2026-05-19T07:28:26.820Z",
+  "goal_last_run_at": {
+    "numerics_sota": "2026-05-19T08:00:03.465Z",
+    "simulation_techniques": "2026-05-19T08:00:03.520Z",
+    "ecosystem_gaps": "2026-05-19T08:00:06.825Z",
+    "stdlib_ecosystem": "2026-05-19T08:00:06.888Z",
+    "ai_ecosystem": "2026-05-19T08:01:50.006Z",
+    "provability_holes": "2026-05-19T08:02:34.258Z"
+  },
+  "last_research_tick_at": "2026-05-19T08:13:38.084Z",
+  "last_implement_tick_at": "2026-05-19T07:59:46.200Z",
+  "last_maintenance_tick_at": "2026-05-19T08:01:47.040Z",
   "proactive_last_run_at": {
-    "orchestrator": "2026-05-18T23:03:01.908Z",
-    "pr_merger": "2026-05-19T07:25:44.528Z",
-    "pr_branch_opener": "2026-05-19T07:25:44.527Z",
-    "issue_planner": "2026-05-19T07:25:44.527Z",
-    "swarm_observer": "2026-05-19T07:25:44.528Z",
-    "agent_kit_maintainer": "2026-05-19T07:25:44.526Z",
-    "workspace_sweeper": "2026-05-19T07:25:44.527Z",
-    "plan_verifier": "2026-05-19T07:25:44.527Z",
-    "implementation_gaps": "2026-05-19T07:25:44.527Z",
-    "autoresearch": "2026-05-19T07:25:44.528Z",
-    "bench_improver": "2026-05-19T07:25:44.528Z",
-    "docs_maintainer": "2026-05-19T07:25:44.528Z",
-    "ci_maintainer": "2026-05-19T07:25:44.528Z",
-    "bug_fixer": "2026-05-19T07:25:44.528Z"
+    "bench_improver": "2026-05-19T08:00:02.103Z",
+    "bug_fixer": "2026-05-19T08:00:02.690Z"
   }
 }

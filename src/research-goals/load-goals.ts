@@ -72,12 +72,12 @@ export function resolveGoalAgent(goal: ResearchGoal): AgentId {
   return "goal_researcher";
 }
 
-export function pickNextGoal(
+function eligibleGoals(
   goals: ResearchGoal[],
   goalLastRunAt: Record<string, string>,
-  now = Date.now(),
-): ResearchGoal | null {
-  const eligible = goals
+  now: number,
+): ResearchGoal[] {
+  return goals
     .filter((g) => {
       const cadenceH = g.cadence_hours ?? 24;
       const last = goalLastRunAt[g.id];
@@ -85,7 +85,30 @@ export function pickNextGoal(
       return now - new Date(last).getTime() >= cadenceH * 3_600_000;
     })
     .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
-  return eligible[0] ?? null;
+}
+
+export function pickNextGoal(
+  goals: ResearchGoal[],
+  goalLastRunAt: Record<string, string>,
+  now = Date.now(),
+): ResearchGoal | null {
+  return eligibleGoals(goals, goalLastRunAt, now)[0] ?? null;
+}
+
+/** Next goal for a specific research agent (parallel workers — no global lane mutex). */
+export function pickNextGoalForAgent(
+  agentId: AgentId,
+  goals: ResearchGoal[],
+  goalLastRunAt: Record<string, string>,
+  now = Date.now(),
+): ResearchGoal | null {
+  return (
+    eligibleGoals(
+      goals.filter((g) => resolveGoalAgent(g) === agentId),
+      goalLastRunAt,
+      now,
+    )[0] ?? null
+  );
 }
 
 export function northStarFitForGoal(goal: ResearchGoal): string {

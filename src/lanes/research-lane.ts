@@ -3,8 +3,10 @@ import { resolveBenchmarksRoot, runPreflight } from "../preflight.js";
 import {
   loadResearchGoals,
   pickNextGoal,
+  pickNextGoalForAgent,
   resolveGoalAgent,
 } from "../research-goals/load-goals.js";
+import { loadResearchSession } from "../research-sessions/session-store.js";
 import {
   agentUsesResearchSession,
   buildGoalKickoffBlock,
@@ -27,31 +29,48 @@ export interface ResearchLaneTickResult {
   status?: string;
 }
 
-export async function pickResearchLaneTarget(): Promise<{
+export type ResearchWorkTarget = {
   agentId: AgentId;
   goal?: ResearchGoal;
   session?: ResearchSession;
   extra: string;
-} | null> {
-  const resumed = await findAnyInProgressSession();
-  if (resumed) {
-    return {
-      agentId: resumed.agent_id as AgentId,
-      session: resumed,
-      extra: buildResearchSessionContinuationBlock(resumed),
-    };
+};
+
+function buildResearchWorkTarget(
+  agentId: AgentId,
+  goal: ResearchGoal | undefined,
+  session: ResearchSession | undefined,
+  extra: string,
+): ResearchWorkTarget {
+  return { agentId, goal, session, extra };
+}
+
+/** Work for one research agent only (used by parallel per-agent workers). */
+export async function pickResearchWorkForAgent(
+  agentId: AgentId,
+): Promise<ResearchWorkTarget | null> {
+  if (agentUsesResearchSession(agentId)) {
+    const session = await loadResearchSession(agentId);
+    if (session?.status === "in_progress") {
+      return buildResearchWorkTarget(
+        agentId,
+        undefined,
+        session,
+        buildResearchSessionContinuationBlock(session),
+      );
+    }
   }
 
   const state = loadLaneState();
-  const goal = pickNextGoal(loadResearchGoals(), state.goal_last_run_at);
+  const goal = pickNextGoalForAgent(agentId, loadResearchGoals(), state.goal_last_run_at);
   if (!goal) return null;
 
-  const agentId = resolveGoalAgent(goal);
   if (!goal.uses_research_session && !agentUsesResearchSession(agentId)) {
-    return {
+    return buildResearchWorkTarget(
       agentId,
       goal,
-      extra: [
+      undefined,
+      [
         "## Research goal (this run)",
         "",
         `- **Goal id:** \`${goal.id}\``,
@@ -59,17 +78,90 @@ export async function pickResearchLaneTarget(): Promise<{
         `- **north_star_fit:** ${northStarFitForGoal(goal)}`,
         "",
       ].join("\n"),
-    };
+    );
   }
 
   const session = await ensureSessionForGoal(agentId, goal);
-  return {
+  return buildResearchWorkTarget(
     agentId,
     goal,
     session,
-    extra: [buildGoalKickoffBlock(goal, session), buildResearchSessionContinuationBlock(session)].join(
+    [buildGoalKickoffBlock(goal, session), buildResearchSessionContinuationBlock(session)].join(
       "\n",
     ),
+  );
+}
+
+export async function pickResearchLaneTarget(): Promise<ResearchWorkTarget | null> {
+  const resumed = await findAnyInProgressSession();
+  if (resumed) {
+    return buildResearchWorkTarget(
+      resumed.agent_id as AgentId,
+      undefined,
+      resumed,
+      buildResearchSessionContinuationBlock(resumed),
+    );
+  }
+
+  const state = loadLaneState();
+  const goal = pickNextGoal(loadResearchGoals(), state.goal_last_run_at);
+  if (!goal) return null;
+
+  const agentId = resolveGoalAgent(goal);
+  return pickResearchWorkForAgent(agentId);
+}
+
+export interface ResearchAgentCycleResult {
+  skipped: boolean;
+  skip_reason?: string;
+  agentId: AgentId;
+  goalId?: string;
+  status?: string;
+}
+
+/** One research-agent cycle (parallel pool) — same runAgent path as lane tick. */
+export async function researchAgentWorkerCycle(
+  agentId: AgentId,
+  options?: { mock?: boolean; dryRun?: boolean; benchmarksRoot?: string },
+): Promise<ResearchAgentCycleResult> {
+  const laneState = loadLaneState();
+  if (!laneState.research_lane_enabled) {
+    return { skipped: true, skip_reason: "research lane disabled", agentId };
+  }
+  if (isHandoffRunInProgress()) {
+    return { skipped: true, skip_reason: "handoff run-all in progress", agentId };
+  }
+
+  const target = await pickResearchWorkForAgent(agentId);
+  if (!target) {
+    return { skipped: true, skip_reason: "no eligible goal or session for agent", agentId };
+  }
+
+  const benchmarksRoot = resolveBenchmarksRoot(options?.benchmarksRoot);
+  const packageRoot = agentsPackageRoot();
+  const mock = options?.mock ?? shouldUseMock(false);
+  const result = await runAgent({
+    agentId: target.agentId,
+    cwd: benchmarksRoot ?? packageRoot,
+    benchmarksRoot,
+    mock: Boolean(mock),
+    dryRun: Boolean(options?.dryRun),
+    extraInstruction: target.extra,
+  });
+
+  if (target.goal?.id) {
+    recordGoalRun(loadLaneState(), target.goal.id);
+  }
+
+  const next = loadLaneState();
+  next.last_research_tick_at = new Date().toISOString();
+  saveLaneState(next);
+
+  return {
+    skipped: false,
+    agentId: target.agentId,
+    goalId: target.goal?.id ?? target.session?.goal_id,
+    status: result.status,
   };
 }
 
