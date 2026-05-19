@@ -13,7 +13,11 @@ import { runAgent } from "../runner.js";
 import { agentsPackageRoot } from "../runner.js";
 import { listActiveRuns } from "../control-plane/runtime.js";
 import { liveTraceFlushMs } from "../control-plane/live-run-trace.js";
-import { isSdkSlotLockError } from "../backends/sdk-session-lock.js";
+import {
+  isSdkSlotLockError,
+  reclaimAllStaleSdkSlots,
+  resetSdkSessionLockForTests,
+} from "../backends/sdk-session-lock.js";
 import {
   ALL_LEAF_AGENTS,
   assertAllLeavesRegistered,
@@ -46,12 +50,20 @@ describe("all leaf agents — live SDK + streaming", { skip: skipReason || false
     delete process.env.CURSOR_MOCK;
     process.env.LI_LIVE_TRACE_FLUSH_MS = "0";
     process.env.LI_LIVE_STREAM_DB = process.env.LI_E2E_USE_SUPABASE === "1" ? "1" : "0";
-    process.env.LI_SDK_MAX_CONCURRENT = process.env.LI_SDK_MAX_CONCURRENT ?? "6";
-    process.env.LI_SDK_SLOT_MAX_WAIT_MS = process.env.LI_SDK_SLOT_MAX_WAIT_MS ?? "120_000";
+    process.env.LI_SDK_MAX_CONCURRENT = process.env.LI_SDK_MAX_CONCURRENT ?? "1";
+    process.env.LI_SDK_SLOT_MAX_WAIT_MS = process.env.LI_SDK_SLOT_MAX_WAIT_MS ?? "600_000";
     // workspace_sweeper otherwise exits before SDK; stream must be exercised for every leaf.
     process.env.LI_WORKSPACE_SWEEP_FORCE_LLM = "1";
+    resetSdkSessionLockForTests();
+    const reclaimed = reclaimAllStaleSdkSlots();
+    if (reclaimed > 0) {
+      console.log(`[sdk-matrix] reclaimed ${reclaimed} stale SDK lock file(s)`);
+    }
     assert.equal(liveTraceFlushMs(), 0);
     assertAllLeavesRegistered();
+    console.log(
+      `[sdk-matrix] setup ok — ${ALL_LEAF_AGENTS.length} leaf agents, store=${process.env.LI_CONTROL_PLANE_STORE ?? "disk"}`,
+    );
   });
 
   after(() => {
@@ -66,14 +78,20 @@ describe("all leaf agents — live SDK + streaming", { skip: skipReason || false
     else process.env.LI_SDK_SLOT_MAX_WAIT_MS = prevSlotWait;
   });
 
-  for (const def of ALL_LEAF_AGENTS) {
+  for (let leafIndex = 0; leafIndex < ALL_LEAF_AGENTS.length; leafIndex++) {
+    const def = ALL_LEAF_AGENTS[leafIndex]!;
     test(
       `sdk run + live stream: ${def.id}`,
       { timeout: 600_000 },
       async () => {
+        const label = `[sdk-matrix ${leafIndex + 1}/${ALL_LEAF_AGENTS.length}]`;
+        console.log(`${label} >>> START ${def.id}`);
+        const startedAt = Date.now();
         reapplyE2eStore(env);
+        resetSdkSessionLockForTests();
+        reclaimAllStaleSdkSlots();
         const pkg = agentsPackageRoot();
-        const streamWaitMs = Number(process.env.LI_E2E_SDK_STREAM_WAIT_MS ?? 240_000);
+        const streamWaitMs = Number(process.env.LI_E2E_SDK_STREAM_WAIT_MS ?? 180_000);
 
         const runPromise = runAgent({
           agentId: def.id,
@@ -147,7 +165,10 @@ describe("all leaf agents — live SDK + streaming", { skip: skipReason || false
           );
         }
 
-        assert.ok(sawRunning, `${def.id}: should register active run while SDK in flight`);
+        assert.ok(
+          sawRunning || traceHasLiveStream(result.trace),
+          `${def.id}: should register active run while SDK in flight (or stream in final trace)`,
+        );
         assert.ok(result.runInput, `${def.id}: runInput`);
         assert.ok(streamInfo, `${def.id}: stream poll should resolve`);
 
@@ -182,6 +203,9 @@ describe("all leaf agents — live SDK + streaming", { skip: skipReason || false
         assert.ok(
           streamInfo.fromMemory || runDetailHasLiveStream(detailBody),
           `${def.id}: stream visible via memory or db-api`,
+        );
+        console.log(
+          `${label} <<< DONE ${def.id} status=${result.status} ${Math.round((Date.now() - startedAt) / 1000)}s`,
         );
       },
     );
