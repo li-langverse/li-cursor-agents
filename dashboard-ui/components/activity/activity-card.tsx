@@ -107,8 +107,14 @@ export function ActivityCard({
   onOpenTrace: (runId: string) => void;
 }) {
   const status = item.live ? "running" : item.status;
-  const preview =
-    previewPlainText(item.prompt_preview || item.output_snippet || item.action_summary) || "—";
+  const preview = previewPlainText(
+    item.live
+      ? item.thinking_preview ||
+          item.output_snippet ||
+          item.prompt_preview ||
+          item.action_summary
+      : item.prompt_preview || item.output_snippet || item.action_summary,
+  ) || "—";
   const backend = runBackendLabel(item);
 
   return (

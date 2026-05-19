@@ -80,6 +80,23 @@ describe("live trace streaming to frontend", () => {
 
     const active = listActiveRuns().find((r) => r.run_id === runId);
     assert.ok(active?.run_trace, "in-process active_runs should carry trace");
+
+    const activity = await dbGet("/api/activity/recent?limit=40");
+    assert.equal(activity.status, 200);
+    const items = activity.body.items as Array<{
+      run_id: string;
+      live?: boolean;
+      output_snippet?: string;
+      action_summary?: string;
+    }>;
+    const row = items.find((i) => i.run_id === runId);
+    assert.ok(row?.live, "activity list should include live run");
+    assert.ok(
+      row?.output_snippet?.includes(token),
+      `activity output_snippet should stream token, got: ${row?.output_snippet?.slice(0, 80)}`,
+    );
+    assert.notEqual(row?.action_summary, "—");
+
     completeSupervisorRun(runId, "finished");
   });
 

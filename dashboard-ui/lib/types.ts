@@ -9,6 +9,13 @@ export interface RuntimePayload {
     started_at: string;
     reason?: string;
     status: string;
+    run_input?: { user_message?: string };
+    run_trace?: {
+      assistant_text?: string;
+      thinking_text?: string;
+      tool_call_count?: number;
+      steps?: Array<{ type: string; message?: Record<string, unknown> }>;
+    };
   }>;
   store?: string;
   agent_backend?: string;

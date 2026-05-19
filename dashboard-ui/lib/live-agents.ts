@@ -1,6 +1,7 @@
 import type { AgentsPayload, QueuePayload, RuntimePayload, StatusPayload, WorkQueueItem } from "./types";
 import type { AgentStatusInfo } from "./agent-status";
 import { buildAgentStatusMap } from "./agent-status";
+import { deriveLiveStreamPreview } from "./live-stream-preview";
 
 export type LiveAgentKind = "sdk_run" | "queue_in_progress" | "supervisor";
 
@@ -46,14 +47,19 @@ export function buildLiveAgentRows(
 
   for (const run of runtime?.active_runs ?? []) {
     if (run.status !== "running") continue;
+    const stream = deriveLiveStreamPreview({
+      run_trace: run.run_trace,
+      run_input: run.run_input,
+      reason: run.reason,
+    });
     pushRow(
       map,
       {
         agentId: run.agent_id,
         agentName: rosterName(agents, run.agent_id),
         kind: "sdk_run",
-        headline: "Running in SDK",
-        detail: run.reason?.trim() || "Agent run in progress",
+        headline: stream.headline,
+        detail: stream.detail || stream.snippet || run.reason?.trim() || "Agent run in progress",
         startedAt: run.started_at,
         runId: run.run_id,
       },

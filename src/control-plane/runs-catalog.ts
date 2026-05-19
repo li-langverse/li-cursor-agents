@@ -23,6 +23,7 @@ import type { ParsedStatsTimeRange } from "./stats-time-range.js";
 import type { AgentRunInputRecord, AgentRunTrace } from "../agent-run-trace.js";
 import { filterProductionRuns, isMockCatalogEntry } from "./run-history.js";
 import { listToActivityItems, type ActivityListItem } from "./activity-summary.js";
+import { deriveLiveStreamPreviewFromActive } from "./live-stream-preview.js";
 import type { AgentId } from "../types.js";
 
 export type { ActivityListItem } from "./activity-summary.js";
@@ -199,11 +200,8 @@ function catalogMdPathForRunId(runId: string): string {
 }
 
 function liveRunToCatalog(r: ActiveAgentRun): RunCatalogEntry {
-  const trace = r.run_trace;
-  const preview =
-    trace?.assistant_text?.slice(0, 320) ??
-    trace?.thinking_text?.slice(0, 200) ??
-    (r.run_input?.user_message ? r.run_input.user_message.slice(0, 200) : "_Running…_");
+  const stream = deriveLiveStreamPreviewFromActive(r);
+  const preview = stream.snippet || stream.detail || "";
   return {
     run_id: r.run_id,
     agent_id: r.agent_id,
@@ -373,19 +371,7 @@ export async function listRunsForAgent(agentId: string, limit = 15): Promise<Run
 
   const live = listActiveRuns()
     .filter((r) => r.agent_id === agentId)
-    .map(
-      (r): RunCatalogEntry => ({
-        run_id: r.run_id,
-        agent_id: r.agent_id,
-        started_at: r.started_at,
-        status: r.status,
-        md_path: catalogMdPathForRunId(r.run_id),
-        reason: r.reason,
-        live: true,
-        pid: r.pid,
-        output_preview: "_Running…_",
-      }),
-    );
+    .map((r) => liveRunToCatalog(r));
   const seen = new Set(live.map((r) => r.run_id));
   const merged = [...live, ...history.filter((r) => !seen.has(r.run_id))];
   return merged.slice(0, limit);

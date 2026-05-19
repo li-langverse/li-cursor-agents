@@ -1,4 +1,5 @@
 import type { AgentRunInputRecord, AgentRunTrace } from "../agent-run-trace.js";
+import { deriveLiveStreamPreview } from "./live-stream-preview.js";
 import type { RunCatalogEntry } from "./runs-catalog.js";
 
 export interface ActivityListItem extends RunCatalogEntry {
@@ -43,12 +44,23 @@ export function toActivityListItem(entry: RunCatalogEntry): ActivityListItem {
   if (tools > 0) parts.push(`${tools} tool${tools === 1 ? "" : "s"}`);
   if (edits > 0) parts.push(`${edits} file edit${edits === 1 ? "" : "s"}`);
   if (trace?.thinking_text) parts.push("thinking");
-  const action_summary = parts.length ? parts.join(" · ") : input || trace ? "run logged" : "—";
+
+  const stream = entry.live
+    ? deriveLiveStreamPreview({ run_trace: trace, run_input: input, reason: entry.reason })
+    : null;
+  const action_summary = stream
+    ? stream.actionSummary
+    : parts.length
+      ? parts.join(" · ")
+      : input || trace
+        ? "run logged"
+        : "—";
 
   const output_snippet =
-    trace?.assistant_text?.slice(0, 320) ??
-    entry.output_preview?.slice(0, 320) ??
-    entry.summary?.slice(0, 320) ??
+    stream?.snippet ||
+    trace?.assistant_text?.slice(0, 320) ||
+    entry.output_preview?.slice(0, 320) ||
+    entry.summary?.slice(0, 320) ||
     "";
 
   return {
