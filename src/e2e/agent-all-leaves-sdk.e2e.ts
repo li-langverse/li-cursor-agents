@@ -101,23 +101,39 @@ describe("all leaf agents — live SDK + streaming", { skip: skipReason || false
           await new Promise((r) => setTimeout(r, 500));
         }
 
+        let streamPollError: unknown;
         try {
           streamInfo = await pollUntilLiveStreamVisible(def.id, {
             maxMs: streamWaitMs,
             intervalMs: 500,
           });
         } catch (streamErr) {
+          streamPollError = streamErr;
           const partial = listActiveRuns().find(
             (r) => r.agent_id === def.id && r.status === "running",
           );
           if (partial?.run_trace && traceHasLiveStream(partial.run_trace)) {
             streamInfo = { runId: partial.run_id, fromMemory: true };
-          } else {
-            throw streamErr;
           }
         }
 
         const result = await runPromise;
+
+        if (!streamInfo) {
+          const runIdFromPath = result.outputPath.split("/").pop()!.replace(/\.md$/, "");
+          if (traceHasLiveStream(result.trace)) {
+            streamInfo = { runId: runIdFromPath, fromMemory: false };
+          } else {
+            reapplyE2eStore(env);
+            const detailRes = await dbGet(`/api/runs/${encodeURIComponent(runIdFromPath)}`);
+            if (detailRes.status === 200 && runDetailHasLiveStream(detailRes.body)) {
+              streamInfo = { runId: runIdFromPath, fromMemory: false, detail: detailRes.body };
+            }
+          }
+        }
+        if (!streamInfo) {
+          throw streamPollError ?? new Error(`${def.id}: no live stream in memory, API, or final trace`);
+        }
         assert.equal(result.backend, "cursor-sdk", def.id);
         const terminal = new Set(["finished", "error", "incomplete", "cancelled", "dry-run"]);
         assert.ok(
