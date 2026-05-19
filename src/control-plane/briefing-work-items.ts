@@ -1,4 +1,5 @@
 import { taskFingerprint } from "../heap/task-queue.js";
+import { orgNewReposDiscoveryFromBriefing } from "../org-repos/discovery.js";
 import type { AgentWorkQueueItem } from "./agent-work-queue.js";
 
 function ciIsGreen(ci: unknown): boolean {
@@ -30,6 +31,41 @@ export function pushBriefingDerivedWorkItems(
   pushCiBugTriageWork(items, seen, b);
   pushSecurityOrgWork(items, seen, b);
   pushEcosystemMaintainerWork(items, seen, b);
+  pushOrgRepoOnboardingWork(items, seen, b);
+}
+
+function pushOrgRepoOnboardingWork(
+  items: AgentWorkQueueItem[],
+  seen: Set<string>,
+  b: Record<string, unknown>,
+): void {
+  const discovery = orgNewReposDiscoveryFromBriefing(b);
+  if (!discovery?.new_repos?.length) return;
+
+  pushItem(items, seen, {
+    id: "org:onboard:discovery",
+    agent_id: "org_repo_onboarder",
+    source: "recommended",
+    priority: 88,
+    reason: `Onboard ${discovery.new_repos.length} new org repo(s): ${discovery.new_repos.slice(0, 4).join(", ")}${discovery.new_repos.length > 4 ? ", …" : ""}`,
+    status: "pending",
+    meta: { repos: discovery.new_repos.join(",") },
+  });
+
+  const entries = discovery.new_repo_entries ?? [];
+  for (const entry of entries) {
+    for (const step of entry.onboarding_steps) {
+      pushItem(items, seen, {
+        id: `org:onboard:${entry.repo}:${step.agent}:${step.action}`,
+        agent_id: step.agent,
+        source: "recommended",
+        priority: step.agent === "package_architect" ? 72 : 56,
+        reason: step.reason,
+        status: "pending",
+        meta: { repo: entry.repo, action: step.action, classification: entry.classification },
+      });
+    }
+  }
 }
 
 function pushPrProgramWork(items: AgentWorkQueueItem[], seen: Set<string>, b: Record<string, unknown>): void {

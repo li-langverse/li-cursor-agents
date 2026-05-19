@@ -14,6 +14,7 @@ import {
 import { advanceResearchSession, loadResearchSession } from "../research-sessions/session-store.js";
 import { loadResearchGoals, northStarFitForGoal } from "../research-goals/load-goals.js";
 import { enqueueImplementationHandoff } from "./implementation-handoff.js";
+import { applyOrgRepoOnboarderPostRun } from "./org-repo-onboarding.js";
 import { runIdFromOutputPath } from "../db/persist.js";
 import type { AgentId, AgentRunResult } from "../types.js";
 
@@ -150,8 +151,10 @@ export async function applyPackageArchitectPostRun(result: AgentRunResult): Prom
 
 export async function applySwarmPostRunEffects(
   result: AgentRunResult,
+  briefing: unknown,
   briefingHash?: string,
 ): Promise<void> {
   await applyResearchPostRun(result, briefingHash);
   await applyPackageArchitectPostRun(result);
+  await applyOrgRepoOnboarderPostRun(result, briefing, briefingHash);
 }

@@ -32,6 +32,12 @@ export function listOrgReposFromBriefing(briefing: Record<string, unknown> | nul
   if (orgPackages && typeof orgPackages === "object") {
     for (const key of Object.keys(orgPackages)) repos.add(key);
   }
+  const discovery = briefing.org_new_repos_discovery as Record<string, unknown> | undefined;
+  if (Array.isArray(discovery?.github_repos)) {
+    for (const r of discovery.github_repos) {
+      if (typeof r === "string" && r) repos.add(r);
+    }
+  }
   return [...repos].sort();
 }
 

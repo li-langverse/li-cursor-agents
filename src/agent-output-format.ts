@@ -150,6 +150,8 @@ export function buildMockDeliverable(
     case "autoresearch":
     case "bench_improver":
       return buildNumericsMockBody(definition.id, briefing);
+    case "org_repo_onboarder":
+      return buildOrgRepoOnboarderMockBody(briefing);
     default:
       return buildGenericMockBody(definition, briefing, userMessage);
   }
@@ -421,6 +423,25 @@ function buildIssuePlannerMockBody(briefing: Record<string, unknown> | null): st
     "",
     "## Plans drafted (mock)",
     "1. Issue → plan doc outline with PH- id and acceptance tests",
+  ].join("\n");
+}
+
+function buildOrgRepoOnboarderMockBody(briefing: Record<string, unknown> | null): string {
+  const disc = briefing?.org_new_repos_discovery as Record<string, unknown> | undefined;
+  const newRepos = (disc?.new_repos as string[]) ?? [];
+  const stale = (disc?.stale_known_repos as string[]) ?? [];
+  return [
+    "## Executive summary",
+    `- Org repo discovery: **${newRepos.length}** new, **${stale.length}** stale catalog entries.`,
+    newRepos.length
+      ? `- New: ${newRepos.slice(0, 6).join(", ")}${newRepos.length > 6 ? ", …" : ""}`
+      : "- No new repos in briefing — mock pass only.",
+    "",
+    "## New repos (mock handoff plan)",
+    ...newRepos.map((r) => `- **${r}** → ci_maintainer, agent_kit_maintainer, docs_maintainer`),
+    "",
+    "## Stale catalog (mock)",
+    ...(stale.length ? stale.map((r) => `- ${r} — verify archived on GitHub`) : ["- _None._"]),
   ].join("\n");
 }
 

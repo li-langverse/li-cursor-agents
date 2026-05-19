@@ -396,6 +396,6 @@ async function runAgentBody(
   if (shouldPersistRunToHistory(finalized)) {
     await persistAgentRun({ run: finalized });
   }
-  await applySwarmPostRunEffects(finalized, briefingHash);
+  await applySwarmPostRunEffects(finalized, preflight.briefing ?? preflight, briefingHash);
   return finalized;
 }

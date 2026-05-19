@@ -64,6 +64,7 @@ export function compactBriefingForPrompt(briefing: unknown): string {
     implementation_queue: Array.isArray(b.implementation_queue)
       ? (b.implementation_queue as unknown[]).slice(0, 8)
       : undefined,
+    org_new_repos_discovery: summarizeOrgNewReposDiscovery(b.org_new_repos_discovery),
     preflight_runs: summarizePreflightRuns(b.preflight_runs),
   };
 
@@ -72,6 +73,20 @@ export function compactBriefingForPrompt(briefing: unknown): string {
     text = `${text.slice(0, MAX_CHARS - 80)}\n/* truncated — read full agent-briefing.json on disk */\n`;
   }
   return text;
+}
+
+function summarizeOrgNewReposDiscovery(raw: unknown): Record<string, unknown> | undefined {
+  if (!raw || typeof raw !== "object") return undefined;
+  const d = raw as Record<string, unknown>;
+  const entries = Array.isArray(d.new_repo_entries)
+    ? (d.new_repo_entries as unknown[]).slice(0, 12)
+    : undefined;
+  return {
+    summary: d.summary,
+    new_repos: d.new_repos,
+    stale_known_repos: d.stale_known_repos,
+    new_repo_entries: entries,
+  };
 }
 
 function summarizePreflightRuns(

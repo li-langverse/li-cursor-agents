@@ -17,6 +17,13 @@ test("listOrgReposFromBriefing merges explorer repos and org_packages keys", () 
   assert.deepEqual(repos, ["benchmarks", "li-std-math", "lic"]);
 });
 
+test("listOrgReposFromBriefing merges org_new_repos_discovery.github_repos", () => {
+  const repos = listOrgReposFromBriefing({
+    org_new_repos_discovery: { github_repos: ["lic", "li-new-pkg"] },
+  });
+  assert.deepEqual(repos, ["li-new-pkg", "lic"]);
+});
+
 test("describePackageFromBriefing returns org_packages row", () => {
   const row = describePackageFromBriefing(
     {

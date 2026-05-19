@@ -31,6 +31,7 @@ const ROLE_CONTENT: Partial<Record<AgentId, RegExp[]>> = {
   docs_maintainer: [/doc|handbook|live docs/i],
   ci_maintainer: [/CI|workflow|template/i],
   agent_kit_maintainer: [/Agent-kit rollout|agent-kit|agent kit|roadmap|org repo/i],
+  org_repo_onboarder: [/new org repo|onboard|discovery|handoff/i],
   workspace_sweeper: [/workspace|sweep|uncommitted/i],
   package_architect: [/package|placement|monorepo/i],
   goal_researcher: [/research goal|Research goal|Goal researcher|SOTA/i],

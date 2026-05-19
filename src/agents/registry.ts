@@ -215,6 +215,23 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     repoWorkflow: true,
   },
   {
+    id: "org_repo_onboarder",
+    name: "Org repo onboarder",
+    description:
+      "Discover new li-langverse GitHub repos and fan out CI, agent-kit, docs, and catalog handoffs.",
+    category: "platform",
+    promptFile: "org-repo-onboarder.md",
+    skills: ["explore-li-ecosystem"],
+    needsWeb: false,
+    preflightKeys: [
+      "org_new_repos_discovery",
+      "org_ci_audit",
+      "org_agent_kit_audit",
+      "briefing",
+    ],
+    cursorSdkMode: "plan",
+  },
+  {
     id: "workspace_sweeper",
     name: "Workspace sweeper",
     description:

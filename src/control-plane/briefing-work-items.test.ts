@@ -35,3 +35,28 @@ test("pushBriefingDerivedWorkItems enqueues PR and security work", () => {
   assert.ok(agents.has("ci_maintainer"));
   assert.equal(items.filter((i) => i.agent_id === "pr_reviewer").length, 1);
 });
+
+test("pushBriefingDerivedWorkItems enqueues org repo onboarding fan-out", () => {
+  const items: AgentWorkQueueItem[] = [];
+  const seen = new Set<string>();
+  pushBriefingDerivedWorkItems(items, seen, {
+    org_new_repos_discovery: {
+      new_repos: ["li-new-pkg"],
+      new_repo_entries: [
+        {
+          repo: "li-new-pkg",
+          classification: "candidate_official",
+          onboarding_steps: [
+            { agent: "ci_maintainer", action: "add_ci_yml", reason: "Add CI on li-new-pkg" },
+            { agent: "agent_kit_maintainer", action: "sync_agent_kit", reason: "Sync kit" },
+          ],
+        },
+      ],
+    },
+  });
+  const agents = new Set(items.map((i) => i.agent_id));
+  assert.ok(agents.has("org_repo_onboarder"));
+  assert.ok(agents.has("ci_maintainer"));
+  assert.ok(agents.has("agent_kit_maintainer"));
+  assert.ok(items.some((i) => i.id === "org:onboard:discovery"));
+});

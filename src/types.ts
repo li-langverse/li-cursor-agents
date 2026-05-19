@@ -22,6 +22,7 @@ export type AgentId =
   | "docs_maintainer"
   | "ci_maintainer"
   | "agent_kit_maintainer"
+  | "org_repo_onboarder"
   | "workspace_sweeper"
   | "package_architect"
   | "goal_researcher"
