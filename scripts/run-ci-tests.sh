@@ -32,3 +32,4 @@ done
 node --test --test-concurrency=1 dist/**/*.test.js "${FILTERED[@]}"
 node scripts/test-log-timestamps.mjs
 python3 ux-harness/tests/test_harness.py
+python3 ux-harness/tests/test_static_site.py

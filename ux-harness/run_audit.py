@@ -16,7 +16,7 @@ DEFAULT_MANIFEST = AGENTS_ROOT / "config" / "ux-targets.json"
 sys.path.insert(0, str(ROOT))
 
 from adapters.base import TargetConfig, should_skip_platform  # noqa: E402
-from adapters.mock_data import mock_ui_result, mock_ux_result  # noqa: E402
+from adapters.registry import run_adapter_ui, run_adapter_ux  # noqa: E402
 
 
 def load_targets(manifest: Path) -> list[TargetConfig]:
@@ -35,10 +35,7 @@ def run_ui(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
             "status": "skip",
             "skip_reason": skip,
         }
-    if mock:
-        return mock_ui_result(target, str(agents_root))
-    # Real adapters: extend with Playwright/Xvfb when deps available
-    return mock_ui_result(target, str(agents_root))
+    return run_adapter_ui(target, agents_root, mock)
 
 
 def run_ux(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
@@ -52,9 +49,7 @@ def run_ux(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
             "status": "skip",
             "skip_reason": skip,
         }
-    if mock:
-        return mock_ux_result(target, str(agents_root))
-    return mock_ux_result(target, str(agents_root))
+    return run_adapter_ux(target, agents_root, mock)
 
 
 def aggregate(results: list[dict]) -> dict:
