@@ -2,7 +2,10 @@ import { listHandoffs } from "../handoffs/handoff-store.js";
 import { loadResearchGoals } from "../research-goals/load-goals.js";
 import { loadLaneState } from "../lanes/lane-state.js";
 import { findAnyInProgressSession } from "../research-sessions/session-lifecycle.js";
-import { buildImplementationQueue } from "../preflight/implementation-queue.js";
+import {
+  buildImplementationQueue,
+  normalizeImplementationQueue,
+} from "../preflight/implementation-queue.js";
 
 export interface SwarmScorecard {
   pending_handoffs: number;
@@ -94,9 +97,11 @@ export async function enrichBriefingWithScorecards(
   briefing: Record<string, unknown> | null,
 ): Promise<Record<string, unknown>> {
   const base = briefing ? { ...briefing } : {};
-  if (!base.implementation_queue) {
-    base.implementation_queue = buildImplementationQueue(base);
+  let iq = normalizeImplementationQueue(base.implementation_queue);
+  if (iq.work_queue.length === 0) {
+    iq = buildImplementationQueue(base);
   }
+  base.implementation_queue = iq;
   base.swarm_scorecard = await buildSwarmScorecard();
   base.research_goals_status = buildResearchGoalsStatus();
   if (!base.provability_scorecard) {

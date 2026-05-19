@@ -1,5 +1,6 @@
 /** Map ui-audit / ux-audit preflight into briefing.recommended_agents. */
 
+import { normalizeImplementationQueue } from "../preflight/implementation-queue.js";
 import type { BriefingRecommendation } from "./swarm-recommendations.js";
 
 const UX_AGENTS = ["docs_ux_tester", "gui_ux_tester", "tui_ux_tester"] as const;
@@ -80,7 +81,16 @@ export function mergeRemediationQueueFromManifest(
   if (!Array.isArray(queueFromManifest) || !queueFromManifest.length) {
     return merged;
   }
-  const prior = Array.isArray(merged.implementation_queue) ? [...merged.implementation_queue] : [];
-  merged.implementation_queue = [...queueFromManifest, ...prior];
+  const base = normalizeImplementationQueue(merged.implementation_queue);
+  const items = [...base.work_queue];
+  const sources = new Set(base.sources);
+  for (const row of queueFromManifest) {
+    if (!row || typeof row !== "object") continue;
+    const reason = String((row as Record<string, unknown>).reason ?? (row as Record<string, unknown>).title ?? "");
+    if (reason && items.some((w) => w.reason === reason)) continue;
+    items.push(row as (typeof items)[number]);
+  }
+  if (items.length > base.work_queue.length) sources.add("remediation_manifest");
+  merged.implementation_queue = { work_queue: items.slice(0, 12), sources: [...sources] };
   return merged;
 }
