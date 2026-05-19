@@ -69,7 +69,16 @@ async function withRunAgentTracking(
 ): Promise<AgentRunResult> {
   if (hasActiveRunningTrack(agentId)) {
     await scheduleWorkerHeartbeatFromRunner();
-    return fn(allocateRunId(agentId));
+    // Still register a run so live trace + dashboard stream work for overlapping calls.
+    const runId = registerSupervisorRun(agentId, "runAgent:parallel");
+    try {
+      const result = await fn(runId);
+      completeSupervisorRun(runId, runLifecycleFromResult(result.status));
+      return result;
+    } catch (err) {
+      completeSupervisorRun(runId, "error");
+      throw err;
+    }
   }
 
   const runId = registerSupervisorRun(agentId, "runAgent");

@@ -48,6 +48,8 @@ describe("all leaf agents — live SDK + streaming", { skip: skipReason || false
     process.env.LI_LIVE_STREAM_DB = process.env.LI_E2E_USE_SUPABASE === "1" ? "1" : "0";
     process.env.LI_SDK_MAX_CONCURRENT = process.env.LI_SDK_MAX_CONCURRENT ?? "6";
     process.env.LI_SDK_SLOT_MAX_WAIT_MS = process.env.LI_SDK_SLOT_MAX_WAIT_MS ?? "120_000";
+    // workspace_sweeper otherwise exits before SDK; stream must be exercised for every leaf.
+    process.env.LI_WORKSPACE_SWEEP_FORCE_LLM = "1";
     assert.equal(liveTraceFlushMs(), 0);
     assertAllLeavesRegistered();
   });
