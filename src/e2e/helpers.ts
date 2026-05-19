@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
 import { AGENT_REGISTRY } from "../agents/registry.js";
-import { dbEnabled, resetSupabaseClient } from "../db/client.js";
+import { assertSafeTestDatabase, dbEnabled, resetSupabaseClient } from "../db/client.js";
 
 export interface E2eEnv {
   controlPlaneDir: string;
@@ -63,6 +63,14 @@ export function setupE2eEnv(variant: "v1" | "v2" = "v1"): E2eEnv {
     delete process.env.SUPABASE_URL;
     delete process.env.SUPABASE_SERVICE_ROLE_KEY;
     delete process.env.SUPABASE_ANON_KEY;
+    delete process.env.LI_USE_TEST_DATABASE;
+  } else {
+    process.env.LI_USE_TEST_DATABASE = "1";
+    process.env.LI_LIVE_STREAM_DB = "1";
+    process.env.LI_LIVE_STREAM_DB_DEBOUNCE_MS = "0";
+    process.env.LI_LIVE_TRACE_FLUSH_MS = "0";
+    loadTestSupabaseEnv(pkg);
+    assertSafeTestDatabase();
   }
   if (process.env.LI_E2E_SDK === "1" || process.env.LI_E2E_SDK === "true") {
     delete process.env.CURSOR_MOCK;
@@ -96,6 +104,27 @@ export function readReport(controlPlaneDir: string): Record<string, unknown> {
   const p = join(controlPlaneDir, "latest-report.json");
   if (!existsSync(p)) throw new Error(`missing report: ${p}`);
   return JSON.parse(readFileSync(p, "utf8")) as Record<string, unknown>;
+}
+
+function loadTestSupabaseEnv(pkgRoot: string): void {
+  const envFile = join(pkgRoot, ".env.supabase");
+  if (!existsSync(envFile)) return;
+  const text = readFileSync(envFile, "utf8");
+  for (const line of text.split("\n")) {
+    const t = line.trim();
+    if (!t || t.startsWith("#")) continue;
+    const eq = t.indexOf("=");
+    if (eq < 1) continue;
+    const key = t.slice(0, eq).trim();
+    const val = t.slice(eq + 1).trim();
+    if (key === "SUPABASE_URL") process.env.LI_TEST_SUPABASE_URL = val;
+    if (key === "SUPABASE_SERVICE_ROLE_KEY") process.env.LI_TEST_SUPABASE_SERVICE_ROLE_KEY = val;
+    if (key === "SUPABASE_ANON_KEY") process.env.LI_TEST_SUPABASE_ANON_KEY = val;
+  }
+  if (process.env.LI_TEST_SUPABASE_URL) process.env.SUPABASE_URL = process.env.LI_TEST_SUPABASE_URL;
+  if (process.env.LI_TEST_SUPABASE_SERVICE_ROLE_KEY) {
+    process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.LI_TEST_SUPABASE_SERVICE_ROLE_KEY;
+  }
 }
 
 export function defaultTickOpts(benchmarksRoot: string) {

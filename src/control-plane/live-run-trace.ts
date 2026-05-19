@@ -6,6 +6,10 @@ import {
   type AgentRunInputRecord,
   type AgentRunTrace,
 } from "../agent-run-trace.js";
+import {
+  flushLiveTraceToDb,
+  upsertLiveAgentRunStart,
+} from "../db/live-stream-persist.js";
 import { slimTraceForList } from "./activity-summary.js";
 import { patchActiveRun } from "./runtime.js";
 
@@ -32,6 +36,14 @@ export function publishRunInputLive(
   patchActiveRun(runId, { run_input: runInput, output_path: outputPath });
   writePartialSidecar(outputPath, { runInput, trace: undefined });
   scheduleWorkerHeartbeat();
+  void upsertLiveAgentRunStart({
+    runId,
+    agentId: runInput.agent_id,
+    startedAt: new Date().toISOString(),
+    runInput,
+    outputPath,
+    backend: runInput.backend,
+  });
 }
 
 export function publishLiveTraceSnapshot(
@@ -40,7 +52,7 @@ export function publishLiveTraceSnapshot(
   trace: AgentRunTrace,
   runInput?: AgentRunInputRecord,
 ): void {
-  const slim = slimTraceForList(trace) ?? trace;
+  const slim = slimTraceForList(trace, true) ?? trace;
   patchActiveRun(runId, {
     run_trace: slim,
     output_path: outputPath,
@@ -89,26 +101,10 @@ export function createLiveTraceCollector(
   const flush = () => {
     const trace = inner.peek(assistantChunks.join(""));
     publishLiveTraceSnapshot(runId, outputPath, trace, runInput);
-    // #region agent log
-    fetch("http://127.0.0.1:7746/ingest/994bad2f-5ad5-4c20-9cd2-19e851fc1d5c", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "898ce1" },
-      body: JSON.stringify({
-        sessionId: "898ce1",
-        hypothesisId: "D",
-        location: "live-run-trace.ts:flush",
-        message: "live trace flush",
-        data: {
-          runId,
-          tool_calls: trace.tool_call_count,
-          thinking_len: trace.thinking_text.length,
-          assistant_len: trace.assistant_text.length,
-          flushIntervalMs,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
+    void flushLiveTraceToDb(runId, trace, {
+      runInput,
+      agentId: runInput?.agent_id,
+    });
   };
 
   const maybeFlush = (immediate = false) => {

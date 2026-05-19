@@ -15,6 +15,7 @@ import type { AgentId } from "../types.js";
 import { asyncSwarmSnapshot } from "../async-swarm/async-swarm-state.js";
 import { computeInSdkCount } from "./active-run-metrics.js";
 import { sdkMaxConcurrent, sdkSessionInProcessActive } from "../backends/sdk-session-lock.js";
+import { upsertLiveAgentRunStart } from "../db/live-stream-persist.js";
 import { allocateRunId } from "./run-paths.js";
 import { handoffRunStatus } from "../lanes/handoff-run-coordinator.js";
 import { runHandoffPhasedSwarm } from "../lanes/run-handoff-phases.js";
@@ -56,12 +57,19 @@ export function hasActiveRunningTrack(agentId: AgentId): boolean {
 /** Track in-process supervisor runs (same map as spawnAgentRun child processes). */
 export function registerSupervisorRun(agentId: AgentId, reason: string, runId?: string): string {
   const id = runId ?? allocateRunId(agentId);
+  const startedAt = new Date().toISOString();
   activeRuns.set(id, {
     run_id: id,
     agent_id: agentId,
     pid: process.pid,
-    started_at: new Date().toISOString(),
+    started_at: startedAt,
     status: "running",
+    reason,
+  });
+  void upsertLiveAgentRunStart({
+    runId: id,
+    agentId,
+    startedAt,
     reason,
   });
   scheduleWorkerHeartbeat();

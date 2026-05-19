@@ -257,6 +257,21 @@ export async function getRunById(runId: string): Promise<AgentRunHistoryRow | nu
   return rowToHistory(data as Record<string, unknown>);
 }
 
+/** Live run row persisted by live-stream-persist (status still running). */
+export async function getRunningRunById(runId: string): Promise<AgentRunHistoryRow | null> {
+  if (!dbEnabled()) return null;
+
+  const { data, error } = await getSupabase()
+    .from("agent_runs")
+    .select("*")
+    .eq("run_id", runId)
+    .eq("status", "running")
+    .maybeSingle();
+  if (error) throw new Error(`getRunningRunById: ${error.message}`);
+  if (!data) return null;
+  return rowToHistory(data as Record<string, unknown>);
+}
+
 export async function getRolloutsForRun(runId: string): Promise<AgentKitRolloutRow[]> {
   if (!dbEnabled()) return [];
 

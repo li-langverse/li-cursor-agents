@@ -28,7 +28,7 @@ export function useDiskStore(): boolean {
 
 /** Supabase client is usable (store is supabase and URL + key are set). */
 export function dbEnabled(): boolean {
-  return useSupabaseStore() && Boolean(process.env.SUPABASE_URL?.trim() && supabaseKey());
+  return useSupabaseStore() && Boolean(resolveSupabaseUrl() && resolveSupabaseKey());
 }
 
 export function dataStoreLabel(): ControlPlaneStore {
@@ -54,6 +54,37 @@ function supabaseKey(): string | undefined {
   );
 }
 
+/** E2E / test stack: prefer local test credentials over production cloud. */
+function resolveSupabaseUrl(): string | undefined {
+  const testUrl = process.env.LI_TEST_SUPABASE_URL?.trim();
+  if (process.env.LI_USE_TEST_DATABASE === "1" && testUrl) return testUrl;
+  return process.env.SUPABASE_URL?.trim();
+}
+
+function resolveSupabaseKey(): string | undefined {
+  if (process.env.LI_USE_TEST_DATABASE === "1") {
+    return (
+      process.env.LI_TEST_SUPABASE_SERVICE_ROLE_KEY?.trim() ||
+      process.env.LI_TEST_SUPABASE_ANON_KEY?.trim() ||
+      supabaseKey()
+    );
+  }
+  return supabaseKey();
+}
+
+/** Block accidental e2e writes to hosted prod unless explicitly allowed. */
+export function assertSafeTestDatabase(): void {
+  if (process.env.LI_E2E_ALLOW_PROD_DB === "1") return;
+  const url = resolveSupabaseUrl() ?? "";
+  if (!url) return;
+  if (/\.supabase\.co/i.test(url) && process.env.LI_E2E_USE_SUPABASE === "1") {
+    throw new Error(
+      "Refusing e2e against hosted Supabase (prod). Use local test DB: npm run db:ensure " +
+        "and LI_USE_TEST_DATABASE=1, or set LI_E2E_ALLOW_PROD_DB=1 to override.",
+    );
+  }
+}
+
 export function resetSupabaseClient(): void {
   client = null;
 }
@@ -64,8 +95,8 @@ export function getSupabase(): SupabaseClient {
     throw new Error("Supabase not configured (set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY)");
   }
   if (!client) {
-    const url = normalizeSupabaseApiUrl(process.env.SUPABASE_URL!);
-    client = createClient(url, supabaseKey()!, {
+    const url = normalizeSupabaseApiUrl(resolveSupabaseUrl()!);
+    client = createClient(url, resolveSupabaseKey()!, {
       auth: { persistSession: false, autoRefreshToken: false },
     });
   }

@@ -22,7 +22,9 @@ export interface ActivityListItem {
     file_edits?: Array<{ path: string; tool: string; ok?: boolean }>;
     steps?: Array<{ type: string; message?: { type?: string; args?: { path?: string; command?: string } } }>;
     tool_call_count?: number;
+    deltas?: Array<{ seq: number; at: string; type: string; payload?: unknown }>;
   };
+  trace_events?: Array<{ seq: number; event_type: string; payload?: unknown }>;
 }
 
 export interface RunDetail extends ActivityListItem {

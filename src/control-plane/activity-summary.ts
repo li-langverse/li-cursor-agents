@@ -13,7 +13,7 @@ export interface ActivityListItem extends RunCatalogEntry {
   output_snippet: string;
 }
 
-export function slimTraceForList(trace?: AgentRunTrace): AgentRunTrace | undefined {
+export function slimTraceForList(trace?: AgentRunTrace, live = false): AgentRunTrace | undefined {
   if (!trace) return undefined;
   return {
     version: trace.version,
@@ -22,7 +22,7 @@ export function slimTraceForList(trace?: AgentRunTrace): AgentRunTrace | undefin
     file_edits: trace.file_edits ?? [],
     tool_call_count: trace.tool_call_count,
     steps: (trace.steps ?? []).filter((s) => s.type === "toolCall").slice(0, 12),
-    deltas: [],
+    deltas: live ? (trace.deltas ?? []).slice(-120) : [],
   };
 }
 
@@ -66,7 +66,7 @@ export function toActivityListItem(entry: RunCatalogEntry): ActivityListItem {
   return {
     ...entry,
     run_input: slimInputForList(input),
-    run_trace: slimTraceForList(trace),
+    run_trace: slimTraceForList(trace, Boolean(entry.live)),
     action_summary,
     edit_count: edits,
     tool_count: tools,

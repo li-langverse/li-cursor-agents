@@ -12,6 +12,7 @@ import { reportPath } from "./paths.js";
 import { dbEnabled, useDiskStore, useSupabaseStore } from "../db/client.js";
 import {
   getRunById,
+  getRunningRunById,
   getRunEvents,
   getRolloutsForRun,
   listAgentRunHistory,
@@ -225,6 +226,20 @@ export async function findActiveRunById(runId: string): Promise<ActiveAgentRun |
     const worker = await loadWorkerStatusFromDb();
     const fromWorker = worker?.active_runs?.find((r) => r.run_id === runId && r.status === "running");
     if (fromWorker) return fromWorker;
+    const fromDb = await getRunningRunById(runId);
+    if (fromDb) {
+      return {
+        run_id: fromDb.run_id,
+        agent_id: fromDb.agent_id as AgentId,
+        pid: 0,
+        started_at: fromDb.started_at,
+        status: "running",
+        reason: fromDb.reason ?? undefined,
+        run_input: fromDb.run_input ?? undefined,
+        run_trace: fromDb.run_trace ?? undefined,
+        output_path: fromDb.output_path ?? undefined,
+      };
+    }
   }
   return null;
 }
@@ -282,31 +297,44 @@ function readPreview(path: string, maxChars: number): string {
   }
 }
 
+async function attachLiveTraceEvents(runId: string, entry: RunCatalogEntry): Promise<RunCatalogEntry> {
+  if (!useSupabaseStore() || !dbEnabled()) return entry;
+  try {
+    entry.trace_events = await getRunEvents(runId);
+  } catch {
+    /* optional */
+  }
+  return entry;
+}
+
+function mergeLiveTracePreferDb(
+  entry: RunCatalogEntry,
+  dbRow: AgentRunHistoryRow | null,
+): RunCatalogEntry {
+  if (!dbRow) return entry;
+  if (dbRow.run_input && !entry.run_input) entry.run_input = dbRow.run_input ?? undefined;
+  const dbTrace = dbRow.run_trace;
+  const memTrace = entry.run_trace;
+  if (dbTrace) {
+    const dbDeltas = dbTrace.deltas?.length ?? 0;
+    const memDeltas = memTrace?.deltas?.length ?? 0;
+    if (!memTrace || dbDeltas >= memDeltas) {
+      entry.run_trace = dbTrace;
+    }
+  }
+  return entry;
+}
+
 export async function getRunDetail(runId: string): Promise<RunCatalogEntry | null> {
   const live = await findActiveRunById(runId);
   if (live) {
-    const entry = enrichCatalogFromSidecar(liveRunToCatalog(live));
-    // #region agent log
-    fetch("http://127.0.0.1:7746/ingest/994bad2f-5ad5-4c20-9cd2-19e851fc1d5c", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "898ce1" },
-      body: JSON.stringify({
-        sessionId: "898ce1",
-        hypothesisId: "C",
-        location: "runs-catalog.ts:getRunDetail",
-        message: "live run detail",
-        data: {
-          runId,
-          agent_id: entry.agent_id,
-          has_trace: Boolean(entry.run_trace),
-          has_input: Boolean(entry.run_input),
-          md_exists: existsSync(entry.md_path),
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-    return entry;
+    let entry = enrichCatalogFromSidecar(liveRunToCatalog(live));
+    if (useSupabaseStore() && dbEnabled()) {
+      const dbRow = await getRunningRunById(runId);
+      entry = mergeLiveTracePreferDb(entry, dbRow);
+    }
+    entry.live = true;
+    return attachLiveTraceEvents(runId, entry);
   }
 
   if (useSupabaseStore() && dbEnabled()) {

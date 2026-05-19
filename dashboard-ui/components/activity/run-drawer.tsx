@@ -7,6 +7,7 @@ import { apiFetch } from "@/lib/api";
 import { formatTime } from "@/lib/format";
 import { runBackendLabel, statusLabel, type RunDetail } from "@/lib/activity";
 import { Badge } from "@/components/ui/badge";
+import { LiveStreamFeed } from "@/components/activity/live-stream-feed";
 
 function RunTraceBody({ detail }: { detail: RunDetail }) {
   const trace = detail.run_trace;
@@ -25,6 +26,10 @@ function RunTraceBody({ detail }: { detail: RunDetail }) {
         <RichContent text={detail.run_input.user_message} maxHeight={420} className="trace-block" />
       </section>,
     );
+  }
+
+  if (detail.live) {
+    parts.push(<LiveStreamFeed key="live-stream" detail={detail} />);
   }
 
   if (trace?.thinking_text) {
@@ -127,7 +132,7 @@ export function RunDrawer({ runId, onClose }: { runId: string | null; onClose: (
     queryKey: ["run-detail", runId],
     queryFn: () => apiFetch<RunDetail>(`/api/runs/${encodeURIComponent(runId!)}`, { timeoutMs: 20_000 }),
     enabled: Boolean(runId),
-    refetchInterval: (query) => (query.state.data?.live ? 1_000 : false),
+    refetchInterval: (query) => (query.state.data?.live ? 300 : false),
   });
 
   if (!runId) return null;

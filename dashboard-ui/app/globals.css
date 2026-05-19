@@ -894,6 +894,46 @@ table.data-table tr:hover {
   white-space: normal;
 }
 
+.live-stream-feed .live-delta-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.live-delta-item {
+  padding: 0.35rem 0.5rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.8rem;
+}
+
+.live-delta-item:last-child {
+  border-bottom: none;
+}
+
+.live-delta-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.2rem;
+}
+
+.live-delta-body {
+  margin: 0;
+  padding: 0.35rem;
+  font-size: 0.75rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 6rem;
+  overflow: auto;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
 .simple-list {
   list-style: none;
   padding: 0;
