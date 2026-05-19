@@ -130,8 +130,10 @@ See [docs/cloud-agent-secrets.md](docs/cloud-agent-secrets.md).
 npm run test:e2e              # CI-safe: mock backend, fixture briefing, dashboard API
 LI_E2E_SDK=1 npm run test:e2e:sdk   # real SDK smoke (orchestrator)
 LI_E2E_SDK=1 LI_E2E_SDK_ALL_LEAVES=1 npm run test:e2e:all-leaves-sdk   # every leaf agent + live onDelta stream
-npm run test:verify-all-agents-sdk-stream   # **required** gate: real SDK stream + status=finished for all leaves
-# Logs: logs/sdk-matrix/all.log and logs/sdk-matrix/<agent_id>.log
+npm run test:verify-all-agents-sdk-stream   # **required** gate: sequential, status=finished, 1 SDK slot
+npm run test:verify-all-agents-sdk-parallel # same gate, all leaves in parallel (default 4 concurrent slots)
+npm run compare:sdk-matrix-timing           # wall clock + per-agent table after both runs
+# Logs: logs/sdk-matrix/ (sequential) and logs/sdk-matrix-parallel/
 npm run test:playwright:mock        # browser: live stream UI (mocked API)
 LI_PLAYWRIGHT_USE_SUPABASE=1 npm run test:playwright:integration   # browser + local test DB
 ```

@@ -24,6 +24,7 @@ import {
   assertSdkStreamingTrace,
   dbGet,
   logSdkMatrixRun,
+  recordSdkMatrixTiming,
   pollUntilLiveStreamVisible,
   reapplyE2eStore,
   runDetailHasLiveStream,
@@ -209,9 +210,9 @@ describe("all leaf agents — live SDK + streaming", { skip: skipReason || false
           streamInfo.fromMemory || runDetailHasLiveStream(detailBody),
           `${def.id}: stream visible via memory or db-api`,
         );
-        console.log(
-          `${label} <<< DONE ${def.id} status=${result.status} ${Math.round((Date.now() - startedAt) / 1000)}s`,
-        );
+        const elapsedSec = Math.round((Date.now() - startedAt) / 1000);
+        recordSdkMatrixTiming(def.id, result.status, elapsedSec);
+        console.log(`${label} <<< DONE ${def.id} status=${result.status} ${elapsedSec}s`);
       },
     );
   }

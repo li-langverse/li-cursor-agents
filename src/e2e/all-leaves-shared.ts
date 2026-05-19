@@ -157,6 +157,27 @@ export function sdkMatrixExtraInstruction(agentId: string): string {
   return lines.join("\n");
 }
 
+/** Append per-agent timing for sequential vs parallel matrix comparison. */
+export function recordSdkMatrixTiming(
+  agentId: string,
+  status: string,
+  seconds: number,
+): void {
+  const mode = process.env.LI_SDK_MATRIX_MODE?.trim() || "batch";
+  const file =
+    process.env.LI_SDK_MATRIX_TIMING_FILE?.trim() ||
+    join(sdkMatrixLogDir(), `timing-${mode}.jsonl`);
+  mkdirSync(join(file, ".."), { recursive: true });
+  const line = JSON.stringify({
+    mode,
+    agent: agentId,
+    seconds: Math.round(seconds),
+    status,
+    at: new Date().toISOString(),
+  });
+  appendFileSync(file, `${line}\n`, "utf8");
+}
+
 export function sdkMatrixLogDir(): string {
   const dir =
     process.env.LI_E2E_SDK_LOG_DIR?.trim() ||
