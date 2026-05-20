@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { classifyGitRemoteError } from "./git-errors.js";
 import type { CmdResult } from "./types.js";
 
 export function runCmd(
@@ -49,9 +50,49 @@ export function gitPushBranch(
   const token = resolveGhToken();
   if (token) {
     const url = `https://x-access-token:${token}@github.com/${org}/${repo}.git`;
-    return runCmd("git", ["push", url, `${branch}:${branch}`], cloneDir, false);
+    const push = runCmd("git", ["push", url, `${branch}:${branch}`], cloneDir, false);
+    if (!push.ok) {
+      const c = classifyGitRemoteError(push.stderr, push.stdout);
+      return { ...push, stderr: `[${c.code}] ${c.message}\n${c.hint}` };
+    }
+    return push;
   }
-  return runCmd("git", ["push", "-u", "origin", branch], cloneDir, false);
+  const push = runCmd("git", ["push", "-u", "origin", branch], cloneDir, false);
+  if (!push.ok) {
+    const c = classifyGitRemoteError(push.stderr, push.stdout);
+    return { ...push, stderr: `[${c.code}] ${c.message}\n${c.hint}` };
+  }
+  return push;
+}
+
+/** Return open PR URL for branch head, if any. */
+export function findOpenPrForBranch(
+  org: string,
+  repo: string,
+  branch: string,
+  dryRun = false,
+): string | undefined {
+  if (dryRun) return undefined;
+  const r = runCmd(
+    "gh",
+    [
+      "pr",
+      "list",
+      "--repo",
+      `${org}/${repo}`,
+      "--head",
+      branch,
+      "--state",
+      "open",
+      "--json",
+      "url",
+      "-q",
+      ".[0].url // empty",
+    ],
+    process.cwd(),
+    false,
+  );
+  return r.ok && r.stdout && r.stdout.includes("github.com") ? r.stdout.trim() : undefined;
 }
 
 /** Remove gh clone `url.*.insteadof` rules from the repo-local config. */

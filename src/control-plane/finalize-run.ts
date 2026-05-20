@@ -5,6 +5,7 @@ import { runIdFromOutputPath } from "../db/persist.js";
 import type { AgentDefinition } from "../types.js";
 import type { AgentRunResult, PreflightBundle } from "../types.js";
 import { auditRunCompletion, type AgentRunCompletion } from "./run-completion.js";
+import { resolveRunAuditContext, type RunAuditContext } from "./run-audit-context.js";
 
 function readOutputText(result: AgentRunResult): string {
   if (result.outputText) return result.outputText;
@@ -34,11 +35,13 @@ export function finalizeAgentRun(
     definition?: AgentDefinition | null;
     preflight?: PreflightBundle;
     extraEvidence?: string[];
+    auditContext?: RunAuditContext;
   },
 ): AgentRunResult {
   const definition = options?.definition ?? getAgent(result.agentId);
   const rawText = readOutputText(result);
   const bodyForAudit = deliverableBody(rawText) || rawText;
+  const auditContext = options?.auditContext ?? resolveRunAuditContext();
 
   const completion: AgentRunCompletion = auditRunCompletion({
     agentId: result.agentId,
@@ -47,13 +50,19 @@ export function finalizeAgentRun(
     backend: result.backend,
     mock: result.backend === "mock",
     rolloutPrUrls: options?.rolloutPrUrls,
+    auditContext,
   });
   if (options?.extraEvidence?.length) {
     completion.evidence = [...new Set([...completion.evidence, ...options.extraEvidence])];
   }
 
   let status = result.status;
-  if (status === "finished" && completion.premature) {
+  if (auditContext.postHookPushFailed && result.backend !== "mock") {
+    status = "error";
+    if (!result.error) {
+      result.error = completion.gaps[0] ?? "Post-hook push failed";
+    }
+  } else if (status === "finished" && completion.premature) {
     status = "incomplete";
   }
 

@@ -15,8 +15,10 @@
 
 - `scripts/live-li-demo-smoke.mjs` — live `docs_maintainer` on real `li-demo` (no fixture, no `CURSOR_MOCK`, push enabled).
 - `package.json` — `npm run smoke:li-demo:live`.
-- `src/repo-workflow/workspace.ts` — `git remote set-url` after `gh repo clone` so push uses `GH_TOKEN` / `gh auth` not embedded bot token.
-- Evidence: SDK run ~15s, branch `chore/agent-docs_maintainer-77703830`, PR https://github.com/li-langverse/li-demo/pull/7.
+- `src/repo-workflow/workspace.ts` — scrub local `url.insteadof` + clean `origin` after `gh repo clone`.
+- `src/repo-workflow/git.ts` — `gitPushBranch()` pushes via `https://x-access-token:${GH_TOKEN}@github.com/...` (bypasses global gh config forcing `cursor[bot]`).
+- `src/repo-workflow/pr.ts` — post-hook uses `gitPushBranch`.
+- Evidence: run 1 manual push → [li-demo#7](https://github.com/li-langverse/li-demo/pull/7); run 3 automated → [li-demo#8](https://github.com/li-langverse/li-demo/pull/8) (`post_hook_pushed`).
 
 ## Not changed
 

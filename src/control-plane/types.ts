@@ -46,7 +46,7 @@ export interface RecentTaskRecord {
   briefing_hash: string;
 }
 
-export type AgentRunLifecycle = "running" | "finished" | "error" | "cancelled";
+export type AgentRunLifecycle = "running" | "finished" | "error" | "cancelled" | "incomplete";
 
 export interface ActiveAgentRun {
   run_id: string;

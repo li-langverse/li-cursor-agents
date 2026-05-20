@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Completion modes** — `LI_AGENT_VERIFY_MODE`, `digest_only` (skip-push), and `LI_REPO_WORKFLOW_SMOKE`; hard vs informational gaps; supervisor handoffs between agents in the same tick (`src/control-plane/run-completion.ts`, `src/supervisor/handoff.ts`).
+- **PR deduplication** — post-hook reuses open PR for branch instead of `gh pr create` duplicate (`src/repo-workflow/pr.ts`).
+- **Classified git errors** — `git_auth_cursor_bot`, `pr_already_exists`, etc. (`src/repo-workflow/git-errors.ts`).
 - **Live li-demo smoke** — `npm run smoke:li-demo:live` runs `docs_maintainer` on real `gh repo clone` of `li-langverse/li-demo` with Cursor SDK and post-hook push (`scripts/live-li-demo-smoke.mjs`).
 - **Long-run swarm monitor** — `npm run agents:monitor` runs `scripts/monitor-swarm-long.sh` (default 3h, 5m interval): clones `li-local-ci` when missing, checks Docker/Supabase containers (project-scoped names), `GET /api/runtime`, optional `LI_MONITOR_SDK_SMOKE` / `LI_MONITOR_SUPABASE_ENSURE` / `LI_MONITOR_MIGRATION_DRY_RUN`.
 - **`scripts/ensure-li-local-ci.sh`** — clones `https://github.com/li-langverse/li-local-ci` when `LI_USE_LOCAL_CI≠0`, `LI_AUTO_CLONE_LOCAL_CI≠0`, and `bin/li-local-ci` is missing.

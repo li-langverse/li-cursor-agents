@@ -12,11 +12,12 @@ test("extractPrUrls finds github PR links", () => {
   assert.match(urls[0], /pull\/42/);
 });
 
-test("repo-workflow agent without PR is premature", () => {
+test("repo-workflow agent without PR is premature in production", () => {
   const c = auditRunCompletion({
     agentId: "ci_maintainer",
     outputText: "## Summary\n- Did some work\n",
     backend: "cursor-sdk",
+    auditContext: { mode: "production", skipPush: false, smokeRun: false },
   });
   assert.equal(c.premature, true);
   assert.ok(c.gaps.some((g) => g.includes("PR URL")));

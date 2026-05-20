@@ -8,6 +8,7 @@ import { buildMockTrace, buildRunInput } from "./agent-run-trace.js";
 import { resolveCursorApiKey } from "./env.js";
 import { hashBriefing } from "./control-plane/briefing-hash.js";
 import { finalizeAgentRun } from "./control-plane/finalize-run.js";
+import { resolveRunAuditContext } from "./control-plane/run-audit-context.js";
 import { persistAgentRun } from "./db/persist.js";
 import { runsDir } from "./control-plane/paths.js";
 import {
@@ -270,6 +271,7 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
   }
   let rolloutPrUrls: string[] | undefined;
   const extraEvidence: string[] = [];
+  const auditContext = resolveRunAuditContext();
   if (
     workflowSession?.ok &&
     agentUsesGuaranteedPush(definition) &&
@@ -286,11 +288,21 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
     if (push.pr_url) rolloutPrUrls = [push.pr_url];
     if (push.committed) extraEvidence.push("post_hook_committed");
     if (push.pushed) extraEvidence.push("post_hook_pushed");
+    if (push.skip_reason === "reused_existing_open_pr") {
+      extraEvidence.push("post_hook_pr_reused");
+    }
+    const skipPush =
+      workflowSession.skipPush || process.env.LI_REPO_WORKFLOW_SKIP_PUSH === "1";
+    if (!skipPush && push.error && !push.pr_url) {
+      auditContext.postHookPushFailed = true;
+      auditContext.postHookError = push.error;
+      extraEvidence.push("post_hook_push_failed");
+    }
   }
 
   const finalized = finalizeAgentRun(
     { ...result, runInput: result.runInput ?? runInput },
-    { definition, rolloutPrUrls, preflight, extraEvidence },
+    { definition, rolloutPrUrls, preflight, extraEvidence, auditContext },
   );
 
   await persistAgentRun({ run: finalized });

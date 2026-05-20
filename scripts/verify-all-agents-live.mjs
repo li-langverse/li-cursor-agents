@@ -42,7 +42,9 @@ function meaningful(result) {
   const bad =
     /AuthenticationError|invalid.*api.*key|401\b|quota exceeded|rate limit/i.test(text) ||
     (result.status === "error" && len < 80);
-  const okStatus = result.status === "finished" || result.status === "incomplete";
+  const okStatus =
+    result.status === "finished" ||
+    (result.status === "incomplete" && result.completion?.completion_mode === "verify");
   const substantive =
     len >= 280 ||
     (result.completion?.evidence?.length && result.completion.evidence.length >= 1);
@@ -70,6 +72,7 @@ async function main() {
   }
 
   process.env.BENCHMARKS_ROOT = benchmarksRoot;
+  process.env.LI_AGENT_VERIFY_MODE = "1";
   process.env.LI_REPO_WORKFLOW_SKIP_PUSH = "1";
   process.env.LI_REPO_WORKFLOW_USE_FIXTURE = "1";
   process.env.LI_WORKSPACE_SWEEP_FORCE_LLM = "0";

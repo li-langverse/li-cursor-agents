@@ -125,7 +125,12 @@ export function formatErrorMarkdown(detail: AgentRunErrorDetail): string {
 
 export function buildFormattedOutput(p: FormatAgentOutputParams): string {
   const sections: string[] = [];
-  const statusLabel = p.status === "incomplete" ? "incomplete (premature)" : p.status;
+  const statusLabel =
+    p.status === "incomplete"
+      ? `incomplete (${p.completion?.completion_mode ?? "production"} — hard gaps)`
+      : p.status === "error"
+        ? "error"
+        : p.status;
 
   sections.push(
     `# Agent run: ${p.definition.name}`,
@@ -355,20 +360,25 @@ function buildTraceSummarySection(trace: AgentRunTrace): string {
 }
 
 function buildCompletionSection(c: AgentRunCompletionMeta): string {
+  const mode = c.completion_mode ?? "production";
   const lines = [
     "## Completion audit",
     "",
     "| Check | Result |",
     "|-------|--------|",
+    `| **Mode** | \`${mode}\` |`,
     `| Complete | ${c.complete ? "yes" : "no"} |`,
-    `| Premature | ${c.premature ? "yes" : "no"} |`,
+    `| Premature | ${c.premature ? "yes (hard gaps)" : "no"} |`,
     `| Deliverable section | ${c.deliverable_checked ? "yes" : "no"} |`,
   ];
   if (c.pr_urls.length) {
     lines.push("", "### PR URLs", "", ...c.pr_urls.map((u) => `- ${u}`));
   }
   if (c.gaps.length) {
-    lines.push("", "### Gaps", "", ...c.gaps.map((g) => `- ${g}`));
+    lines.push("", "### Hard gaps (block completion)", "", ...c.gaps.map((g) => `- ${g}`));
+  }
+  if (c.notes?.length) {
+    lines.push("", "### Notes (informational)", "", ...c.notes.map((n) => `- ${n}`));
   }
   if (c.evidence.length) {
     lines.push("", "### Evidence", "", ...c.evidence.map((e) => `- ${e}`));

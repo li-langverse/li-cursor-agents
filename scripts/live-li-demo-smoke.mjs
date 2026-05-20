@@ -13,6 +13,10 @@ import { runAgent } from "../dist/runner.js";
 
 loadRuntimeEnv();
 
+process.env.LI_REPO_WORKFLOW_SMOKE = "1";
+process.env.LI_REPO_WORKFLOW_PR_TITLE =
+  process.env.LI_REPO_WORKFLOW_PR_TITLE?.trim() || "docs(li-demo): agent smoke (li-cursor-agents)";
+
 const benchmarksRoot = resolveBenchmarksRoot(process.env.BENCHMARKS_ROOT);
 
 const result = await runAgent({
