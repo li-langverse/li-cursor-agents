@@ -97,6 +97,7 @@ function failResult(
   err: unknown,
 ): AgentRunResult {
   const detail = errorDetailFromUnknown(err);
+  const errorOneLine = [detail.code ? `[${detail.code}]` : "", detail.message].filter(Boolean).join(" ");
   return {
     agentId,
     backend: "cursor-sdk",
@@ -104,7 +105,7 @@ function failResult(
     durationMs: Date.now() - start,
     outputPath,
     outputText: "",
-    error: detail.message,
+    error: errorOneLine,
     errorDetail: detail,
   };
 }

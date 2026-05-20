@@ -44,6 +44,13 @@ if [[ -f "$ROOT/.env.supabase" ]]; then
   set +a
 fi
 
+# Optional: clone sibling li-local-ci when missing (supervisor local-ci sweep).
+if [[ "${LI_USE_LOCAL_CI:-1}" != "0" ]] && [[ "${LI_AUTO_CLONE_LOCAL_CI:-1}" != "0" ]]; then
+  if ! bash "$ROOT/scripts/ensure-li-local-ci.sh"; then
+    echo "WARN: li-local-ci unavailable (network, partial dir, or LI_AUTO_CLONE_LOCAL_CI=0 after edit). Local-ci sweep logs WARN until fixed or LI_USE_LOCAL_CI=0." >&2
+  fi
+fi
+
 if [[ "${LI_KEEP_AGENTS_RESTART:-}" != "0" ]]; then
   if lsof -ti ":${LI_AGENT_DASHBOARD_PORT}" >/dev/null 2>&1; then
     echo "Stopping existing dashboard on :${LI_AGENT_DASHBOARD_PORT}…"
@@ -90,6 +97,7 @@ nohup env \
   GH_TOKEN="${GH_TOKEN:-}" \
   GITHUB_TOKEN="${GITHUB_TOKEN:-}" \
   CURSOR_API_KEY="${CURSOR_API_KEY:-}" \
+  CURSOR_MODEL="${CURSOR_MODEL:-default}" \
   SUPABASE_URL="${SUPABASE_URL:-}" \
   SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-}" \
   "$NODE_BIN" "$ROOT/dist/cli/serve-dashboard.js" --port "$PORT" \

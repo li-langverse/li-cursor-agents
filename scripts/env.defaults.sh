@@ -57,7 +57,10 @@ export LI_LOCAL_CI_BUILD_LIC="${LI_LOCAL_CI_BUILD_LIC:-0}"
 export LI_SUPERVISOR_INTERVAL_MS="${LI_SUPERVISOR_INTERVAL_MS:-120000}"
 export LI_AGENTS_COOLDOWN_MS="${LI_AGENTS_COOLDOWN_MS:-300000}"
 export LI_SUPERVISOR_MAX_TASKS="${LI_SUPERVISOR_MAX_TASKS:-2}"
+# Run-all (parallel): 0 = spawn all leaf agents at once; set 4–12 if SDK rate-limits
+export LI_SWARM_MAX_PARALLEL="${LI_SWARM_MAX_PARALLEL:-0}"
 export LI_AGENT_DASHBOARD_PORT="${LI_AGENT_DASHBOARD_PORT:-9477}"
+export LI_WATCH_INTERVAL_SEC="${LI_WATCH_INTERVAL_SEC:-30}"
 export LI_AUTO_START_SUPERVISOR="${LI_AUTO_START_SUPERVISOR:-1}"
 
 # Prefer host lic CI (brew llvm) over 2GB docker image
@@ -67,3 +70,6 @@ export LI_LOCAL_CI_LIC_MODE="${LI_LOCAL_CI_LIC_MODE:-host}"
 export LI_CONTROL_PLANE_STORE="${LI_CONTROL_PLANE_STORE:-supabase}"
 # Legacy alias for disk: LI_STACK_SKIP_SUPABASE=1
 export LI_STACK_SKIP_SUPABASE="${LI_STACK_SKIP_SUPABASE:-0}"
+
+# Cursor SDK: `default` = Auto (dynamic model). Override in .env to pin a model id.
+export CURSOR_MODEL="${CURSOR_MODEL:-default}"

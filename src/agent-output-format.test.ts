@@ -22,6 +22,27 @@ test("formatErrorMarkdown includes stack fence", () => {
   assert.match(md, /at foo/);
 });
 
+test("errorDetailFromUnknown surfaces Cursor-style code and cause", () => {
+  const inner = new Error("token rejected");
+  (inner as Error & { code?: string }).code = "unauthenticated";
+  const err = new Error("Error");
+  (err as Error & { code?: string; cause?: unknown }).code = "internal";
+  (err as Error & { cause?: unknown }).cause = inner;
+  const d = errorDetailFromUnknown(err);
+  assert.equal(d.code, "internal");
+  assert.match(d.causeLine ?? "", /unauthenticated|token rejected/);
+  const md = formatErrorMarkdown(d);
+  assert.match(md, /\*\*Code\*\*/);
+  assert.match(md, /\*\*Cause\*\*/);
+});
+
+test("errorDetailFromUnknown upgrades generic Error message when code is set", () => {
+  const err = new Error("Error");
+  (err as Error & { code?: string }).code = "internal";
+  const d = errorDetailFromUnknown(err);
+  assert.match(d.message, /internal/);
+});
+
 test("plan_verifier mock deliverable has executive summary and tracker", () => {
   const def = getAgent("plan_verifier")!;
   const body = buildMockDeliverable(def, {

@@ -2,10 +2,14 @@ node_modules/
 dist/
 data/runs/
 data/workspaces/
+data/workspaces-test/
 # e2e temp runs use LI_RUNS_DIR outside repo
 data/supervisor/
 data/control-plane/
+data/capture/
 .env
 .env.supabase
 *.log
+logs/
 .DS_Store
+supabase/.temp/

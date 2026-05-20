@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
-import { defaultBranch, runCmd } from "./git.js";
+import { defaultBranch, runCmd, scrubCloneGitInsteadof } from "./git.js";
 import type { PrepareWorkspaceResult, RepoWorkflowOptions } from "./types.js";
 
 const GOVERNANCE_REPOS = new Set(["roadmap"]);
@@ -62,6 +62,13 @@ export function prepareIsolatedClone(
         error: clone.stderr || clone.stdout || "gh repo clone failed",
       };
     }
+    scrubCloneGitInsteadof(cloneDir);
+    runCmd(
+      "git",
+      ["remote", "set-url", "origin", `https://github.com/${org}/${repo}.git`],
+      cloneDir,
+      false,
+    );
   } else {
     runCmd("git", ["fetch", "origin"], cloneDir, false);
     runCmd("git", ["checkout", baseBranch], cloneDir, false);

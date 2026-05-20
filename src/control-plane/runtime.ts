@@ -12,6 +12,7 @@ import { pushSupervisorActivity } from "./supervisor-activity.js";
 import { loadState, saveState } from "./state.js";
 import type { ActiveAgentRun, AgentRunLifecycle, ControlPlaneState } from "./types.js";
 import type { AgentId } from "../types.js";
+import { runWithConcurrencyLimit, swarmMaxParallelFromEnv } from "./parallel-pool.js";
 
 const activeRuns = new Map<string, ActiveAgentRun>();
 const childByRunId = new Map<string, ChildProcess>();
@@ -350,16 +351,22 @@ export async function runAllAgentsNow(): Promise<{
 
   const spawned: ActiveAgentRun[] = [];
   const skipped: Array<{ agent: AgentId; reason: string }> = [];
+  const toSpawn: AgentId[] = [];
 
   for (const agentId of agentIds) {
     if (stopped.has(agentId)) {
       skipped.push({ agent: agentId, reason: "stopped" });
       continue;
     }
+    toSpawn.push(agentId);
+  }
+
+  const maxParallel = swarmMaxParallelFromEnv();
+  await runWithConcurrencyLimit(toSpawn, maxParallel, async (agentId) => {
     const result = spawnAgentRun(agentId, "swarm run-all");
     if (result.ok) spawned.push(result.run);
     else skipped.push({ agent: agentId, reason: result.error });
-  }
+  });
 
   return { spawned, skipped };
 }

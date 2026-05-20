@@ -6,6 +6,16 @@ export interface AgentRunErrorDetail {
   name?: string;
   message: string;
   stack?: string;
+  /** Cursor SDK / Connect stable code when present (e.g. `internal`, `unauthenticated`). */
+  code?: string;
+  /** HTTP status from SDK/backend when present. */
+  status?: number;
+  requestId?: string;
+  operation?: string;
+  endpoint?: string;
+  isRetryable?: boolean;
+  /** Condensed `error.cause` (one hop) for wrapped Connect/gRPC failures. */
+  causeLine?: string;
 }
 
 export interface FormatAgentOutputParams {
@@ -27,19 +37,62 @@ export interface FormatAgentOutputParams {
 
 export function errorDetailFromUnknown(err: unknown): AgentRunErrorDetail {
   if (err instanceof Error) {
-    return {
+    const base: AgentRunErrorDetail = {
       name: err.name,
-      message: err.message || String(err),
+      message: normalizeErrorMessage(err.message || String(err)),
       stack: err.stack,
     };
+    Object.assign(base, pickSdkStyleFields(err));
+    if ((!base.message || base.message === "Error") && base.code) {
+      base.message = `SDK/backend error (code: ${base.code})`;
+    }
+    const cause = (err as Error & { cause?: unknown }).cause;
+    if (cause !== undefined && cause !== null && cause !== err) {
+      const c = errorDetailFromUnknown(cause);
+      const line = [c.name && `${c.name}: `, c.message].filter(Boolean).join("");
+      if (line.trim()) {
+        base.causeLine = line.trim().slice(0, 800);
+        if (!base.code && c.code) base.code = c.code;
+        if (base.status === undefined && c.status !== undefined) base.status = c.status;
+      }
+    }
+    return base;
   }
   if (typeof err === "object" && err !== null) {
     const o = err as Record<string, unknown>;
-    const message = String(o.message ?? o.error ?? err);
+    const message = normalizeErrorMessage(String(o.message ?? o.error ?? err));
     const stack = typeof o.stack === "string" ? o.stack : undefined;
-    return { name: typeof o.name === "string" ? o.name : undefined, message, stack };
+    const detail: AgentRunErrorDetail = {
+      name: typeof o.name === "string" ? o.name : undefined,
+      message,
+      stack,
+    };
+    Object.assign(detail, pickSdkStyleFields(o));
+    if ((!detail.message || detail.message === "Error") && detail.code) {
+      detail.message = `SDK/backend error (code: ${detail.code})`;
+    }
+    return detail;
   }
-  return { message: String(err) };
+  return { message: normalizeErrorMessage(String(err)) };
+}
+
+/** Avoid useless single-word messages from some RPC layers when JSON has more context. */
+function normalizeErrorMessage(raw: string): string {
+  const t = raw.trim();
+  if (t && t.toLowerCase() !== "error") return t;
+  return t || "(empty error message)";
+}
+
+function pickSdkStyleFields(source: object): Partial<AgentRunErrorDetail> {
+  const o = source as Record<string, unknown>;
+  const out: Partial<AgentRunErrorDetail> = {};
+  if (typeof o.code === "string" && o.code.trim()) out.code = o.code.trim();
+  if (typeof o.status === "number" && Number.isFinite(o.status)) out.status = o.status;
+  if (typeof o.requestId === "string" && o.requestId.trim()) out.requestId = o.requestId.trim();
+  if (typeof o.operation === "string" && o.operation.trim()) out.operation = o.operation.trim();
+  if (typeof o.endpoint === "string" && o.endpoint.trim()) out.endpoint = o.endpoint.trim();
+  if (typeof o.isRetryable === "boolean") out.isRetryable = o.isRetryable;
+  return out;
 }
 
 export function formatErrorMarkdown(detail: AgentRunErrorDetail): string {
@@ -51,6 +104,17 @@ export function formatErrorMarkdown(detail: AgentRunErrorDetail): string {
     `| **Type** | \`${detail.name ?? "Error"}\` |`,
     `| **Message** | ${escapeTableCell(detail.message)} |`,
   ];
+  if (detail.code) lines.push(`| **Code** | \`${escapeTableCell(detail.code)}\` |`);
+  if (detail.status !== undefined) lines.push(`| **HTTP status** | ${detail.status} |`);
+  if (detail.requestId) lines.push(`| **Request ID** | \`${escapeTableCell(detail.requestId)}\` |`);
+  if (detail.operation) lines.push(`| **Operation** | ${escapeTableCell(detail.operation)} |`);
+  if (detail.endpoint) lines.push(`| **Endpoint** | ${escapeTableCell(detail.endpoint)} |`);
+  if (detail.isRetryable !== undefined) {
+    lines.push(`| **Retryable** | ${detail.isRetryable ? "yes" : "no"} |`);
+  }
+  if (detail.causeLine) {
+    lines.push(`| **Cause** | ${escapeTableCell(detail.causeLine)} |`);
+  }
   if (detail.stack?.trim()) {
     lines.push("", "### Stack trace", "", "```", detail.stack.trim(), "```");
   } else {
@@ -61,7 +125,12 @@ export function formatErrorMarkdown(detail: AgentRunErrorDetail): string {
 
 export function buildFormattedOutput(p: FormatAgentOutputParams): string {
   const sections: string[] = [];
-  const statusLabel = p.status === "incomplete" ? "incomplete (premature)" : p.status;
+  const statusLabel =
+    p.status === "incomplete"
+      ? `incomplete (${p.completion?.completion_mode ?? "production"} — hard gaps)`
+      : p.status === "error"
+        ? "error"
+        : p.status;
 
   sections.push(
     `# Agent run: ${p.definition.name}`,
@@ -291,20 +360,25 @@ function buildTraceSummarySection(trace: AgentRunTrace): string {
 }
 
 function buildCompletionSection(c: AgentRunCompletionMeta): string {
+  const mode = c.completion_mode ?? "production";
   const lines = [
     "## Completion audit",
     "",
     "| Check | Result |",
     "|-------|--------|",
+    `| **Mode** | \`${mode}\` |`,
     `| Complete | ${c.complete ? "yes" : "no"} |`,
-    `| Premature | ${c.premature ? "yes" : "no"} |`,
+    `| Premature | ${c.premature ? "yes (hard gaps)" : "no"} |`,
     `| Deliverable section | ${c.deliverable_checked ? "yes" : "no"} |`,
   ];
   if (c.pr_urls.length) {
     lines.push("", "### PR URLs", "", ...c.pr_urls.map((u) => `- ${u}`));
   }
   if (c.gaps.length) {
-    lines.push("", "### Gaps", "", ...c.gaps.map((g) => `- ${g}`));
+    lines.push("", "### Hard gaps (block completion)", "", ...c.gaps.map((g) => `- ${g}`));
+  }
+  if (c.notes?.length) {
+    lines.push("", "### Notes (informational)", "", ...c.notes.map((n) => `- ${n}`));
   }
   if (c.evidence.length) {
     lines.push("", "### Evidence", "", ...c.evidence.map((e) => `- ${e}`));

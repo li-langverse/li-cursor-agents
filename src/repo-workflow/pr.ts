@@ -1,4 +1,5 @@
-import { hasGitToken, gitStatusPorcelain, runCmd } from "./git.js";
+import { classifyGitRemoteError } from "./git-errors.js";
+import { findOpenPrForBranch, gitPushBranch, hasGitToken, gitStatusPorcelain, runCmd } from "./git.js";
 import type { CommitPushPrResult, RepoWorkflowOptions } from "./types.js";
 
 export function commitPushOpenPr(
@@ -79,14 +80,27 @@ export function commitPushOpenPr(
     };
   }
 
-  const push = runCmd("git", ["push", "-u", "origin", branch], cloneDir, dryRun);
+  const push = gitPushBranch(cloneDir, branch, options.org, options.repo, dryRun);
   if (!push.ok) {
+    const c = classifyGitRemoteError(push.stderr, push.stdout);
     return {
       ok: false,
       committed: true,
       pushed: false,
       branch,
-      error: push.stderr || "git push failed",
+      error: `[${c.code}] ${c.message} — ${c.hint}`,
+    };
+  }
+
+  const afterPushPr = findOpenPrForBranch(options.org, options.repo, branch, dryRun);
+  if (afterPushPr) {
+    return {
+      ok: true,
+      committed: true,
+      pushed: true,
+      branch,
+      pr_url: afterPushPr,
+      skip_reason: "reused_existing_open_pr",
     };
   }
 
@@ -111,12 +125,24 @@ export function commitPushOpenPr(
   );
 
   if (!pr.ok) {
+    const c = classifyGitRemoteError(pr.stderr, pr.stdout);
+    const reused = findOpenPrForBranch(options.org, options.repo, branch, dryRun);
+    if (reused || c.code === "pr_already_exists") {
+      return {
+        ok: true,
+        committed: true,
+        pushed: true,
+        branch,
+        pr_url: reused,
+        skip_reason: "reused_existing_open_pr",
+      };
+    }
     return {
       ok: false,
       committed: true,
       pushed: true,
       branch,
-      error: pr.stderr || "gh pr create failed",
+      error: `[${c.code}] ${c.message} — ${c.hint}`,
     };
   }
 

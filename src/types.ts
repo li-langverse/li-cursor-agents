@@ -75,12 +75,18 @@ export interface AgentRunOptions {
   extraInstruction?: string;
 }
 
+export type CompletionMode = "production" | "verify" | "digest_only";
+
 export interface AgentRunCompletionMeta {
   complete: boolean;
   premature: boolean;
   pr_urls: string[];
   deliverable_checked: boolean;
   skip_reason?: string;
+  /** production = PR/evidence required; verify/digest_only = digest OK without PR */
+  completion_mode?: CompletionMode;
+  /** Soft gaps (expected in verify/digest); do not mark premature */
+  notes?: string[];
   gaps: string[];
   evidence: string[];
 }

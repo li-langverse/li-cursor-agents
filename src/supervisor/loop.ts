@@ -26,6 +26,8 @@ import { runLocalCiSweepForMergeAgents } from "../local-ci/sweep.js";
 import { runPreflight, resolveBenchmarksRoot } from "../preflight.js";
 import type { AgentRunResult, PreflightBundle } from "../types.js";
 import type { ControlPlaneState, HumanIntervention, QueuedAgentTask } from "../control-plane/types.js";
+import { statusForTaskCooldown } from "../control-plane/run-audit-context.js";
+import { buildHandoffInstruction, handoffNoteFromRun, type HandoffNote } from "./handoff.js";
 
 export interface SupervisorOptions {
   benchmarksRoot?: string;
@@ -169,22 +171,27 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
     const packageRoot = agentsPackageRoot();
     const workCwd = benchmarksRoot ?? packageRoot;
 
+    const handoffChain: HandoffNote[] = [];
+
     for (const task of tasks) {
       state.supervisor_status = "running_agent";
       state.current_supervisor_agent = task.agentId;
       saveState(state);
       const supervisorRunId = registerSupervisorRun(task.agentId, task.reason);
       try {
-        let extraInstruction: string | undefined;
+        const parts: string[] = [];
+        const handoff = buildHandoffInstruction(handoffChain, task);
+        if (handoff) parts.push(handoff);
         if (task.agentId === "pr_merger") {
-          extraInstruction = buildPrMergerInstruction(mergePlanFromBriefing(briefing));
+          parts.push(buildPrMergerInstruction(mergePlanFromBriefing(briefing)));
         } else if (task.agentId === "agent_kit_maintainer" && benchmarksRoot) {
           const rollout = rolloutAgentKitPrs(benchmarksRoot, briefing, {
             dryRun: options.mock,
           });
           refreshAgentKitAudit(benchmarksRoot);
-          extraInstruction = buildAgentKitMaintainerInstruction([], briefing, rollout);
+          parts.push(buildAgentKitMaintainerInstruction([], briefing, rollout));
         }
+        const extraInstruction = parts.length ? parts.join("\n\n---\n\n") : undefined;
         const result = await runAgent({
           agentId: task.agentId,
           cwd: workCwd,
@@ -194,17 +201,19 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
           extraInstruction,
         });
         executed.push(result);
+        handoffChain.push(handoffNoteFromRun(task, result));
         await persistRunMeta(task, result, briefingHash);
-        recordTaskRun(state, task, briefingHash, result.status);
+        recordTaskRun(state, task, briefingHash, statusForTaskCooldown(result));
         tasksExecuted += 1;
-        completeSupervisorRun(
-          supervisorRunId,
+        const supervisorStatus =
           result.status === "error"
             ? "error"
             : result.status === "cancelled"
               ? "cancelled"
-              : "finished",
-        );
+              : result.status === "incomplete"
+                ? "incomplete"
+                : "finished";
+        completeSupervisorRun(supervisorRunId, supervisorStatus);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         state.last_error = msg;
@@ -312,7 +321,27 @@ export async function runSupervisorLoop(
     if (signal?.aborted) break;
     const tickOptions =
       tickIndex === 0 && forceFirst ? { ...options, force: true } : options;
-    const tick = await supervisorTick(tickOptions);
+    let tick: TickResult;
+    try {
+      tick = await supervisorTick(tickOptions);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      pushSupervisorActivity("error", `tick failed (continuing loop): ${msg}`);
+      const state = loadState();
+      state.last_error = msg;
+      state.supervisor_status = "idle";
+      state.current_supervisor_agent = undefined;
+      saveState(state);
+      tickIndex += 1;
+      if (options.once) break;
+      if (signal?.aborted) break;
+      try {
+        await sleepMs(options.intervalMs, signal);
+      } catch {
+        break;
+      }
+      continue;
+    }
     tickIndex += 1;
     const msg = [
       `tick briefing=${tick.briefingHash}`,

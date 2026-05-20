@@ -221,18 +221,32 @@ describe("dashboard drilldown API e2e", () => {
     assert.equal(startRes.status, 200);
     const body = startRes.body as {
       started?: boolean;
+      already_running?: boolean;
       message?: string;
       runtime?: { supervisor_loop_running?: boolean };
     };
-    assert.equal(body.started, true);
-    assert.ok(body.message?.includes("started"));
+    assert.ok(
+      body.started === true || body.already_running === true,
+      `supervisor/start: ${JSON.stringify(body)}`,
+    );
+    if (body.started) {
+      assert.ok(body.message?.includes("started"), body.message);
+    } else {
+      assert.ok(body.message?.includes("already running"), body.message);
+    }
     assert.equal(body.runtime?.supervisor_loop_running, true);
 
     const activity = await httpGetJson(port, "/api/supervisor/activity");
     assert.equal(activity.status, 200);
     const act = activity.body as { loop_running?: boolean; entries?: Array<{ message: string }> };
     assert.equal(act.loop_running, true);
-    assert.ok(act.entries?.some((e) => e.message.includes("started")));
+    assert.ok(
+      act.entries?.some(
+        (e) =>
+          e.message.includes("started") || e.message.toLowerCase().includes("already running"),
+      ),
+      "activity should mention start or already-running",
+    );
 
     const stopRes = await httpPostJson(port, "/api/supervisor/stop");
     assert.equal(stopRes.status, 200);

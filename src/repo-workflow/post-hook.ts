@@ -20,7 +20,10 @@ export function formatPushDigest(push: PostHookPushResult): string {
   if (push.pushed) lines.push(`- **Pushed:** \`${push.branch}\` → origin`);
   if (push.committed && !push.pushed) lines.push(`- **Committed locally** (push skipped)`);
   if (push.skipped) lines.push(`- **Skipped:** ${push.skip_reason ?? "no changes"}`);
-  if (push.error) lines.push(`- **Error:** ${push.error}`);
+  if (push.error) {
+    lines.push(`- **Error:** ${push.error}`);
+    lines.push(`- **Remediation:** Fix git auth (GH_TOKEN), reuse open PR, or set LI_REPO_WORKFLOW_SKIP_PUSH=1 for digest-only runs.`);
+  }
   return lines.join("\n");
 }
 

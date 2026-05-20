@@ -6,8 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Completion modes** — `LI_AGENT_VERIFY_MODE`, `digest_only` (skip-push), and `LI_REPO_WORKFLOW_SMOKE`; hard vs informational gaps; supervisor handoffs between agents in the same tick (`src/control-plane/run-completion.ts`, `src/supervisor/handoff.ts`).
+- **PR deduplication** — post-hook reuses open PR for branch instead of `gh pr create` duplicate (`src/repo-workflow/pr.ts`).
+- **Classified git errors** — `git_auth_cursor_bot`, `pr_already_exists`, etc. (`src/repo-workflow/git-errors.ts`).
+- **Live li-demo smoke** — `npm run smoke:li-demo:live` runs `docs_maintainer` on real `gh repo clone` of `li-langverse/li-demo` with Cursor SDK and post-hook push (`scripts/live-li-demo-smoke.mjs`).
+- **Long-run swarm monitor** — `npm run agents:monitor` runs `scripts/monitor-swarm-long.sh` (default 3h, 5m interval): clones `li-local-ci` when missing, checks Docker/Supabase containers (project-scoped names), `GET /api/runtime`, optional `LI_MONITOR_SDK_SMOKE` / `LI_MONITOR_SUPABASE_ENSURE` / `LI_MONITOR_MIGRATION_DRY_RUN`.
+- **`scripts/ensure-li-local-ci.sh`** — clones `https://github.com/li-langverse/li-local-ci` when `LI_USE_LOCAL_CI≠0`, `LI_AUTO_CLONE_LOCAL_CI≠0`, and `bin/li-local-ci` is missing.
+- **`agents:keep` + local CI** — `scripts/keep-agents-running.sh` invokes `ensure-li-local-ci.sh` after Supabase setup (warns on failure, does not block dashboard).
+- **Swarm watchdog** — `npm run agents:watch` / `scripts/watch-control-plane.sh` restarts dashboard + supervisor when `/api/status` fails; re-POSTs `/api/supervisor/start` if loop stops.
+- **`LI_SWARM_MAX_PARALLEL`** — optional cap for run-all parallel spawns (`0` = all leaf agents at once).
+
+### Changed
+
+- **Cursor API key resolution** — skip `http(s)://` dashboard URLs in `CURSOR_API_KEY` / `CURSOR_SDK`; pick first plausible key across all credential env vars; `.env` no longer overrides a good shell key with a URL; `check-sdk-key.sh` probes `GET /v1/me` per candidate (`src/env.ts`).
+- **Cursor Auto model everywhere by default** — `CURSOR_MODEL` defaults to `default` (Auto) in `env.defaults.sh`, `keep-agents-running.sh`, and `.env.example`; `auto`/`default` aliases normalized in `resolveCursorModelId()`; `/api/status` and `/api/runtime` expose `cursor_model_id`.
+- **SDK / Cursor error visibility** — `errorDetailFromUnknown` and `formatErrorMarkdown` capture `code`, HTTP `status`, `requestId`, `operation`, `endpoint`, `isRetryable`, and one-hop `causeLine`; generic message `"Error"` is expanded when `code` is set (`src/agent-output-format.ts`, `src/backends/cursor-sdk-backend.ts`).
+- **Dashboard API e2e** — `POST /api/supervisor/start` accepts `already_running` when auto-start beat the test (`src/e2e/dashboard-api.e2e.ts`).
+
 ### Fixed
 
+- **Repo-workflow push after `gh clone`** — `gitPushBranch()` uses explicit `GH_TOKEN` push URL; scrub clone `url.insteadof`; bypasses global gh config that forced `cursor[bot]` 403 (`src/repo-workflow/git.ts`, `pr.ts`, `workspace.ts`).
+
+### Fixed
+
+- **Cursor keys from `.env` override process env** — non-empty `CURSOR_API_KEY`, `CURSOR_SDK`, `CURSOR_MODEL`, etc. in `li-cursor-agents/.env` replace already-set values so a refreshed local key is not ignored when the shell still has stale Cloud-injected vars (`src/env.ts`).
+- Supervisor loop survives tick-level throws (logs error, continues interval).
+- Ops server logs `uncaughtException` / `unhandledRejection` without exiting.
+- `package.json` declares `pg` and `@modelcontextprotocol/sdk` (fixes fresh `npm ci` build).
 - Operational logs (`keep-agents.log`, supervisor subprocess) prefix ISO-8601 timestamps; `src/agent-log.ts`, `scripts/test-log-timestamps.mjs` regression.
 - Supabase persist `fetch failed`: retry transient REST errors, serialize state upserts, normalize `localhost` → `127.0.0.1`, wait for PostgREST in `ensure-supabase.sh`, `db:probe` checks REST not only Postgres (`src/db/supabase-retry.ts`, `rest-health.ts`, `persist.ts`).
 - Dashboard agent status: **Recommended** (briefing/heap) vs misleading **Queued**; cooldown wins over recommended; supervisor subprocess state mirrored to `data/control-plane/state.json` for parent reload when Supabase persist fails (`src/control-plane/state.ts`, `web/app.js`).
