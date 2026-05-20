@@ -49,6 +49,7 @@ function packageRoot(): string {
 
 /** Load optional .env from package root or BENCHMARKS_ROOT (KEY=value, no export required). */
 export function loadDotEnv(): void {
+  if (process.env.LI_SKIP_DOTENV === "1") return;
   const roots = [
     process.env.LI_CURSOR_AGENTS_ROOT,
     process.cwd(),

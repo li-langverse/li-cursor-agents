@@ -28,12 +28,14 @@ test("resolveCursorApiKey skips URL-shaped CURSOR_API_KEY when SDK_KEY is plausi
   const prev: Record<string, string | undefined> = {};
   for (const k of keys) prev[k] = process.env[k];
   for (const k of keys) delete process.env[k];
+  process.env.LI_SKIP_DOTENV = "1";
   process.env.CURSOR_API_KEY = "https://cursor.com/dashboard/integrations";
   process.env.CURSOR_SDK_KEY = "key_test_01234567890123456789012";
   process.env.CURSOR_SDK = "https://cursor.com/dashboard/integrations";
   try {
     assert.equal(resolveCursorApiKey(), "key_test_01234567890123456789012");
   } finally {
+    delete process.env.LI_SKIP_DOTENV;
     for (const k of keys) {
       if (prev[k] === undefined) delete process.env[k];
       else process.env[k] = prev[k];
