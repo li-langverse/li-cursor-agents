@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- **Cursor keys from `.env` override process env** — non-empty `CURSOR_API_KEY`, `CURSOR_SDK`, `CURSOR_MODEL`, etc. in `li-cursor-agents/.env` replace already-set values so a refreshed local key is not ignored when the shell still has stale Cloud-injected vars (`src/env.ts`).
 - Supervisor loop survives tick-level throws (logs error, continues interval).
 - Ops server logs `uncaughtException` / `unhandledRejection` without exiting.
 - `package.json` declares `pg` and `@modelcontextprotocol/sdk` (fixes fresh `npm ci` build).

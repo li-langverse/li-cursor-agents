@@ -2,6 +2,15 @@ import { existsSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
+/** Cursor / model vars: non-empty values in `.env` must win over stale Cloud-injected env. */
+const DOTENV_OVERRIDE_KEYS = new Set([
+  "CURSOR_API_KEY",
+  "CURSOR_SDK_KEY",
+  "CURSOR_SDK",
+  "CURSOR_API_TOKEN",
+  "CURSOR_MODEL",
+]);
+
 function applyEnvFile(path: string): void {
   if (!existsSync(path)) return;
   for (const line of readFileSync(path, "utf8").split("\n")) {
@@ -13,6 +22,10 @@ function applyEnvFile(path: string): void {
     let val = t.slice(eq + 1).trim();
     if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
       val = val.slice(1, -1);
+    }
+    if (DOTENV_OVERRIDE_KEYS.has(key)) {
+      if (val) process.env[key] = val;
+      continue;
     }
     if (!(key in process.env) || process.env[key] === "") {
       process.env[key] = val;
