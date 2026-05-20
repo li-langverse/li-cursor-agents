@@ -1,3 +1,4 @@
+import { isSdkSlotLockError } from "../backends/sdk-session-lock.js";
 import { agentsPackageRoot, runAgent, shouldUseMock } from "../runner.js";
 import { resolveBenchmarksRoot, runPreflight } from "../preflight.js";
 import {
@@ -140,14 +141,26 @@ export async function researchAgentWorkerCycle(
   const benchmarksRoot = resolveBenchmarksRoot(options?.benchmarksRoot);
   const packageRoot = agentsPackageRoot();
   const mock = options?.mock ?? shouldUseMock(false);
-  const result = await runAgent({
-    agentId: target.agentId,
-    cwd: benchmarksRoot ?? packageRoot,
-    benchmarksRoot,
-    mock: Boolean(mock),
-    dryRun: Boolean(options?.dryRun),
-    extraInstruction: target.extra,
-  });
+  let result;
+  try {
+    result = await runAgent({
+      agentId: target.agentId,
+      cwd: benchmarksRoot ?? packageRoot,
+      benchmarksRoot,
+      mock: Boolean(mock),
+      dryRun: Boolean(options?.dryRun),
+      extraInstruction: target.extra,
+    });
+  } catch (err) {
+    if (isSdkSlotLockError(err)) throw err;
+    return {
+      skipped: false,
+      agentId: target.agentId,
+      goalId: target.goal?.id ?? target.session?.goal_id,
+      status: "error",
+      skip_reason: err instanceof Error ? err.message : String(err),
+    };
+  }
 
   if (target.goal?.id) {
     recordGoalRun(loadLaneState(), target.goal.id);

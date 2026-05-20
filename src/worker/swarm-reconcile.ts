@@ -43,6 +43,11 @@ export async function reconcileSwarmAfterStartup(): Promise<void> {
     return;
   }
 
+  if (envAutoStartSwarm() && detachedSwarmEnabled()) {
+    const { markDetachedSwarmStopped } = await import("../swarm/swarm-watchdog.js");
+    await markDetachedSwarmStopped("reconcile: detached pid not running");
+  }
+
   let shouldStart = envAutoStartSwarm();
   if (!shouldStart && dbEnabled()) {
     const worker = await loadWorkerStatusFromDb();

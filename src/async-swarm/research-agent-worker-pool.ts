@@ -125,7 +125,14 @@ export function startResearchAgentWorkerPool(options?: {
     if (existing && !existing.signal.aborted) continue;
     const abort = new AbortController();
     workerAborts.set(agentId, abort);
-    workerLoops.set(agentId, researchAgentLoop(agentId, abort.signal, mock));
+    const loop = researchAgentLoop(agentId, abort.signal, mock).catch((err) => {
+      agentLog(
+        `research:${agentId}`,
+        "ERROR",
+        `worker loop exited: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    });
+    workerLoops.set(agentId, loop);
     started++;
   }
   return {

@@ -3,11 +3,12 @@
   "implement_lane_enabled": true,
   "goal_last_run_at": {
     "numerics_sota": "2026-05-19T08:54:44.638Z",
-    "simulation_techniques": "2026-05-19T08:54:44.685Z"
+    "simulation_techniques": "2026-05-19T08:54:44.685Z",
+    "ecosystem_gaps": "2026-05-19T19:57:15.057Z"
   },
-  "last_research_tick_at": "2026-05-19T09:11:50.615Z",
+  "last_research_tick_at": "2026-05-19T19:57:15.058Z",
   "last_implement_tick_at": "2026-05-19T08:54:29.180Z",
-  "last_maintenance_tick_at": "2026-05-19T10:14:31.493Z",
+  "last_maintenance_tick_at": "2026-05-19T21:38:22.056Z",
   "proactive_last_run_at": {
     "bench_improver": "2026-05-19T08:54:43.052Z",
     "bug_fixer": "2026-05-19T08:54:43.388Z"

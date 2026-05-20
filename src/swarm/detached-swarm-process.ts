@@ -3,6 +3,7 @@ import { appendFileSync, existsSync, mkdirSync, openSync, readFileSync, unlinkSy
 import { join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
 import { workerConsole } from "../worker/worker-console.js";
+import { markDetachedSwarmStopped } from "./swarm-watchdog.js";
 
 let managedChild: ChildProcess | null = null;
 
@@ -83,6 +84,18 @@ export function spawnDetachedAsyncSwarm(): { started: boolean; message: string; 
     detached: true,
     stdio: ["ignore", out, out],
   });
+  child.on("exit", (code, signal) => {
+    if (managedChild === child) managedChild = null;
+    try {
+      unlinkSync(pidFilePath());
+    } catch {
+      /* */
+    }
+    const why = signal ? `signal ${signal}` : `code ${code ?? "?"}`;
+    workerConsole("async-swarm", "warn", `detached swarm exited (${why})`);
+    void markDetachedSwarmStopped(`detached child exit: ${why}`);
+  });
+
   child.unref();
   managedChild = child;
 

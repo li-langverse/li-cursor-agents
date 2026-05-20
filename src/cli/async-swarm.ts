@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { loadRuntimeEnv } from "../env.js";
 loadRuntimeEnv();
+import { installProcessStabilityHandlers } from "../swarm/process-stability.js";
+installProcessStabilityHandlers("async-swarm");
 import { startAsyncSwarm, stopAsyncSwarm } from "../async-swarm/async-swarm-runtime.js";
 import { shouldUseMock } from "../runner.js";
 

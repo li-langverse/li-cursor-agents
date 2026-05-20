@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { loadRuntimeEnv } from "../env.js";
 loadRuntimeEnv();
+import { installProcessStabilityHandlers } from "../swarm/process-stability.js";
+installProcessStabilityHandlers("dashboard");
 import { defaultOpsPort, startOpsServer } from "../ops-server.js";
 import { workerBanner, workerConsole } from "../worker/worker-console.js";
 import { agentBackendLabel } from "../runner.js";

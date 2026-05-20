@@ -128,10 +128,18 @@ export function startResearchLaneLoop(options?: { mock?: boolean }): {
   }
 
   researchAbort = new AbortController();
-  researchPromise = researchLoop(researchAbort.signal, mock).finally(() => {
-    researchAbort = null;
-    researchPromise = null;
-  });
+  researchPromise = researchLoop(researchAbort.signal, mock)
+    .catch((err) => {
+      agentLog(
+        "research-lane",
+        "ERROR",
+        `serial loop exited: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    })
+    .finally(() => {
+      researchAbort = null;
+      researchPromise = null;
+    });
   return { started: true, message: "research lane loop started (serial)" };
 }
 
@@ -159,10 +167,18 @@ export function startImplementLaneLoop(options?: { mock?: boolean }): {
 
   const mock = options?.mock ?? shouldUseMock(false);
   implementAbort = new AbortController();
-  implementPromise = implementLoop(implementAbort.signal, mock).finally(() => {
-    implementAbort = null;
-    implementPromise = null;
-  });
+  implementPromise = implementLoop(implementAbort.signal, mock)
+    .catch((err) => {
+      agentLog(
+        "implement-lane",
+        "ERROR",
+        `loop exited: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    })
+    .finally(() => {
+      implementAbort = null;
+      implementPromise = null;
+    });
   return { started: true, message: "implement lane loop started" };
 }
 
@@ -206,10 +222,18 @@ export function startMaintenanceLaneLoop(_options?: { mock?: boolean }): {
     return { started: false, message: "maintenance lane already running" };
   }
   maintenanceAbort = new AbortController();
-  maintenancePromise = maintenanceLoop(maintenanceAbort.signal).finally(() => {
-    maintenanceAbort = null;
-    maintenancePromise = null;
-  });
+  maintenancePromise = maintenanceLoop(maintenanceAbort.signal)
+    .catch((err) => {
+      agentLog(
+        "maintenance-lane",
+        "ERROR",
+        `loop exited: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    })
+    .finally(() => {
+      maintenanceAbort = null;
+      maintenancePromise = null;
+    });
   return { started: true, message: "maintenance lane loop started" };
 }
 

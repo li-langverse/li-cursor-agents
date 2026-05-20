@@ -204,7 +204,13 @@ export function startAgentWorkerPool(options?: { mock?: boolean }): {
     if (workerAborts.has(agentId) && !workerAborts.get(agentId)!.signal.aborted) continue;
     const abort = new AbortController();
     workerAborts.set(agentId, abort);
-    void agentWorkerLoop(agentId, abort.signal, mock);
+    void agentWorkerLoop(agentId, abort.signal, mock).catch((err) => {
+      agentLog(
+        `worker:${agentId}`,
+        "ERROR",
+        `worker loop exited: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    });
     started++;
   }
   return {
