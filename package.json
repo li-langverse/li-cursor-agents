@@ -17,6 +17,7 @@
     "setup": "bash scripts/setup-local-env.sh",
     "agents:keep": "bash scripts/keep-agents-running.sh",
     "agents:monitor": "bash scripts/monitor-swarm-long.sh",
+    "agents:test-auto-quota": "npm run build && env -u CURSOR_MOCK node scripts/test-auto-quota.mjs",
     "agents:watch": "bash scripts/watch-control-plane.sh",
     "dashboard": "node dist/cli/serve-dashboard.js",
     "repo-workflow": "node dist/cli/repo-workflow.js",
