@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-19T20:02Z",
+  "generated_at": "2026-05-20T06:40Z",
   "role": "preflight_for_cursor_agents",
   "note": "Intelligence (web, review, gaps) runs in Cursor Automations — not in this file.",
   "preflight_runs": {
@@ -28,7 +28,7 @@
     "org_agent_kit_audit": {
       "command": "python3 scripts/ensure-org-agent-kit.py --local-only",
       "exit_code": 1,
-      "stdout_tail": "wrote /Users/julian/Documents/coding-projects/benchmarks/data/latest/org-agent-kit-audit.json\ncanonical: 1.3.2+130de1d9a8d0e52c\nOK: 0  needing sync: 8\n  - benchmarks: drift\n  - li-cursor-agents: drift\n  - li-local-ci: missing_kit\n  - lic: drift\n  - lip: drift\n  - lis: drift\n  - lit: drift\n  - roadmap: drift\n",
+      "stdout_tail": "wrote /Users/julian/Documents/coding-projects/benchmarks/data/latest/org-agent-kit-audit.json\ncanonical: 1.3.2+130de1d9a8d0e52c\nOK: 1  needing sync: 7\n  - benchmarks: drift\n  - li-cursor-agents: drift\n  - li-local-ci: missing_kit\n  - lic: drift\n  - lip: drift\n  - lis: drift\n  - lit: drift\n",
       "stderr_tail": ""
     },
     "org_new_repos_discovery": {
@@ -44,7 +44,7 @@
     "merge_plan": {
       "command": "python3 scripts/pr-merge-queue-plan.py",
       "exit_code": 0,
-      "stdout_tail": " merge #39 first, then merge `origin/main` into #34 (preserve both sides) before merging #34\n  warn: ~62% file overlap on `main`; merge #39 first, then merge `origin/main` into #32 (preserve both sides) before merging #32\n  warn: ~100% file overlap on `main`; merge #32 first, then merge `origin/main` into #34 (preserve both sides) before merging #34\n  warn: benchmarks#39 CONFLICTING with main: rebase before merge\n  warn: benchmarks#34 CONFLICTING with main: rebase before merge\n  ... +2 warnings\n",
+      "stdout_tail": " merge #39 first, then merge `origin/main` into #34 (preserve both sides) before merging #34\n  warn: ~62% file overlap on `main`; merge #39 first, then merge `origin/main` into #32 (preserve both sides) before merging #32\n  warn: ~100% file overlap on `main`; merge #32 first, then merge `origin/main` into #34 (preserve both sides) before merging #34\n  warn: benchmarks#39 CONFLICTING with main: rebase before merge\n  warn: benchmarks#34 CONFLICTING with main: rebase before merge\n  ... +8 warnings\n",
       "stderr_tail": ""
     },
     "pr_program": {
@@ -81,7 +81,7 @@
     }
   },
   "issue_triage": {
-    "generated_at": "2026-05-19T19:58Z",
+    "generated_at": "2026-05-20T06:40Z",
     "vision_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/vision-and-roadmap.md",
     "skill": "plan-feature-from-issue (see .cursor/skills/)",
     "summary": {
@@ -644,7 +644,7 @@
     ]
   },
   "ecosystem_audit": {
-    "generated_at": "2026-05-19T19:58Z",
+    "generated_at": "2026-05-20T06:38Z",
     "vision": {
       "master_plan": "https://github.com/li-langverse/lic/blob/main/docs/superpowers/plans/2026-05-14-li-master-plan.md",
       "benchmark_goal": "Li ≤1.2× cpp (tier-1/2); beat HPC SOTA everywhere — PH-5b, PH-7e pure-Li codegen",
@@ -652,9 +652,9 @@
       "merge_order": "P0 package CI PRs → benchmarks#1 → lic dev→main"
     },
     "metrics": {
-      "open_prs": 20,
+      "open_prs": 23,
       "failed_prs": 12,
-      "ready_prs": 0,
+      "ready_prs": 2,
       "repos_missing_ci_main": 1,
       "repos_without_live_pages": 10
     },
@@ -671,12 +671,12 @@
       },
       {
         "repo": "lic",
-        "number": 56,
-        "title": "chore(lic): workspace sweep fallback",
-        "url": "https://github.com/li-langverse/lic/pull/56",
+        "number": 70,
+        "title": "feat(contracts): reject ensures true on value returns (E0303)",
+        "url": "https://github.com/li-langverse/lic/pull/70",
         "base": "main",
         "ci": "fail",
-        "draft": false,
+        "draft": true,
         "ready": false
       },
       {
@@ -780,7 +780,28 @@
         "ready": false
       }
     ],
-    "ready_prs": [],
+    "ready_prs": [
+      {
+        "repo": "lic",
+        "number": 69,
+        "title": "fix(lic): workspace import members parse + multiline def params",
+        "url": "https://github.com/li-langverse/lic/pull/69",
+        "base": "main",
+        "ci": "pass",
+        "draft": false,
+        "ready": true
+      },
+      {
+        "repo": "roadmap",
+        "number": 12,
+        "title": "feat(docs): ecosystem statistics on development overview",
+        "url": "https://github.com/li-langverse/roadmap/pull/12",
+        "base": "main",
+        "ci": "pass",
+        "draft": false,
+        "ready": true
+      }
+    ],
     "missing_ci_on_main": [
       "li-local-ci"
     ],
@@ -1133,7 +1154,7 @@
         "action": "Fix failing PR CI before new feature work",
         "prs": [
           "li-language#6",
-          "lic#56",
+          "lic#70",
           "lic#53",
           "lic#52",
           "lic#51",
@@ -1172,6 +1193,11 @@
         "action": "Plan completion debt — run plan-completion-audit automation",
         "total_findings": 127,
         "master_open": 8
+      },
+      {
+        "priority": "P2",
+        "action": "Human review merge queue (do not self-merge)",
+        "count": 2
       }
     ]
   },
@@ -1688,7 +1714,7 @@
     ]
   },
   "org_ci_audit": {
-    "generated_at": "2026-05-19T19:58Z",
+    "generated_at": "2026-05-20T06:39Z",
     "org": "li-langverse",
     "required_workflow": "ci.yml",
     "repos_ok": [
@@ -1796,7 +1822,7 @@
     "lic_monorepo_hint": "Run lic/scripts/ensure-package-ci.sh before push-official-package-repo.sh"
   },
   "org_agent_kit_audit": {
-    "generated_at": "2026-05-19T19:58Z",
+    "generated_at": "2026-05-20T06:39Z",
     "org": "li-langverse",
     "canonical_stamp": "1.3.2+130de1d9a8d0e52c",
     "roadmap_kit": "/Users/julian/Documents/coding-projects/roadmap/agent-kit",
@@ -1806,7 +1832,9 @@
       ".cursor/rules/li-release-notes.mdc"
     ],
     "policy": "docs/ecosystem/ADOPTION.md",
-    "repos_ok": [],
+    "repos_ok": [
+      "roadmap"
+    ],
     "repos_needing_sync": [
       {
         "repo": "benchmarks",
@@ -1902,19 +1930,6 @@
         "has_sync_script": true,
         "has_agents_md": true,
         "fix": "cd /Users/julian/Documents/coding-projects/lit && ../roadmap/scripts/install-agent-kit.sh lit"
-      },
-      {
-        "repo": "roadmap",
-        "present_locally": true,
-        "local_path": "/Users/julian/Documents/coding-projects/roadmap",
-        "status": "drift",
-        "cursor_stamp": "1.3.0+manual",
-        "expected_stamp": "1.3.0+manual",
-        "canonical_stamp": "1.3.2+130de1d9a8d0e52c",
-        "missing_rules": [],
-        "has_sync_script": true,
-        "has_agents_md": true,
-        "fix": "cd /Users/julian/Documents/coding-projects/roadmap && ../roadmap/scripts/install-agent-kit.sh roadmap"
       }
     ],
     "entries": [
@@ -2047,19 +2062,19 @@
         "repo": "roadmap",
         "present_locally": true,
         "local_path": "/Users/julian/Documents/coding-projects/roadmap",
-        "status": "drift",
-        "cursor_stamp": "1.3.0+manual",
-        "expected_stamp": "1.3.0+manual",
+        "status": "ok",
+        "cursor_stamp": "1.3.2+130de1d9a8d0e52c",
+        "expected_stamp": "1.3.2+130de1d9a8d0e52c",
         "canonical_stamp": "1.3.2+130de1d9a8d0e52c",
         "missing_rules": [],
         "has_sync_script": true,
         "has_agents_md": true,
-        "fix": "cd /Users/julian/Documents/coding-projects/roadmap && ../roadmap/scripts/install-agent-kit.sh roadmap"
+        "fix": null
       }
     ]
   },
   "org_new_repos_discovery": {
-    "generated_at": "2026-05-19T19:58Z",
+    "generated_at": "2026-05-20T06:39Z",
     "org": "li-langverse",
     "github_source": "gh_repo_list",
     "github_repos": [
@@ -2106,7 +2121,7 @@
     "downstream_agent": "org_repo_onboarder"
   },
   "merge_plan": {
-    "generated_at": "2026-05-19T20:02Z",
+    "generated_at": "2026-05-20T06:40Z",
     "vision_order": "package CI / mirrors → benchmarks → lic → lip/lit/lis → roadmap",
     "ordering_rules": [
       "Repo tier: mirrors/httpd → benchmarks → lic → lip/lit/lis → roadmap (roadmap last)",
@@ -2120,15 +2135,15 @@
       "Progress: after every merge, remaining PRs must absorb latest main before their merge"
     ],
     "summary": {
-      "open_prs": 14,
+      "open_prs": 16,
       "merge_approved": 0,
       "gate_ready": 0,
-      "conflicting_with_main": 4,
+      "conflicting_with_main": 10,
       "auto_merge_candidates": 0,
       "redundant_pairs": 3,
       "stacks": 0,
       "pair_risk_count": 5,
-      "repos_with_plans": 2
+      "repos_with_plans": 3
     },
     "repo_merge_plans": [
       {
@@ -2206,8 +2221,9 @@
       {
         "repo": "lic",
         "base": "main",
-        "open_prs": 11,
+        "open_prs": 12,
         "local_merge_order": [
+          "lic#69",
           "lic#60",
           "lic#53",
           "lic#51",
@@ -2227,6 +2243,48 @@
             "number": 60,
             "url": "https://github.com/li-langverse/lic/pull/60",
             "title": "feat(packages): World Studio scaffolds (li-sim, li-studio, li-chem, li-voxel)",
+            "merge_state": "DIRTY",
+            "action": "Do not merge until rebased: `git fetch origin && git checkout <head> && git merge origin/main` — resolve conflicts preserving main + PR progress (see merge-conflict-resolution.md)"
+          },
+          {
+            "number": 53,
+            "url": "https://github.com/li-langverse/lic/pull/53",
+            "title": "fix(ci): dev PR3 sync and package CI scaffold",
+            "merge_state": "DIRTY",
+            "action": "Do not merge until rebased: `git fetch origin && git checkout <head> && git merge origin/main` — resolve conflicts preserving main + PR progress (see merge-conflict-resolution.md)"
+          },
+          {
+            "number": 52,
+            "url": "https://github.com/li-langverse/lic/pull/52",
+            "title": "feat(physics): game-dev guide, runtime defaults, agent JSON type.index",
+            "merge_state": "DIRTY",
+            "action": "Do not merge until rebased: `git fetch origin && git checkout <head> && git merge origin/main` — resolve conflicts preserving main + PR progress (see merge-conflict-resolution.md)"
+          },
+          {
+            "number": 51,
+            "url": "https://github.com/li-langverse/lic/pull/51",
+            "title": "feat(lic): agent planning automation",
+            "merge_state": "DIRTY",
+            "action": "Do not merge until rebased: `git fetch origin && git checkout <head> && git merge origin/main` — resolve conflicts preserving main + PR progress (see merge-conflict-resolution.md)"
+          },
+          {
+            "number": 48,
+            "url": "https://github.com/li-langverse/lic/pull/48",
+            "title": "chore(lic): Benchmark improver automated update",
+            "merge_state": "DIRTY",
+            "action": "Do not merge until rebased: `git fetch origin && git checkout <head> && git merge origin/main` — resolve conflicts preserving main + PR progress (see merge-conflict-resolution.md)"
+          },
+          {
+            "number": 40,
+            "url": "https://github.com/li-langverse/lic/pull/40",
+            "title": "fix(codegen): '+' lexer and horner_pure_li benchmark (88× → ~1.5×)",
+            "merge_state": "DIRTY",
+            "action": "Do not merge until rebased: `git fetch origin && git checkout <head> && git merge origin/main` — resolve conflicts preserving main + PR progress (see merge-conflict-resolution.md)"
+          },
+          {
+            "number": 8,
+            "url": "https://github.com/li-langverse/lic/pull/8",
+            "title": "docs(vision): point agents at HPC, scientific computing, AI north star",
             "merge_state": "DIRTY",
             "action": "Do not merge until rebased: `git fetch origin && git checkout <head> && git merge origin/main` — resolve conflicts preserving main + PR progress (see merge-conflict-resolution.md)"
           }
@@ -2255,6 +2313,20 @@
             "resolution": "benchmarks/docs/ecosystem/merge-conflict-resolution.md"
           }
         ],
+        "stacks": [],
+        "progress_rule": "After each merge to main, remaining PRs must integrate latest main (merge or rebase) before merge — never discard main or open PR commits"
+      },
+      {
+        "repo": "roadmap",
+        "base": "main",
+        "open_prs": 1,
+        "local_merge_order": [
+          "roadmap#12"
+        ],
+        "safe_merge_order": [],
+        "safe_next": null,
+        "conflicting_with_main": [],
+        "pair_risks": [],
         "stacks": [],
         "progress_rule": "After each merge to main, remaining PRs must integrate latest main (merge or rebase) before merge — never discard main or open PR commits"
       }
@@ -2323,32 +2395,32 @@
       {
         "rank": 1,
         "repo": "lic",
-        "number": 53,
-        "url": "https://github.com/li-langverse/lic/pull/53",
-        "title": "fix(ci): dev PR3 sync and package CI scaffold",
+        "number": 69,
+        "url": "https://github.com/li-langverse/lic/pull/69",
+        "title": "fix(lic): workspace import members parse + multiline def params",
         "merge_approved": false,
         "gate_ready": false,
-        "mergeable": "UNKNOWN",
-        "merge_state": "UNKNOWN",
-        "priority_score": 240,
-        "auto_merge_ok": false,
-        "blocked_reason": null,
-        "order_reason": "rank 1; priority_score=240; awaiting merge-approved label"
-      },
-      {
-        "rank": 2,
-        "repo": "lic",
-        "number": 51,
-        "url": "https://github.com/li-langverse/lic/pull/51",
-        "title": "feat(lic): agent planning automation",
-        "merge_approved": false,
-        "gate_ready": false,
-        "mergeable": "UNKNOWN",
-        "merge_state": "UNKNOWN",
+        "mergeable": "MERGEABLE",
+        "merge_state": "BLOCKED",
         "priority_score": 280,
         "auto_merge_ok": false,
         "blocked_reason": null,
-        "order_reason": "rank 2; priority_score=280; awaiting merge-approved label"
+        "order_reason": "rank 1; priority_score=280; awaiting merge-approved label"
+      },
+      {
+        "rank": 2,
+        "repo": "roadmap",
+        "number": 12,
+        "url": "https://github.com/li-langverse/roadmap/pull/12",
+        "title": "feat(docs): ecosystem statistics on development overview",
+        "merge_approved": false,
+        "gate_ready": false,
+        "mergeable": "MERGEABLE",
+        "merge_state": "BLOCKED",
+        "priority_score": 340,
+        "auto_merge_ok": false,
+        "blocked_reason": null,
+        "order_reason": "rank 2; priority_score=340; awaiting merge-approved label"
       },
       {
         "rank": 3,
@@ -2358,8 +2430,8 @@
         "title": "chore(security): downstream security-gate workflow template",
         "merge_approved": false,
         "gate_ready": false,
-        "mergeable": "UNKNOWN",
-        "merge_state": "UNKNOWN",
+        "mergeable": "MERGEABLE",
+        "merge_state": "BEHIND",
         "priority_score": 230,
         "auto_merge_ok": false,
         "blocked_reason": null,
@@ -2373,8 +2445,8 @@
         "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
         "merge_approved": false,
         "gate_ready": false,
-        "mergeable": "UNKNOWN",
-        "merge_state": "UNKNOWN",
+        "mergeable": "MERGEABLE",
+        "merge_state": "BEHIND",
         "priority_score": 240,
         "auto_merge_ok": false,
         "blocked_reason": null,
@@ -2388,8 +2460,8 @@
         "title": "docs(numerics): red/near-limit SOTA map and bench repro (numerics_researcher)",
         "merge_approved": false,
         "gate_ready": false,
-        "mergeable": "UNKNOWN",
-        "merge_state": "UNKNOWN",
+        "mergeable": "MERGEABLE",
+        "merge_state": "BEHIND",
         "priority_score": 280,
         "auto_merge_ok": false,
         "blocked_reason": null,
@@ -2398,50 +2470,20 @@
       {
         "rank": 6,
         "repo": "lic",
-        "number": 40,
-        "url": "https://github.com/li-langverse/lic/pull/40",
-        "title": "fix(codegen): '+' lexer and horner_pure_li benchmark (88× → ~1.5×)",
-        "merge_approved": false,
-        "gate_ready": false,
-        "mergeable": "UNKNOWN",
-        "merge_state": "UNKNOWN",
-        "priority_score": 245,
-        "auto_merge_ok": false,
-        "blocked_reason": null,
-        "order_reason": "rank 6; priority_score=245; awaiting merge-approved label"
-      },
-      {
-        "rank": 7,
-        "repo": "lic",
         "number": 37,
         "url": "https://github.com/li-langverse/lic/pull/37",
         "title": "chore(lic): Numerics researcher automated update",
         "merge_approved": false,
         "gate_ready": false,
-        "mergeable": "UNKNOWN",
-        "merge_state": "UNKNOWN",
+        "mergeable": "MERGEABLE",
+        "merge_state": "BEHIND",
         "priority_score": 280,
         "auto_merge_ok": false,
         "blocked_reason": null,
-        "order_reason": "rank 7; priority_score=280; awaiting merge-approved label"
+        "order_reason": "rank 6; priority_score=280; awaiting merge-approved label"
       },
       {
-        "rank": 8,
-        "repo": "lic",
-        "number": 8,
-        "url": "https://github.com/li-langverse/lic/pull/8",
-        "title": "docs(vision): point agents at HPC, scientific computing, AI north star",
-        "merge_approved": false,
-        "gate_ready": false,
-        "mergeable": "UNKNOWN",
-        "merge_state": "UNKNOWN",
-        "priority_score": 280,
-        "auto_merge_ok": false,
-        "blocked_reason": null,
-        "order_reason": "rank 8; priority_score=280; awaiting merge-approved label"
-      },
-      {
-        "rank": 9,
+        "rank": 7,
         "repo": "benchmarks",
         "number": 39,
         "url": "https://github.com/li-langverse/benchmarks/pull/39",
@@ -2453,14 +2495,44 @@
         "priority_score": 420,
         "auto_merge_ok": false,
         "blocked_reason": "conflicts with base — rebase onto main before merge",
-        "order_reason": "rank 9; priority_score=420; awaiting merge-approved label"
+        "order_reason": "rank 7; priority_score=420; awaiting merge-approved label"
       },
       {
-        "rank": 10,
+        "rank": 8,
         "repo": "lic",
         "number": 60,
         "url": "https://github.com/li-langverse/lic/pull/60",
         "title": "feat(packages): World Studio scaffolds (li-sim, li-studio, li-chem, li-voxel)",
+        "merge_approved": false,
+        "gate_ready": false,
+        "mergeable": "CONFLICTING",
+        "merge_state": "DIRTY",
+        "priority_score": 430,
+        "auto_merge_ok": false,
+        "blocked_reason": "conflicts with base — rebase onto main before merge",
+        "order_reason": "rank 8; priority_score=430; awaiting merge-approved label"
+      },
+      {
+        "rank": 9,
+        "repo": "lic",
+        "number": 53,
+        "url": "https://github.com/li-langverse/lic/pull/53",
+        "title": "fix(ci): dev PR3 sync and package CI scaffold",
+        "merge_approved": false,
+        "gate_ready": false,
+        "mergeable": "CONFLICTING",
+        "merge_state": "DIRTY",
+        "priority_score": 390,
+        "auto_merge_ok": false,
+        "blocked_reason": "conflicts with base — rebase onto main before merge",
+        "order_reason": "rank 9; priority_score=390; awaiting merge-approved label"
+      },
+      {
+        "rank": 10,
+        "repo": "lic",
+        "number": 51,
+        "url": "https://github.com/li-langverse/lic/pull/51",
+        "title": "feat(lic): agent planning automation",
         "merge_approved": false,
         "gate_ready": false,
         "mergeable": "CONFLICTING",
@@ -2473,32 +2545,32 @@
       {
         "rank": 11,
         "repo": "lic",
-        "number": 52,
-        "url": "https://github.com/li-langverse/lic/pull/52",
-        "title": "feat(physics): game-dev guide, runtime defaults, agent JSON type.index",
+        "number": 40,
+        "url": "https://github.com/li-langverse/lic/pull/40",
+        "title": "fix(codegen): '+' lexer and horner_pure_li benchmark (88× → ~1.5×)",
         "merge_approved": false,
         "gate_ready": false,
-        "mergeable": "UNKNOWN",
-        "merge_state": "UNKNOWN",
-        "priority_score": 280,
+        "mergeable": "CONFLICTING",
+        "merge_state": "DIRTY",
+        "priority_score": 395,
         "auto_merge_ok": false,
-        "blocked_reason": "overlap with lic#51 (92% files); merge lic#51 first, then rebase lic#52 onto main",
-        "order_reason": "overlap with lic#51 (92% files); merge lic#51 first, then rebase lic#52 onto main"
+        "blocked_reason": "conflicts with base — rebase onto main before merge",
+        "order_reason": "rank 11; priority_score=395; awaiting merge-approved label"
       },
       {
         "rank": 12,
         "repo": "lic",
-        "number": 48,
-        "url": "https://github.com/li-langverse/lic/pull/48",
-        "title": "chore(lic): Benchmark improver automated update",
+        "number": 8,
+        "url": "https://github.com/li-langverse/lic/pull/8",
+        "title": "docs(vision): point agents at HPC, scientific computing, AI north star",
         "merge_approved": false,
         "gate_ready": false,
-        "mergeable": "UNKNOWN",
-        "merge_state": "UNKNOWN",
-        "priority_score": 245,
+        "mergeable": "CONFLICTING",
+        "merge_state": "DIRTY",
+        "priority_score": 430,
         "auto_merge_ok": false,
-        "blocked_reason": "overlap with lic#40 (100% files); merge lic#40 first, then rebase lic#48 onto main",
-        "order_reason": "overlap with lic#40 (100% files); merge lic#40 first, then rebase lic#48 onto main"
+        "blocked_reason": "conflicts with base — rebase onto main before merge",
+        "order_reason": "rank 12; priority_score=430; awaiting merge-approved label"
       },
       {
         "rank": 13,
@@ -2529,6 +2601,36 @@
         "auto_merge_ok": false,
         "blocked_reason": "merge benchmarks#32 blocked (conflicts with base); fix before #34; conflicts with base — rebase onto main before merge",
         "order_reason": "merge benchmarks#32 blocked (conflicts with base); fix before #34"
+      },
+      {
+        "rank": 15,
+        "repo": "lic",
+        "number": 52,
+        "url": "https://github.com/li-langverse/lic/pull/52",
+        "title": "feat(physics): game-dev guide, runtime defaults, agent JSON type.index",
+        "merge_approved": false,
+        "gate_ready": false,
+        "mergeable": "CONFLICTING",
+        "merge_state": "DIRTY",
+        "priority_score": 430,
+        "auto_merge_ok": false,
+        "blocked_reason": "merge lic#51 blocked (conflicts with base); fix before #52; conflicts with base — rebase onto main before merge",
+        "order_reason": "merge lic#51 blocked (conflicts with base); fix before #52"
+      },
+      {
+        "rank": 16,
+        "repo": "lic",
+        "number": 48,
+        "url": "https://github.com/li-langverse/lic/pull/48",
+        "title": "chore(lic): Benchmark improver automated update",
+        "merge_approved": false,
+        "gate_ready": false,
+        "mergeable": "CONFLICTING",
+        "merge_state": "DIRTY",
+        "priority_score": 395,
+        "auto_merge_ok": false,
+        "blocked_reason": "merge lic#40 blocked (conflicts with base); fix before #48; conflicts with base — rebase onto main before merge",
+        "order_reason": "merge lic#40 blocked (conflicts with base); fix before #48"
       }
     ],
     "stacks": [],
@@ -2565,16 +2667,15 @@
         "url_b": "https://github.com/li-langverse/benchmarks/pull/32",
         "overlap": 1,
         "reasons": [
-          "#34 branch includes all commits from #32",
           "100% file overlap"
         ],
-        "suggested_action": "close #32 after #34 merges"
+        "suggested_action": "human: pick one PR or rebase the other"
       }
     ],
     "warnings": [
       "lic#52 vs lic#51: human: pick one PR or rebase the other",
       "lic#48 vs lic#40: human: pick one PR or rebase the other",
-      "benchmarks#34 vs benchmarks#32: close #32 after #34 merges",
+      "benchmarks#34 vs benchmarks#32: human: pick one PR or rebase the other",
       "~92% file overlap on `main`; merge #51 first, then merge `origin/main` into #52 (preserve both sides) before merging #52",
       "~100% file overlap on `main`; merge #40 first, then merge `origin/main` into #48 (preserve both sides) before merging #48",
       "~62% file overlap on `main`; merge #39 first, then merge `origin/main` into #34 (preserve both sides) before merging #34",
@@ -2583,7 +2684,13 @@
       "benchmarks#39 CONFLICTING with main: rebase before merge",
       "benchmarks#34 CONFLICTING with main: rebase before merge",
       "benchmarks#32 CONFLICTING with main: rebase before merge",
-      "lic#60 CONFLICTING with main: rebase before merge"
+      "lic#60 CONFLICTING with main: rebase before merge",
+      "lic#53 CONFLICTING with main: rebase before merge",
+      "lic#52 CONFLICTING with main: rebase before merge",
+      "lic#51 CONFLICTING with main: rebase before merge",
+      "lic#48 CONFLICTING with main: rebase before merge",
+      "lic#40 CONFLICTING with main: rebase before merge",
+      "lic#8 CONFLICTING with main: rebase before merge"
     ]
   },
   "pr_program": {
@@ -3438,7 +3545,7 @@
     ]
   },
   "workspace_dirty_sweep": {
-    "generated_at": "2026-05-19T20:02Z",
+    "generated_at": "2026-05-20T06:40Z",
     "ecosystem_root": "/Users/julian/Documents/coding-projects",
     "dirty_count": 2,
     "dirty_repos": [
@@ -3468,13 +3575,9 @@
         "repo": "li-cursor-agents",
         "org": "li-langverse",
         "branch": "feat/agent-heap-control-plane",
-        "changed_files": 7,
+        "changed_files": 3,
         "safe_files": [
-          "data/lanes/state.json",
-          "ux-harness/adapters/__pycache__/__init__.cpython-313.pyc",
-          "ux-harness/adapters/__pycache__/base.cpython-313.pyc",
-          "ux-harness/adapters/__pycache__/mock_data.cpython-313.pyc",
-          "ux-harness/sota/__pycache__/rubric.cpython-313.pyc",
+          "dashboard-ui/next-env.d.ts",
           "data/research-sessions/goal_researcher.json",
           "data/research-sessions/stdlib_researcher.json"
         ],
@@ -3485,7 +3588,7 @@
     ]
   },
   "ui_audit": {
-    "generated_at": "2026-05-19T20:02:44.043571+00:00",
+    "generated_at": "2026-05-20T06:40:52.396820+00:00",
     "platform": "Darwin",
     "summary": {
       "total": 6,
@@ -3617,7 +3720,7 @@
     ]
   },
   "ux_audit": {
-    "generated_at": "2026-05-19T20:02:44.044623+00:00",
+    "generated_at": "2026-05-20T06:40:52.397476+00:00",
     "platform": "Darwin",
     "summary": {
       "total": 6,
@@ -4213,7 +4316,7 @@
   "agent_incomplete_runs": [],
   "agent_pr_deliverable_failures": [],
   "org_roadmap": {
-    "loaded_at": "2026-05-19T20:02Z",
+    "loaded_at": "2026-05-20T06:40Z",
     "vision_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/vision-and-roadmap.md",
     "engineering_standards_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/engineering-standards.md",
     "master_plan_url": "https://github.com/li-langverse/lic/blob/main/docs/superpowers/plans/2026-05-14-li-master-plan.md",
@@ -4557,6 +4660,6 @@
     "missing_north_star_fit": [],
     "invalid_north_star_fit": []
   },
-  "swarm_enriched_at": "2026-05-19T21:38:22.053Z",
-  "swarm_recommendations_merged_at": "2026-05-19T21:38:22.054Z"
+  "swarm_enriched_at": "2026-05-20T06:40:52.803Z",
+  "swarm_recommendations_merged_at": "2026-05-20T06:40:52.804Z"
 }
