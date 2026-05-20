@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Live li-demo smoke** — `npm run smoke:li-demo:live` runs `docs_maintainer` on real `gh repo clone` of `li-langverse/li-demo` with Cursor SDK and post-hook push (`scripts/live-li-demo-smoke.mjs`).
 - **Long-run swarm monitor** — `npm run agents:monitor` runs `scripts/monitor-swarm-long.sh` (default 3h, 5m interval): clones `li-local-ci` when missing, checks Docker/Supabase containers (project-scoped names), `GET /api/runtime`, optional `LI_MONITOR_SDK_SMOKE` / `LI_MONITOR_SUPABASE_ENSURE` / `LI_MONITOR_MIGRATION_DRY_RUN`.
 - **`scripts/ensure-li-local-ci.sh`** — clones `https://github.com/li-langverse/li-local-ci` when `LI_USE_LOCAL_CI≠0`, `LI_AUTO_CLONE_LOCAL_CI≠0`, and `bin/li-local-ci` is missing.
 - **`agents:keep` + local CI** — `scripts/keep-agents-running.sh` invokes `ensure-li-local-ci.sh` after Supabase setup (warns on failure, does not block dashboard).
@@ -20,6 +21,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **Cursor Auto model everywhere by default** — `CURSOR_MODEL` defaults to `default` (Auto) in `env.defaults.sh`, `keep-agents-running.sh`, and `.env.example`; `auto`/`default` aliases normalized in `resolveCursorModelId()`; `/api/status` and `/api/runtime` expose `cursor_model_id`.
 - **SDK / Cursor error visibility** — `errorDetailFromUnknown` and `formatErrorMarkdown` capture `code`, HTTP `status`, `requestId`, `operation`, `endpoint`, `isRetryable`, and one-hop `causeLine`; generic message `"Error"` is expanded when `code` is set (`src/agent-output-format.ts`, `src/backends/cursor-sdk-backend.ts`).
 - **Dashboard API e2e** — `POST /api/supervisor/start` accepts `already_running` when auto-start beat the test (`src/e2e/dashboard-api.e2e.ts`).
+
+### Fixed
+
+- **Repo-workflow push after `gh clone`** — reset `origin` to `https://github.com/{org}/{repo}.git` so post-hook push uses `GH_TOKEN` instead of `cursor[bot]` token embedded at clone time (`src/repo-workflow/workspace.ts`).
 
 ### Fixed
 

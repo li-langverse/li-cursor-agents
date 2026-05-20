@@ -62,6 +62,13 @@ export function prepareIsolatedClone(
         error: clone.stderr || clone.stdout || "gh repo clone failed",
       };
     }
+    // gh embeds the clone-time token in origin URL (e.g. cursor[bot]); use GH_TOKEN on push.
+    runCmd(
+      "git",
+      ["remote", "set-url", "origin", `https://github.com/${org}/${repo}.git`],
+      cloneDir,
+      false,
+    );
   } else {
     runCmd("git", ["fetch", "origin"], cloneDir, false);
     runCmd("git", ["checkout", baseBranch], cloneDir, false);
