@@ -11,3 +11,4 @@ data/capture/
 *.log
 logs/
 .DS_Store
+supabase/.temp/
