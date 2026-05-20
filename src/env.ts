@@ -24,7 +24,14 @@ function applyEnvFile(path: string): void {
       val = val.slice(1, -1);
     }
     if (DOTENV_OVERRIDE_KEYS.has(key)) {
-      if (val) process.env[key] = val;
+      if (!val) continue;
+      if (isCursorCredentialEnvName(key) && !isPlausibleCursorApiKey(val)) {
+        // Do not let a dashboard/docs URL in .env override a real key from the shell.
+        const existing = process.env[key]?.trim();
+        if (existing && isPlausibleCursorApiKey(existing)) continue;
+        continue;
+      }
+      process.env[key] = val;
       continue;
     }
     if (!(key in process.env) || process.env[key] === "") {
@@ -124,19 +131,67 @@ export function loadRuntimeEnv(): void {
   }
 }
 
+/** Env vars checked for Cursor Cloud / SDK API keys (priority order). */
+export const CURSOR_API_KEY_ENV_NAMES = [
+  "CURSOR_API_KEY",
+  "CURSOR_SDK_KEY",
+  "CURSOR_SDK",
+  "CURSOR_API_TOKEN",
+] as const;
+
+function isCursorCredentialEnvName(name: string): boolean {
+  return (
+    name === "CURSOR_API_KEY" ||
+    name === "CURSOR_SDK_KEY" ||
+    name === "CURSOR_SDK" ||
+    name === "CURSOR_API_TOKEN"
+  );
+}
+
+/**
+ * Reject common misconfigurations (dashboard URL pasted as "key", empty, too short).
+ * Real user API keys from cursor.com/dashboard/integrations are never http(s) URLs.
+ */
+export function isPlausibleCursorApiKey(value: string | undefined): boolean {
+  const v = value?.trim();
+  if (!v || v.length < 16) return false;
+  if (/^https?:\/\//i.test(v)) return false;
+  if (/cursor\.com\/dashboard/i.test(v)) return false;
+  if (/\s/.test(v)) return false;
+  return true;
+}
+
+/** All set Cursor credential env vars that look like API keys (for diagnostics). */
+export function listPlausibleCursorApiKeys(): Array<{ name: string; length: number }> {
+  loadRuntimeEnv();
+  const out: Array<{ name: string; length: number }> = [];
+  for (const name of CURSOR_API_KEY_ENV_NAMES) {
+    const v = process.env[name]?.trim();
+    if (v && isPlausibleCursorApiKey(v)) out.push({ name, length: v.length });
+  }
+  return out;
+}
+
 export function resolveCursorApiKey(): string | undefined {
   loadRuntimeEnv();
-  const candidates = [
-    "CURSOR_API_KEY",
-    "CURSOR_SDK_KEY",
-    "CURSOR_SDK",
-    "CURSOR_API_TOKEN",
-  ];
-  for (const name of candidates) {
+  for (const name of CURSOR_API_KEY_ENV_NAMES) {
     const v = process.env[name]?.trim();
-    if (v) return v;
+    if (v && isPlausibleCursorApiKey(v)) return v;
   }
   return undefined;
+}
+
+/** Probe Cursor API; returns HTTP status or 0 on network failure. */
+export async function probeCursorApiKey(key: string): Promise<{ status: number; ok: boolean }> {
+  const auth = Buffer.from(`${key.trim()}:`).toString("base64");
+  try {
+    const res = await fetch("https://api.cursor.com/v1/me", {
+      headers: { Authorization: `Basic ${auth}`, Accept: "application/json" },
+    });
+    return { status: res.status, ok: res.status === 200 };
+  } catch {
+    return { status: 0, ok: false };
+  }
 }
 
 /**

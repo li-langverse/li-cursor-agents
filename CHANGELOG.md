@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- **Cursor API key resolution** — skip `http(s)://` dashboard URLs in `CURSOR_API_KEY` / `CURSOR_SDK`; pick first plausible key across all credential env vars; `.env` no longer overrides a good shell key with a URL; `check-sdk-key.sh` probes `GET /v1/me` per candidate (`src/env.ts`).
 - **Cursor Auto model everywhere by default** — `CURSOR_MODEL` defaults to `default` (Auto) in `env.defaults.sh`, `keep-agents-running.sh`, and `.env.example`; `auto`/`default` aliases normalized in `resolveCursorModelId()`; `/api/status` and `/api/runtime` expose `cursor_model_id`.
 - **SDK / Cursor error visibility** — `errorDetailFromUnknown` and `formatErrorMarkdown` capture `code`, HTTP `status`, `requestId`, `operation`, `endpoint`, `isRetryable`, and one-hop `causeLine`; generic message `"Error"` is expanded when `code` is set (`src/agent-output-format.ts`, `src/backends/cursor-sdk-backend.ts`).
 - **Dashboard API e2e** — `POST /api/supervisor/start` accepts `already_running` when auto-start beat the test (`src/e2e/dashboard-api.e2e.ts`).
