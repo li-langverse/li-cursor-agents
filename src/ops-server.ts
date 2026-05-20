@@ -41,6 +41,15 @@ import { resolveBenchmarksRoot } from "./preflight.js";
 import type { AgentId } from "./types.js";
 import type { SwarmStatistics } from "./control-plane/swarm-statistics.js";
 
+function installProcessGuards(): void {
+  const logFatal = (label: string, err: unknown) => {
+    const msg = err instanceof Error ? err.stack ?? err.message : String(err);
+    agentLog("dashboard", "ERROR", `${label}: ${msg}`);
+  };
+  process.on("uncaughtException", (err) => logFatal("uncaughtException", err));
+  process.on("unhandledRejection", (reason) => logFatal("unhandledRejection", reason));
+}
+
 const MIME: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -73,6 +82,7 @@ async function getSwarmStatisticsForApi(
 }
 
 export function startOpsServer(port: number): ReturnType<typeof createServer> {
+  installProcessGuards();
   assertStoreReady();
   const packageRoot = agentsPackageRoot();
   const webRoot = join(packageRoot, "web");

@@ -312,7 +312,27 @@ export async function runSupervisorLoop(
     if (signal?.aborted) break;
     const tickOptions =
       tickIndex === 0 && forceFirst ? { ...options, force: true } : options;
-    const tick = await supervisorTick(tickOptions);
+    let tick: TickResult;
+    try {
+      tick = await supervisorTick(tickOptions);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      pushSupervisorActivity("error", `tick failed (continuing loop): ${msg}`);
+      const state = loadState();
+      state.last_error = msg;
+      state.supervisor_status = "idle";
+      state.current_supervisor_agent = undefined;
+      saveState(state);
+      tickIndex += 1;
+      if (options.once) break;
+      if (signal?.aborted) break;
+      try {
+        await sleepMs(options.intervalMs, signal);
+      } catch {
+        break;
+      }
+      continue;
+    }
     tickIndex += 1;
     const msg = [
       `tick briefing=${tick.briefingHash}`,

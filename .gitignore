@@ -8,4 +8,6 @@ data/control-plane/
 .env
 .env.supabase
 *.log
+logs/
 .DS_Store
+logs/

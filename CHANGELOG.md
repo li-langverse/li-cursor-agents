@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **Swarm watchdog** — `npm run agents:watch` / `scripts/watch-control-plane.sh` restarts dashboard + supervisor when `/api/status` fails; re-POSTs `/api/supervisor/start` if loop stops.
+- **`LI_SWARM_MAX_PARALLEL`** — optional cap for run-all parallel spawns (`0` = all leaf agents at once).
+
+### Fixed
+
+- Supervisor loop survives tick-level throws (logs error, continues interval).
+- Ops server logs `uncaughtException` / `unhandledRejection` without exiting.
+- `package.json` declares `pg` and `@modelcontextprotocol/sdk` (fixes fresh `npm ci` build).
+
 ### Fixed
 
 - Operational logs (`keep-agents.log`, supervisor subprocess) prefix ISO-8601 timestamps; `src/agent-log.ts`, `scripts/test-log-timestamps.mjs` regression.
