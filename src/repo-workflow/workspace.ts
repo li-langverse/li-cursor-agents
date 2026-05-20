@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
-import { defaultBranch, runCmd } from "./git.js";
+import { defaultBranch, runCmd, scrubCloneGitInsteadof } from "./git.js";
 import type { PrepareWorkspaceResult, RepoWorkflowOptions } from "./types.js";
 
 const GOVERNANCE_REPOS = new Set(["roadmap"]);
@@ -62,7 +62,7 @@ export function prepareIsolatedClone(
         error: clone.stderr || clone.stdout || "gh repo clone failed",
       };
     }
-    // gh embeds the clone-time token in origin URL (e.g. cursor[bot]); use GH_TOKEN on push.
+    scrubCloneGitInsteadof(cloneDir);
     runCmd(
       "git",
       ["remote", "set-url", "origin", `https://github.com/${org}/${repo}.git`],

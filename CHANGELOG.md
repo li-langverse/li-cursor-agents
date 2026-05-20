@@ -24,7 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- **Repo-workflow push after `gh clone`** — reset `origin` to `https://github.com/{org}/{repo}.git` so post-hook push uses `GH_TOKEN` instead of `cursor[bot]` token embedded at clone time (`src/repo-workflow/workspace.ts`).
+- **Repo-workflow push after `gh clone`** — `gitPushBranch()` uses explicit `GH_TOKEN` push URL; scrub clone `url.insteadof`; bypasses global gh config that forced `cursor[bot]` 403 (`src/repo-workflow/git.ts`, `pr.ts`, `workspace.ts`).
 
 ### Fixed
 

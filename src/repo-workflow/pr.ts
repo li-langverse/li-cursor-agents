@@ -1,4 +1,4 @@
-import { hasGitToken, gitStatusPorcelain, runCmd } from "./git.js";
+import { gitPushBranch, hasGitToken, gitStatusPorcelain, runCmd } from "./git.js";
 import type { CommitPushPrResult, RepoWorkflowOptions } from "./types.js";
 
 export function commitPushOpenPr(
@@ -79,7 +79,7 @@ export function commitPushOpenPr(
     };
   }
 
-  const push = runCmd("git", ["push", "-u", "origin", branch], cloneDir, dryRun);
+  const push = gitPushBranch(cloneDir, branch, options.org, options.repo, dryRun);
   if (!push.ok) {
     return {
       ok: false,

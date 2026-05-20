@@ -9,7 +9,7 @@
 1. **Read** `scripts/live-li-demo-smoke.mjs`, `src/repo-workflow/workspace.ts` (remote reset), `logs/live-li-demo-smoke.log`.
 2. **Run** `cd li-cursor-agents && npm run smoke:li-demo:live` (requires `CURSOR_API_KEY`, `gh` auth with push to `li-demo`).
 3. **Then** merge or close [li-demo#7](https://github.com/li-langverse/li-demo/pull/7) after human review; re-run post-hook push test without manual `git push`.
-4. **Blocked on** Cloud `gh` default account `cursor[bot]` for clone unless `GH_TOKEN` maps to a user with `li-demo` write — post-hook now resets `origin` URL; verify in next live smoke.
+4. **Blocked on** N/A for push after `gitPushBranch()` — uses `GH_TOKEN` URL directly (global `url.insteadof` → `cursor[bot]` bypassed). Re-run: `npm run smoke:li-demo:live` → expect `post_hook_pushed` and a new li-demo PR.
 
 ## Changed
 
