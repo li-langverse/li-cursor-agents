@@ -5,9 +5,9 @@ data/workspaces/
 # e2e temp runs use LI_RUNS_DIR outside repo
 data/supervisor/
 data/control-plane/
+data/capture/
 .env
 .env.supabase
 *.log
 logs/
 .DS_Store
-logs/
