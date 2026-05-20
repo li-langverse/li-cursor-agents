@@ -104,6 +104,10 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
   }
 
   let extra = options.extraInstruction;
+  const envExtra = process.env.LI_AGENT_EXTRA_INSTRUCTION?.trim();
+  if (envExtra) {
+    extra = extra ? `${extra}\n\n---\n\n${envExtra}` : envExtra;
+  }
 
   if (definition.workspaceSweep) {
     const start = Date.now();
