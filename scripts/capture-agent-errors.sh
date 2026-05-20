@@ -35,7 +35,8 @@ ts() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 for f in "$ROOT/logs/keep-agents.log" "$ROOT/logs/watch-control-plane.log"; do
   if [[ -f "$f" ]]; then
     base=$(basename "$f")
-    grep -iE 'error|warn|fail|exception|429|401|403|denied|nxdomain|crash' "$f" 2>/dev/null | tail -200 >"$OUT/${base}.errors.txt" || true
+    # Avoid matching "fail" inside benign tokens (e.g. fail_threshold); require failed/failure/etc.
+    grep -iE 'error|warn|failed|failing|failure|exception|429|401|403|denied|nxdomain|crash' "$f" 2>/dev/null | tail -200 >"$OUT/${base}.errors.txt" || true
     tail -400 "$f" >"$OUT/${base}.tail.txt" || true
   fi
 done

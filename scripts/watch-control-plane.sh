@@ -37,7 +37,7 @@ restart_stack() {
 }
 
 mkdir -p "$ROOT/logs"
-log "watching :${PORT} every ${INTERVAL}s (fail threshold ${FAIL_THRESHOLD})"
+log "watching :${PORT} every ${INTERVAL}s (unhealthy streak before restart: ${FAIL_THRESHOLD})"
 
 while true; do
   if health_ok; then
