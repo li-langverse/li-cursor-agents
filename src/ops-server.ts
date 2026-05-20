@@ -19,7 +19,7 @@ import {
 } from "./control-plane/runtime.js";
 import { sortedCoordinators } from "./heap/coordinators.js";
 import { agentsPackageRoot, agentBackendLabel } from "./runner.js";
-import { resolveCursorApiKey } from "./env.js";
+import { resolveCursorApiKey, resolveCursorModelId } from "./env.js";
 import { interventionsPath, reportPath, statePath } from "./control-plane/paths.js";
 import { loadLiveInterventionsPayload, loadLiveReportAsync } from "./control-plane/live-report.js";
 import { readJson } from "./control-plane/read-json.js";
@@ -112,7 +112,7 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
     agentLog(
       "dashboard",
       "info",
-      `Agent backend: ${backend}${backend === "cursor-sdk" && !keyOk ? " (missing CURSOR_API_KEY — add to .env)" : ""}`,
+      `Agent backend: ${backend} model=${resolveCursorModelId()}${backend === "cursor-sdk" && !keyOk ? " (missing CURSOR_API_KEY — add to .env)" : ""}`,
     );
     if (dbEnabled()) {
       void hydrateStateFromDb().catch((err) => {
@@ -160,6 +160,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       supervisor_loop_running: isSupervisorLoopRunning(),
       store,
       agent_backend: agentBackendLabel(),
+      cursor_model_id: resolveCursorModelId(),
       sdk_ready: agentBackendLabel() === "cursor-sdk" && Boolean(resolveCursorApiKey()),
     });
     return;
@@ -170,6 +171,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     json(res, 200, {
       ...runtime,
       agent_backend: backend,
+      cursor_model_id: resolveCursorModelId(),
       sdk_ready: backend === "cursor-sdk" && Boolean(resolveCursorApiKey()),
     });
     return;

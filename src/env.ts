@@ -139,9 +139,23 @@ export function resolveCursorApiKey(): string | undefined {
   return undefined;
 }
 
-/** SDK model id; `default` is Cursor "Auto" (`Cursor.models.list` displayName). */
+/**
+ * Cursor SDK model id for Auto routing.
+ * `default` is the API id for Cursor **Auto** (dynamic model pick).
+ */
+export const CURSOR_MODEL_AUTO_ID = "default";
+
+/** Normalize user-facing aliases to the SDK Auto model id. */
+export function normalizeCursorModelId(raw: string | undefined): string {
+  const v = raw?.trim();
+  if (!v) return CURSOR_MODEL_AUTO_ID;
+  const lower = v.toLowerCase();
+  if (lower === "auto" || lower === "default") return CURSOR_MODEL_AUTO_ID;
+  return v;
+}
+
+/** SDK model id; unset/`auto`/`default` → Cursor Auto. */
 export function resolveCursorModelId(): string {
   loadRuntimeEnv();
-  const v = process.env.CURSOR_MODEL?.trim();
-  return v || "default";
+  return normalizeCursorModelId(process.env.CURSOR_MODEL);
 }

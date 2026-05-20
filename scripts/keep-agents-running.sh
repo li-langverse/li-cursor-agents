@@ -97,6 +97,7 @@ nohup env \
   GH_TOKEN="${GH_TOKEN:-}" \
   GITHUB_TOKEN="${GITHUB_TOKEN:-}" \
   CURSOR_API_KEY="${CURSOR_API_KEY:-}" \
+  CURSOR_MODEL="${CURSOR_MODEL:-default}" \
   SUPABASE_URL="${SUPABASE_URL:-}" \
   SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-}" \
   "$NODE_BIN" "$ROOT/dist/cli/serve-dashboard.js" --port "$PORT" \

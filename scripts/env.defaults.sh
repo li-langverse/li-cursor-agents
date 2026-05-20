@@ -70,3 +70,6 @@ export LI_LOCAL_CI_LIC_MODE="${LI_LOCAL_CI_LIC_MODE:-host}"
 export LI_CONTROL_PLANE_STORE="${LI_CONTROL_PLANE_STORE:-supabase}"
 # Legacy alias for disk: LI_STACK_SKIP_SUPABASE=1
 export LI_STACK_SKIP_SUPABASE="${LI_STACK_SKIP_SUPABASE:-0}"
+
+# Cursor SDK: `default` = Auto (dynamic model). Override in .env to pin a model id.
+export CURSOR_MODEL="${CURSOR_MODEL:-default}"
