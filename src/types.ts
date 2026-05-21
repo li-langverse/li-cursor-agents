@@ -12,6 +12,7 @@ export type AgentId =
   | "bug_fixer"
   | "security_auditor"
   | "issue_planner"
+  | "issue_hygiene"
   | "pr_branch_opener"
   | "pr_alignment"
   | "pr_reviewer"

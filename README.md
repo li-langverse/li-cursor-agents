@@ -83,6 +83,7 @@ npm run list
 | `gap_explorer` | Ecosystem + HPC + Reddit/SOTA gaps | **yes** |
 | `implementation_gaps` | Plan vs code drift | yes |
 | `issue_planner` | Issues → implementation plans | no |
+| `issue_hygiene` | Duplicate/stale backlog triage + routing | no |
 | `pr_branch_opener` | Open PRs for branches with no pull request | no |
 | `pr_alignment` | PRs vs vision / roadmap; close superseded PRs | no |
 | `pr_reviewer` | Standards review before merge-approved | no |
@@ -145,7 +146,7 @@ The root **orchestrator** never dispatches more than **10 leaf agents** at once.
 |-------------|-------------|
 | `coord_pull_requests` | pr_branch_opener, pr_alignment, pr_reviewer, pr_merger |
 | `coord_numerics` | numerics_researcher, autoresearch, bench_improver |
-| `coord_governance` | plan_verifier, implementation_gaps, issue_planner |
+| `coord_governance` | plan_verifier, implementation_gaps, issue_planner, issue_hygiene |
 | `coord_ecosystem` | gap_explorer, docs_maintainer |
 | `coord_platform` | ci_maintainer, agent_kit_maintainer |
 
