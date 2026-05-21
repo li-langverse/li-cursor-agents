@@ -83,7 +83,9 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
 
   const packageRoot = agentsPackageRoot();
   const benchmarksRoot = resolveBenchmarksRoot(options.benchmarksRoot);
-  const preflight = runPreflight(benchmarksRoot, true);
+  const skipSlowPreflight =
+    definition.id !== "issue_hygiene" && definition.id !== "issue_planner";
+  const preflight = runPreflight(benchmarksRoot, skipSlowPreflight);
   let systemPrompt = loadPrompt(packageRoot, definition.promptFile);
   if (definition.repoWorkflow) {
     systemPrompt += `\n\n---\n\n${loadPrompt(packageRoot, "repo-workflow-tools.md")}`;
