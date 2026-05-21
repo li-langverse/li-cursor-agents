@@ -21,6 +21,7 @@ COORDINATOR_LEAVES: dict[str, list[str]] = {
         "bug_fixer",
         "security_auditor",
         "issue_planner",
+        "issue_hygiene",
     ],
     "coord_ecosystem": ["gap_explorer", "docs_maintainer"],
     "coord_platform": ["ci_maintainer", "agent_kit_maintainer"],

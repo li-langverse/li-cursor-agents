@@ -210,6 +210,8 @@ export function buildMockDeliverable(
       return buildGapExplorerMockBody(briefing);
     case "issue_planner":
       return buildIssuePlannerMockBody(briefing);
+    case "issue_hygiene":
+      return buildIssueHygieneMockBody(briefing);
     case "numerics_researcher":
     case "autoresearch":
     case "bench_improver":
@@ -490,6 +492,27 @@ function buildIssuePlannerMockBody(briefing: Record<string, unknown> | null): st
     "",
     "## Plans drafted (mock)",
     "1. Issue → plan doc outline with PH- id and acceptance tests",
+  ].join("\n");
+}
+
+function buildIssueHygieneMockBody(briefing: Record<string, unknown> | null): string {
+  const hygiene = briefing?.issue_backlog_hygiene as Record<string, unknown> | undefined;
+  const summary = (hygiene?.summary ?? {}) as Record<string, number>;
+  return [
+    "## Executive summary",
+    "- Scanned org issue backlog for duplicates, stale items, and routing (mock).",
+    hygiene
+      ? `- duplicate_clusters=${summary.duplicate_clusters ?? 0} stale=${summary.stale_candidates ?? 0}`
+      : "- _No issue_backlog_hygiene in briefing._",
+    "",
+    "## Deliverable (mock)",
+    "| Cluster | Action |",
+    "|---------|--------|",
+    "| similar titles | comment + recommend close as duplicate |",
+    "",
+    "## Routing (mock)",
+    "- plan-needed → **issue_planner**",
+    "- plan-approved → **code_implementer**",
   ].join("\n");
 }
 

@@ -101,6 +101,17 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     preflightKeys: ["issue_triage", "briefing"],
   },
   {
+    id: "issue_hygiene",
+    name: "Issue hygiene",
+    description:
+      "Backlog triage: duplicate clusters, stale issues, explorer-finding bursts; routes planner vs implementer.",
+    category: "governance",
+    promptFile: "issue-hygiene-agent.md",
+    skills: ["plan-feature-from-issue", "review-pr-alignment"],
+    needsWeb: false,
+    preflightKeys: ["issue_hygiene", "issue_triage", "briefing"],
+  },
+  {
     id: "pr_branch_opener",
     name: "PR branch opener",
     description: "Opens PRs for pushed branches that have no open pull request yet.",

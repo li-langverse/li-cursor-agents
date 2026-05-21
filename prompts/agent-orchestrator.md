@@ -33,6 +33,7 @@ Read `recommended_agents` and each artifact in `data/latest/*.json`.
 | Red benches (shared kernel) | **numerics_researcher** + **bench_improver** |
 | Red `*_pure_li` / novel issues | **autoresearch** (+ numerics_researcher if needed) |
 | `needs_plan` issues | **issue_planner** |
+| Duplicate/stale issues, explorer bursts | **issue_hygiene** |
 | Missing org CI | **ci_maintainer** |
 | Agent-kit drift / missing `.cursor` policy | **agent_kit_maintainer** |
 | Missing live docs | **docs_maintainer** |

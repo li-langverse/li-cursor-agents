@@ -49,6 +49,7 @@ export const COORDINATOR_REGISTRY: CoordinatorDefinition[] = [
       "bug_fixer",
       "security_auditor",
       "issue_planner",
+      "issue_hygiene",
     ],
     priority: 30,
     promptFile: "coord-governance.md",
