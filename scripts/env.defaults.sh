@@ -21,6 +21,14 @@ _abs_file() {
 }
 
 export LI_CURSOR_AGENTS_ROOT="$ROOT"
+export LI_LANGVERSE_ROOT="${LI_LANGVERSE_ROOT:-$(_abs_dir "$ROOT/..")}"
+
+# Ecosystem pull + skill sync (see scripts/sync-ecosystem.sh)
+export LI_ECOSYSTEM_AUTO_SYNC="${LI_ECOSYSTEM_AUTO_SYNC:-1}"
+export LI_ECOSYSTEM_SYNC_INTERVAL_SEC="${LI_ECOSYSTEM_SYNC_INTERVAL_SEC:-3600}"
+export LI_ECOSYSTEM_SYNC_ON_START="${LI_ECOSYSTEM_SYNC_ON_START:-1}"
+export LI_ECOSYSTEM_REF="${LI_ECOSYSTEM_REF:-main}"
+export LI_ECOSYSTEM_CLONE_MISSING="${LI_ECOSYSTEM_CLONE_MISSING:-1}"
 
 # After sourcing .env, call this so relative sibling paths still resolve correctly.
 li_resolve_env_paths() {

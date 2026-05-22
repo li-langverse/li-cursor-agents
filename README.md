@@ -197,10 +197,24 @@ Env: `LI_SUPERVISOR_INTERVAL_MS`, `LI_SUPERVISOR_COOLDOWN_MS`, `LI_AGENT_DASHBOA
 
 All registry `skills[]` resolve to **`li-cursor-agents/.cursor/skills/<id>/SKILL.md`**. The runner injects full skill bodies into the system prompt and records `skill_paths` on each run.
 
+Skills are **refreshed automatically**:
+
+| Mechanism | When |
+|-----------|------|
+| `npm install` | `postinstall` → `sync-agent-skills.sh` |
+| `npm run setup` | full `sync-ecosystem.sh` (pull + skills) |
+| `npm run agents:keep` | background `ecosystem-sync-loop.sh` (default every 1h) |
+| Supervisor tick | `maybe-sync-ecosystem.sh` if interval elapsed |
+
 ```bash
-npm run sync-skills   # copy from ../benchmarks + ../lic
+npm run install-gh          # GitHub CLI (~/.local/bin or apt)
+gh auth login               # or GH_TOKEN in ../.env.github
+npm run sync-ecosystem      # git pull all org repos + sync skills + prompts
+npm run sync-ecosystem:quick # skills/prompts only (no pull)
 npm run build && npm test   # includes skills-registry.test.ts
 ```
+
+Env: `LI_ECOSYSTEM_SYNC_INTERVAL_SEC` (default 3600), `LI_ECOSYSTEM_AUTO_SYNC=0` to disable, `LI_LANGVERSE_ROOT` for sibling checkout root.
 
 ## Link from benchmarks
 

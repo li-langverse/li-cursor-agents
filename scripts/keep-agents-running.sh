@@ -65,6 +65,18 @@ fi
 "$ROOT/scripts/ensure-native-modules.sh"
 npm run build >/dev/null 2>&1
 
+if [[ "${LI_ECOSYSTEM_SYNC_LOOP:-1}" != "0" ]]; then
+  if ! pgrep -f "ecosystem-sync-loop.sh" >/dev/null 2>&1; then
+    echo "==> ecosystem sync loop (interval ${LI_ECOSYSTEM_SYNC_INTERVAL_SEC:-3600}s)"
+    nohup bash "$ROOT/scripts/ecosystem-sync-loop.sh" >>"$ROOT/logs/ecosystem-sync.log" 2>&1 &
+    echo $! >"$ROOT/logs/ecosystem-sync.pid"
+  fi
+fi
+
+if [[ "${LI_ECOSYSTEM_SYNC_ON_START:-1}" != "0" ]]; then
+  bash "$ROOT/scripts/maybe-sync-ecosystem.sh" --quick 2>/dev/null || true
+fi
+
 PORT="$LI_AGENT_DASHBOARD_PORT"
 if curl -sf "http://127.0.0.1:${PORT}/api/status" >/dev/null 2>&1; then
   RT=$(curl -sf "http://127.0.0.1:${PORT}/api/runtime" || echo "{}")
