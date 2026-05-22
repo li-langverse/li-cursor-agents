@@ -30,7 +30,7 @@ From a **lic** checkout:
 ./scripts/agent-push-github.sh "feat(scope): short description"
 ```
 
-Requires `../.env.github` with `GH_TOKEN` (never commit or paste tokens).
+Requires `GH_TOKEN` in Cursor workspace `../../.env` (never commit or paste tokens).
 
 ## Do not
 

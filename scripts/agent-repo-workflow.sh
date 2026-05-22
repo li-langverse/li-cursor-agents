@@ -5,5 +5,6 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 export LI_CURSOR_AGENTS_ROOT="$ROOT"
 # shellcheck source=/dev/null
-[[ -f "$ROOT/../.env.github" ]] && set -a && source "$ROOT/../.env.github" && set +a
+# shellcheck source=env.defaults.sh
+source "$ROOT/scripts/env.defaults.sh"
 exec node dist/cli/repo-workflow.js "$@"

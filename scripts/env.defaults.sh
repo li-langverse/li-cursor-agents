@@ -49,7 +49,21 @@ li_resolve_env_paths() {
 }
 
 li_resolve_env_paths "$ROOT"
-export LI_GITHUB_ENV="${LI_GITHUB_ENV:-$(_abs_file "$ROOT/../.env.github")}"
+
+# Shared secrets: Documents/Cursor/.env (workspace parent of li-langverse/)
+if [[ -z "${LI_SHARED_ENV:-}" ]]; then
+  if [[ -f "$ROOT/../../.env" ]]; then
+    export LI_SHARED_ENV="$(_abs_file "$ROOT/../../.env")"
+  elif [[ -f "$ROOT/../.env.github" ]]; then
+    export LI_SHARED_ENV="$(_abs_file "$ROOT/../.env.github")"
+  elif [[ -f "$ROOT/.env" ]]; then
+    export LI_SHARED_ENV="$(_abs_file "$ROOT/.env")"
+  fi
+fi
+export LI_GITHUB_ENV="${LI_GITHUB_ENV:-${LI_SHARED_ENV:-$(_abs_file "$ROOT/../.env.github")}}"
+
+# shellcheck source=source-shared-env.sh
+[[ -f "$ROOT/scripts/source-shared-env.sh" ]] && source "$ROOT/scripts/source-shared-env.sh" || true
 
 # Local CI instead of GitHub Actions (merge queue / pr_merger)
 export LI_USE_LOCAL_CI="${LI_USE_LOCAL_CI:-1}"
