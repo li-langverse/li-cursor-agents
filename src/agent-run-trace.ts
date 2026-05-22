@@ -19,6 +19,7 @@ export interface AgentRunInputRecord {
   system_prompt: string;
   user_message: string;
   extra_instruction?: string;
+  skill_paths?: string[];
 }
 
 export interface AgentRunTraceFileEdit {
@@ -59,6 +60,7 @@ export function buildRunInput(params: {
   preflightGeneratedAt?: string;
   modelId?: string;
   extraInstruction?: string;
+  skillPaths?: string[];
   dryRun: boolean;
   mock: boolean;
 }): AgentRunInputRecord {
@@ -77,6 +79,7 @@ export function buildRunInput(params: {
     system_prompt: params.systemPrompt,
     user_message: params.userMessage,
     extra_instruction: params.extraInstruction,
+    skill_paths: params.skillPaths,
   };
 }
 

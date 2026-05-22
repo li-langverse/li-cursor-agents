@@ -193,6 +193,15 @@ npm run agents:keep   # dashboard + supervisor (cursor-sdk if .env has key)
 
 Env: `LI_SUPERVISOR_INTERVAL_MS`, `LI_SUPERVISOR_COOLDOWN_MS`, `LI_AGENT_DASHBOARD_PORT` (9477).
 
+## Agent skills (canonical)
+
+All registry `skills[]` resolve to **`li-cursor-agents/.cursor/skills/<id>/SKILL.md`**. The runner injects full skill bodies into the system prompt and records `skill_paths` on each run.
+
+```bash
+npm run sync-skills   # copy from ../benchmarks + ../lic
+npm run build && npm test   # includes skills-registry.test.ts
+```
+
 ## Link from benchmarks
 
 ```bash

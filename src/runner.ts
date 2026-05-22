@@ -1,8 +1,7 @@
-import { writeFileSync } from "node:fs";
-import { readFileSync, existsSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { writeFileSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { getAgent } from "./agents/registry.js";
+import { appendSkillsToSystemPrompt, resolveAgentSkillPaths } from "./agents/skills.js";
 import { MockBackend } from "./backends/mock-backend.js";
 import { buildMockTrace, buildRunInput } from "./agent-run-trace.js";
 import { resolveCursorApiKey } from "./env.js";
@@ -35,16 +34,9 @@ import {
 } from "./repo-workflow/workspace-session.js";
 import type { AgentRunOptions, AgentRunResult } from "./types.js";
 import type { RepoWorkflowSession } from "./repo-workflow/workspace-session.js";
+import { agentsPackageRoot } from "./package-root.js";
 
-/** li-cursor-agents package root (where prompts/ lives). */
-export function agentsPackageRoot(): string {
-  const env = process.env.LI_CURSOR_AGENTS_ROOT;
-  if (env && existsSync(join(env, "package.json"))) return env;
-  const here = dirname(fileURLToPath(import.meta.url));
-  const root = join(here, "..");
-  if (existsSync(join(root, "prompts"))) return root;
-  return process.cwd();
-}
+export { agentsPackageRoot } from "./package-root.js";
 
 export function loadPrompt(repoRoot: string, promptFile: string): string {
   const p = join(repoRoot, "prompts", promptFile);
@@ -87,6 +79,9 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
   let systemPrompt = loadPrompt(packageRoot, definition.promptFile);
   if (definition.repoWorkflow) {
     systemPrompt += `\n\n---\n\n${loadPrompt(packageRoot, "repo-workflow-tools.md")}`;
+  }
+  if (definition.skills.length) {
+    systemPrompt = appendSkillsToSystemPrompt(systemPrompt, definition.skills, packageRoot);
   }
   let workCwd = options.cwd || packageRoot;
   const mock = shouldUseMock(options.mock);
@@ -249,6 +244,7 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
     preflightGeneratedAt: preflight.generated_at,
     modelId: options.modelId,
     extraInstruction: extra,
+    skillPaths: resolveAgentSkillPaths(definition.skills, packageRoot),
     dryRun: options.dryRun,
     mock,
   });

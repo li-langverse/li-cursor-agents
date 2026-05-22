@@ -1,4 +1,15 @@
 import type { AgentDefinition, AgentId, LegacyAgentId } from "../types.js";
+import {
+  AGENT_SKILLS_DIR,
+  assertRegistrySkillsOnDisk,
+  resolveAgentSkillPaths,
+} from "./skills.js";
+
+/**
+ * Registry `skills[]` ids resolve to `li-cursor-agents/${AGENT_SKILLS_DIR}/<id>/SKILL.md`.
+ * Sync sources: `./scripts/sync-agent-skills.sh` (benchmarks + lic + agent-kit).
+ */
+export { AGENT_SKILLS_DIR };
 
 /** Legacy briefing / fixture ids → canonical registry ids. */
 export const AGENT_ALIASES: Record<LegacyAgentId, AgentId> = {
@@ -60,7 +71,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     description: "Implements gaps, bugs, and queue items; opens PRs via post-hook.",
     category: "governance",
     promptFile: "code-implementer.md",
-    skills: ["explore-li-ecosystem", "audit-plan-completion"],
+    skills: ["explore-li-ecosystem", "audit-plan-completion", "push-li-github"],
     needsWeb: false,
     preflightKeys: ["plan_audit", "explorer", "ci_bug_triage", "briefing"],
     repoWorkflow: true,
@@ -72,7 +83,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     description: "Fixes CI failures (local-ci + GHA) and bug-labeled GitHub issues.",
     category: "governance",
     promptFile: "bug-fixer.md",
-    skills: ["explore-li-ecosystem"],
+    skills: ["explore-li-ecosystem", "agent-diagnose-fix-li", "push-li-github"],
     needsWeb: false,
     preflightKeys: ["ci_bug_triage", "pr_program", "briefing"],
     repoWorkflow: true,
@@ -256,6 +267,7 @@ export function listAgentsPublic(): Array<{
   category: string;
   needsWeb: boolean;
   skills: string[];
+  skill_paths: string[];
 }> {
   return AGENT_REGISTRY.map(({ id, name, description, category, needsWeb, skills }) => ({
     id,
@@ -264,5 +276,15 @@ export function listAgentsPublic(): Array<{
     category,
     needsWeb,
     skills,
+    skill_paths: resolveAgentSkillPaths(skills),
   }));
+}
+
+/** Validate every registry skill exists under `.cursor/skills/` (call from tests / CI). */
+export function validateRegistrySkills(): { ok: true } | { ok: false; missing: string[] } {
+  const ids = new Set<string>();
+  for (const a of AGENT_REGISTRY) {
+    for (const s of a.skills) ids.add(s);
+  }
+  return assertRegistrySkillsOnDisk(ids);
 }
