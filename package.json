@@ -77,12 +77,14 @@
     "ci:local:quick": "bash ../li-local-ci/bin/li-local-ci run li-cursor-agents-quick --repo ."
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "dependencies": {
     "@cursor/sdk": "^1.0.13",
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "@supabase/supabase-js": "^2.49.0"
+    "@supabase/supabase-js": "^2.49.0",
+    "@types/pg": "^8.20.0",
+    "pg": "^8.21.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
