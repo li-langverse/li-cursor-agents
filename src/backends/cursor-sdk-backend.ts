@@ -11,6 +11,11 @@ import {
 } from "../env.js";
 import { buildControlPlaneDbMcpServers } from "../mcp/mcp-config.js";
 import type { AgentBackend, AgentDefinition, AgentRunOptions, AgentRunResult } from "../types.js";
+import {
+  printSdkDeltaToTerminal,
+  printSdkRunBanner,
+  printSdkStepToTerminal,
+} from "../sdk/terminal-stream.js";
 import { sdkSessionGapMs, withGlobalSdkSessionLock } from "./sdk-session-lock.js";
 
 export interface SdkAttemptMeta {
@@ -134,13 +139,20 @@ export class CursorSdkBackend implements AgentBackend {
           });
 
           const chunks: string[] = [];
+          if (attempt === 1) {
+            printSdkRunBanner(definition.id, options.cwd);
+          }
           const collector = options.runId
             ? createLiveTraceCollector(options.runId, outputPath)
             : createTraceCollector();
           const run = await agent.send(fullPrompt, {
             local: force ? { force: true } : undefined,
-            onStep: async ({ step }) => collector.onStep({ step }),
+            onStep: async ({ step }) => {
+              printSdkStepToTerminal(step);
+              collector.onStep({ step });
+            },
             onDelta: async ({ update }) => {
+              printSdkDeltaToTerminal(update);
               collector.onDelta({ update });
               if (update.type === "text-delta") chunks.push(update.text);
             },

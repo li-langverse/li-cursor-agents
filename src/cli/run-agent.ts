@@ -100,6 +100,14 @@ async function main() {
   }
 
   console.error(`backend: ${agentBackendLabel(args.mock)} agent: ${args.agent}`);
+  if (!args.mock && !args.dryRun) {
+    const { terminalStreamEnabled } = await import("../sdk/terminal-stream.js");
+    if (terminalStreamEnabled()) {
+      console.error(
+        "SDK activity streams to stderr ([sdk] tool/thinking lines). Set LI_SDK_TERMINAL_STREAM=0 to disable.",
+      );
+    }
+  }
 
   const result = await runAgent({
     agentId: args.agent,
