@@ -35,6 +35,26 @@ Dashboard footer toggles **Research lane** / **Implement lane**; **Run all (hand
 
 Env: `LI_SWARM_HANDOFF_PHASES=0` restores legacy parallel spawn for run-all.
 
+### Goal-directed SDK loop (reusable)
+
+Any plan or human-written goal — no per-project agent id:
+
+```bash
+export CURSOR_API_KEY=crsr_...
+./scripts/goal-directed-loop.sh \
+  --agent code_implementer \
+  --workflow-repo lic \
+  --cwd ../lic \
+  --goal-file ./my-goal.md \
+  --max 10
+```
+
+Single shot: `npm run build && node dist/cli/run-agent.js --agent code_implementer --workflow-repo lic --cwd ../lic --goal-file goal.md`
+
+Env fallbacks: `LI_AGENT_GOAL`, `LI_AGENT_EXTRA_INSTRUCTION`, `LI_GOAL_AGENT`, `LI_REPO_WORKFLOW_REPO`.
+
+**lic httpd plan:** `../lic/scripts/httpd-plan-loop.py` writes each YAML todo as a goal file and invokes `code_implementer` (override with `LI_HTTPD_PLAN_AGENT`).
+
 ### Goal implementation → `lic`
 
 | Env | Effect |

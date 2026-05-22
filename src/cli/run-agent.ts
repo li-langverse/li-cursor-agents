@@ -1,9 +1,24 @@
 #!/usr/bin/env node
+import { readFileSync } from "node:fs";
 import { loadRuntimeEnv, resolveCursorApiKey } from "../env.js";
 loadRuntimeEnv();
 import { AGENT_REGISTRY } from "../agents/registry.js";
 import { agentBackendLabel, runAgent, shouldUseMock } from "../runner.js";
 import type { AgentId } from "../types.js";
+
+function resolveGoalInstruction(
+  inline?: string,
+  goalFile?: string,
+): string | undefined {
+  if (goalFile) {
+    return readFileSync(goalFile, "utf8").trim();
+  }
+  if (inline?.trim()) return inline.trim();
+  const env =
+    process.env.LI_AGENT_GOAL?.trim() ||
+    process.env.LI_AGENT_EXTRA_INSTRUCTION?.trim();
+  return env || undefined;
+}
 
 function parseArgs(argv: string[]) {
   let agent: AgentId | undefined;
@@ -13,6 +28,8 @@ function parseArgs(argv: string[]) {
   let cwd = process.cwd(); // SDK working tree (often benchmarks); prompts use package root
   let benchmarksRoot: string | undefined;
   let workflowRepo: string | undefined;
+  let instruction: string | undefined;
+  let goalFile: string | undefined;
 
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -23,12 +40,24 @@ function parseArgs(argv: string[]) {
     else if (a === "--cwd") cwd = argv[++i];
     else if (a === "--benchmarks") benchmarksRoot = argv[++i];
     else if (a === "--workflow-repo") workflowRepo = argv[++i];
+    else if (a === "--instruction" || a === "--goal") instruction = argv[++i];
+    else if (a === "--goal-file") goalFile = argv[++i];
     else if (a === "--help" || a === "-h") {
       printHelp();
       process.exit(0);
     }
   }
-  return { agent, mock, dryRun, list, cwd, benchmarksRoot, workflowRepo };
+  const extraInstruction = resolveGoalInstruction(instruction, goalFile);
+  return {
+    agent,
+    mock,
+    dryRun,
+    list,
+    cwd,
+    benchmarksRoot,
+    workflowRepo,
+    extraInstruction,
+  };
 }
 
 function printHelp() {
@@ -38,12 +67,19 @@ Usage:
   li-agent --list
   li-agent --agent <id> [--dry-run]
   li-agent --agent orchestrator --benchmarks ../benchmarks
+  li-agent --agent code_implementer --workflow-repo lic --goal-file ./goal.md
 
 Agents: ${AGENT_REGISTRY.map((a) => a.id).join(", ")}
+
+Goal-directed (reusable — no per-plan agent id):
+  --goal / --instruction <text>   Injected as "## Additional instruction"
+  --goal-file <path>              Same, from file
+  LI_AGENT_GOAL / LI_AGENT_EXTRA_INSTRUCTION   Env fallback when flags omitted
 
 Env:
   CURSOR_API_KEY     Required for real runs (.env or shell)
   BENCHMARKS_ROOT    Path to benchmarks repo for preflight
+  LI_REPO_WORKFLOW_REPO   Target repo for repoWorkflow agents (e.g. lic)
   --mock             Dry-run mock backend (CI/tests set CURSOR_MOCK=1)
 `);
 }
@@ -72,6 +108,7 @@ async function main() {
     mock: args.mock,
     dryRun: args.dryRun,
     workflowRepo: args.workflowRepo,
+    extraInstruction: args.extraInstruction,
   });
 
   console.log(JSON.stringify(result, null, 2));
