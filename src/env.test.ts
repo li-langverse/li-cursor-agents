@@ -5,6 +5,7 @@ import {
   isPlausibleCursorApiKey,
   normalizeCursorModelId,
   resolveCursorApiKey,
+  resolveSharedEnvPath,
 } from "./env.js";
 
 test("normalizeCursorModelId maps auto aliases to default", () => {
@@ -21,6 +22,12 @@ test("isPlausibleCursorApiKey rejects dashboard URLs", () => {
   assert.equal(isPlausibleCursorApiKey("http://example.com/key"), false);
   assert.equal(isPlausibleCursorApiKey("short"), false);
   assert.equal(isPlausibleCursorApiKey("key_0123456789012345678901234567890"), true);
+});
+
+test("resolveSharedEnvPath finds Cursor workspace ../../.env when present", () => {
+  const path = resolveSharedEnvPath();
+  assert.ok(path);
+  assert.match(path!, /\/\.env$/);
 });
 
 test("resolveCursorApiKey skips URL-shaped CURSOR_API_KEY when SDK_KEY is plausible", () => {

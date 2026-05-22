@@ -2,13 +2,15 @@ import { existsSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-/** Cursor / model vars: non-empty values in `.env` must win over stale Cloud-injected env. */
+/** Non-empty values from the canonical shared `.env` win over stale Cloud-injected env. */
 const DOTENV_OVERRIDE_KEYS = new Set([
   "CURSOR_API_KEY",
   "CURSOR_SDK_KEY",
   "CURSOR_SDK",
   "CURSOR_API_TOKEN",
   "CURSOR_MODEL",
+  "GH_TOKEN",
+  "GITHUB_TOKEN",
 ]);
 
 function applyEnvFile(path: string): void {
@@ -26,11 +28,11 @@ function applyEnvFile(path: string): void {
     if (DOTENV_OVERRIDE_KEYS.has(key)) {
       if (!val) continue;
       if (isCursorCredentialEnvName(key) && !isPlausibleCursorApiKey(val)) {
-        // Do not let a dashboard/docs URL in .env override a real key from the shell.
         const existing = process.env[key]?.trim();
         if (existing && isPlausibleCursorApiKey(existing)) continue;
         continue;
       }
+      if ((key === "GH_TOKEN" || key === "GITHUB_TOKEN") && val.length < 8) continue;
       process.env[key] = val;
       continue;
     }
@@ -118,6 +120,7 @@ export function loadSupabaseEnv(): void {
 }
 
 export function loadRuntimeEnv(): void {
+  loadSharedEnv();
   loadDotEnv();
   loadSupabaseEnv();
   loadGithubEnv();
