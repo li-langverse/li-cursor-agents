@@ -68,7 +68,8 @@ RUN_ARGS=(node "$ROOT/dist/cli/run-agent.js" --agent "$AGENT" --cwd "$CWD" "${GO
 iter=0
 while :; do
   iter=$((iter + 1))
-  echo "==> goal-directed-loop iteration $iter agent=$AGENT repo=${WORKFLOW_REPO:-—}"
+  echo "==> goal-directed-loop iteration $iter agent=$AGENT repo=${WORKFLOW_REPO:-—} (live output below)"
+  # Do not wrap in `tail` — output streams until the agent exits.
   if "${RUN_ARGS[@]}"; then
     echo "goal-directed-loop: agent finished (exit 0)"
     exit 0
