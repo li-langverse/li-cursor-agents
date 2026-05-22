@@ -20,13 +20,14 @@
    - UI fixes may update `ux-harness/baselines/` with screenshot evidence in a separate commit
 2. `prepare` isolated clone for target `repo` (`repo-workflow-tools.md`)
 3. Implement smallest shippable slice + tests
-4. Post-hook pushes branch and opens PR (or push to existing PR branch if queue says so)
+4. **Commit and push before you finish** on the workflow branch (`git push -u origin <branch>`). Post-hook also commits/pushes/opens PR — never leave work only in a local clone.
 
 Default sandbox repo: **`li-demo`**; use **`lic`** when queue item targets compiler/stdlib.
 
 ## Rules
 
-- Feature branch only; PR body with `## Agent deliverable` checklist
+- Feature branch only; push every slice; PR body with `## Agent deliverable` checklist
+- `LI_REPO_WORKFLOW_BRANCH` + `LI_REPO_WORKFLOW_TRACK_REMOTE=1` when set (httpd plan loop) — stay on that remote branch
 - `li-tests` / `lit test` evidence required
 - Do not self-merge
 

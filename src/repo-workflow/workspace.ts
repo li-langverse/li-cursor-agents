@@ -78,7 +78,21 @@ export function prepareIsolatedClone(
     }
   }
 
-  runCmd("git", ["checkout", "-B", options.branchName], cloneDir, false);
+  const trackRemote = process.env.LI_REPO_WORKFLOW_TRACK_REMOTE?.trim().toLowerCase();
+  if (trackRemote && ["1", "true", "yes", "on"].includes(trackRemote)) {
+    runCmd("git", ["fetch", "origin", options.branchName], cloneDir, false);
+    const tracked = runCmd(
+      "git",
+      ["checkout", "-B", options.branchName, `origin/${options.branchName}`],
+      cloneDir,
+      false,
+    );
+    if (!tracked.ok) {
+      runCmd("git", ["checkout", "-B", options.branchName], cloneDir, false);
+    }
+  } else {
+    runCmd("git", ["checkout", "-B", options.branchName], cloneDir, false);
+  }
 
   maybePruneWorkspaces({ workspaceRoot: options.workspaceRoot });
 

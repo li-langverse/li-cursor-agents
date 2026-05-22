@@ -90,13 +90,13 @@ test("post-hook skips clean workspace", () => {
   assert.match(push.skip_reason ?? "", /no uncommitted/i);
 });
 
-test("shouldOpenPrAfterRun defers PR for implement agents unless env set", () => {
+test("shouldOpenPrAfterRun opens PR for implement agents unless disabled", () => {
   const prev = process.env.LI_REPO_WORKFLOW_OPEN_PR;
   delete process.env.LI_REPO_WORKFLOW_OPEN_PR;
-  assert.equal(shouldOpenPrAfterRun("code_implementer"), false);
-  assert.equal(shouldOpenPrAfterRun("docs_maintainer"), true);
-  process.env.LI_REPO_WORKFLOW_OPEN_PR = "1";
   assert.equal(shouldOpenPrAfterRun("code_implementer"), true);
+  assert.equal(shouldOpenPrAfterRun("docs_maintainer"), true);
+  process.env.LI_REPO_WORKFLOW_OPEN_PR = "0";
+  assert.equal(shouldOpenPrAfterRun("code_implementer"), false);
   if (prev === undefined) delete process.env.LI_REPO_WORKFLOW_OPEN_PR;
   else process.env.LI_REPO_WORKFLOW_OPEN_PR = prev;
 });

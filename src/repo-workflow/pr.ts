@@ -37,6 +37,18 @@ export function commitPushOpenPr(
 
   const dirty = gitStatusPorcelain(cloneDir, dryRun);
   if (!dirty.trim()) {
+    if (!options.skipPush && !dryRun) {
+      const ahead = pushUnpublishedCommits(cloneDir, branch, dryRun, options.skipPush);
+      if (ahead.pushed) {
+        return {
+          ok: true,
+          committed: false,
+          pushed: true,
+          branch,
+          skip_reason: "pushed commits already on branch (clean working tree)",
+        };
+      }
+    }
     return {
       ok: true,
       skipped: true,
@@ -141,6 +153,28 @@ export function commitPushOpenPr(
     branch,
     pr_url: url.trim(),
   };
+}
+
+/** Push when HEAD is ahead of origin (agent committed but did not push). */
+export function pushUnpublishedCommits(
+  cloneDir: string,
+  branch: string,
+  dryRun = false,
+  skipPush = false,
+): { pushed: boolean; error?: string } {
+  if (dryRun || skipPush || !hasGitToken()) return { pushed: false };
+  const upstream = runCmd("git", ["rev-parse", "--abbrev-ref", "@{upstream}"], cloneDir, false);
+  let ahead = runCmd(
+    "git",
+    ["rev-list", "--count", upstream.ok ? "@{upstream}..HEAD" : `origin/${branch}..HEAD`],
+    cloneDir,
+    false,
+  );
+  if (!ahead.ok || !ahead.stdout || ahead.stdout === "0") {
+    return { pushed: false };
+  }
+  const push = runCmd("git", ["push", "-u", "origin", branch], cloneDir, false);
+  return { pushed: push.ok, error: push.ok ? undefined : push.stderr || "git push failed" };
 }
 
 export function applyRepoWorkflowEnv(options: RepoWorkflowOptions): void {
