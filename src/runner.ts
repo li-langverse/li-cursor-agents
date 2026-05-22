@@ -305,10 +305,10 @@ async function runAgentBody(
     }
   }
 
-  const swarmBlocks = await buildSwarmPromptBlocks(
-    definition.id,
-    preflight.briefing ?? preflight,
-  );
+  const swarmBlocks =
+    process.env.LI_AGENT_MINIMAL_PROMPT === "1"
+      ? ""
+      : await buildSwarmPromptBlocks(definition.id, preflight.briefing ?? preflight);
   const userMessage = buildUserMessage(definition.id, preflight, extra, swarmBlocks);
   const backend = mock
     ? new MockBackend()

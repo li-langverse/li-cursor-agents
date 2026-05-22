@@ -95,6 +95,23 @@ export function buildUserMessage(
   extra?: string,
   swarmBlocks?: string,
 ): string {
+  if (process.env.LI_AGENT_MINIMAL_PROMPT === "1") {
+    const lines = [
+      `Run **${definitionId}** (httpd plan loop — **goal only**).`,
+      "",
+      "Ignore swarm handoffs, implementation_queue, and unrelated briefing work.",
+      "Implement only **Additional instruction** below in the workflow clone.",
+      "",
+      "## Your task",
+      "- Follow Additional instruction and code-implementer PR rules.",
+      "- Run gates/tests cited in the goal before finishing.",
+      "- Open/update one PR; do not self-merge.",
+      "",
+    ];
+    if (extra) lines.push("## Additional instruction", extra);
+    return lines.join("\n");
+  }
+
   const isMerger = definitionId === "pr_merger";
   const mergePlan = mergePlanFromBriefing(preflight.briefing);
 
