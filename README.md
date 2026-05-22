@@ -19,7 +19,7 @@ Org drift audit (feeds **agent_kit_maintainer**): `python3 ../benchmarks/scripts
 
 Platform agents (`agent_kit_maintainer`, `ci_maintainer`, `docs_maintainer`) use **isolated workspaces** under `data/workspaces/` — not your sibling checkout.
 
-Requires `GH_TOKEN` in `../.env.github` (see lic `scripts/with-github-env.sh`).
+Requires `GH_TOKEN` and `CURSOR_API_KEY` in **`../../.env`** (Cursor workspace parent, e.g. `Documents/Cursor/.env` beside `li-langverse/`).
 
 ```bash
 npm run repo-workflow -- agent-kit-rollout --dry-run
@@ -208,7 +208,7 @@ Skills are **refreshed automatically**:
 
 ```bash
 npm run install-gh          # GitHub CLI (~/.local/bin or apt)
-gh auth login               # or GH_TOKEN in ../.env.github
+gh auth login               # or GH_TOKEN in ../../.env (Cursor workspace)
 npm run sync-ecosystem      # git pull all org repos + sync skills + prompts
 npm run sync-ecosystem:quick # skills/prompts only (no pull)
 npm run build && npm test   # includes skills-registry.test.ts
