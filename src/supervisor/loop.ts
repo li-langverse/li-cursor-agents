@@ -28,6 +28,7 @@ import type { AgentRunResult, PreflightBundle } from "../types.js";
 import type { ControlPlaneState, HumanIntervention, QueuedAgentTask } from "../control-plane/types.js";
 import { statusForTaskCooldown } from "../control-plane/run-audit-context.js";
 import { buildHandoffInstruction, handoffNoteFromRun, type HandoffNote } from "./handoff.js";
+import { maybeSyncEcosystem } from "../ecosystem-sync.js";
 
 export interface SupervisorOptions {
   benchmarksRoot?: string;
@@ -59,6 +60,7 @@ function extractRecommended(briefing: unknown): Array<{ agent: string; reason: s
 
 export async function supervisorTick(options: SupervisorOptions): Promise<TickResult> {
   ensureControlPlaneDirs();
+  maybeSyncEcosystem();
   const state = loadState();
   state.last_tick_at = new Date().toISOString();
   state.supervisor_status = "waiting";

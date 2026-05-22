@@ -14,6 +14,13 @@ echo "==> Li agent swarm — local environment setup"
 echo "    ROOT=$ROOT"
 echo "    BENCHMARKS_ROOT=$BENCHMARKS_ROOT"
 echo "    LI_LOCAL_CI_ROOT=$LI_LOCAL_CI_ROOT"
+echo "    LI_LANGVERSE_ROOT=${LI_LANGVERSE_ROOT:-$ROOT/..}"
+
+echo "==> GitHub CLI (gh)"
+if ! command -v gh >/dev/null 2>&1; then
+  bash "$ROOT/scripts/install-gh.sh" || echo "WARN: gh install failed — install manually for org pull" >&2
+fi
+export PATH="${HOME}/.local/bin:${PATH}"
 
 missing=0
 for d in "$BENCHMARKS_ROOT" "$LI_LOCAL_CI_ROOT"; do
@@ -102,19 +109,25 @@ fi
 
 if command -v gh >/dev/null 2>&1; then
   if [[ -f "$LI_GITHUB_ENV" ]]; then
-  set -a
-  # shellcheck source=/dev/null
-  source "$LI_GITHUB_ENV"
-  set +a
+    set -a
+    # shellcheck source=/dev/null
+    source "$LI_GITHUB_ENV"
+    set +a
+    export GH_TOKEN GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
   fi
   if gh auth status >/dev/null 2>&1; then
     echo "==> gh auth ok"
+  elif [[ -n "${GH_TOKEN:-}" ]]; then
+    echo "==> gh will use GH_TOKEN from LI_GITHUB_ENV"
   else
-    echo "WARN: gh not authenticated — run: gh auth login (needed for run-pr / merge)" >&2
+    echo "WARN: gh not authenticated — run: gh auth login OR set GH_TOKEN in ../.env.github" >&2
   fi
 else
-  echo "WARN: gh not installed — brew install gh" >&2
+  echo "WARN: gh not installed — run: ./scripts/install-gh.sh" >&2
 fi
+
+echo "==> ecosystem sync (pull siblings + skills)"
+bash "$ROOT/scripts/sync-ecosystem.sh" --quick || bash "$ROOT/scripts/sync-ecosystem.sh" || true
 
 if [[ -f "$BENCHMARKS_ROOT/scripts/agent-briefing.py" ]]; then
   echo "==> refresh briefing (skip-slow)"
