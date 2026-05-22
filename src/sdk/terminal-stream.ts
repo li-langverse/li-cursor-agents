@@ -23,8 +23,22 @@ function toolLabel(update: Record<string, unknown>): string {
   return path ? `${tool} ${path}` : tool;
 }
 
+/** High-frequency stream chunks — kept off CLI by default (dashboard trace still records them). */
+const SILENT_DELTA_TYPES = new Set([
+  "token-delta",
+  "thinking-delta",
+  "text-delta",
+]);
+
 export function printSdkDeltaToTerminal(update: InteractionUpdate): void {
   if (!terminalStreamEnabled()) return;
+  if (SILENT_DELTA_TYPES.has(update.type)) {
+    if (update.type === "text-delta" && process.env.LI_SDK_TERMINAL_STREAM_TEXT === "1") {
+      const text = String((update as { text?: string }).text ?? "");
+      if (text) process.stderr.write(text);
+    }
+    return;
+  }
   const u = update as Record<string, unknown>;
   switch (update.type) {
     case "tool-call-started":
@@ -36,17 +50,10 @@ export function printSdkDeltaToTerminal(update: InteractionUpdate): void {
       writeErr(`[sdk] ${mark} ${toolLabel(u)}`);
       break;
     }
-    case "thinking-delta":
-      process.stderr.write("·");
-      break;
-    case "text-delta":
-      if (process.env.LI_SDK_TERMINAL_STREAM_TEXT === "1") {
-        const text = String(u.text ?? "");
-        if (text) process.stderr.write(text);
-      }
-      break;
     default:
-      writeErr(`[sdk] ${update.type}`);
+      if (process.env.LI_SDK_TERMINAL_STREAM_VERBOSE === "1") {
+        writeErr(`[sdk] ${update.type}`);
+      }
   }
 }
 
@@ -70,5 +77,13 @@ export function printSdkStepToTerminal(step: ConversationStep): void {
 
 export function printSdkRunBanner(agentId: string, cwd: string): void {
   if (!terminalStreamEnabled()) return;
-  writeErr(`[sdk] live stream on (agent=${agentId} cwd=${cwd}) — tools/thinking below; LI_SDK_TERMINAL_STREAM=0 to disable`);
+  writeErr(
+    `[sdk] live stream on (agent=${agentId} cwd=${cwd}) — tool lines only; LI_SDK_TERMINAL_STREAM=0 to disable`,
+  );
+}
+
+export function printSdkProgressToTerminal(elapsedMs: number): void {
+  if (!terminalStreamEnabled()) return;
+  const sec = Math.round(elapsedMs / 1000);
+  writeErr(`[sdk] … still running (${sec}s — waiting for model/tools)`);
 }

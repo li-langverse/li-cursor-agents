@@ -13,8 +13,10 @@ import { buildControlPlaneDbMcpServers } from "../mcp/mcp-config.js";
 import type { AgentBackend, AgentDefinition, AgentRunOptions, AgentRunResult } from "../types.js";
 import {
   printSdkDeltaToTerminal,
+  printSdkProgressToTerminal,
   printSdkRunBanner,
   printSdkStepToTerminal,
+  terminalStreamEnabled,
 } from "../sdk/terminal-stream.js";
 import { sdkSessionGapMs, withGlobalSdkSessionLock } from "./sdk-session-lock.js";
 
@@ -145,18 +147,29 @@ export class CursorSdkBackend implements AgentBackend {
           const collector = options.runId
             ? createLiveTraceCollector(options.runId, outputPath)
             : createTraceCollector();
-          const run = await agent.send(fullPrompt, {
-            local: force ? { force: true } : undefined,
-            onStep: async ({ step }) => {
-              printSdkStepToTerminal(step);
-              collector.onStep({ step });
-            },
-            onDelta: async ({ update }) => {
-              printSdkDeltaToTerminal(update);
-              collector.onDelta({ update });
-              if (update.type === "text-delta") chunks.push(update.text);
-            },
-          });
+          const progressIv =
+            terminalStreamEnabled() && !options.dryRun
+              ? setInterval(() => {
+                  printSdkProgressToTerminal(Date.now() - attemptStart);
+                }, 15_000)
+              : undefined;
+          let run;
+          try {
+            run = await agent.send(fullPrompt, {
+              local: force ? { force: true } : undefined,
+              onStep: async ({ step }) => {
+                printSdkStepToTerminal(step);
+                collector.onStep({ step });
+              },
+              onDelta: async ({ update }) => {
+                printSdkDeltaToTerminal(update);
+                collector.onDelta({ update });
+                if (update.type === "text-delta") chunks.push(update.text);
+              },
+            });
+          } finally {
+            if (progressIv) clearInterval(progressIv);
+          }
 
           const result = await run.wait();
           lastResult = result;
