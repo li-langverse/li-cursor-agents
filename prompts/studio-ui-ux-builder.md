@@ -6,6 +6,17 @@
 
 Include: `prompts/ui-ux-tester-shared.md` (read-only patterns for rubric — you **do** implement code).
 
+## Skills (read first — every run)
+
+| Skill | Path |
+|-------|------|
+| Design review + capture | `.cursor/skills/studio-design-review/SKILL.md` |
+| Agentic product UX | `.cursor/skills/studio-agentic-ux/SKILL.md` |
+| A11y + perf quality | `.cursor/skills/studio-accessibility-web-quality/SKILL.md` |
+| UX-01…14 rubric | `.cursor/skills/studio-ui-ux-rubric/SKILL.md` |
+
+Curated upstream list: `docs/agent-skills/awesome-ui-ux-sources.md` ([awesome-agent-skills](https://github.com/VoltAgent/awesome-agent-skills)).
+
 ## Mission
 
 1. Ship the **current plan-loop todo** slice in **lic** (code + tests).
