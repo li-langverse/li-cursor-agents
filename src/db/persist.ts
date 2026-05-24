@@ -22,12 +22,12 @@ export async function persistAgentRun(input: runsDb.PersistRunInput): Promise<vo
   if (!shouldPersistRunToHistory(input.run)) {
     return;
   }
-  requireSupabaseWrite("persistAgentRun");
   if (dbEnabled()) {
     await runsDb.upsertAgentRun(input);
   }
+  // Headless plan loops: do not fail the agent when store=supabase but env is unset.
 
-  if (exportDiskCacheEnabled() && input.run.outputPath) {
+  if (input.run.outputPath) {
     try {
       if (input.run.outputText) {
         writeFileSync(input.run.outputPath, input.run.outputText, "utf8");
