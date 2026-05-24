@@ -365,6 +365,20 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     preflightKeys: ["ux_audit", "briefing"],
     cursorSdkMode: "plan",
   },
+  {
+    id: "studio_ui_ux_builder",
+    name: "Studio UI/UX builder",
+    description:
+      "Implements Li Studio native UI/render slices; captures screenshots/video; benchmarks particles/memory; scores PH-UX each iteration.",
+    category: "ux",
+    promptFile: "studio-ui-ux-builder.md",
+    skills: ["explore-li-ecosystem"],
+    needsWeb: true,
+    preflightKeys: ["briefing"],
+    repoWorkflow: true,
+    guaranteedPush: true,
+    cursorSdkMode: "agent",
+  },
 ];
 
 export function getAgent(id: string): AgentDefinition | undefined {

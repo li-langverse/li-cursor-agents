@@ -44,6 +44,7 @@ const ROLE_CONTENT: Partial<Record<AgentId, RegExp[]>> = {
   gui_ux_tester: [/ux-audit|SOTA|journey|empty.state/i],
   tui_ui_tester: [/ui-audit|remediation|terminal|TUI/i],
   tui_ux_tester: [/ux-audit|SOTA|journey|Textual/i],
+  studio_ui_ux_builder: [/Studio UI\/UX|PH-UX|capture|bench|viewport|particle/i],
 };
 
 const CATEGORY_FALLBACK: Record<string, RegExp[]> = {

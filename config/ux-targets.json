@@ -38,6 +38,19 @@
       ]
     },
     {
+      "id": "world-studio-demo",
+      "repo": "lic",
+      "surface": "gui",
+      "surface_class": "gui_app",
+      "adapter": "web_gui",
+      "fixture": "ux-harness/fixtures/world-studio-workspace.html",
+      "journeys": [
+        { "id": "studio_workspace", "steps": ["viewport", "timeline", "inspector"] },
+        { "id": "command_palette", "steps": ["open_palette", "filter", "run_command"] },
+        { "id": "vertical_profile", "steps": ["switch_profile", "read_metrics"] }
+      ]
+    },
+    {
       "id": "gui-gen-fixture",
       "repo": "li-cursor-agents",
       "surface": "gui",
