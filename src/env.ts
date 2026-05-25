@@ -30,6 +30,23 @@ function packageRoot(): string {
 
 /** Load optional .env from package root or BENCHMARKS_ROOT (KEY=value, no export required). */
 export function loadDotEnv(): void {
+  const cursorEnv = process.env.LI_CURSOR_ENV_FILE?.trim();
+  if (cursorEnv && existsSync(cursorEnv)) {
+    applyEnvFile(cursorEnv);
+    return;
+  }
+
+  const homeCursor = join(
+    process.env.HOME ?? "",
+    "Documents",
+    "Cursor",
+    ".env",
+  );
+  if (homeCursor.length > 12 && existsSync(homeCursor)) {
+    applyEnvFile(homeCursor);
+    return;
+  }
+
   const roots = [
     process.env.LI_CURSOR_AGENTS_ROOT,
     process.cwd(),
