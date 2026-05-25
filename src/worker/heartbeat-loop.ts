@@ -2,7 +2,7 @@ import { loadState } from "../control-plane/state.js";
 import { isAsyncSwarmRunning } from "../async-swarm/async-swarm-state.js";
 import { listActiveRuns } from "../control-plane/runtime.js";
 import { persistWorkerHeartbeat } from "./heartbeat.js";
-import { ensureSwarmRunningIfConfigured } from "../swarm/swarm-watchdog.js";
+import { runSwarmWatchdogTick } from "../swarm/swarm-watchdog.js";
 import { workerConsole } from "./worker-console.js";
 
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
@@ -25,8 +25,8 @@ export function startWorkerHeartbeatLoop(): void {
   heartbeatTimer = setInterval(() => {
     heartbeatTicks++;
     if (heartbeatTicks % watchdogEvery === 0) {
-      void ensureSwarmRunningIfConfigured().then((r) => {
-        if (r.action === "spawned" || r.action === "started_in_process") {
+      void runSwarmWatchdogTick().then((r) => {
+        if (!r.ok || r.message.includes("infra_restart") || r.message.includes("ensure=")) {
           workerConsole("watchdog", "info", `swarm watchdog: ${r.message}`);
         }
       });

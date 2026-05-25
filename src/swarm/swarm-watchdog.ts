@@ -1,77 +1,59 @@
 import { agentLog } from "../agent-log.js";
-import { isAsyncSwarmRunning, startAsyncSwarm } from "../async-swarm/async-swarm-runtime.js";
-import { dbEnabled } from "../db/client.js";
-import { loadWorkerStatusFromDb, saveWorkerStatusToDb } from "../db/worker-status.js";
-import { workerConsole } from "../worker/worker-console.js";
+import { DEFAULT_STATE } from "../control-plane/types.js";
 import {
-  detachedSwarmEnabled,
-  externalSwarmRunnerEnabled,
-  isDetachedSwarmChildRunning,
-  spawnDetachedAsyncSwarm,
-} from "./detached-swarm-process.js";
+  applyInfrastructureRemediations,
+  buildRemediations,
+} from "../observer/remediate.js";
+import { collectSwarmInfrastructureHealth } from "./swarm-health-collect.js";
+import { isDisableAutostartSet, writeSwarmHealthJson } from "./swarm-health-file.js";
+import {
+  ensureSwarmRunningIfConfigured,
+  isSwarmActiveOnHost,
+  markDetachedSwarmStopped,
+} from "./swarm-watchdog-core.js";
 
-function envAutoStartSwarm(): boolean {
-  return (
-    process.env.LI_AUTO_START_ASYNC_SWARM === "1" ||
-    process.env.LI_AUTO_START_ASYNC_SWARM === "true"
-  );
+export { markDetachedSwarmStopped, ensureSwarmRunningIfConfigured } from "./swarm-watchdog-core.js";
+
+export async function writeSwarmHealthSnapshot(): Promise<string> {
+  const payload = await collectSwarmInfrastructureHealth();
+  return writeSwarmHealthJson(payload);
 }
 
-function swarmActiveOnThisHost(): boolean {
-  return isAsyncSwarmRunning() || isDetachedSwarmChildRunning();
-}
-
-/** Clear stale async_swarm_running when detached child died without updating DB. */
-export async function markDetachedSwarmStopped(reason: string): Promise<void> {
-  if (!dbEnabled()) return;
-  try {
-    const worker = await loadWorkerStatusFromDb();
-    if (!worker?.async_swarm_running) return;
-    await saveWorkerStatusToDb({
-      ...worker,
-      async_swarm_running: false,
-      active_runs: [],
-    });
-    workerConsole("watchdog", "info", `marked swarm stopped in DB: ${reason}`);
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
-    agentLog("watchdog", "warn", `markDetachedSwarmStopped failed: ${msg}`);
-  }
-}
-
-/**
- * Periodic + on-demand: respawn detached swarm (or in-process swarm) when auto-start is on
- * but the child process exited (e.g. SDK stall crash).
- */
-export async function ensureSwarmRunningIfConfigured(): Promise<{
-  action: "none" | "already_running" | "spawned" | "started_in_process";
+export async function runSwarmWatchdogTick(): Promise<{
+  ok: boolean;
   message: string;
+  health_path?: string;
 }> {
-  if (!envAutoStartSwarm()) {
-    return { action: "none", message: "LI_AUTO_START_ASYNC_SWARM not set" };
+  const health = await collectSwarmInfrastructureHealth();
+  const health_path = writeSwarmHealthJson(health);
+  const asyncActive = isSwarmActiveOnHost();
+  const remediations = buildRemediations({
+    findings: [],
+    briefing: null,
+    state: { ...DEFAULT_STATE },
+    observerState: { retry_counts: {} },
+    runs: [],
+    needsMetaObserver: false,
+    asyncSwarmActive: asyncActive,
+    planLoopsHealthy: health.plan_loops_healthy,
+  });
+  const infra = await applyInfrastructureRemediations(remediations);
+  const ensure = await ensureSwarmRunningIfConfigured();
+  const parts = [
+    `health→${health_path}`,
+    `plan_loops=${health.plan_loops.length} healthy=${health.plan_loops_healthy}`,
+    `swarm_active=${asyncActive}`,
+  ];
+  if (infra.restarted) parts.push(`infra_restart=${infra.message}`);
+  if (ensure.action !== "none" && ensure.action !== "already_running") {
+    parts.push(`ensure=${ensure.action}:${ensure.message}`);
   }
-
-  if (swarmActiveOnThisHost()) {
-    return { action: "already_running", message: "swarm process alive" };
-  }
-
-  if (externalSwarmRunnerEnabled() && !detachedSwarmEnabled()) {
-    return { action: "none", message: "external swarm runner owns startup" };
-  }
-
-  if (detachedSwarmEnabled()) {
-    workerConsole("watchdog", "info", "detached swarm missing — respawning");
-    const r = spawnDetachedAsyncSwarm();
-    agentLog("watchdog", "info", `respawn detached swarm: ${r.message}`);
-    return {
-      action: r.started ? "spawned" : "none",
-      message: r.message,
-    };
-  }
-
-  const r = await startAsyncSwarm({ stopSupervisor: true });
-  return {
-    action: r.started ? "started_in_process" : "none",
-    message: r.message,
-  };
+  const autoStart =
+    process.env.LI_AUTO_START_ASYNC_SWARM === "1" ||
+    process.env.LI_AUTO_START_ASYNC_SWARM === "true";
+  const ok =
+    !isDisableAutostartSet() &&
+    (asyncActive || ensure.action !== "none" || infra.restarted || !autoStart);
+  if (!ok) agentLog("watchdog", "warn", parts.join("; "));
+  return { ok, message: parts.join("; "), health_path };
 }
