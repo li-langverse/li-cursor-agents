@@ -19,7 +19,6 @@ export async function writeSwarmHealthSnapshot(): Promise<string> {
   return writeSwarmHealthJson(payload);
 }
 
-/** Full watchdog tick: health json, infra remediations, swarm ensure. */
 export async function runSwarmWatchdogTick(): Promise<{
   ok: boolean;
   message: string;
@@ -27,22 +26,19 @@ export async function runSwarmWatchdogTick(): Promise<{
 }> {
   const health = await collectSwarmInfrastructureHealth();
   const health_path = writeSwarmHealthJson(health);
-
   const asyncActive = isSwarmActiveOnHost();
   const remediations = buildRemediations({
     findings: [],
     briefing: null,
-    state: { stopped_agents: [] } as unknown as import("../control-plane/types.js").ControlPlaneState,
+    state: { ...DEFAULT_STATE },
     observerState: { retry_counts: {} },
     runs: [],
     needsMetaObserver: false,
     asyncSwarmActive: asyncActive,
     planLoopsHealthy: health.plan_loops_healthy,
   });
-
   const infra = await applyInfrastructureRemediations(remediations);
   const ensure = await ensureSwarmRunningIfConfigured();
-
   const parts = [
     `health→${health_path}`,
     `plan_loops=${health.plan_loops.length} healthy=${health.plan_loops_healthy}`,
@@ -52,17 +48,12 @@ export async function runSwarmWatchdogTick(): Promise<{
   if (ensure.action !== "none" && ensure.action !== "already_running") {
     parts.push(`ensure=${ensure.action}:${ensure.message}`);
   }
-
   const autoStart =
     process.env.LI_AUTO_START_ASYNC_SWARM === "1" ||
     process.env.LI_AUTO_START_ASYNC_SWARM === "true";
   const ok =
     !isDisableAutostartSet() &&
     (asyncActive || ensure.action !== "none" || infra.restarted || !autoStart);
-
-  if (!ok) {
-    agentLog("watchdog", "warn", parts.join("; "));
-  }
-
+  if (!ok) agentLog("watchdog", "warn", parts.join("; "));
   return { ok, message: parts.join("; "), health_path };
 }

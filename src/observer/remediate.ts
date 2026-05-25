@@ -3,6 +3,7 @@ import { canonicalAgentId } from "../agents/registry.js";
 import type { ControlPlaneState, QueuedAgentTask } from "../control-plane/types.js";
 import type { AgentRunResult } from "../types.js";
 import type { AgentId } from "../types.js";
+import { restartAsyncSwarmUnit } from "../swarm/swarm-restart.js";
 import type { ObserverState, RemediationAction, SwarmFinding } from "./types.js";
 
 const HEALER_AGENTS: Record<string, AgentId> = {
@@ -36,6 +37,13 @@ function briefingWorkspaceDirty(briefing: unknown): boolean {
   return Array.isArray(repos) && repos.length > 0;
 }
 
+function envAutoStartSwarm(): boolean {
+  return (
+    process.env.LI_AUTO_START_ASYNC_SWARM === "1" ||
+    process.env.LI_AUTO_START_ASYNC_SWARM === "true"
+  );
+}
+
 export function buildRemediations(params: {
   findings: SwarmFinding[];
   briefing: unknown;
@@ -43,16 +51,39 @@ export function buildRemediations(params: {
   observerState: ObserverState;
   runs: AgentRunResult[];
   needsMetaObserver: boolean;
+  asyncSwarmActive?: boolean;
+  planLoopsHealthy?: boolean;
 }): RemediationAction[] {
   const out: RemediationAction[] = [];
   const stopped = new Set(params.state.stopped_agents ?? []);
   const maxRetries = Number(process.env.LI_OBSERVER_MAX_RETRIES_PER_AGENT ?? 3);
 
   const pushUnique = (action: RemediationAction) => {
-    if (stopped.has(action.agentId)) return;
-    if (out.some((a) => a.agentId === action.agentId && a.kind === action.kind)) return;
+    if (action.agentId && stopped.has(action.agentId)) return;
+    if (
+      action.agentId &&
+      out.some((a) => a.agentId === action.agentId && a.kind === action.kind)
+    ) {
+      return;
+    }
+    if (out.some((a) => a.kind === action.kind && !a.agentId && !action.agentId)) return;
     out.push(action);
   };
+
+  if (params.asyncSwarmActive === false && envAutoStartSwarm()) {
+    pushUnique({
+      kind: "restart_async_swarm",
+      reason: "observer:async swarm not running (auto-start enabled)",
+    });
+  }
+
+  if (params.planLoopsHealthy === false) {
+    pushUnique({
+      kind: "schedule_meta_observer",
+      agentId: "swarm_observer",
+      reason: "observer:li-*-plan-loop unit unhealthy",
+    });
+  }
 
   for (const f of params.findings) {
     if (!f.auto_healable || !f.agentId) continue;
@@ -128,21 +159,32 @@ export function buildRemediations(params: {
   return out.slice(0, Number(process.env.LI_OBSERVER_MAX_REMEDIATIONS_PER_TICK ?? 2));
 }
 
+export async function applyInfrastructureRemediations(
+  actions: RemediationAction[],
+): Promise<{ restarted: boolean; message: string }> {
+  const restart = actions.find((a) => a.kind === "restart_async_swarm");
+  if (!restart) return { restarted: false, message: "none" };
+  const r = await restartAsyncSwarmUnit(restart.reason);
+  return { restarted: r.ok, message: r.message };
+}
+
 export function remediationsToTasks(
   actions: RemediationAction[],
-  briefingHash: string,
+  _briefingHash: string,
 ): QueuedAgentTask[] {
-  return actions.map((a) => {
-    const base = taskFingerprint(a.agentId, a.reason);
-    const fp = a.fingerprintSuffix ? `${base}${a.fingerprintSuffix}` : base;
-    return {
-      fingerprint: fp,
-      agentId: a.agentId,
-      reason: a.reason,
-      source: "retry" as const,
-      coordinator: undefined,
-    };
-  });
+  return actions
+    .filter((a) => a.kind !== "restart_async_swarm" && a.agentId)
+    .map((a) => {
+      const base = taskFingerprint(a.agentId!, a.reason);
+      const fp = a.fingerprintSuffix ? `${base}${a.fingerprintSuffix}` : base;
+      return {
+        fingerprint: fp,
+        agentId: a.agentId!,
+        reason: a.reason,
+        source: "retry" as const,
+        coordinator: undefined,
+      };
+    });
 }
 
 export function recordRemediationOutcome(

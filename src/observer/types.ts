@@ -24,11 +24,12 @@ export type RemediationActionKind =
   | "retry_agent"
   | "dispatch_healer"
   | "schedule_meta_observer"
-  | "clear_stopped_agent";
+  | "clear_stopped_agent"
+  | "restart_async_swarm";
 
 export interface RemediationAction {
   kind: RemediationActionKind;
-  agentId: AgentId;
+  agentId?: AgentId;
   reason: string;
   /** Fingerprint base for dedup; observer appends :retry:N when needed. */
   fingerprintSuffix?: string;

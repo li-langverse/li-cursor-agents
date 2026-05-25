@@ -6,6 +6,7 @@ import type { AgentId } from "../types.js";
 import { canonicalAgentId } from "../agents/registry.js";
 import type { ObserverState, SwarmFinding, SwarmHealthReport } from "./types.js";
 import { buildRemediations } from "./remediate.js";
+import { isSwarmActiveOnHost } from "../swarm/swarm-watchdog-core.js";
 
 const DEFAULT_RUN_WINDOW = 16;
 const ERROR_STREAK_THRESHOLD = 2;
@@ -177,6 +178,7 @@ export function scanSwarmHealth(params: {
     observerState: params.observerState,
     runs,
     needsMetaObserver,
+    asyncSwarmActive: isSwarmActiveOnHost(),
   });
 
   const healthy =
