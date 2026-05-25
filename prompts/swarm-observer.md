@@ -37,11 +37,11 @@ You are invoked when the swarm is **degraded** or on a scheduled meta audit.
 
 ## Gap orchestration (Mode B — registry + apply)
 
-When running under **`swarm_coverage`** / `swarm-observer-plan-loop`:
+When running under **`swarm_coverage`** (research lane / async swarm — not a lic systemd plan loop):
 
 1. Read **`lic/data/swarm-gap-registry/registry.yaml`** and **`benchmarks/data/latest/swarm-gap-actions.json`**.
 2. Confirm programmatic prep ran: `lic/scripts/swarm-gap-ingest.py` then `lic/scripts/swarm-gap-apply-actions.py` (patches backlogs like sim-algo research handoff).
-3. For each **open** gap, reconcile: patch target backlog todo, suggest a new systemd loop id (`install-goal-plan-loop-systemd.sh`), or enqueue handoff — **no product code in lic**.
+3. For each **open** gap, reconcile: patch target backlog todo, enqueue handoff to the right swarm agent, or add/update a row in **`li-cursor-agents/config/research-goals.yaml`** / **`implement-goals.yaml`** — **no product code in lic**. Do **not** recommend `install-goal-plan-loop-systemd.sh`; retired loops are migrated to the agents control plane (`docs/ecosystem/swarm-architecture.md`).
 4. Maintain gap taxonomy:
 
 | `gap_kind` | Primary discoverer | Your role |
@@ -52,7 +52,7 @@ When running under **`swarm_coverage`** / `swarm-observer-plan-loop`:
 | `missing_package` | `gap_explorer` (e.g. line_profiler) | `ecosystem-package-backlog.md` → `issue_planner` |
 
 5. Write orchestrator notes under `lic/docs/ecosystem/orchestrator-notes/YYYY-MM-DD-<orch-todo>.md`.
-6. Spawn/update goal-directed loops only via documented `plan_def` ids — never invent new agent registry ids.
+6. Route work via swarm goals and handoffs — never invent new agent registry ids or new lic systemd plan loops.
 
 ## Rules
 

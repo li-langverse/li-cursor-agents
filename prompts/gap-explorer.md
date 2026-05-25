@@ -53,5 +53,5 @@ Emit structured gaps for **`lic/data/swarm-gap-registry/registry.yaml`** (not on
 
 - Digest under `benchmarks/docs/ecosystem/explorer-digests/`
 - Registry rows or ingest-ready JSON in digest appendix
-- Up to **3** GitHub issues when no plan loop exists; otherwise prefer registry + `swarm_observer` apply
+- Up to **3** GitHub issues when no swarm goal covers the gap; otherwise prefer registry + `swarm_observer` / `swarm_coverage` goal apply (async swarm in `li-cursor-agents`, not lic systemd plan loops)
 - **No code** in this run (gaps only)

@@ -10,6 +10,7 @@ import {
 import {
   pickProactiveWorkForAgent,
   recordProactiveAgentRun,
+  sortWorkerAgentsByEligibleGoals,
 } from "../control-plane/proactive-agent-work.js";
 import { loadState } from "../control-plane/state.js";
 import { asyncWorkerAgentIds } from "../lanes/lane-agent-ids.js";
@@ -204,7 +205,7 @@ export function startAgentWorkerPool(options?: { mock?: boolean }): {
     };
   }
 
-  const agents = asyncWorkerAgentIds();
+  const agents = sortWorkerAgentsByEligibleGoals(asyncWorkerAgentIds());
   const mock = options?.mock ?? shouldUseMock(false);
   workerConsole(
     "worker-pool",

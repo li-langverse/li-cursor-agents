@@ -9,6 +9,7 @@ goals:
     enabled: true
     ph_ids: [PH-5b, PH-7e]
 
+  # Swarm goal md_sim (retired li-sim-md-research-plan-loop)
   - id: md_sim_algorithms
     title: MD algorithms — SOTA survey and Li gap analysis
     domains: [scientific_computing, hpc]
@@ -20,6 +21,7 @@ goals:
     allow_implementation: true
     handoff_to: [code_implementer, issue_planner]
 
+  # Swarm goal chem_sim (retired li-sim-chem-research-plan-loop)
   - id: chem_sim_algorithms
     title: Chemistry / QM algorithms — SOTA survey and Li gap analysis
     domains: [scientific_computing, hpc]
@@ -123,8 +125,9 @@ goals:
     ph_ids: [PH-2e, PH-2f]
     handoff_to: [package_architect, code_implementer, issue_planner]
 
+  # Swarm goal (retired li-swarm-observer-plan-loop — use async swarm, not new systemd loops)
   - id: swarm_coverage
-    title: Swarm gap orchestration — registry, backlog apply, loop spawn
+    title: Swarm gap orchestration — registry, backlog apply, handoffs
     domains: [ecosystem, ai]
     agent: swarm_observer
     priority: 10
@@ -132,6 +135,7 @@ goals:
     enabled: true
     handoff_to: [gap_explorer, plan_verifier, issue_planner]
 
+  # Swarm goal (retired li-security-research-plan-loop)
   - id: offensive_security
     title: Offensive security — fuzz, tier5 exploits, CWE feed
     domains: [ecosystem, web]

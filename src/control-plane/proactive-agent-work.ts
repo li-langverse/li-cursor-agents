@@ -5,6 +5,12 @@ import {
   researchLaneAgentIds,
 } from "../lanes/lane-agent-ids.js";
 import { loadLaneState, saveLaneState } from "../lanes/lane-state.js";
+import {
+  loadResearchGoals,
+  pickNextGoalForAgent,
+  resolveGoalAgent,
+  type ResearchGoal,
+} from "../research-goals/load-goals.js";
 import type { AgentId } from "../types.js";
 
 function extractRecommended(briefing: unknown): Array<{ agent: string; reason: string }> {
@@ -15,6 +21,57 @@ function extractRecommended(briefing: unknown): Array<{ agent: string; reason: s
     (r): r is { agent: string; reason: string } =>
       r && typeof r === "object" && typeof r.agent === "string" && typeof r.reason === "string",
   );
+}
+
+function goalEligible(
+  goal: ResearchGoal,
+  goalLastRunAt: Record<string, string>,
+  now: number,
+): boolean {
+  const cadenceH = goal.cadence_hours ?? 24;
+  const last = goalLastRunAt[goal.id];
+  if (!last) return true;
+  return now - new Date(last).getTime() >= cadenceH * 3_600_000;
+}
+
+/** Worker-pool agent is a handoff target for an eligible research goal. */
+export function eligibleGoalHandoffForAgent(agentId: AgentId): ResearchGoal | null {
+  const goals = loadResearchGoals();
+  const lane = loadLaneState();
+  const now = Date.now();
+  const candidates = goals
+    .filter(
+      (g) =>
+        g.enabled !== false &&
+        g.handoff_to?.includes(agentId) &&
+        goalEligible(g, lane.goal_last_run_at ?? {}, now),
+    )
+    .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
+  return candidates[0] ?? null;
+}
+
+/** Priority of the best eligible goal tied to this agent (direct assignment or handoff). */
+export function goalPriorityForAgent(agentId: AgentId): number {
+  const lane = loadLaneState();
+  const direct = pickNextGoalForAgent(agentId, loadResearchGoals(), lane.goal_last_run_at ?? {});
+  if (direct) return direct.priority ?? 0;
+  const handoff = eligibleGoalHandoffForAgent(agentId);
+  return handoff?.priority ?? 0;
+}
+
+/** Sort worker-pool agents so those with eligible swarm goals run earlier (lower startup stagger). */
+export function sortWorkerAgentsByEligibleGoals(agentIds: AgentId[]): AgentId[] {
+  const briefing = loadCachedBriefing();
+  const recAgents = new Set(extractRecommended(briefing).map((r) => r.agent));
+  return [...agentIds].sort((a, b) => {
+    const pa = goalPriorityForAgent(a);
+    const pb = goalPriorityForAgent(b);
+    if (pb !== pa) return pb - pa;
+    const ra = recAgents.has(a) ? 1 : 0;
+    const rb = recAgents.has(b) ? 1 : 0;
+    if (rb !== ra) return rb - ra;
+    return a.localeCompare(b);
+  });
 }
 
 /** Worker-pool agents that should sweep briefing/ecosystem even with an empty queue. */
@@ -49,12 +106,13 @@ export function isProactiveEligibleAgent(agentId: AgentId): boolean {
   if (researchLaneAgentIds().has(agentId)) return false;
   if (IMPLEMENT_LANE_AGENTS.has(agentId)) return false;
   if (defaultProactiveAgentIds().includes(agentId)) return true;
+  if (eligibleGoalHandoffForAgent(agentId)) return true;
   return proactiveAllPoolWorkersEnabled() && asyncWorkerAgentIds().includes(agentId);
 }
 
 export function pickProactiveWorkForAgent(agentId: AgentId): {
   reason: string;
-  source: "recommended" | "proactive";
+  source: "recommended" | "proactive" | "research_goal";
 } | null {
   if (researchLaneAgentIds().has(agentId)) return null;
   if (IMPLEMENT_LANE_AGENTS.has(agentId)) return null;
@@ -70,7 +128,26 @@ export function pickProactiveWorkForAgent(agentId: AgentId): {
 
   const briefing = loadCachedBriefing();
   const rec = extractRecommended(briefing).find((r) => r.agent === agentId);
-  if (!rec && !isProactiveEligibleAgent(agentId)) return null;
+  const handoffGoal = eligibleGoalHandoffForAgent(agentId);
+  const directGoal = pickNextGoalForAgent(
+    agentId,
+    loadResearchGoals(),
+    lane.goal_last_run_at ?? {},
+  );
+  const goal = directGoal ?? handoffGoal;
+
+  if (!rec && !goal && !isProactiveEligibleAgent(agentId)) return null;
+
+  if (goal) {
+    const owner = resolveGoalAgent(goal);
+    return {
+      reason:
+        owner === agentId
+          ? `Swarm research goal ${goal.id} eligible (priority ${goal.priority ?? 0}) — ${goal.title}.`
+          : `Swarm research goal ${goal.id} eligible (priority ${goal.priority ?? 0}) — handoff support for ${owner}.`,
+      source: "research_goal",
+    };
+  }
 
   return {
     reason:
