@@ -10,11 +10,14 @@ LOG_DIR="$ROOT/logs"
 PORT="${LI_AGENT_DASHBOARD_PORT:-9477}"
 DASHBOARD_HOST="${LI_AGENT_DASHBOARD_HOST:-127.0.0.1}"
 SDK_MAX="${LI_SDK_MAX_CONCURRENT:-8}"
-STORE="${LI_CONTROL_PLANE_STORE:-supabase}"
-if [[ -f "$ENV_FILE" ]]; then
+_store_cli="${LI_CONTROL_PLANE_STORE:-}"
+STORE="${_store_cli:-supabase}"
+if [[ -f "$ENV_FILE" && -z "$_store_cli" ]]; then
   # shellcheck disable=SC1090
-  _store_from_env="$(set -a; source "$ENV_FILE"; set +a; printf '%s' "${LI_CONTROL_PLANE_STORE:-}")"
-  [[ -n "$_store_from_env" && -z "${LI_CONTROL_PLANE_STORE:-}" ]] && STORE="$_store_from_env"
+  _store_from_env="$(
+    (set -a; source "$ENV_FILE"; set +a; printf '%s' "${LI_CONTROL_PLANE_STORE:-}") 2>/dev/null
+  )"
+  [[ -n "$_store_from_env" ]] && STORE="$_store_from_env"
 fi
 DISABLE_AUTOSTART="${DATA_DIR}/DISABLE_AUTOSTART"
 # shellcheck source=lib/li-stack-env.sh
