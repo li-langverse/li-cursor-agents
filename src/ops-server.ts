@@ -194,9 +194,11 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
 
   installOpsProcessGuards(server);
 
-  server.listen(port, "127.0.0.1", () => {
+  const host = defaultOpsHost();
+  server.listen(port, host, () => {
     const addr = server.address();
     const p = typeof addr === "object" && addr ? addr.port : port;
+    const bindHost = typeof addr === "object" && addr ? addr.address : host;
     const backend = agentBackendLabel();
     const keyOk = Boolean(resolveCursorApiKey());
     void import("./backends/sdk-session-lock.js").then((m) => {
@@ -206,7 +208,7 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
       }
     });
     startOpsBackgroundServices(currentApiState);
-    agentLog("dashboard", "info", `Agent dashboard: http://127.0.0.1:${p}/`);
+    agentLog("dashboard", "info", `Agent dashboard: http://${bindHost}:${p}/`);
     agentLog(
       "dashboard",
       "info",
