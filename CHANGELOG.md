@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- **Studio X demo** — `docs/demo/studio-x-demo-script.md`, `docs/demo/RECORDING.md`, `docs/demo/media/studio-x-demo.mp4`, `scripts/record-studio-x-demo.sh` (HTML mocks from `lic` `cursor/studio-ui-ux-plan-loop`).
+- **Studio X demo** — moved to [li-langverse/studio](https://github.com/li-langverse/studio) (`docs/demo/`, `scripts/record-studio-x-demo.sh`); pointer in `docs/demo/README.md`.
 - **Local disk cleanup** — `scripts/disk-cleanup.sh` compacts Cursor `state.vscdb`, prunes Docker, and drops stale `data/workspaces/` runs; `npm run maintenance:install-schedule` installs daily 04:00 launchd (`docs/local-disk-cleanup.md`).
 - **Workflow repo routing** — `explore-li-ecosystem` skill section for implementers; `resolve-workflow-repo.ts`; `run-agent --goal-file` / `--workflow-repo` inference; `scripts/goal-directed-loop.sh`.
 - **Completion modes** — `LI_AGENT_VERIFY_MODE`, `digest_only` (skip-push), and `LI_REPO_WORKFLOW_SMOKE`; hard vs informational gaps; supervisor handoffs between agents in the same tick (`src/control-plane/run-completion.ts`, `src/supervisor/handoff.ts`).

@@ -1,0 +1,9 @@
+file '/Users/julian/Documents/coding-projects/li-cursor-agents/.demo-cache/deploy/studio-demo/screenshots/png/01-studio-workspace.png'
+duration 10
+file '/Users/julian/Documents/coding-projects/li-cursor-agents/.demo-cache/deploy/studio-demo/screenshots/png/02-studio-empty-viewport.png'
+duration 7
+file '/Users/julian/Documents/coding-projects/li-cursor-agents/.demo-cache/deploy/studio-demo/screenshots/png/03-studio-agent-error.png'
+duration 8
+file '/Users/julian/Documents/coding-projects/li-cursor-agents/.demo-cache/deploy/studio-demo/screenshots/png/01-studio-workspace.png'
+duration 5
+file '/Users/julian/Documents/coding-projects/li-cursor-agents/.demo-cache/deploy/studio-demo/screenshots/png/01-studio-workspace.png'

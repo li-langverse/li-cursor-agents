@@ -12,7 +12,4 @@ data/capture/
 *.log
 logs/
 .DS_Store
-.demo-cache/
-docs/demo/media/studio-x-demo-raw.mp4
-docs/demo/media/ffmpeg-scenes.txt
 supabase/.temp/
