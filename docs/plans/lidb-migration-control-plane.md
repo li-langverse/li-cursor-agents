@@ -4,6 +4,8 @@
 **Plan phase:** PH-DB-10 (after PH-DB-1..3 engine + `lis` bundle, PH-DB-2 `liorm`/`liq`)  
 **Repo:** [li-cursor-agents](https://github.com/li-langverse/li-cursor-agents)
 
+**Checkbox audit (dedupes lic [#184](https://github.com/li-langverse/lic/pull/184)):** [ph-db-10-checkbox-audit.md](./ph-db-10-checkbox-audit.md) — lic plan waves stay in **lic**; this file tracks PH-DB-10 only.
+
 ## North star
 
 Replace Supabase-backed control-plane persistence and Postgres read MCP with:
@@ -53,9 +55,10 @@ Existing Supabase e2e remains: `src/e2e/control-plane-db.e2e.ts` (`LI_E2E_DB=1`)
 - [ ] `assertStoreReady()` when `lidb`: require `lis db status` healthy or `LI_LIDB_URL`
 - [ ] `persist.ts`: liorm execute paths for `agent_runs`, handoffs, etc. (schema parity with `supabase/migrations/`)
 - [x] Stub MCP: `li-control-plane-liq` + `liq-query.ts` mock (PH-DB-2/10 harness)
+- [x] Stub e2e harness: `lidb-control-plane.e2e.ts` skip reasons + mock liq tests (`npm test` / `test:e2e:lidb`)
 - [ ] Backfill: extend `scripts/backfill-control-plane-db.mjs` for lidb import from disk cache
-- [ ] Un-skip `lidb-control-plane.e2e.ts` todos; gate CI optional job `LI_E2E_LIDB=1`
-- [ ] Deprecation note in `.env.example` for Supabase-only vars when `lidb` is default in dev profiles
+- [ ] Un-skip `lidb-control-plane.e2e.ts` `test.todo` rows; gate CI optional job `LI_E2E_LIDB=1`
+- [x] Deprecation note in `.env.example` for Supabase-only vars when `LI_CONTROL_PLANE_STORE=lidb`
 
 ## Security gates (must not regress)
 
