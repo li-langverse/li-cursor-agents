@@ -18,7 +18,7 @@ console.log("OK: API key resolved");
 const agent = await Agent.create({
   apiKey: key,
   model: { id: resolveCursorModelId() },
-  local: { cwd: process.cwd() },
+  local: { cwd: process.cwd(), settingSources: [] },
 });
 try {
   const run = await agent.send(

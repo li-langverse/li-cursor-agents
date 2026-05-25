@@ -136,7 +136,11 @@ export class CursorSdkBackend implements AgentBackend {
           agent = await Agent.create({
             apiKey,
             model: { id: modelId },
-            local: { cwd: options.cwd },
+            local: {
+              cwd: options.cwd,
+              // Avoid marketplace plugins (e.g. Tavily OAuth MCP) on SDK runs.
+              settingSources: [],
+            },
             ...(mcpServers ? { mcpServers } : {}),
           });
 
