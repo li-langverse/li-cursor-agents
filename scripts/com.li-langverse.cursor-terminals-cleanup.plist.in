@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.li-langverse.cursor-terminals-cleanup</string>
+  <key>Comment</key>
+  <string>Reclaim RAM from stale Cursor agent terminals (li-cursor-agents)</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>@@BASH@@</string>
+    <string>@@ROOT@@/scripts/cleanup-stale-cursor-terminals.sh</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>@@ROOT@@</string>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>LI_CURSOR_AGENTS_ROOT</key>
+    <string>@@ROOT@@</string>
+  </dict>
+  <key>StartInterval</key>
+  <integer>@@INTERVAL@@</integer>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>@@ROOT@@/logs/cursor-terminals-cleanup-launchd.log</string>
+  <key>StandardErrorPath</key>
+  <string>@@ROOT@@/logs/cursor-terminals-cleanup-launchd.log</string>
+</dict>
+</plist>

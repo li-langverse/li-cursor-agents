@@ -203,8 +203,10 @@ Skills are **refreshed automatically**:
 |-----------|------|
 | `npm install` | `postinstall` → `sync-agent-skills.sh` |
 | `npm run setup` | full `sync-ecosystem.sh` (pull + skills) |
-| `npm run agents:keep` | background `ecosystem-sync-loop.sh` (default every 1h) |
+| `npm run agents:keep` | background `ecosystem-sync-loop.sh` (default every 1h) + `cursor-terminals-cleanup-loop.sh` (every 2h) |
 | Supervisor tick | `maybe-sync-ecosystem.sh` if interval elapsed |
+| `npm run maintenance:terminals` | kill stale Cursor agent shells now (`--dry-run` to preview) |
+| `npm run maintenance:terminals:launchd` | macOS LaunchAgents backup (runs even when `agents:keep` is off) |
 
 ```bash
 npm run install-gh          # GitHub CLI (~/.local/bin or apt)

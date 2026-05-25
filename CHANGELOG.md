@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Stale Cursor terminal cleanup** — `scripts/cleanup-stale-cursor-terminals.{py,sh}` + 2h loop (`cursor-terminals-cleanup-loop.sh`); macOS launchd backup (`install-cursor-terminals-cleanup-launchd.sh`); wired into `agents:keep`; `npm run maintenance:terminals*` ([2026-05-25-cursor-terminals-cleanup.md](docs/release-notes/2026-05-25-cursor-terminals-cleanup.md)).
+- **PH-DB-10 lidb store stub** — `ControlPlaneStore: "lidb"`, `assertStoreReady()` / `lidbStoreReady()`, `src/db/lidb-persist.ts` liorm hooks + disk mirror ([2026-05-25-ph-db-lidb-store-stub.md](docs/release-notes/2026-05-25-ph-db-lidb-store-stub.md)).
 - **PH-DB-10 checkbox audit** — `docs/plans/ph-db-10-checkbox-audit.md` dedupes lic PR #184; closes stub e2e + `.env.example` deprecation checkboxes ([2026-05-25-ph-db-10-checkbox-audit.md](docs/release-notes/2026-05-25-ph-db-10-checkbox-audit.md)).
 - **PH-DB-2/10 liq MCP stub** — `src/mcp/lidb-liq-mcp.ts`, `src/db/liq-query.ts` (mock `read <table> limit N`), `buildControlPlaneLiqMcpServers()` when `LI_CONTROL_PLANE_STORE=lidb`; `npm run test:e2e:lidb`; expanded `lidb-control-plane.e2e.ts` skip reasons (`docs/plans/lidb-migration-control-plane.md`).
 - **Workflow repo routing** — `explore-li-ecosystem` skill section for implementers; `resolve-workflow-repo.ts`; `run-agent --goal-file` / `--workflow-repo` inference; `scripts/goal-directed-loop.sh`.

@@ -73,6 +73,14 @@ if [[ "${LI_ECOSYSTEM_SYNC_LOOP:-1}" != "0" ]]; then
   fi
 fi
 
+if [[ "${LI_CURSOR_TERMINALS_CLEANUP_LOOP:-1}" != "0" ]]; then
+  if ! pgrep -f "cursor-terminals-cleanup-loop.sh" >/dev/null 2>&1; then
+    echo "==> cursor terminals cleanup loop (interval ${LI_CURSOR_TERMINALS_CLEANUP_INTERVAL_SEC:-7200}s)"
+    nohup bash "$ROOT/scripts/cursor-terminals-cleanup-loop.sh" >>"$ROOT/logs/cursor-terminals-cleanup.log" 2>&1 &
+    echo $! >"$ROOT/logs/cursor-terminals-cleanup.pid"
+  fi
+fi
+
 if [[ "${LI_ECOSYSTEM_SYNC_ON_START:-1}" != "0" ]]; then
   bash "$ROOT/scripts/maybe-sync-ecosystem.sh" --quick 2>/dev/null || true
 fi
