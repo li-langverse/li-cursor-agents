@@ -1,9 +1,12 @@
 import { computeInSdkCount } from "../control-plane/active-run-metrics.js";
+import { mergeActiveRunsForDisplay } from "../control-plane/merge-active-runs.js";
 import { sdkMaxConcurrent, sdkSlotsInUse } from "../backends/sdk-session-lock.js";
 import { swarmWorkersPaused } from "../swarm/swarm-worker-pause.js";
 import type { ControlPlaneState } from "../control-plane/types.js";
+import type { ActiveAgentRun } from "../control-plane/types.js";
 import type { WorkerStatusRow } from "../db/worker-status.js";
 import { defaultWorkerStatus } from "../db/worker-status.js";
+import type { AgentRunHistoryRow } from "../db/runs.js";
 import type { LaneStateFile } from "../lanes/lane-state.js";
 import { implementLaneIntervalMs } from "../lanes/implement-lane.js";
 import { researchLaneIntervalMs } from "../lanes/research-lane.js";
@@ -34,16 +37,18 @@ export function runtimeStoreFields(): {
 export function runtimeSnapshotFromDb(
   state: ControlPlaneState,
   worker: WorkerStatusRow | null,
+  dbRunning: AgentRunHistoryRow[] = [],
 ) {
   const w = worker ?? defaultWorkerStatus();
   const loopRunning = w.supervisor_loop_running || Boolean(state.supervisor_loop_running);
+  const activeRuns: ActiveAgentRun[] = mergeActiveRunsForDisplay(w.active_runs, dbRunning);
   return {
     supervisor_loop_running: loopRunning,
     supervisor_loop_started_at: loopRunning ? (state.supervisor_loop_started_at ?? null) : null,
     stopped_agents: state.stopped_agents ?? [],
     current_supervisor_agent: state.current_supervisor_agent ?? null,
-    active_runs: w.active_runs,
-    active_run_count: computeInSdkCount(w.active_runs, w.sdk_sessions_active),
+    active_runs: activeRuns,
+    active_run_count: computeInSdkCount(activeRuns, w.sdk_sessions_active),
     async_swarm_running: w.async_swarm_running,
     handoff_run: w.handoff_run,
     sdk_max_concurrent: w.sdk_max_concurrent ?? sdkMaxConcurrent(),

@@ -158,7 +158,7 @@ export async function getRunEvents(
   limit = 120,
 ): Promise<Array<{ seq: number; event_type: string; payload: unknown; created_at?: string }>> {
   const { getRunEventsForApi, runEventsPersistEnabled } = await import("./run-events.js");
-  if (!runEventsPersistEnabled() && !dbEnabled()) return [];
+  if (!runEventsPersistEnabled()) return [];
   const rows = await getRunEventsForApi(runId, limit);
   return rows.map((r) => ({
     seq: r.seq,

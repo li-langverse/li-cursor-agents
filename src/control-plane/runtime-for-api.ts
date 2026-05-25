@@ -1,7 +1,10 @@
 import { isAsyncSwarmRunning } from "../async-swarm/async-swarm-state.js";
 import { computeInSdkCount } from "./active-run-metrics.js";
+import { mergeActiveRunsForDisplay } from "./merge-active-runs.js";
 import { runtimeSnapshot } from "./runtime.js";
 import type { ControlPlaneState } from "./types.js";
+import { dbEnabled } from "../db/client.js";
+import { listRunningAgentRuns } from "../db/runs.js";
 import { loadWorkerStatusPeer, type WorkerStatusRow } from "../db/worker-status.js";
 
 let peerCache: { at: number; row: WorkerStatusRow | null } | null = null;
@@ -23,15 +26,15 @@ export async function runtimeForApi(state: ControlPlaneState) {
     return local;
   }
 
-  const runningRuns = peer.active_runs.filter((r) => r.status === "running");
+  const dbRunning = dbEnabled() ? await listRunningAgentRuns(30) : [];
+  const peerRuns = peer.active_runs.length ? peer.active_runs : local.active_runs;
+  const activeRuns = mergeActiveRunsForDisplay(peerRuns, dbRunning);
+  const runningRuns = activeRuns.filter((r) => r.status === "running");
   return {
     ...local,
     async_swarm_running: true,
-    active_runs: peer.active_runs.length ? peer.active_runs : local.active_runs,
-    active_run_count: computeInSdkCount(
-      peer.active_runs.length ? peer.active_runs : local.active_runs,
-      peer.sdk_sessions_active,
-    ),
+    active_runs: activeRuns,
+    active_run_count: computeInSdkCount(activeRuns, peer.sdk_sessions_active),
     worker_pool: {
       running: true,
       worker_count: runningRuns.length > 0 ? runningRuns.length : 1,

@@ -14,7 +14,7 @@ import {
   listRecentActivity,
   listRunsMerged,
 } from "../control-plane/runs-catalog.js";
-import { getRunEvents } from "../db/runs.js";
+import { getRunEvents, listRunningAgentRuns } from "../db/runs.js";
 import { buildSwarmStatistics, type SwarmStatistics } from "../control-plane/swarm-statistics.js";
 import { defaultStatsRunLimit, parseStatsTimeRange } from "../control-plane/stats-time-range.js";
 import { agentLog } from "../agent-log.js";
@@ -96,7 +96,8 @@ async function handleGet(pathname: string, url: URL): Promise<Response | null> {
   const store = dataStoreLabel();
   const state = await loadStateForRead();
   const worker = await loadWorkerStatusFromDb();
-  const runtime = runtimeSnapshotFromDb(state, worker);
+  const dbRunning = dbEnabled() ? await listRunningAgentRuns(30) : [];
+  const runtime = runtimeSnapshotFromDb(state, worker, dbRunning);
 
   if (pathname === "/api/agents") {
     return jsonBody({ ...dashboardRosterSummary(), runtime });

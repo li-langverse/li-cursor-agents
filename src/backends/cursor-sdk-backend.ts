@@ -149,7 +149,7 @@ export class CursorSdkBackend implements AgentBackend {
             printSdkRunBanner(definition.id, options.cwd);
           }
           const collector = options.runId
-            ? createLiveTraceCollector(options.runId, outputPath)
+            ? createLiveTraceCollector(options.runId, outputPath, options.runInput)
             : createTraceCollector();
           const progressIv =
             terminalStreamEnabled() && !options.dryRun

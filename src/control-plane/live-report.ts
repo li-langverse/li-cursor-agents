@@ -19,11 +19,13 @@ import type { ControlPlaneReport } from "./types.js";
  */
 export async function buildLiveReportAsync(
   stored: ControlPlaneReport | null,
-  options?: { persist?: boolean },
+  options?: { persist?: boolean; skipBriefingRefresh?: boolean },
 ): Promise<ControlPlaneReport | null> {
   if (!stored) return null;
 
-  const fresh = loadFreshBriefing(stored);
+  const fresh = loadFreshBriefing(stored, {
+    skipRefresh: options?.skipBriefingRefresh ?? true,
+  });
   if (!fresh) return stored;
 
   const { briefing, path, briefingGeneratedAt } = fresh;
@@ -105,6 +107,7 @@ export function buildLiveReport(stored: ControlPlaneReport | null): ControlPlane
 
 export async function loadLiveReportAsync(options?: {
   persist?: boolean;
+  skipBriefingRefresh?: boolean;
 }): Promise<ControlPlaneReport | null> {
   let stored: ControlPlaneReport | null = null;
   if (dbEnabled()) {
@@ -117,7 +120,10 @@ export async function loadLiveReportAsync(options?: {
   if (!stored) {
     stored = readJson(reportPath()) as ControlPlaneReport | null;
   }
-  return buildLiveReportAsync(stored, { persist: options?.persist ?? false });
+  return buildLiveReportAsync(stored, {
+    persist: options?.persist ?? false,
+    skipBriefingRefresh: options?.skipBriefingRefresh ?? true,
+  });
 }
 
 export function loadLiveReport(): ControlPlaneReport | null {

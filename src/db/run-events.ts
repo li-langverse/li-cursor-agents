@@ -2,6 +2,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ConversationStep } from "@cursor/sdk";
 import type { InteractionUpdate } from "@cursor/sdk";
+import { agentLog } from "../agent-log.js";
 import { runsDir } from "../control-plane/paths.js";
 import { dbEnabled, getSupabase } from "./client.js";
 import { liveStreamDbEnabled } from "./live-stream-persist.js";
@@ -47,9 +48,16 @@ export function skipTokenStreamDeltas(): boolean {
   return true;
 }
 
+/** Persist structured SDK events to Supabase when configured; else disk JSONL under data/runs/events. */
 export function runEventsPersistEnabled(): boolean {
-  if (liveStreamDbEnabled()) return true;
-  return !dbEnabled();
+  if (!dbEnabled()) return true;
+  const off = process.env.LI_RUN_EVENTS_DB?.trim();
+  if (off === "0" || off === "false") return false;
+  return true;
+}
+
+function runEventsUseSupabase(): boolean {
+  return dbEnabled() && runEventsPersistEnabled();
 }
 
 function nextSeq(runId: string): number {
@@ -224,7 +232,10 @@ function scheduleFlush(runId: string): void {
     runId,
     setTimeout(() => {
       flushTimers.delete(runId);
-      void flushRunEvents(runId).catch(() => {});
+      void flushRunEvents(runId).catch((err) => {
+        const msg = err instanceof Error ? err.message : String(err);
+        agentLog("run-events", "warn", `flushRunEvents ${runId}: ${msg}`);
+      });
     }, Number.isFinite(debounceMs) && debounceMs >= 0 ? debounceMs : 80),
   );
 }
@@ -234,7 +245,7 @@ export async function flushRunEvents(runId: string): Promise<void> {
   if (!batch?.length) return;
   pendingByRun.set(runId, []);
 
-  if (liveStreamDbEnabled()) {
+  if (runEventsUseSupabase()) {
     await withSupabaseRetry("flushRunEvents", async () => {
       const rows = batch.map((e) => ({
         run_id: runId,
@@ -281,7 +292,7 @@ export async function getRunEventsForApi(
 ): Promise<RunEventRecord[]> {
   const cap = Math.min(500, Math.max(1, limit));
 
-  if (liveStreamDbEnabled()) {
+  if (runEventsUseSupabase()) {
     const { data, error } = await getSupabase()
       .from("agent_run_events")
       .select("seq, event_type, payload, created_at")

@@ -353,6 +353,7 @@ async function runAgentBody(
       ...options,
       cwd: workCwd,
       runId: options.runId,
+      runInput,
     });
   } catch (err) {
     if (isSdkSlotLockError(err)) {

@@ -1,6 +1,11 @@
 import type { AgentRunInputRecord, AgentRunTrace } from "../agent-run-trace.js";
 import { dbEnabled, getSupabase } from "./client.js";
-import { flushRunEvents, recordRunStarted, resetRunEventsState } from "./run-events.js";
+import {
+  flushRunEvents,
+  recordRunStarted,
+  resetRunEventsState,
+  runEventsPersistEnabled,
+} from "./run-events.js";
 import { withSupabaseRetry } from "./supabase-retry.js";
 
 /** Persist finest-grain SDK stream to Supabase during runs (Next.js reads without worker in-process state). */
@@ -64,7 +69,9 @@ export async function upsertLiveAgentRunStart(params: {
     );
     if (error) throw new Error(`upsertLiveAgentRunStart: ${error.message}`);
   });
-  recordRunStarted(params.runId, params.agentId, params.reason);
+  if (runEventsPersistEnabled()) {
+    recordRunStarted(params.runId, params.agentId, params.reason);
+  }
 }
 
 export async function flushLiveTraceToDb(

@@ -5,16 +5,16 @@ import {
   staleRunningRunMaxAgeMs,
 } from "./reconcile-stale-runs.js";
 
-test("staleRunningRunMaxAgeMs defaults to 1h and respects bounded env", () => {
+test("staleRunningRunMaxAgeMs defaults to 30m and respects bounded env", () => {
   const prev = process.env.LI_STALE_RUNNING_RUN_MS;
   delete process.env.LI_STALE_RUNNING_RUN_MS;
-  assert.equal(staleRunningRunMaxAgeMs(), 3_600_000);
+  assert.equal(staleRunningRunMaxAgeMs(), 1_800_000);
 
   process.env.LI_STALE_RUNNING_RUN_MS = "120000";
   assert.equal(staleRunningRunMaxAgeMs(), 120_000);
 
   process.env.LI_STALE_RUNNING_RUN_MS = "30";
-  assert.equal(staleRunningRunMaxAgeMs(), 3_600_000);
+  assert.equal(staleRunningRunMaxAgeMs(), 1_800_000);
 
   process.env.LI_STALE_RUNNING_RUN_MS = String(8 * 24 * 3_600_000);
   assert.equal(staleRunningRunMaxAgeMs(), 7 * 24 * 3_600_000);

@@ -10,6 +10,7 @@ import {
   spawnDetachedAsyncSwarm,
 } from "../swarm/detached-swarm-process.js";
 import { workerConsole } from "./worker-console.js";
+import { reconcileStaleRunningAgentRuns } from "../db/reconcile-stale-runs.js";
 import { flushWorkerHeartbeat } from "./heartbeat-loop.js";
 
 function swarmActiveOnThisHost(): boolean {
@@ -30,6 +31,17 @@ function envAutoStartSwarm(): boolean {
  */
 export async function reconcileSwarmAfterStartup(): Promise<void> {
   const state = loadState();
+  if (dbEnabled()) {
+    try {
+      const n = await reconcileStaleRunningAgentRuns();
+      if (n > 0) {
+        workerConsole("reconcile", "info", `marked ${n} stale agent_runs as error`);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      workerConsole("reconcile", "warn", `stale run reconcile skipped: ${msg}`);
+    }
+  }
   workerConsole(
     "reconcile",
     "info",

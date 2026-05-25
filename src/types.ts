@@ -94,6 +94,8 @@ export interface AgentRunOptions {
   workflowRepo?: string;
   /** When set (supervisor tracking), output + DB use this run_id. */
   runId?: string;
+  /** Populated by runner for live trace + event persistence. */
+  runInput?: AgentRunInputRecord;
 }
 
 export interface AgentRunCompletionMeta {
