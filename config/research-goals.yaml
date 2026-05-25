@@ -122,3 +122,23 @@ goals:
     uses_research_session: true
     ph_ids: [PH-2e, PH-2f]
     handoff_to: [package_architect, code_implementer, issue_planner]
+
+  - id: swarm_coverage
+    title: Swarm gap orchestration — registry, backlog apply, loop spawn
+    domains: [ecosystem, ai]
+    agent: swarm_observer
+    priority: 10
+    cadence_hours: 6
+    enabled: true
+    handoff_to: [gap_explorer, plan_verifier, issue_planner]
+
+  - id: offensive_security
+    title: Offensive security — fuzz, tier5 exploits, CWE feed
+    domains: [ecosystem, web]
+    agent: security_auditor
+    priority: 9
+    cadence_hours: 12
+    enabled: true
+    uses_research_session: true
+    allow_implementation: true
+    handoff_to: [code_implementer, issue_planner]
