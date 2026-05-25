@@ -13,7 +13,9 @@ export function LiveStreamFeed({ detail }: { detail: RunDetail }) {
   const trace = detail.run_trace;
   const deltas = trace?.deltas ?? [];
   const events = detail.trace_events ?? [];
-  const streamEvents = events.filter((e) => e.event_type.startsWith("stream_"));
+  const streamEvents = events.filter(
+    (e) => e.event_type.startsWith("stream_") || e.event_type.startsWith("tool_") || e.event_type.startsWith("step_") || e.event_type === "file_edit" || e.event_type === "shell_output" || e.event_type === "run_started",
+  );
   const rows = buildDeltaRows(deltas, streamEvents);
   const preview = deriveLiveStreamPreview({
     run_trace: trace,

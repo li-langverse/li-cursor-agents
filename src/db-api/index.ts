@@ -14,6 +14,7 @@ import {
   listRecentActivity,
   listRunsMerged,
 } from "../control-plane/runs-catalog.js";
+import { getRunEvents } from "../db/runs.js";
 import { buildSwarmStatistics, type SwarmStatistics } from "../control-plane/swarm-statistics.js";
 import { defaultStatsRunLimit, parseStatsTimeRange } from "../control-plane/stats-time-range.js";
 import { agentLog } from "../agent-log.js";
@@ -191,6 +192,14 @@ async function handleGet(pathname: string, url: URL): Promise<Response | null> {
   if (pathname === "/api/runs") {
     const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") ?? 80)));
     return jsonBody({ runs: await listRunsMerged(limit), store });
+  }
+
+  const runEventsMatch = pathname.match(/^\/api\/runs\/([^/]+)\/events$/);
+  if (runEventsMatch) {
+    const runId = decodeURIComponent(runEventsMatch[1]!);
+    const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") ?? 80)));
+    const events = await getRunEvents(runId, limit);
+    return jsonBody({ run_id: runId, events, store });
   }
 
   const runDetailMatch = pathname.match(/^\/api\/runs\/([^/]+)$/);

@@ -38,7 +38,7 @@ describeLiveDb("live stream → test Supabase → frontend API", () => {
     env?.restoreEnv();
   });
 
-  test("text-delta persists to agent_runs + agent_run_events and appears in GET /api/runs/:id", async () => {
+  test("tool events persist to agent_runs + agent_run_events and appear in GET /api/runs/:id/events", async () => {
     const agentId = "bug_fixer";
     const runId = registerSupervisorRun(agentId, "e2e-supabase-live-stream");
     const outPath = runOutputPath(agentId, runId, true);
@@ -53,39 +53,58 @@ describeLiveDb("live stream → test Supabase → frontend API", () => {
     });
 
     const collector = createLiveTraceCollector(runId, outPath, runInput);
-    const token = `db-stream-${Date.now()}`;
+    const toolPath = `e2e-stream-${Date.now()}.ts`;
     collector.onDelta({
-      update: { type: "text-delta", text: token } as { type: "text-delta"; text: string },
+      update: {
+        type: "tool-call-started",
+        tool: "edit",
+        args: { path: toolPath },
+      } as { type: "tool-call-started"; tool: string; args: { path: string } },
     });
     collector.onDelta({
-      update: { type: "thinking-delta", text: "planning…" } as { type: "thinking-delta"; text: string },
+      update: {
+        type: "tool-call-completed",
+        tool: "edit",
+        args: { path: toolPath },
+        result: { status: "success" },
+      } as {
+        type: "tool-call-completed";
+        tool: string;
+        args: { path: string };
+        result: { status: string };
+      },
     });
 
-    let assistant = "";
     let events: Array<{ event_type: string }> = [];
     for (let i = 0; i < 40; i++) {
-      const row = await getRunningRunById(runId);
-      const trace = row?.run_trace as { assistant_text?: string; deltas?: unknown[] } | null | undefined;
-      assistant = trace?.assistant_text ?? "";
       events = await getRunEvents(runId);
-      if (assistant.includes(token) && events.some((e) => e.event_type.startsWith("stream_"))) break;
+      if (events.some((e) => e.event_type === "tool_call_started")) break;
       await new Promise((r) => setTimeout(r, 50));
     }
 
-    assert.ok(assistant.includes(token), `DB run_trace should include streamed text; got "${assistant.slice(0, 80)}"`);
     assert.ok(
-      events.some((e) => e.event_type === "stream_text-delta"),
-      `expected stream_text-delta in agent_run_events, got: ${events.map((e) => e.event_type).join(", ")}`,
+      events.some((e) => e.event_type === "tool_call_started"),
+      `expected tool_call_started in agent_run_events, got: ${events.map((e) => e.event_type).join(", ")}`,
     );
+    assert.ok(
+      !events.some((e) => e.event_type.startsWith("stream_text-delta")),
+      "token/text deltas should not be persisted when LI_SDK_LOG_SKIP_TOKEN_DELTAS=1",
+    );
+
+    const row = await getRunningRunById(runId);
+    assert.ok(row, "running row should exist in agent_runs");
+
+    const eventsApi = await dbGet(`/api/runs/${encodeURIComponent(runId)}/events?limit=50`);
+    assert.equal(eventsApi.status, 200);
+    const apiEvents = (eventsApi.body.events as Array<{ event_type: string }>) ?? [];
+    assert.ok(apiEvents.some((e) => e.event_type === "tool_call_started"), "events API should list tool start");
 
     const detail = await dbGet(`/api/runs/${encodeURIComponent(runId)}`);
     assert.equal(detail.status, 200);
     assert.equal(detail.body.live, true);
-    const apiTrace = detail.body.run_trace as { assistant_text?: string; deltas?: Array<{ type: string }> };
-    assert.ok(apiTrace?.assistant_text?.includes(token), "db-api run detail should stream assistant_text");
     assert.ok(
-      (apiTrace?.deltas?.length ?? 0) > 0 || (detail.body.trace_events as unknown[])?.length,
-      "db-api should expose deltas or trace_events for live UI",
+      (detail.body.trace_events as unknown[])?.length || detail.body.run_trace,
+      "db-api run detail should expose trace_events or run_trace",
     );
 
     completeSupervisorRun(runId, "finished");

@@ -726,15 +726,50 @@ function renderStatCards() {
     <div class="stat-card"><div class="label">Run artifacts</div><div class="value">${runs}</div></div>`;
 }
 
+function liveEventPreview(events) {
+  if (!events?.length) return "";
+  const last = events[events.length - 1];
+  const p = last?.payload;
+  if (p && typeof p === "object" && p.message) return String(p.message).slice(0, 140);
+  return last?.event_type?.replace(/_/g, " ") ?? "";
+}
+
+async function loadLiveActivityEvents() {
+  const runtime = ui.data?.runtime;
+  const active = (runtime?.active_runs ?? []).filter((r) => r.status === "running" && r.run_id);
+  const byRun = {};
+  await Promise.all(
+    active.slice(0, 10).map(async (r) => {
+      try {
+        const body = await fetchJson(
+          `/api/runs/${encodeURIComponent(r.run_id)}/events?limit=24`,
+        );
+        byRun[r.run_id] = body.events ?? [];
+      } catch {
+        byRun[r.run_id] = [];
+      }
+    }),
+  );
+  ui.data.liveEventsByRun = byRun;
+}
+
 function renderLiveActivity() {
-  const { report, runtime, runsPayload } = ui.data;
+  const { report, runtime, runsPayload, liveEventsByRun } = ui.data;
   const feed = $("#live-activity");
   const items = [];
 
   for (const r of runtime?.active_runs ?? []) {
+    if (r.status !== "running") continue;
+    const evLine = liveEventPreview(liveEventsByRun?.[r.run_id]);
+    const trace = r.run_trace;
+    const toolHint =
+      trace?.tool_call_count > 0
+        ? `${trace.tool_call_count} tool${trace.tool_call_count === 1 ? "" : "s"}`
+        : "";
+    const detail = evLine || toolHint || r.reason || "SDK run in progress";
     items.push({
       t: r.started_at,
-      html: `<strong>${esc(r.agent_id)}</strong> running <span class="mono">pid ${esc(r.pid)}</span> — ${esc(r.reason ?? "")}`,
+      html: `<strong>${esc(r.agent_id)}</strong> <span class="mono">${esc(detail)}</span>${r.run_id ? ` <button type="button" class="linkish" data-open-run="${escAttr(r.run_id)}">trace</button>` : ""}`,
     });
   }
   for (const r of runsPayload?.runs?.slice(0, 8) ?? []) {
@@ -1150,6 +1185,7 @@ function closeDrawers() {
 async function refresh() {
   try {
     await loadDashboard();
+    await loadLiveActivityEvents().catch(() => {});
     renderSidebar();
     renderAgentBackendUi();
     renderSupervisorActivity();

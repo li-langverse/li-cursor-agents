@@ -35,12 +35,33 @@ export function deltaTypeLabel(type: string): string {
     case "text-delta":
       return "Assistant";
     case "tool-call-started":
+    case "tool_call_started":
       return "Tool started";
     case "tool-call-completed":
+    case "tool_call_completed":
       return "Tool finished";
+    case "step_thinking":
+      return "Thinking";
+    case "step_assistant":
+      return "Assistant";
+    case "file_edit":
+      return "File edit";
+    case "shell_output":
+      return "Shell";
+    case "tool_step":
+      return "Tool";
+    case "run_started":
+      return "Run started";
     default:
-      return type;
+      return type.replace(/_/g, " ");
   }
+}
+
+function formatRunEventPayload(payload: unknown): string {
+  if (payload && typeof payload === "object" && "message" in payload) {
+    return String((payload as { message: unknown }).message);
+  }
+  return formatDeltaPayload(payload);
 }
 
 export function buildDeltaRows(
@@ -56,13 +77,14 @@ export function buildDeltaRows(
     }));
   }
   return streamEvents.map((e) => {
-    const p = e.payload as { type?: string; at?: string; payload?: unknown } | null;
+    const p = e.payload as { type?: string; at?: string; ts?: string; payload?: unknown } | null;
     const type = p?.type ?? e.event_type.replace(/^stream_/, "");
+    const at = p?.ts ?? p?.at ?? "";
     return {
       key: `e-${e.seq}`,
       label: deltaTypeLabel(type),
-      at: p?.at ?? "",
-      body: formatDeltaPayload(p?.payload ?? e.payload),
+      at,
+      body: formatRunEventPayload(e.payload),
     };
   });
 }

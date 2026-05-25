@@ -41,6 +41,7 @@ import {
   listRunsMerged,
 } from "./control-plane/runs-catalog.js";
 import { readFileSafe } from "./control-plane/safe-file-read.js";
+import { getRunEvents } from "./db/runs.js";
 import { listActiveRuns } from "./control-plane/runtime.js";
 import { listSupervisorActivityAsync } from "./control-plane/supervisor-activity.js";
 import { loadRecentRunSummariesAsync } from "./control-plane/build-report.js";
@@ -615,6 +616,15 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       active: listActiveRuns(),
       store,
     });
+    return;
+  }
+
+  const runEventsMatch = url.pathname.match(/^\/api\/runs\/([^/]+)\/events$/);
+  if (runEventsMatch && req.method === "GET") {
+    const runId = decodeURIComponent(runEventsMatch[1]!);
+    const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") ?? 80)));
+    const events = await getRunEvents(runId, limit);
+    json(res, 200, { run_id: runId, events, store });
     return;
   }
 

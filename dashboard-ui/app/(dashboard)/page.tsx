@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { ActivityFeed } from "@/components/activity/activity-feed";
 import { RunDrawer } from "@/components/activity/run-drawer";
 import { AgentDetailDrawer } from "@/components/agents/agent-detail-drawer";
+import { LiveActivityPanel } from "@/components/live/live-activity-panel";
 import { LiveAgentsPanel, LiveAgentsPanelHeader } from "@/components/live/live-agents-panel";
 import { useDashboardCore, useRecentActivity } from "@/hooks/use-dashboard-data";
 import { buildAgentStatusMap } from "@/lib/agent-status";
@@ -67,6 +68,18 @@ export default function OverviewPage() {
           onOpenAgent={(id) => {
             setSelectedRunId(null);
             setSelectedAgentId(id);
+          }}
+        />
+      </section>
+
+      <section className="panel panel-live-activity">
+        <h2>Live activity</h2>
+        <p className="hint">SDK tool calls, file edits, and steps (token deltas omitted).</p>
+        <LiveActivityPanel
+          rows={liveRows}
+          onOpenRun={(runId) => {
+            setSelectedAgentId(null);
+            setSelectedRunId(runId);
           }}
         />
       </section>

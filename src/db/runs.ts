@@ -153,20 +153,18 @@ export async function upsertAgentRun(input: PersistRunInput): Promise<void> {
   }
 }
 
-export async function getRunEvents(runId: string): Promise<Array<{ seq: number; event_type: string; payload: unknown }>> {
-  if (!dbEnabled()) return [];
-
-  const { data, error } = await getSupabase()
-    .from("agent_run_events")
-    .select("seq, event_type, payload")
-    .eq("run_id", runId)
-    .order("seq", { ascending: true });
-
-  if (error) throw new Error(`getRunEvents: ${error.message}`);
-  return (data ?? []).map((r) => ({
-    seq: Number(r.seq),
-    event_type: String(r.event_type),
+export async function getRunEvents(
+  runId: string,
+  limit = 120,
+): Promise<Array<{ seq: number; event_type: string; payload: unknown; created_at?: string }>> {
+  const { getRunEventsForApi, runEventsPersistEnabled } = await import("./run-events.js");
+  if (!runEventsPersistEnabled() && !dbEnabled()) return [];
+  const rows = await getRunEventsForApi(runId, limit);
+  return rows.map((r) => ({
+    seq: r.seq,
+    event_type: r.event_type,
     payload: r.payload,
+    created_at: r.created_at,
   }));
 }
 
