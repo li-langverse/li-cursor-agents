@@ -24,6 +24,7 @@ import {
   nextContinuousLoopDelayMs,
   sleepUntil,
 } from "./continuous-agent-loop.js";
+import { swarmWorkersPaused } from "../swarm/swarm-worker-pause.js";
 
 export {
   IMPLEMENT_LANE_AGENTS,
@@ -73,6 +74,10 @@ export async function agentWorkerCycle(
   agentId: AgentId,
   options?: { mock?: boolean },
 ): Promise<AgentWorkerCycleResult> {
+  if (swarmWorkersPaused()) {
+    return { skipped: true, skip_reason: "worker pool paused (LI_SWARM_PAUSE_WORKERS)" };
+  }
+
   const state = loadState();
   if ((state.stopped_agents ?? []).includes(agentId)) {
     return { skipped: true, skip_reason: "agent stopped" };
@@ -191,6 +196,14 @@ export function startAgentWorkerPool(options?: { mock?: boolean }): {
   message: string;
   agents: AgentId[];
 } {
+  if (swarmWorkersPaused()) {
+    return {
+      started: false,
+      message: "agent worker pool paused (LI_SWARM_PAUSE_WORKERS)",
+      agents: [],
+    };
+  }
+
   const agents = asyncWorkerAgentIds();
   const mock = options?.mock ?? shouldUseMock(false);
   workerConsole(
@@ -233,11 +246,14 @@ export function agentWorkerPoolSnapshot(): {
   running: boolean;
   worker_count: number;
   agents: AgentId[];
+  paused: boolean;
 } {
+  const paused = swarmWorkersPaused();
   const active = [...workerAborts.entries()].filter(([, a]) => !a.signal.aborted);
   return {
-    running: active.length > 0,
-    worker_count: active.length,
-    agents: active.map(([id]) => id),
+    running: !paused && active.length > 0,
+    worker_count: paused ? 0 : active.length,
+    agents: paused ? [] : active.map(([id]) => id),
+    paused,
   };
 }

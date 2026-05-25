@@ -14,7 +14,12 @@ import type { ActiveAgentRun, AgentRunLifecycle, ControlPlaneState } from "./typ
 import type { AgentId } from "../types.js";
 import { asyncSwarmSnapshot } from "../async-swarm/async-swarm-state.js";
 import { computeInSdkCount } from "./active-run-metrics.js";
-import { sdkMaxConcurrent, sdkSessionInProcessActive } from "../backends/sdk-session-lock.js";
+import {
+  sdkMaxConcurrent,
+  sdkSessionInProcessActive,
+  sdkSlotsInUse,
+} from "../backends/sdk-session-lock.js";
+import { swarmWorkersPaused } from "../swarm/swarm-worker-pause.js";
 import { upsertLiveAgentRunStart } from "../db/live-stream-persist.js";
 import { allocateRunId } from "./run-paths.js";
 import { handoffRunStatus } from "../lanes/handoff-run-coordinator.js";
@@ -158,7 +163,9 @@ export function runtimeSnapshot(state: ControlPlaneState) {
     ...asyncSwarmSnapshot(),
     handoff_run: handoffRunStatus(),
     sdk_max_concurrent: sdkMaxConcurrent(),
+    sdk_slots_in_use: sdkSlotsInUse(),
     sdk_sessions_active: sdkSessionInProcessActive(),
+    workers_paused: swarmWorkersPaused(),
   };
 }
 
