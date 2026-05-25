@@ -241,15 +241,49 @@ function agentDeliverablePrGaps(b: Record<string, unknown>): HumanIntervention[]
   );
 }
 
+const BENCHMARK_DASHBOARD_BASE = "https://li-langverse.github.io/benchmarks";
+
+function benchIdFromRedRow(row: unknown): string {
+  if (typeof row === "string") return row;
+  if (row && typeof row === "object") {
+    const r = row as { id?: string; benchmark?: string };
+    return String(r.id ?? r.benchmark ?? "unknown");
+  }
+  return "unknown";
+}
+
+function redBenchmarkDeepLinks(b: Record<string, unknown>): Array<{ id?: string; url?: string }> {
+  const top = b.benchmarks as Record<string, unknown> | undefined;
+  const fromTop = top?.deep_links;
+  if (Array.isArray(fromTop) && fromTop.length > 0) return fromTop as Array<{ id?: string; url?: string }>;
+  const audit = b.ecosystem_audit as Record<string, unknown> | undefined;
+  const bench = audit?.benchmarks as Record<string, unknown> | undefined;
+  const fromAudit = bench?.deep_links;
+  if (Array.isArray(fromAudit) && fromAudit.length > 0) return fromAudit as Array<{ id?: string; url?: string }>;
+  return [];
+}
+
+function redBenchmarkPrimaryLink(b: Record<string, unknown>, firstId: string): string {
+  const base = String(b.benchmark_dashboard_base ?? BENCHMARK_DASHBOARD_BASE);
+  const links = redBenchmarkDeepLinks(b);
+  const match = links.find((d) => d.id === firstId) ?? links[0];
+  if (match?.url) return String(match.url);
+  return `${base}/bench/${firstId}/`;
+}
+
 function redBenchmarks(b: Record<string, unknown>): HumanIntervention[] {
   const audit = b.ecosystem_audit as Record<string, unknown> | undefined;
   const bench = audit?.benchmarks as Record<string, unknown> | undefined;
   const raw = bench?.red;
   const rows = Array.isArray(raw) ? raw : [];
   if (rows.length === 0) return [];
-  const ids = rows.map((r) =>
-    typeof r === "string" ? r : String((r as { id?: string }).id ?? "unknown"),
-  );
+  const ids = rows.map(benchIdFromRedRow);
+  const firstId = ids[0] ?? "unknown";
+  const primary = redBenchmarkPrimaryLink(b, firstId);
+  const extra = redBenchmarkDeepLinks(b)
+    .map((d) => String(d.url ?? ""))
+    .filter((u) => u && u !== primary)
+    .slice(0, 5);
   return [
     item(
       "ci_red",
@@ -257,7 +291,7 @@ function redBenchmarks(b: Record<string, unknown>): HumanIntervention[] {
       `${rows.length} red benchmark row(s)`,
       ids.slice(0, 6).join(", ") + (ids.length > 6 ? "…" : ""),
       "Prioritize compiler/bench fix or run numerics_research agent after reviewing dashboard.",
-      ["https://li-langverse.github.io/benchmarks/"],
+      [primary, ...extra],
     ),
   ];
 }
