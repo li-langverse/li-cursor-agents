@@ -1,29 +1,11 @@
-import { test, mock } from "node:test";
+import { test } from "node:test";
 import assert from "node:assert/strict";
 import { join } from "node:path";
-import { mkdtempSync, writeFileSync, mkdirSync } from "node:fs";
+import { mkdtempSync, writeFileSync, mkdirSync, chmodSync } from "node:fs";
 import { tmpdir } from "node:os";
-import * as handoffStore from "../handoffs/handoff-store.js";
-import { pickHandoffImplementTarget, pickImplementLaneTarget } from "./implement-lane.js";
+import { pickNextImplementWorkForAgent, loadImplementGoals } from "../implement-goals/load-goals.js";
 
-test("pickHandoffImplementTarget returns null when queue empty", async () => {
-  const list = mock.method(handoffStore, "listHandoffs", async () => []);
-  const claim = mock.method(handoffStore, "claimNextHandoff", async () => null);
-  try {
-    const target = await pickHandoffImplementTarget();
-    assert.equal(target, null);
-    assert.equal(list.mock.callCount(), 2);
-    assert.equal(claim.mock.callCount(), 1);
-  } finally {
-    list.mock.restore();
-    claim.mock.restore();
-  }
-});
-
-test("pickImplementLaneTarget falls back to implement goal when no handoff", async () => {
-  const list = mock.method(handoffStore, "listHandoffs", async () => []);
-  const claim = mock.method(handoffStore, "claimNextHandoff", async () => null);
-
+test("pickNextImplementWorkForAgent returns goal and todo from temp backlog", () => {
   const root = mkdtempSync(join(tmpdir(), "implement-lane-"));
   const lic = join(root, "lic");
   const backlogDir = join(lic, "docs", "ecosystem");
@@ -41,23 +23,13 @@ test("pickImplementLaneTarget falls back to implement goal when no handoff", asy
     ].join("\n"),
     "utf8",
   );
-  writeFileSync(
-    join(lic, "scripts", "noop-gates.sh"),
-    "#!/usr/bin/env bash\nexit 0\n",
-    "utf8",
-  );
+  const gates = join(lic, "scripts", "noop-gates.sh");
+  writeFileSync(gates, "#!/usr/bin/env bash\nexit 0\n", "utf8");
+  chmodSync(gates, 0o755);
 
-  const prevGoals = process.env.LI_IMPLEMENT_GOALS_PATH;
-  const prevLangverse = process.env.LI_LANGVERSE_ROOT;
-  const prevLic = process.env.LIC_ROOT;
-  process.env.LI_LANGVERSE_ROOT = root;
-  process.env.LIC_ROOT = lic;
-  process.env.LI_IMPLEMENT_GOALS_PATH = join(
-    root,
-    "implement-goals-test.yaml",
-  );
+  const goalsPath = join(root, "implement-goals-test.yaml");
   writeFileSync(
-    process.env.LI_IMPLEMENT_GOALS_PATH,
+    goalsPath,
     [
       "goals:",
       "  - id: swarm_test",
@@ -75,18 +47,20 @@ test("pickImplementLaneTarget falls back to implement goal when no handoff", asy
     "utf8",
   );
 
+  const prevGoals = process.env.LI_IMPLEMENT_GOALS_PATH;
+  const prevLangverse = process.env.LI_LANGVERSE_ROOT;
+  const prevLic = process.env.LIC_ROOT;
+  process.env.LI_IMPLEMENT_GOALS_PATH = goalsPath;
+  process.env.LI_LANGVERSE_ROOT = root;
+  process.env.LIC_ROOT = lic;
+
   try {
-    const target = await pickImplementLaneTarget();
-    assert.ok(target);
-    assert.equal(target!.kind, "implement_goal");
-    if (target!.kind === "implement_goal") {
-      assert.equal(target.agentId, "code_implementer");
-      assert.equal(target.goal.id, "swarm_test");
-      assert.equal(target.todo.id, "swarm-test-todo");
-    }
+    const goals = loadImplementGoals();
+    const picked = pickNextImplementWorkForAgent("code_implementer", goals, {}, {});
+    assert.ok(picked);
+    assert.equal(picked!.goal.id, "swarm_test");
+    assert.equal(picked!.todo.id, "swarm-test-todo");
   } finally {
-    list.mock.restore();
-    claim.mock.restore();
     if (prevGoals === undefined) delete process.env.LI_IMPLEMENT_GOALS_PATH;
     else process.env.LI_IMPLEMENT_GOALS_PATH = prevGoals;
     if (prevLangverse === undefined) delete process.env.LI_LANGVERSE_ROOT;

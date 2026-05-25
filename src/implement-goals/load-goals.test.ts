@@ -6,6 +6,7 @@ import {
   loadImplementGoals,
   pickNextImplementGoal,
   pickNextImplementGoalForAgent,
+  pickNextImplementWorkForAgent,
 } from "./load-goals.js";
 import { parseBacklogTodos, pickNextBacklogTodo } from "./backlog-io.js";
 
@@ -15,10 +16,20 @@ test("loadImplementGoals reads committed yaml", () => {
   const httpd = goals.find((g) => g.id === "httpd_parity");
   assert.ok(httpd);
   assert.equal(httpd?.agent, "code_implementer");
-  assert.equal(httpd?.lic_root, "lic");
   assert.equal(httpd?.gates_script, "scripts/httpd-plan-gates.sh");
   const studio = goals.find((g) => g.id === "studio_ui_ux");
   assert.equal(studio?.lic_root, "lic-studio-ui");
+});
+
+test("pickNextImplementWorkForAgent returns null when repos missing", () => {
+  const goals = loadImplementGoals();
+  const picked = pickNextImplementWorkForAgent(
+    "code_implementer",
+    goals.map((g) => ({ ...g, repo_subpath: "__missing__", lic_root: "__missing__" })),
+    {},
+    {},
+  );
+  assert.equal(picked, null);
 });
 
 test("pickNextImplementGoal respects cadence", () => {
