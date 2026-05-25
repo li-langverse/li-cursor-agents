@@ -13,6 +13,8 @@ mkdir -p logs
 
 # shellcheck source=env.defaults.sh
 source "$ROOT/scripts/env.defaults.sh"
+ENV_FILE="${LI_CURSOR_ENV_FILE:-$HOME/Documents/Cursor/.env}"
+if [[ -f "$ENV_FILE" ]]; then set -a && source "$ENV_FILE" && set +a; fi
 if [[ -f "$ROOT/.env" ]]; then set -a && source "$ROOT/.env" && set +a; fi
 li_resolve_env_paths "$ROOT"
 if [[ -f "$ROOT/.env.supabase" ]]; then set -a && source "$ROOT/.env.supabase" && set +a; fi

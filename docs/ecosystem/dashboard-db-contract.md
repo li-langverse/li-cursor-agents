@@ -12,7 +12,7 @@ The ops dashboard (`:9477`) and Next.js read API share the same Supabase tables 
 
 ## Runtime API (`GET /api/runtime`)
 
-- **`active_runs`**: union of async-swarm heartbeat rows and DB `agent_runs` with `status=running` (orphans after worker loss).
+- **`active_runs`**: union of async-swarm heartbeat rows and DB `agent_runs` with `status=running` (orphans after worker loss). When both exist for the same `run_id`, DB fields (`run_trace`, `run_input`, `output_path`) overlay the heartbeat row.
 - Each running row includes **`recent_events`** (last 5) and **`last_event`** (latest payload preview) when run-event persist is enabled.
 - **`store`**, **`db_enabled`**, **`control_plane_store`**: must read `supabase` when the stack is up; `disk` is a boot-time fallback only.
 
