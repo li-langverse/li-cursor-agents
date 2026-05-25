@@ -25,6 +25,24 @@ fi
 if [[ -n "$STORE_FROM_UNIT" ]]; then
   export LI_CONTROL_PLANE_STORE="$STORE_FROM_UNIT"
 fi
+_store="${LI_CONTROL_PLANE_STORE:-supabase}"
+[[ "${LI_STACK_SKIP_SUPABASE:-}" == "1" ]] && _store="disk"
+if [[ "$_store" == "supabase" ]]; then
+  if ! "$ROOT/scripts/ensure-supabase.sh"; then
+    echo "agents-swarm-systemd[$AGENTS_SWARM_ROLE]: Supabase ensure failed (Docker?). LI_CONTROL_PLANE_STORE=disk or: npm run db:ensure" >&2
+    exit 1
+  fi
+  if [[ -f "$ROOT/.env.supabase" ]]; then
+    set -a
+    # shellcheck source=/dev/null
+    source "$ROOT/.env.supabase"
+    set +a
+  fi
+  if [[ -z "${SUPABASE_URL:-}" || ( -z "${SUPABASE_SERVICE_ROLE_KEY:-}" && -z "${SUPABASE_ANON_KEY:-}" ) ]]; then
+    echo "agents-swarm-systemd[$AGENTS_SWARM_ROLE]: Supabase credentials missing — install Docker + Supabase CLI, then: npm run db:ensure" >&2
+    exit 1
+  fi
+fi
 export GH_TOKEN GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
 if [[ -z "${NODE_BIN:-}" || ! -x "${NODE_BIN}" ]]; then
   for candidate in /opt/homebrew/bin/node /opt/homebrew/opt/node@22/bin/node; do

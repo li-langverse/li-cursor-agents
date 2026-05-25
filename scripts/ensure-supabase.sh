@@ -20,8 +20,23 @@ if [[ "${LI_STACK_SKIP_SUPABASE:-}" == "1" ]]; then
   exit 0
 fi
 
-if ! command -v supabase >/dev/null 2>&1 || [[ ! -f supabase/config.toml ]]; then
-  echo "WARN: supabase CLI or supabase/config.toml missing — disk cache only" >&2
+if [[ ! -f supabase/config.toml ]]; then
+  echo "WARN: supabase/config.toml missing — disk cache only" >&2
+  exit 0
+fi
+
+_supabase_cmd() {
+  if command -v supabase >/dev/null 2>&1; then
+    supabase "$@"
+  elif command -v npx >/dev/null 2>&1; then
+    npx --yes supabase "$@"
+  else
+    return 127
+  fi
+}
+
+if ! command -v supabase >/dev/null 2>&1 && ! command -v npx >/dev/null 2>&1; then
+  echo "WARN: supabase CLI not found (install or use npx) — disk cache only" >&2
   exit 0
 fi
 
@@ -31,23 +46,23 @@ if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
 fi
 
 _log "==> Supabase: start"
-if ! supabase start; then
+if ! _supabase_cmd start; then
   echo "WARN: supabase start failed" >&2
   exit 1
 fi
 
 if [[ "${LI_SUPABASE_DB_RESET:-}" == "1" ]]; then
   _log "==> Supabase: db reset (LI_SUPABASE_DB_RESET=1)"
-  supabase db reset
+  _supabase_cmd db reset
 else
   _log "==> Supabase: apply local migrations (migration up)"
-  if ! supabase migration up; then
+  if ! _supabase_cmd migration up; then
     echo "ERROR: supabase migration up failed — try: LI_SUPABASE_DB_RESET=1 npm run db:ensure" >&2
     exit 1
   fi
 fi
 
-API_URL="$(supabase status -o json 2>/dev/null | node -e "
+API_URL="$(_supabase_cmd status -o json 2>/dev/null | node -e "
 let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{
   try { console.log(JSON.parse(d).API_URL || 'http://127.0.0.1:54321'); }
   catch { console.log('http://127.0.0.1:54321'); }

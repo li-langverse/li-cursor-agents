@@ -58,11 +58,14 @@ For implementers who need node-level detail:
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"primaryColor": "#1A2332", "primaryTextColor": "#E8EDF4", "primaryBorderColor": "#5B9FD4", "lineColor": "#5B9FD4", "secondaryColor": "#121820", "tertiaryColor": "#243044", "background": "#0B0F14", "mainBkg": "#0B0F14", "clusterBkg": "#121820", "titleColor": "#E8EDF4"}}}%%
 flowchart TB
-  subgraph controlPlane ["Control plane · agents systemd"]
+  subgraph controlPlane ["Control plane · agents systemd · Supabase"]
+    DB["Supabase PostgREST · local Docker"]
     DASH["Dashboard port 9477"]
     ASYNC["Async swarm runtime"]
     SLOT["SDK slot pool · max 8"]
     WD["Watchdog · swarm-health.json"]
+    DB --> DASH
+    DB --> ASYNC
     DASH --> ASYNC --> SLOT
     WD --> ASYNC
   end
@@ -123,10 +126,17 @@ Single entry for a persistent self-driving swarm:
 ```bash
 cd li-cursor-agents
 source ~/Documents/Cursor/.env   # CURSOR_API_KEY, GH_TOKEN
+npm run db:ensure                # Docker + Supabase CLI; writes .env.supabase
 ./scripts/install-agents-swarm-systemd.sh
 ```
 
-This installs user systemd for the dashboard (`:9477`, `LI_AUTO_START_ASYNC_SWARM=0` when async-swarm is installed) plus `li-agents-async-swarm` and watchdog. Only the async-swarm unit runs the swarm process; the dashboard serves API/UI. Stop autostart: `touch data/control-plane/DISABLE_AUTOSTART`.
+**Control plane store:** production swarm uses **`LI_CONTROL_PLANE_STORE=supabase`** (default in `scripts/env.defaults.sh` and systemd install). State, worker heartbeats, handoffs, and runs persist to local Supabase (`http://127.0.0.1:54321` by default). `data/control-plane/state.json` remains an IPC mirror when the dashboard and async-swarm are separate processes; it is not the source of truth when store=supabase.
+
+- **Verify:** `curl -sf http://127.0.0.1:9477/api/runtime | jq '{store, db_enabled, control_plane_store}'` — expect `store: "supabase"`, `db_enabled: true`.
+- **Disk-only (CI/tests):** `LI_CONTROL_PLANE_STORE=disk` or legacy `LI_STACK_SKIP_SUPABASE=1`.
+- **Migrate disk → Supabase** (optional, does not wipe DB): after `npm run db:ensure`, `set -a && source .env.supabase && set +a && node scripts/backfill-control-plane-db.mjs` imports `data/control-plane/state.json`, `latest-report.json`, and `data/runs/*.md`.
+
+This installs user systemd for the dashboard (`:9477`, `LI_AUTO_START_ASYNC_SWARM=0` when async-swarm is installed) plus `li-agents-async-swarm` and watchdog. Units set `LI_CONTROL_PLANE_STORE=supabase` unless overridden at install time. Only the async-swarm unit runs the swarm process; the dashboard serves API/UI. Stop autostart: `touch data/control-plane/DISABLE_AUTOSTART`.
 
 **LAN access (other machines on your network):** by default the ops-server binds to loopback (`127.0.0.1`). To expose the dashboard API and static UI on the LAN:
 

@@ -10,6 +10,7 @@ LOG_DIR="$ROOT/logs"
 PORT="${LI_AGENT_DASHBOARD_PORT:-9477}"
 DASHBOARD_HOST="${LI_AGENT_DASHBOARD_HOST:-127.0.0.1}"
 SDK_MAX="${LI_SDK_MAX_CONCURRENT:-8}"
+STORE="${LI_CONTROL_PLANE_STORE:-supabase}"
 NODE_BIN="${NODE_BIN:-$(command -v node)}"
 NODE_DIR="$(dirname "$NODE_BIN")"
 NPM_BIN="${NPM_BIN:-$(command -v npm 2>/dev/null || true)}"
@@ -44,7 +45,7 @@ After=network-online.target
 Type=simple
 WorkingDirectory=$ROOT
 Environment=HOME=$HOME PATH=$SERVICE_PATH LI_CURSOR_ENV_FILE=$ENV_FILE LI_CURSOR_AGENTS_ROOT=$ROOT
-Environment=NODE_BIN=$NODE_BIN LI_AGENT_DASHBOARD_PORT=$PORT LI_AGENT_DASHBOARD_HOST=$DASHBOARD_HOST LI_CONTROL_PLANE_STORE=disk
+Environment=NODE_BIN=$NODE_BIN LI_AGENT_DASHBOARD_PORT=$PORT LI_AGENT_DASHBOARD_HOST=$DASHBOARD_HOST LI_CONTROL_PLANE_STORE=$STORE
 Environment=LI_SDK_MAX_CONCURRENT=$SDK_MAX LI_AUTO_START_ASYNC_SWARM=${DASHBOARD_AUTO_SWARM} LI_SWARM_DETACHED=1 LI_SWARM_EXTERNAL=${DASHBOARD_EXTERNAL_SWARM} LI_AUTO_START_SUPERVISOR=0
 ExecStart=$ROOT/scripts/agents-dashboard-systemd.sh
 Restart=on-failure
@@ -63,7 +64,7 @@ After=network-online.target
 Type=simple
 WorkingDirectory=$ROOT
 Environment=HOME=$HOME PATH=$SERVICE_PATH LI_CURSOR_ENV_FILE=$ENV_FILE LI_CURSOR_AGENTS_ROOT=$ROOT
-Environment=NODE_BIN=$NODE_BIN LI_CONTROL_PLANE_STORE=disk LI_SDK_MAX_CONCURRENT=$SDK_MAX
+Environment=NODE_BIN=$NODE_BIN LI_CONTROL_PLANE_STORE=$STORE LI_SDK_MAX_CONCURRENT=$SDK_MAX
 Environment=LI_AUTO_START_ASYNC_SWARM=1 LI_SWARM_DETACHED=0
 ExecStart=$ROOT/scripts/agents-async-swarm-systemd.sh
 Restart=on-failure
@@ -97,7 +98,7 @@ if [[ "$INSTALL_SWEEP" == "1" ]]; then
 Type=oneshot
 WorkingDirectory=$ROOT
 Environment=HOME=$HOME PATH=$SERVICE_PATH LI_CURSOR_ENV_FILE=$ENV_FILE LI_CURSOR_AGENTS_ROOT=$ROOT
-Environment=NODE_BIN=$NODE_BIN LI_CONTROL_PLANE_STORE=disk LI_SDK_MAX_CONCURRENT=$SDK_MAX
+Environment=NODE_BIN=$NODE_BIN LI_CONTROL_PLANE_STORE=$STORE LI_SDK_MAX_CONCURRENT=$SDK_MAX
 ExecStart=$ROOT/scripts/sweep-hung-agents.sh --apply
 EOF
   cat >"$SERVICE_DIR/li-agents-sweep.timer" <<EOF
@@ -120,4 +121,5 @@ if [[ "$DASHBOARD_HOST" == "0.0.0.0" ]]; then
 else
   echo "OK dashboard http://127.0.0.1:${PORT}/ — LAN: reinstall with --lan or LI_AGENT_DASHBOARD_HOST=0.0.0.0"
 fi
+echo "Control plane store: ${STORE} (Supabase: npm run db:ensure before start; disk: LI_CONTROL_PLANE_STORE=disk)"
 echo "DISABLE autostart: ${DATA_DIR}/DISABLE_AUTOSTART"
