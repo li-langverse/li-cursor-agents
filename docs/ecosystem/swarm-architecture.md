@@ -32,7 +32,7 @@ The loop is continuous: **read signals → pick highest-value goal → run agent
                     ┌──────────────────▼──────────────────┐
                     │  SWARM                              │
                     │  research · implement · audit lanes │
-                    │  ≤4 parallel SDK sessions         │
+                    │  ≤8 parallel SDK sessions         │
                     └──────────────────┬──────────────────┘
                                        │ produces
                     ┌──────────────────▼──────────────────┐
@@ -43,7 +43,7 @@ The loop is continuous: **read signals → pick highest-value goal → run agent
                                        └────── feedback ──────┘
 ```
 
-**X infographic (brand colors):** [swarm-infographic.html](./swarm-infographic.html) — 1200×675 artboard (16:9), **Download PNG for X** via html2canvas, optional 1600×900. Flow: Signals → Goals → Swarm (4 slots) → Agents → Codebase + feedback; **9 lic loops → 1 swarm**.
+**X infographic (brand colors):** [swarm-infographic.html](./swarm-infographic.html) — 1200×675 artboard (16:9), **Download PNG for X** via html2canvas, optional 1600×900. Flow: Signals → Goals → Swarm (8 slots) → Agents → Codebase + feedback; **9 lic loops → 1 swarm**.
 
 **Old model (retired):** nine separate bash loops in `lic`, each fighting for the same SDK slots.
 
@@ -61,7 +61,7 @@ flowchart TB
   subgraph controlPlane ["Control plane · agents systemd"]
     DASH["Dashboard port 9477"]
     ASYNC["Async swarm runtime"]
-    SLOT["SDK slot pool · max 4"]
+    SLOT["SDK slot pool · max 8"]
     WD["Watchdog · swarm-health.json"]
     DASH --> ASYNC --> SLOT
     WD --> ASYNC
@@ -126,7 +126,7 @@ source ~/Documents/Cursor/.env   # CURSOR_API_KEY, GH_TOKEN
 ./scripts/install-agents-swarm-systemd.sh
 ```
 
-This installs user systemd for the dashboard (`:9477`, `LI_AUTO_START_ASYNC_SWARM=1`) plus optional async-swarm and watchdog. Stop autostart: `touch data/control-plane/DISABLE_AUTOSTART`.
+This installs user systemd for the dashboard (`:9477`, `LI_AUTO_START_ASYNC_SWARM=0` when async-swarm is installed) plus `li-agents-async-swarm` and watchdog. Only the async-swarm unit runs the swarm process; the dashboard serves API/UI. Stop autostart: `touch data/control-plane/DISABLE_AUTOSTART`.
 
 **LAN access (other machines on your network):** by default the ops-server binds to loopback (`127.0.0.1`). To expose the dashboard API and static UI on the LAN:
 
@@ -175,10 +175,22 @@ Read-only board: `GET /api/goals` (YAML only, no DB).
 
 ## SDK slots
 
-Research (1) + implement (1) + worker pool (2) = default `LI_SDK_MAX_CONCURRENT=4`. Details: [sdk-slot-policy.md](./sdk-slot-policy.md).
+Research (1) + implement (1) + worker pool (6) = default `LI_SDK_MAX_CONCURRENT=8`. Details: [sdk-slot-policy.md](./sdk-slot-policy.md).
+
+## Hung-agent sweep
+
+Crashed workers can leave stale SDK slot files or orphan `run-agent` / `async-swarm` processes. The sweep reclaims locks and stops stuck PIDs without killing the dashboard or systemd swarm:
+
+```bash
+./scripts/sweep-hung-agents.sh          # dry-run
+./scripts/sweep-hung-agents.sh --apply
+```
+
+Timer: `li-agents-sweep.timer` (30m) from `install-agents-swarm-systemd.sh`. See [hung-agent-sweep.md](./hung-agent-sweep.md).
 
 ## Related docs
 
 - [agent-automations.md](./agent-automations.md)
 - [sdk-slot-policy.md](./sdk-slot-policy.md)
+- [hung-agent-sweep.md](./hung-agent-sweep.md)
 - `lic/.cursor/skills/goal-plan-loop-persistent/SKILL.md` — **deprecated**; use this doc

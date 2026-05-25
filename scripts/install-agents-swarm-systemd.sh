@@ -18,9 +18,11 @@ NPM_DIR=""
 SERVICE_PATH="$NODE_DIR${NPM_DIR:+:$NPM_DIR}:/usr/local/bin:/usr/bin:/bin"
 INSTALL_WATCHDOG=1
 INSTALL_ASYNC=1
+INSTALL_SWEEP=1
 for arg in "$@"; do
   case "$arg" in
     --no-watchdog) INSTALL_WATCHDOG=0 ;;
+    --no-sweep) INSTALL_SWEEP=0 ;;
     --dashboard-only) INSTALL_ASYNC=0 ;;
     --lan) DASHBOARD_HOST="0.0.0.0" ;;
   esac
@@ -31,7 +33,7 @@ if [[ "$INSTALL_ASYNC" == "1" ]]; then
   DASHBOARD_AUTO_SWARM=0
   DASHBOARD_EXTERNAL_SWARM=1
 fi
-chmod +x "$ROOT"/scripts/lib/agents-swarm-systemd-wrapper.sh "$ROOT"/scripts/agents-*.sh
+chmod +x "$ROOT"/scripts/lib/agents-swarm-systemd-wrapper.sh "$ROOT"/scripts/agents-*.sh "$ROOT"/scripts/sweep-hung-agents.sh
 mkdir -p "$DATA_DIR" "$LOG_DIR" "$SERVICE_DIR"
 command -v loginctl >/dev/null && loginctl enable-linger "$(whoami)" 2>/dev/null || true
 cat >"$SERVICE_DIR/li-agents-dashboard.service" <<EOF
@@ -89,10 +91,29 @@ Persistent=true
 WantedBy=timers.target
 EOF
 fi
+if [[ "$INSTALL_SWEEP" == "1" ]]; then
+  cat >"$SERVICE_DIR/li-agents-sweep.service" <<EOF
+[Service]
+Type=oneshot
+WorkingDirectory=$ROOT
+Environment=HOME=$HOME PATH=$SERVICE_PATH LI_CURSOR_ENV_FILE=$ENV_FILE LI_CURSOR_AGENTS_ROOT=$ROOT
+Environment=NODE_BIN=$NODE_BIN LI_CONTROL_PLANE_STORE=disk LI_SDK_MAX_CONCURRENT=$SDK_MAX
+ExecStart=$ROOT/scripts/sweep-hung-agents.sh --apply
+EOF
+  cat >"$SERVICE_DIR/li-agents-sweep.timer" <<EOF
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=30min
+Persistent=true
+[Install]
+WantedBy=timers.target
+EOF
+fi
 systemctl --user daemon-reload
 systemctl --user enable --now li-agents-dashboard.service
 [[ "$INSTALL_ASYNC" == "1" ]] && systemctl --user enable li-agents-async-swarm.service
 [[ "$INSTALL_WATCHDOG" == "1" ]] && systemctl --user enable --now li-agents-swarm-watchdog.timer
+[[ "$INSTALL_SWEEP" == "1" ]] && systemctl --user enable --now li-agents-sweep.timer
 if [[ "$DASHBOARD_HOST" == "0.0.0.0" ]]; then
   LAN_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
   echo "OK dashboard LAN http://${LAN_IP:-<host-ip>}:${PORT}/ (bind 0.0.0.0:${PORT}) — firewall: ufw allow ${PORT}/tcp"
