@@ -1,4 +1,6 @@
 import { computeInSdkCount } from "../control-plane/active-run-metrics.js";
+import { sdkMaxConcurrent, sdkSlotsInUse } from "../backends/sdk-session-lock.js";
+import { swarmWorkersPaused } from "../swarm/swarm-worker-pause.js";
 import type { ControlPlaneState } from "../control-plane/types.js";
 import type { WorkerStatusRow } from "../db/worker-status.js";
 import { defaultWorkerStatus } from "../db/worker-status.js";
@@ -24,8 +26,10 @@ export function runtimeSnapshotFromDb(
     active_run_count: computeInSdkCount(w.active_runs, w.sdk_sessions_active),
     async_swarm_running: w.async_swarm_running,
     handoff_run: w.handoff_run,
-    sdk_max_concurrent: w.sdk_max_concurrent ?? Number(process.env.LI_SDK_MAX_CONCURRENT ?? 2),
+    sdk_max_concurrent: w.sdk_max_concurrent ?? sdkMaxConcurrent(),
+    sdk_slots_in_use: sdkSlotsInUse(),
     sdk_sessions_active: w.sdk_sessions_active ?? 0,
+    workers_paused: swarmWorkersPaused(),
     store: undefined as string | undefined,
   };
 }

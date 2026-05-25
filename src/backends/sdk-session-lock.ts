@@ -142,6 +142,12 @@ export function sdkSlotsDiagnostics(): {
   return { max, held };
 }
 
+/** Cross-process slot files currently held (non-stale). */
+export function sdkSlotsInUse(): number {
+  reclaimAllStaleSdkSlots();
+  return sdkSlotsDiagnostics().held.filter((h) => !h.stale).length;
+}
+
 /** Fast check before starting a long SDK run (worker tick). */
 export function sdkSlotLikelyAvailable(): boolean {
   reclaimAllStaleSdkSlots();

@@ -47,4 +47,7 @@ test("runtimeSnapshotFromDb active_run_count reflects running rows and sdk slots
     },
   );
   assert.equal(snap.active_run_count, 1);
+  assert.equal(typeof snap.sdk_slots_in_use, "number");
+  assert.equal(typeof snap.workers_paused, "boolean");
+  assert.equal(snap.sdk_max_concurrent, 2);
 });
