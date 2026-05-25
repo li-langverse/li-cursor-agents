@@ -37,7 +37,8 @@ export NODE_BIN PATH="$(dirname "$NODE_BIN")${NPM_DIR:+:$NPM_DIR}:${PATH}"
 npm run build >/dev/null 2>&1
 case "$AGENTS_SWARM_ROLE" in
   dashboard)
-    export LI_AUTO_START_SUPERVISOR=0 LI_AUTO_START_ASYNC_SWARM=1 LI_SWARM_DETACHED=1 LI_SWARM_EXTERNAL=0
+    export LI_AUTO_START_SUPERVISOR=0 LI_SWARM_DETACHED=1 LI_SWARM_EXTERNAL=0
+    export LI_AUTO_START_ASYNC_SWARM="${LI_AUTO_START_ASYNC_SWARM:-0}"
     exec "$NODE_BIN" "$ROOT/dist/cli/serve-dashboard.js" --port "$PORT"
     ;;
   async-swarm)

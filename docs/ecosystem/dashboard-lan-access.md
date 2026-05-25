@@ -1,5 +1,14 @@
 # Dashboard LAN access and tracking
 
+## Verified working URL (this host)
+
+- **Dashboard UI:** http://192.168.10.32:9477/
+- **Health check:** `curl -sf --max-time 5 http://192.168.10.32:9477/api/health` → HTTP 200
+
+### Root cause when the browser shows “site can’t be reached” or curls hang
+
+Binding was already correct (`0.0.0.0:9477`). The dashboard **systemd wrapper** (`scripts/lib/agents-swarm-systemd-wrapper.sh`) forced `LI_AUTO_START_ASYNC_SWARM=1`, which started 22+ in-process workers and blocked the Node HTTP event loop. The user unit’s `LI_AUTO_START_ASYNC_SWARM=0` is now honored; async swarm runs in **`li-agents-async-swarm.service`** instead.
+
 The Li agents dashboard defaults to port **9477** (`LI_AGENT_DASHBOARD_PORT`). For phones or other machines on your LAN, bind to all interfaces:
 
 ```bash

@@ -24,6 +24,10 @@ for arg in "$@"; do
     --lan) DASHBOARD_HOST="0.0.0.0" ;;
   esac
 done
+DASHBOARD_AUTO_SWARM=1
+if [[ "$INSTALL_ASYNC" == "1" ]]; then
+  DASHBOARD_AUTO_SWARM=0
+fi
 chmod +x "$ROOT"/scripts/lib/agents-swarm-systemd-wrapper.sh "$ROOT"/scripts/agents-*.sh
 mkdir -p "$DATA_DIR" "$LOG_DIR" "$SERVICE_DIR"
 command -v loginctl >/dev/null && loginctl enable-linger "$(whoami)" 2>/dev/null || true
@@ -36,7 +40,7 @@ Type=simple
 WorkingDirectory=$ROOT
 Environment=HOME=$HOME PATH=$SERVICE_PATH LI_CURSOR_ENV_FILE=$ENV_FILE LI_CURSOR_AGENTS_ROOT=$ROOT
 Environment=NODE_BIN=$NODE_BIN LI_AGENT_DASHBOARD_PORT=$PORT LI_AGENT_DASHBOARD_HOST=$DASHBOARD_HOST LI_CONTROL_PLANE_STORE=disk
-Environment=LI_AUTO_START_ASYNC_SWARM=1 LI_SWARM_DETACHED=1 LI_AUTO_START_SUPERVISOR=0
+Environment=LI_AUTO_START_ASYNC_SWARM=${DASHBOARD_AUTO_SWARM} LI_SWARM_DETACHED=1 LI_AUTO_START_SUPERVISOR=0
 ExecStart=$ROOT/scripts/agents-dashboard-systemd.sh
 Restart=on-failure
 RestartSec=30
