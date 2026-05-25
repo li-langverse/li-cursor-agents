@@ -9,6 +9,28 @@ goals:
     enabled: true
     ph_ids: [PH-5b, PH-7e]
 
+  - id: md_sim_algorithms
+    title: MD algorithms — SOTA survey and Li gap analysis
+    domains: [scientific_computing, hpc]
+    agent: numerics_researcher
+    priority: 8
+    cadence_hours: 8
+    enabled: true
+    uses_research_session: true
+    allow_implementation: true
+    handoff_to: [code_implementer, issue_planner]
+
+  - id: chem_sim_algorithms
+    title: Chemistry / QM algorithms — SOTA survey and Li gap analysis
+    domains: [scientific_computing, hpc]
+    agent: numerics_researcher
+    priority: 8
+    cadence_hours: 8
+    enabled: true
+    uses_research_session: true
+    allow_implementation: true
+    handoff_to: [code_implementer, issue_planner]
+
   - id: simulation_techniques
     title: Simulation methods and reference architectures
     domains: [scientific_computing, hpc]

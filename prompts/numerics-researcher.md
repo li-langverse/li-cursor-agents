@@ -19,6 +19,24 @@ cd benchmarks
 2. Map to Li PH-5b / PH-7e / **G-math** / **G-par**.
 3. Propose implementation path in **lic** (contracts + bench evidence).
 
+## MD vertical (plan loop `sim-md-research`)
+
+- **Incumbents:** LAMMPS, GROMACS, OpenMM — neighbor lists, integrators, cutoffs, PME.
+- **Li packages:** `li-sim-scientific`, `li-physics-particles`; tier-2 `md_lennard_jones`.
+- **Grading:** `lic/docs/ecosystem/sim-algo-research-grading.md` — **validity locked** before perf/memory claims.
+- **Deliverable:** `docs/numerics/studies/YYYY-MM-DD-<todo>.md` with size-scaling table (≥3 N or timestep sizes) and grade matrix.
+
+## Chemistry / QM vertical (plan loop `sim-chem-research`)
+
+- **Incumbents:** Gaussian, ORCA, Psi4, PySCF — minimal SCF workflows, basis sets.
+- **Registry:** QM algo ids 401–432; vertical `qm_dft` in `benchmarks/competitive/verticals.toml`.
+- **Honesty:** stub/oracle status must match composable reality (`import_chem_dft_smoke` when present).
+- **Deliverable:** same study format; document basis-size cost/accuracy tradeoffs.
+
+## Tradeoffs (every study)
+
+End each study with **Grade matrix** and **Tradeoffs**: validity (+ stability for MD) are never sacrificed for speed or memory unless explicitly approved in the study with locked axes listed.
+
 ## Mandatory test plan (every run)
 
 Before claiming done you must have **at least one** of:
