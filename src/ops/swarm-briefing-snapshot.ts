@@ -28,6 +28,10 @@ function pickSwarmFields(briefing: Record<string, unknown>, source: string): Swa
 export function loadSwarmBriefingSnapshot(
   embeddedBriefing?: Record<string, unknown> | null,
 ): SwarmBriefingSnapshot | null {
+  if (embeddedBriefing && typeof embeddedBriefing === "object") {
+    return pickSwarmFields(embeddedBriefing, "embedded");
+  }
+
   const bench = resolveBenchmarksRoot();
   if (bench) {
     const path = join(bench, "data", "latest", "agent-briefing.json");
@@ -41,10 +45,6 @@ export function loadSwarmBriefingSnapshot(
   if (existsSync(agentsPath)) {
     const briefing = JSON.parse(readFileSync(agentsPath, "utf8")) as Record<string, unknown>;
     return pickSwarmFields(briefing, agentsPath);
-  }
-
-  if (embeddedBriefing && typeof embeddedBriefing === "object") {
-    return pickSwarmFields(embeddedBriefing, "embedded");
   }
 
   return null;

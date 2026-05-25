@@ -25,7 +25,11 @@ test("pickNextGoal respects cadence", () => {
 
 test("pickNextGoalForAgent scopes goals to one agent", () => {
   const goals = loadResearchGoals();
-  const numerics = pickNextGoalForAgent("numerics_researcher", goals, {});
+  const now = Date.now();
+  const numerics = pickNextGoalForAgent("numerics_researcher", goals, {
+    md_sim_algorithms: new Date(now).toISOString(),
+    chem_sim_algorithms: new Date(now).toISOString(),
+  }, now);
   const proof = pickNextGoalForAgent("proof_gap_researcher", goals, {});
   assert.equal(numerics?.id, "numerics_sota");
   assert.equal(proof?.id, "provability_holes");
