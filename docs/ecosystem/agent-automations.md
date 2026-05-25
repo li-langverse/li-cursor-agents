@@ -53,6 +53,17 @@ Single shot: `npm run build && node dist/cli/run-agent.js --agent code_implement
 
 Env fallbacks: `LI_AGENT_GOAL`, `LI_AGENT_EXTRA_INSTRUCTION`, `LI_GOAL_AGENT`, `LI_REPO_WORKFLOW_REPO`.
 
+Goal files may declare repo explicitly:
+
+```yaml
+---
+workflow_repo: studio
+cwd: ../studio
+---
+```
+
+Without flags, `run-agent` and `goal-directed-loop.sh` infer repo from frontmatter or path keywords (see skill `explore-li-ecosystem`).
+
 **lic httpd plan:** `../lic/scripts/httpd-plan-loop.py` writes each YAML todo as a goal file and invokes `code_implementer` (override with `LI_HTTPD_PLAN_AGENT`).
 
 ### Goal implementation → `lic`

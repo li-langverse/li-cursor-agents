@@ -24,3 +24,20 @@ test("resolveSpawnWorkflowRepo returns lic for pending goal handoff", async () =
   assert.equal(await resolveSpawnWorkflowRepo("code_implementer"), "lic");
   assert.equal(await resolveSpawnWorkflowRepo("docs_maintainer"), undefined);
 });
+
+test("resolveSpawnWorkflowRepo prefers work.target_repo over goal defaults", async () => {
+  const dir = join(agentsPackageRoot(), "data", "handoffs");
+  rmSync(dir, { recursive: true, force: true });
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, "pending.jsonl"), "", "utf8");
+
+  await createHandoff({
+    from_agent: "gui_ux_tester",
+    to_agents: ["code_implementer"],
+    status: "pending",
+    north_star_fit: "Fix studio empty state",
+    work: { kind: "ui_remediation", target_repo: "studio", issue: "https://github.com/li-langverse/studio/issues/1" },
+  });
+
+  assert.equal(await resolveSpawnWorkflowRepo("code_implementer"), "studio");
+});

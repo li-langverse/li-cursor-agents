@@ -18,6 +18,7 @@ import {
   refreshAgentKitAudit,
 } from "./preflight/agent-kit-sync.js";
 import { buildSwarmPromptBlocks } from "./preflight/swarm-context.js";
+import { buildSkillsPromptAppendix } from "./agents/load-skills.js";
 import { buildUserMessage, runPreflight, resolveBenchmarksRoot } from "./preflight.js";
 import { resolveCursorSdkMode, sdkModeSystemPrefix } from "./agents/sdk-mode.js";
 import {
@@ -151,6 +152,10 @@ async function runAgentBody(
   const benchmarksRoot = resolveBenchmarksRoot(options.benchmarksRoot);
   const preflight = runPreflight(benchmarksRoot, true);
   let systemPrompt = loadPrompt(packageRoot, definition.promptFile);
+  const skillsAppendix = buildSkillsPromptAppendix(definition.skills, packageRoot);
+  if (skillsAppendix) {
+    systemPrompt += `\n\n---\n\n# Agent skills (follow before editing)\n\n${skillsAppendix}`;
+  }
   if (definition.repoWorkflow) {
     systemPrompt += `\n\n---\n\n${loadPrompt(packageRoot, "repo-workflow-tools.md")}`;
   }

@@ -3,6 +3,10 @@ import { readFileSync } from "node:fs";
 import { loadRuntimeEnv, resolveCursorApiKey } from "../env.js";
 loadRuntimeEnv();
 import { AGENT_REGISTRY } from "../agents/registry.js";
+import {
+  resolveWorkflowRepoFromGoalFile,
+  resolveWorkflowRepoFromText,
+} from "../agents/resolve-workflow-repo.js";
 import { agentBackendLabel, runAgent, shouldUseMock } from "../runner.js";
 import type { AgentId } from "../types.js";
 
@@ -48,6 +52,14 @@ function parseArgs(argv: string[]) {
     }
   }
   const extraInstruction = resolveGoalInstruction(instruction, goalFile);
+  let resolvedWorkflowRepo = workflowRepo;
+  if (!resolvedWorkflowRepo?.trim()) {
+    if (goalFile) {
+      resolvedWorkflowRepo = resolveWorkflowRepoFromGoalFile(goalFile);
+    } else if (extraInstruction) {
+      resolvedWorkflowRepo = resolveWorkflowRepoFromText(extraInstruction);
+    }
+  }
   return {
     agent,
     mock,
@@ -55,7 +67,7 @@ function parseArgs(argv: string[]) {
     list,
     cwd,
     benchmarksRoot,
-    workflowRepo,
+    workflowRepo: resolvedWorkflowRepo,
     extraInstruction,
   };
 }
@@ -80,6 +92,7 @@ Env:
   CURSOR_API_KEY     Required for real runs (.env or shell)
   BENCHMARKS_ROOT    Path to benchmarks repo for preflight
   LI_REPO_WORKFLOW_REPO   Target repo for repoWorkflow agents (e.g. lic)
+                          Auto from --goal-file frontmatter workflow_repo: or path signals
   --mock             Dry-run mock backend (CI/tests set CURSOR_MOCK=1)
 `);
 }

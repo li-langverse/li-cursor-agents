@@ -53,6 +53,25 @@ if [[ ! -f "$ROOT/dist/cli/run-agent.js" ]]; then
   npm run build --prefix "$ROOT"
 fi
 
+# Auto workflow repo + cwd from goal frontmatter / path signals (skill: explore-li-ecosystem)
+if [[ -z "$WORKFLOW_REPO" ]]; then
+  GOAL_FILE="$GOAL_FILE" GOAL_INLINE="$GOAL_INLINE" WORKFLOW_REPO="$(
+    cd "$ROOT" && node --input-type=module -e "
+import { resolveWorkflowRepoFromGoalFile, resolveWorkflowRepoFromText } from './dist/agents/resolve-workflow-repo.js';
+const f = process.env.GOAL_FILE?.trim();
+const inline = process.env.GOAL_INLINE?.trim();
+const r = f ? resolveWorkflowRepoFromGoalFile(f) : inline ? resolveWorkflowRepoFromText(inline) : undefined;
+if (r) process.stdout.write(r);
+" 2>/dev/null || true
+  )"
+fi
+if [[ -n "$WORKFLOW_REPO" && "$CWD" == "$ROOT" ]]; then
+  SIBLING="$ROOT/../$WORKFLOW_REPO"
+  if [[ -d "$SIBLING" ]]; then
+    CWD="$SIBLING"
+  fi
+fi
+
 GOAL_ARGS=()
 if [[ -n "$GOAL_FILE" ]]; then
   GOAL_ARGS=(--goal-file "$GOAL_FILE")

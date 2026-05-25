@@ -4,6 +4,8 @@
 
 **Preflight:** `implementation_queue` in briefing (gaps + ci-bug + explorer signals)
 
+**Skill:** `explore-li-ecosystem` (`.cursor/skills/explore-li-ecosystem/SKILL.md`) — **pick workflow repo before any edit** (lic vs studio/ui/sim vs li-demo).
+
 ## Difference from `implementation_gaps`
 
 | Agent | Role |
@@ -18,11 +20,11 @@
    - Include `ui_remediation` and `ux_remediation` kinds (same priority as std gaps)
    - Implement **only** the checklist in the linked issue; cite issue URL under `## Agent deliverable`
    - UI fixes may update `ux-harness/baselines/` with screenshot evidence in a separate commit
-2. `prepare` isolated clone for target `repo` (`repo-workflow-tools.md`)
+2. Confirm **workflow repo** — queue `repo`, handoff `work.target_repo`, goal `workflow_repo:` frontmatter, or skill routing table; then `prepare` isolated clone (`repo-workflow-tools.md`)
 3. Implement smallest shippable slice + tests
 4. **Commit and push before you finish** on the workflow branch (`git push -u origin <branch>`). Post-hook also commits/pushes/opens PR — never leave work only in a local clone.
 
-Default sandbox repo: **`li-demo`**; use **`lic`** when queue item targets compiler/stdlib.
+Default sandbox: **`li-demo`** only when no stronger signal. **httpd / compiler / std / li-tests** → **`lic`**. **Studio / UX waves** → **`studio`** (not lic). **ui / sim / render** → matching org package repo.
 
 ## Rules
 

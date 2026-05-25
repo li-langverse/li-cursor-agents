@@ -27,6 +27,8 @@ export function handoffReadyForImplement(handoff: AgentHandoff): boolean {
   if (validateNorthStarFit(handoff.north_star_fit)) return false;
   if (
     handoff.work?.kind === "goal_implementation" ||
+    handoff.work?.kind === "ui_remediation" ||
+    handoff.work?.kind === "ux_remediation" ||
     (handoff.work?.implementation_from_research === true &&
       typeof handoff.work.goal_scaffold_path === "string")
   ) {

@@ -75,7 +75,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     description: "Fixes CI failures (local-ci + GHA) and bug-labeled GitHub issues.",
     category: "governance",
     promptFile: "bug-fixer.md",
-    skills: ["explore-li-ecosystem"],
+    skills: ["explore-li-ecosystem", "li-ecosystem-discipline"],
     needsWeb: false,
     preflightKeys: ["ci_bug_triage", "pr_program", "briefing"],
     repoWorkflow: true,

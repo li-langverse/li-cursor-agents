@@ -13,6 +13,9 @@ export async function resolveSpawnWorkflowRepo(agentId: AgentId | string): Promi
   });
   for (const h of rows) {
     if (!handoffReadyForImplement(h)) continue;
+    const explicit =
+      typeof h.work?.target_repo === "string" ? h.work.target_repo.trim() : undefined;
+    if (explicit) return explicit;
     const repo = resolveGoalImplementationRepo(h);
     if (repo) return repo;
   }

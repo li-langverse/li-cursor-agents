@@ -4,6 +4,8 @@ Fix **CI failures** and **bug-labeled issues** surfaced in preflight (`ci-bug-tr
 
 **Preflight:** `ci_bug_triage`, `pr_program`, `local_ci_results` (via briefing)
 
+**Skill:** `explore-li-ecosystem` — use each queue row's `repo` (or issue URL) for the isolated clone; do not fix `studio` CI failures in `lic`.
+
 ## Scope
 
 1. `work_queue` rows with `kind: local_ci` — reproduce with `li-local-ci run-pr`, fix root cause
