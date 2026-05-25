@@ -5,13 +5,10 @@ import { handoffRunStatus } from "../lanes/handoff-run-coordinator.js";
 import { laneRuntimeSnapshot } from "../lanes/lane-runtime.js";
 import type { ControlPlaneState } from "../control-plane/types.js";
 import { saveWorkerStatusToDb } from "../db/worker-status.js";
-import { dbEnabled } from "../db/client.js";
 import { sdkMaxConcurrent, sdkSessionInProcessActive } from "../backends/sdk-session-lock.js";
 
 /** Persist worker heartbeat for read-only dashboard API (no in-process state in Next). */
 export async function persistWorkerHeartbeat(state: ControlPlaneState): Promise<void> {
-  if (!dbEnabled()) return;
-
   const runtime = runtimeSnapshot(state);
   const lanes = laneRuntimeSnapshot();
 

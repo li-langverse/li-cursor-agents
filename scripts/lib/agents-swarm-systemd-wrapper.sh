@@ -8,6 +8,7 @@ ENV_FILE="${LI_CURSOR_ENV_FILE:-$HOME/Documents/Cursor/.env}"
 PORT="${LI_AGENT_DASHBOARD_PORT:-9477}"
 # Preserve unit/CLI bind host across .env sourcing (systemd --lan).
 BIND_HOST_FROM_UNIT="${LI_AGENT_DASHBOARD_HOST:-}"
+STORE_FROM_UNIT="${LI_CONTROL_PLANE_STORE:-}"
 if [[ -f "$DISABLE_FILE" ]]; then
   echo "agents-swarm-systemd[$AGENTS_SWARM_ROLE]: DISABLE_AUTOSTART — exit 0"
   exit 0
@@ -20,6 +21,9 @@ li_resolve_env_paths "$ROOT"
 [[ -f "$ENV_FILE" ]] && { set -a; source "$ENV_FILE"; set +a; }
 if [[ -n "$BIND_HOST_FROM_UNIT" ]]; then
   export LI_AGENT_DASHBOARD_HOST="$BIND_HOST_FROM_UNIT"
+fi
+if [[ -n "$STORE_FROM_UNIT" ]]; then
+  export LI_CONTROL_PLANE_STORE="$STORE_FROM_UNIT"
 fi
 export GH_TOKEN GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
 if [[ -z "${NODE_BIN:-}" || ! -x "${NODE_BIN}" ]]; then

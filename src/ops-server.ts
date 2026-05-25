@@ -16,6 +16,7 @@ import {
   stopAllActiveRuns,
   stopSupervisorLoop,
 } from "./control-plane/runtime.js";
+import { runtimeForApi } from "./control-plane/runtime-for-api.js";
 import { startAsyncSwarm, stopAsyncSwarm } from "./async-swarm/async-swarm-runtime.js";
 import {
   handoffRunStatus,
@@ -265,7 +266,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
 
   const state = currentApiState();
   const store = dataStoreLabel();
-  const runtime = runtimeSnapshot(state);
+  const runtime = await runtimeForApi(state);
 
   // Fast paths — avoid loadLiveReportAsync on every poll (blocks dashboard).
   if (url.pathname === "/api/status" || url.pathname === "/api/state") {

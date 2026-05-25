@@ -43,6 +43,16 @@ export async function reconcileSwarmAfterStartup(): Promise<void> {
     return;
   }
 
+  if (!envAutoStartSwarm() && detachedSwarmEnabled()) {
+    workerConsole(
+      "reconcile",
+      "info",
+      "LI_AUTO_START_ASYNC_SWARM=0 — systemd/async unit owns swarm; dashboard will not spawn detached child",
+    );
+    await flushWorkerHeartbeat();
+    return;
+  }
+
   if (envAutoStartSwarm() && detachedSwarmEnabled()) {
     const { markDetachedSwarmStopped } = await import("../swarm/swarm-watchdog.js");
     await markDetachedSwarmStopped("reconcile: detached pid not running");
