@@ -761,10 +761,18 @@ async function loadLiveActivityEvents() {
   ui.data.liveEventsByRun = byRun;
 }
 
+function agentCategoryLabel(agentId) {
+  const entry = ui.data?.roster?.roster?.find((e) => e.id === agentId);
+  return entry?.category ? String(entry.category).replace(/_/g, " ") : "";
+}
+
 function renderLiveActivity() {
   const { report, runtime, runsPayload, liveEventsByRun } = ui.data;
   const feed = $("#live-activity");
   const items = [];
+  const activeRunIds = new Set(
+    (runtime?.active_runs ?? []).filter((r) => r.status === "running").map((r) => r.run_id),
+  );
 
   for (const r of runtime?.active_runs ?? []) {
     if (r.status !== "running") continue;
@@ -776,16 +784,22 @@ function renderLiveActivity() {
       trace?.tool_call_count > 0
         ? `${trace.tool_call_count} tool${trace.tool_call_count === 1 ? "" : "s"}`
         : "";
-    const detail = evLine || toolHint || r.reason || "SDK run in progress";
+    const lane = agentCategoryLabel(r.agent_id);
+    const detail = evLine || toolHint || r.reason || "preflight / awaiting SDK";
+    const meta = [lane, formatTime(r.started_at)].filter(Boolean).join(" · ");
     items.push({
       t: r.started_at,
-      html: `<strong>${esc(r.agent_id)}</strong> <span class="mono">${esc(detail)}</span>${r.run_id ? ` <button type="button" class="linkish" data-open-run="${escAttr(r.run_id)}">trace</button>` : ""}`,
+      html: `<strong>${esc(r.agent_id)}</strong>${meta ? ` <span class="muted">${esc(meta)}</span>` : ""} <span class="mono">${esc(detail)}</span>${r.run_id ? ` <button type="button" class="linkish" data-open-run="${escAttr(r.run_id)}">trace</button>` : ""}`,
     });
   }
   for (const r of runsPayload?.runs?.slice(0, 8) ?? []) {
+    if (activeRunIds.has(r.run_id)) continue;
+    if (r.status !== "running" && r.status !== "finished") continue;
+    const evLine = liveEventPreview(liveEventsByRun?.[r.run_id]);
+    const detail = evLine || r.summary || r.status;
     items.push({
       t: r.started_at,
-      html: `<strong>${esc(r.agent_id)}</strong> ${esc(r.status)} <span class="time">${formatTime(r.started_at)}</span>`,
+      html: `<strong>${esc(r.agent_id)}</strong> ${esc(r.status)} <span class="mono">${esc(String(detail).slice(0, 120))}</span> <span class="time">${formatTime(r.started_at)}</span>${r.run_id ? ` <button type="button" class="linkish" data-open-run="${escAttr(r.run_id)}">trace</button>` : ""}`,
     });
   }
   for (const i of (report?.interventions ?? []).slice(0, 3)) {

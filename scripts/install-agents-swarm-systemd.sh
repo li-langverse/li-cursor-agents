@@ -9,7 +9,7 @@ DATA_DIR="$ROOT/data/control-plane"
 LOG_DIR="$ROOT/logs"
 PORT="${LI_AGENT_DASHBOARD_PORT:-9477}"
 DASHBOARD_HOST="${LI_AGENT_DASHBOARD_HOST:-127.0.0.1}"
-SDK_MAX="${LI_SDK_MAX_CONCURRENT:-8}"
+SDK_MAX="${LI_SDK_MAX_CONCURRENT:-5}"
 _store_cli="${LI_CONTROL_PLANE_STORE:-}"
 STORE="${_store_cli:-supabase}"
 if [[ -f "$ENV_FILE" && -z "$_store_cli" ]]; then

@@ -1,6 +1,6 @@
 # SDK slot policy
 
-Cursor SDK runs share a cross-process slot pool (`data/control-plane/sdk-slots/`). `LI_SDK_MAX_CONCURRENT` caps how many sessions may hold a slot at once (default **8** in `scripts/env.defaults.sh` — matches the host Cursor SDK parallel limit).
+Cursor SDK runs share a cross-process slot pool (`data/control-plane/sdk-slots/`). `LI_SDK_MAX_CONCURRENT` caps how many sessions may hold a slot at once (default **5** in `scripts/env.defaults.sh`).
 
 ## Slot budget (steady async swarm)
 
@@ -9,7 +9,7 @@ Cursor SDK runs share a cross-process slot pool (`data/control-plane/sdk-slots/`
 | Research lane | 1 | `research_goal_agent` loop |
 | Implement lane | 1 | `code_implementer` loop |
 | Agent worker pool | 6 | All other registry agents on staggered continuous loops |
-| **Total (lanes + pool)** | **8** | Matches default `LI_SDK_MAX_CONCURRENT=8` |
+| **Total (lanes + pool)** | **5** | Matches default `LI_SDK_MAX_CONCURRENT=5` |
 
 Lanes and the worker pool compete for the same slot files. When all slots are busy, workers skip the cycle and retry after idle backoff (no hard failure).
 

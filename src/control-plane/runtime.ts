@@ -21,6 +21,11 @@ import {
 } from "../backends/sdk-session-lock.js";
 import { swarmWorkersPaused } from "../swarm/swarm-worker-pause.js";
 import { upsertLiveAgentRunStart } from "../db/live-stream-persist.js";
+import {
+  flushRunEvents,
+  recordRunStarted,
+  runEventsPersistEnabled,
+} from "../db/run-events.js";
 import { allocateRunId } from "./run-paths.js";
 import { handoffRunStatus } from "../lanes/handoff-run-coordinator.js";
 import { runHandoffPhasedSwarm } from "../lanes/run-handoff-phases.js";
@@ -71,6 +76,10 @@ export function registerSupervisorRun(agentId: AgentId, reason: string, runId?: 
     status: "running",
     reason,
   });
+  if (runEventsPersistEnabled()) {
+    recordRunStarted(id, agentId, reason);
+    void flushRunEvents(id).catch(() => {});
+  }
   void upsertLiveAgentRunStart({
     runId: id,
     agentId,
