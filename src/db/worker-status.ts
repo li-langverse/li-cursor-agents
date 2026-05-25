@@ -69,10 +69,22 @@ function saveWorkerStatusToDisk(row: Partial<WorkerStatusRow>): void {
   );
 }
 
+const PEER_DB_TIMEOUT_MS = Number(process.env.LI_SUPABASE_PEER_TIMEOUT_MS ?? 3_000);
+
 /** Supabase when configured; otherwise JSON under data/control-plane/. */
 export async function loadWorkerStatusPeer(): Promise<WorkerStatusRow | null> {
-  if (dbEnabled()) return loadWorkerStatusFromDb();
-  return loadWorkerStatusFromDisk();
+  if (!dbEnabled()) return loadWorkerStatusFromDisk();
+  try {
+    const row = await Promise.race([
+      loadWorkerStatusFromDb(),
+      new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error("loadWorkerStatusPeer timeout")), PEER_DB_TIMEOUT_MS);
+      }),
+    ]);
+    return row;
+  } catch {
+    return loadWorkerStatusFromDisk();
+  }
 }
 
 export async function loadWorkerStatusFromDb(): Promise<WorkerStatusRow | null> {

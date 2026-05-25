@@ -49,7 +49,6 @@ export async function reconcileSwarmAfterStartup(): Promise<void> {
       "info",
       "LI_AUTO_START_ASYNC_SWARM=0 — systemd/async unit owns swarm; dashboard will not spawn detached child",
     );
-    await flushWorkerHeartbeat();
     return;
   }
 

@@ -366,6 +366,9 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     const backend = agentBackendLabel();
     json(res, 200, {
       ...runtime,
+      store,
+      db_enabled: dbEnabled(),
+      control_plane_store: configuredStore(),
       agent_backend: backend,
       sdk_ready: backend === "cursor-sdk" && Boolean(resolveCursorApiKey()),
     });

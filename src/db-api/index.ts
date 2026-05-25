@@ -96,7 +96,6 @@ async function handleGet(pathname: string, url: URL): Promise<Response | null> {
   const state = await loadStateForRead();
   const worker = await loadWorkerStatusFromDb();
   const runtime = runtimeSnapshotFromDb(state, worker);
-  runtime.store = store;
 
   if (pathname === "/api/agents") {
     return jsonBody({ ...dashboardRosterSummary(), runtime });

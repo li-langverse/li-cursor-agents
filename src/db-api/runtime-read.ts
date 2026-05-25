@@ -10,6 +10,26 @@ import { researchLaneIntervalMs } from "../lanes/research-lane.js";
 import { maintenanceLaneIntervalMs } from "../lanes/maintenance-lane.js";
 import { researchLaneAgentIds } from "../lanes/lane-agent-ids.js";
 import { defaultProactiveAgentIds } from "../control-plane/proactive-agent-work.js";
+import {
+  configuredStore,
+  dataStoreLabel,
+  dbEnabled,
+  type ControlPlaneStore,
+} from "../db/client.js";
+
+/** Store/db fields for `/api/runtime` (matches `/api/status` runtime block). */
+export function runtimeStoreFields(): {
+  store: ControlPlaneStore;
+  db_enabled: boolean;
+  control_plane_store: ControlPlaneStore;
+} {
+  const store = dataStoreLabel();
+  return {
+    store,
+    db_enabled: dbEnabled(),
+    control_plane_store: configuredStore(),
+  };
+}
 
 export function runtimeSnapshotFromDb(
   state: ControlPlaneState,
@@ -30,7 +50,7 @@ export function runtimeSnapshotFromDb(
     sdk_slots_in_use: sdkSlotsInUse(),
     sdk_sessions_active: w.sdk_sessions_active ?? 0,
     workers_paused: swarmWorkersPaused(),
-    store: undefined as string | undefined,
+    ...runtimeStoreFields(),
   };
 }
 
