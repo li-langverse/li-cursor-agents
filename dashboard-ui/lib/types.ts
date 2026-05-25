@@ -16,6 +16,12 @@ export interface RuntimePayload {
       tool_call_count?: number;
       steps?: Array<{ type: string; message?: Record<string, unknown> }>;
     };
+    recent_events?: Array<{
+      seq: number;
+      event_type: string;
+      payload?: { ts?: string; message?: string; tool_name?: string; path?: string };
+    }>;
+    last_event?: { ts?: string; message?: string; tool_name?: string; path?: string };
   }>;
   store?: string;
   agent_backend?: string;

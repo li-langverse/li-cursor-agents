@@ -29,7 +29,7 @@ import { dataStoreLabel, dbEnabled, configuredStore } from "../db/client.js";
 import { loadWorkerStatusFromDb } from "../db/worker-status.js";
 import { loadLaneStateFromDb } from "../db/lane-state.js";
 import { researchLaneAgentIds } from "../lanes/lane-agent-ids.js";
-import { runtimeSnapshotFromDb, laneSnapshotFromDb } from "./runtime-read.js";
+import { runtimeSnapshotFromDbEnriched, laneSnapshotFromDb } from "./runtime-read.js";
 import { listSettingsViewsForRead, SETTING_CATEGORIES } from "./settings-read.js";
 import { loadQueuePayloadForRead } from "./queue-read.js";
 import { getAgentDetailFromDb } from "./agent-detail-read.js";
@@ -97,7 +97,7 @@ async function handleGet(pathname: string, url: URL): Promise<Response | null> {
   const state = await loadStateForRead();
   const worker = await loadWorkerStatusFromDb();
   const dbRunning = dbEnabled() ? await listRunningAgentRuns(30) : [];
-  const runtime = runtimeSnapshotFromDb(state, worker, dbRunning);
+  const runtime = await runtimeSnapshotFromDbEnriched(state, worker, dbRunning);
 
   if (pathname === "/api/agents") {
     return jsonBody({ ...dashboardRosterSummary(), runtime });

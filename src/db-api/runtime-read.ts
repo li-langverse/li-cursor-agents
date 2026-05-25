@@ -1,4 +1,5 @@
 import { computeInSdkCount } from "../control-plane/active-run-metrics.js";
+import { enrichActiveRunsWithRecentEvents } from "../control-plane/enrich-active-runs.js";
 import { mergeActiveRunsForDisplay } from "../control-plane/merge-active-runs.js";
 import { sdkMaxConcurrent, sdkSlotsInUse } from "../backends/sdk-session-lock.js";
 import { swarmWorkersPaused } from "../swarm/swarm-worker-pause.js";
@@ -56,6 +57,21 @@ export function runtimeSnapshotFromDb(
     sdk_sessions_active: w.sdk_sessions_active ?? 0,
     workers_paused: swarmWorkersPaused(),
     ...runtimeStoreFields(),
+  };
+}
+
+/** Same as runtimeSnapshotFromDb but embeds recent_events on active runs for live activity. */
+export async function runtimeSnapshotFromDbEnriched(
+  state: ControlPlaneState,
+  worker: WorkerStatusRow | null,
+  dbRunning: AgentRunHistoryRow[] = [],
+) {
+  const snap = runtimeSnapshotFromDb(state, worker, dbRunning);
+  const enriched = await enrichActiveRunsWithRecentEvents(snap.active_runs);
+  return {
+    ...snap,
+    active_runs: enriched,
+    active_run_count: computeInSdkCount(enriched, snap.sdk_sessions_active),
   };
 }
 

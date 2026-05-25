@@ -1,5 +1,6 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { readFileSync, existsSync } from "node:fs";
+import { execSync } from "node:child_process";
 import { join, extname } from "node:path";
 import { dashboardRosterSummary } from "./agents/dashboard-roster.js";
 import { canonicalAgentId } from "./agents/registry.js";
@@ -856,6 +857,16 @@ function resolveAgentId(raw: string): AgentId | undefined {
   return canonicalAgentId(decodeURIComponent(raw));
 }
 
+function dashboardAssetVersion(): string {
+  const fromEnv = process.env.LI_BUILD_SHA?.trim();
+  if (fromEnv) return fromEnv.slice(0, 12);
+  try {
+    return execSync("git rev-parse --short HEAD", { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+  } catch {
+    return "dev";
+  }
+}
+
 function serveStatic(pathname: string, webRoot: string, res: ServerResponse): void {
   const file = pathname === "/" ? "/index.html" : pathname;
   if (file.includes("..")) {
@@ -867,8 +878,19 @@ function serveStatic(pathname: string, webRoot: string, res: ServerResponse): vo
     json(res, 404, { error: "not found" });
     return;
   }
+  let body = readFileSync(full);
+  if (file === "/index.html") {
+    const v = dashboardAssetVersion();
+    body = Buffer.from(
+      body
+        .toString("utf8")
+        .replace('src="/app.js"', `src="/app.js?v=${v}"`)
+        .replace('href="/style.css"', `href="/style.css?v=${v}"`),
+      "utf8",
+    );
+  }
   res.writeHead(200, { "Content-Type": MIME[extname(full)] ?? "text/plain", "Cache-Control": "no-store" });
-  res.end(readFileSync(full));
+  res.end(body);
 }
 
 async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown>> {

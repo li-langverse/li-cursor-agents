@@ -738,8 +738,16 @@ async function loadLiveActivityEvents() {
   const runtime = ui.data?.runtime;
   const active = (runtime?.active_runs ?? []).filter((r) => r.status === "running" && r.run_id);
   const byRun = {};
+  const needFetch = [];
+  for (const r of active) {
+    if (r.recent_events?.length) {
+      byRun[r.run_id] = r.recent_events;
+    } else {
+      needFetch.push(r);
+    }
+  }
   await Promise.all(
-    active.slice(0, 10).map(async (r) => {
+    needFetch.slice(0, 10).map(async (r) => {
       try {
         const body = await fetchJson(
           `/api/runs/${encodeURIComponent(r.run_id)}/events?limit=24`,
@@ -760,7 +768,9 @@ function renderLiveActivity() {
 
   for (const r of runtime?.active_runs ?? []) {
     if (r.status !== "running") continue;
-    const evLine = liveEventPreview(liveEventsByRun?.[r.run_id]);
+    const evLine =
+      liveEventPreview(liveEventsByRun?.[r.run_id]) ||
+      (r.last_event?.message ? String(r.last_event.message).slice(0, 140) : "");
     const trace = r.run_trace;
     const toolHint =
       trace?.tool_call_count > 0
