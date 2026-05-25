@@ -1,8 +1,8 @@
 ---
 name: explore-li-ecosystem
 description: >-
-  Scan the Li org for missing std/libs, catalog gaps, and HPC parity vs Eigen/Kokkos/PETSc;
-  use web/Reddit search for external signals; file explorer-finding or ecosystem-gap issues.
+  Scan the Li org for gaps and pick the correct workflow repo before edits (lic, studio, ui,
+  sim, benchmarks). Use for ecosystem explorer discovery and goal-directed implementer runs.
 ---
 
 # Explore Li ecosystem
@@ -105,8 +105,42 @@ Do **not** self-merge. Do **not** add Actions `cron:`.
 
 ---
 
+## Workflow repo routing (implementers)
+
+**Before any file edit**, choose the GitHub repo for the isolated clone (`LI_REPO_WORKFLOW_REPO` / `--workflow-repo`).
+
+| Priority | Source |
+|----------|--------|
+| 1 | Goal frontmatter `workflow_repo:` or line `Workflow repo: <name>` |
+| 2 | Briefing `implementation_queue[].repo` or issue/PR URL host repo |
+| 3 | Path/topic table below |
+| 4 | Agent default (`code_implementer` → `li-demo` only if no signal) |
+
+| Repo | Edit here when |
+|------|----------------|
+| **lic** | `std/`, `li-tests/`, compiler, httpd (`li-tests/httpd/`, `scripts/httpd-*`), master-plan PH-2* |
+| **studio** | World Studio UX, `PH-GD-*`, `PH-UX-*`, `world.li`, viewport/outliner |
+| **ui** | `li-ui` package, shared UI components |
+| **sim** | `li-sim`, simulation / numerics package code |
+| **render** | `li-render` |
+| **benchmarks** | `agent-briefing.py`, explorer digests, catalog only |
+| **li-cursor-agents** | Agent registry, dashboard, prompts, skills |
+| **lip** / **lit** | Package manager / test runner |
+| **li-demo** | Agent-kit templates, CI snippets |
+
+```bash
+./scripts/goal-directed-loop.sh --goal-file goal.md --workflow-repo lic --cwd ../lic
+```
+
+`run-agent` infers `workflow_repo` from `--goal-file` when `--workflow-repo` is omitted (`src/agents/resolve-workflow-repo.ts`).
+
+Do **not** land studio/ui/sim product code in **lic** unless the handoff or plan explicitly says lic hosts the scaffold.
+
+---
+
 ## Related
 
 - [ecosystem-explorer.md](../../../docs/ecosystem/ecosystem-explorer.md)
 - `ecosystem-first` — catalog before one-offs
 - `research-li-numerics` — after a specific kernel is chosen
+- `repo-workflow-tools.md` — isolated clone + PR template

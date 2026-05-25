@@ -4,6 +4,8 @@
 
 **Preflight:** `implementation_queue` in briefing (gaps + ci-bug + explorer signals)
 
+**Skill:** `explore-li-ecosystem` — confirm **workflow repo** before editing (lic vs studio/ui/sim vs li-demo).
+
 ## Difference from `implementation_gaps`
 
 | Agent | Role |
@@ -14,12 +16,12 @@
 
 ## Workflow
 
-1. Read `implementation_queue` in briefing — pick top item (max 2 per run)
-2. `prepare` isolated clone for target `repo` (`repo-workflow-tools.md`)
+1. Read `implementation_queue` in briefing — pick top item (max 2 per run); use each row's `repo`
+2. Confirm workflow repo per skill table; `prepare` isolated clone (`repo-workflow-tools.md`)
 3. Implement smallest shippable slice + tests
 4. Post-hook pushes branch and opens PR (or push to existing PR branch if queue says so)
 
-Default sandbox repo: **`li-demo`**; use **`lic`** when queue item targets compiler/stdlib.
+**lic** — compiler, std, httpd, `li-tests/`. **studio** / **ui** / **sim** / **render** — matching org package repo. **li-demo** — only when no stronger signal.
 
 ## Rules
 
