@@ -43,7 +43,7 @@ The loop is continuous: **read signals → pick highest-value goal → run agent
                                        └────── feedback ──────┘
 ```
 
-**Infographic (brand colors, screenshot-ready):** open [swarm-infographic.html](./swarm-infographic.html) in a browser — 1200×675 artboard, optional **Export PNG** (html2canvas). Shows the six-step loop, lane pills, SDK slot budget, and old (9× lic loops) vs new (one swarm) contrast.
+**X infographic (brand colors):** [swarm-infographic.html](./swarm-infographic.html) — 1200×675 artboard (16:9), **Download PNG for X** via html2canvas, optional 1600×900. Flow: Signals → Goals → Swarm (4 slots) → Agents → Codebase + feedback; **9 lic loops → 1 swarm**.
 
 **Old model (retired):** nine separate bash loops in `lic`, each fighting for the same SDK slots.
 
