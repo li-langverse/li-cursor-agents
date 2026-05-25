@@ -64,6 +64,7 @@ import { runPreflight, resolveBenchmarksRoot } from "./preflight.js";
 import type { AgentId } from "./types.js";
 import type { SwarmStatistics } from "./control-plane/swarm-statistics.js";
 import { buildSwarmScorecard, buildResearchGoalsStatus } from "./briefing/swarm-scorecard.js";
+import { listActiveGoals } from "./goals/list-active-goals.js";
 import { listHandoffs } from "./handoffs/handoff-store.js";
 import {
   agentHandoffsTableUnavailable,
@@ -360,6 +361,11 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       agent_backend: backend,
       sdk_ready: backend === "cursor-sdk" && Boolean(resolveCursorApiKey()),
     });
+    return;
+  }
+
+  if (url.pathname === "/api/goals" && req.method === "GET") {
+    json(res, 200, listActiveGoals());
     return;
   }
 

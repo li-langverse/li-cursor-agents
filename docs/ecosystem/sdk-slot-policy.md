@@ -47,4 +47,4 @@ Clear pause and restart async swarm (or dashboard **Stop agents** → **Start ag
 - Lower it (e.g. `2`) on laptops or when debugging slot timeouts (`LI_SDK_SLOT_MAX_WAIT_MS`).
 - Reclaim stale locks after crashes: delete orphaned files under `data/control-plane/sdk-slots/` or restart the dashboard (boot calls `reclaimAllStaleSdkSlots()`).
 
-See also [agent-automations.md](./agent-automations.md) and `docs/sdk-matrix-troubleshooting.md`.
+See also [swarm-architecture.md](./swarm-architecture.md), [agent-automations.md](./agent-automations.md), and `docs/sdk-matrix-troubleshooting.md`.

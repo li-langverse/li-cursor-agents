@@ -11,6 +11,10 @@ export interface LaneStateFile {
   last_implement_tick_at?: string;
   last_maintenance_tick_at?: string;
   goal_last_run_at: Record<string, string>;
+  /** Implement-goal lane cadence (retired lic plan loops). */
+  implement_goal_last_run_at?: Record<string, string>;
+  implement_goal_last_gate_pass?: Record<string, boolean>;
+  implement_goal_last_gate_at?: Record<string, string>;
   /** Last proactive worker-pool run (orchestrator, implementation_gaps, …). */
   proactive_last_run_at?: Record<string, string>;
 }
@@ -19,6 +23,9 @@ const defaultState = (): LaneStateFile => ({
   research_lane_enabled: process.env.LI_RESEARCH_LANE_ENABLED !== "0",
   implement_lane_enabled: process.env.LI_IMPLEMENT_LANE_ENABLED !== "0",
   goal_last_run_at: {},
+  implement_goal_last_run_at: {},
+  implement_goal_last_gate_pass: {},
+  implement_goal_last_gate_at: {},
 });
 
 let memoryLane: LaneStateFile | null = null;
@@ -69,6 +76,31 @@ export function recordGoalRun(state: LaneStateFile, goalId: string): LaneStateFi
   const next = {
     ...state,
     goal_last_run_at: { ...state.goal_last_run_at, [goalId]: new Date().toISOString() },
+  };
+  saveLaneState(next);
+  return next;
+}
+
+export function recordImplementGoalRun(
+  state: LaneStateFile,
+  goalId: string,
+  gatePass: boolean,
+): LaneStateFile {
+  const at = new Date().toISOString();
+  const next: LaneStateFile = {
+    ...state,
+    implement_goal_last_run_at: {
+      ...(state.implement_goal_last_run_at ?? {}),
+      [goalId]: at,
+    },
+    implement_goal_last_gate_pass: {
+      ...(state.implement_goal_last_gate_pass ?? {}),
+      [goalId]: gatePass,
+    },
+    implement_goal_last_gate_at: {
+      ...(state.implement_goal_last_gate_at ?? {}),
+      [goalId]: at,
+    },
   };
   saveLaneState(next);
   return next;

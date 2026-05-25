@@ -74,7 +74,9 @@ async function implementLoop(abort: AbortSignal, mock: boolean): Promise<void> {
       const tick = await implementLaneTick({ mock });
       const msg = tick.skipped
         ? `skipped: ${tick.skip_reason}`
-        : `tick agent=${tick.agentId} handoff=${tick.handoff_id?.slice(0, 8)} status=${tick.status}`;
+        : tick.implement_goal_id
+          ? `tick agent=${tick.agentId} goal=${tick.implement_goal_id} todo=${tick.backlog_todo_id} gate=${tick.gate_pass} status=${tick.status}`
+          : `tick agent=${tick.agentId} handoff=${tick.handoff_id?.slice(0, 8)} status=${tick.status}`;
       workerConsole("implement-lane", tick.skipped ? "info" : "info", msg);
       agentLog("implement-lane", "info", msg);
     } catch (err) {

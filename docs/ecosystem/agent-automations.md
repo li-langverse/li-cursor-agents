@@ -1,5 +1,30 @@
 # Li cursor agents — dual-mode scheduling
 
+## Goal-directed swarm (production)
+
+**Production self-driving** uses one async control plane in **li-cursor-agents** — not per-mission `lic` systemd plan loops.
+
+| Topic | Doc |
+|-------|-----|
+| Architecture + operator install | [swarm-architecture.md](./swarm-architecture.md) |
+| SDK slot budget | [sdk-slot-policy.md](./sdk-slot-policy.md) |
+| Active goals API | `GET /api/goals` |
+
+Install (only entry): `./scripts/install-agents-swarm-systemd.sh` — dashboard + async swarm; do **not** enable `li-*-plan-loop` units in `lic`.
+
+### Deprecated: `lic` plan loops
+
+The following are **retired** as long-running systemd processes. Backlogs and gate scripts under `lic` remain **data only**; scheduling is via `config/research-goals.yaml` and `config/implement-goals.yaml`.
+
+| Retired | Replacement |
+|---------|-------------|
+| `li-httpd-plan-loop`, `li-sim-algo-plan-loop`, `li-compiler-studio-plan-loop`, `li-studio-ui-ux-plan-loop` | Implement goals in async swarm |
+| `li-sim-md-research-plan-loop`, `li-sim-chem-research-plan-loop`, `li-security-research-plan-loop`, `li-swarm-observer-plan-loop` | Research goals in async swarm |
+| `lic/scripts/*-plan-loop-systemd.sh` | Do not install |
+| Skill `goal-plan-loop-persistent` | Use [swarm-architecture.md](./swarm-architecture.md) |
+
+Ad-hoc one-off goals still work via `goal-directed-loop.sh` / `run-agent --goal-file` (not a replacement for the swarm).
+
 ## Async swarm (default for `keep-agents`)
 
 **Target behavior:** user clicks **Start agents** once on the dashboard (or `LI_AUTO_START_ASYNC_SWARM=1` on server boot) — research, implement, maintenance, and worker loops run **continuously** until **Stop agents**. Each loop checks the work queue (`GET /api/queue`), handoffs, and sessions; mostly in parallel (`LI_SDK_MAX_CONCURRENT`, default 4). **Mock runs** (`CURSOR_MOCK=1`, `--mock`) are for CI/tests only — artifacts go under `data/runs/mock/` and are **not** listed in dashboard history or Supabase.
@@ -64,7 +89,7 @@ cwd: ../studio
 
 Without flags, `run-agent` and `goal-directed-loop.sh` infer repo from frontmatter or path keywords (see skill `explore-li-ecosystem`).
 
-**lic httpd plan:** `../lic/scripts/httpd-plan-loop.py` writes each YAML todo as a goal file and invokes `code_implementer` (override with `LI_HTTPD_PLAN_AGENT`).
+**lic httpd plan (deprecated loop):** prefer implement goal `httpd_parity` in the async swarm. Legacy `../lic/scripts/httpd-plan-loop.py` is not part of self-driving install.
 
 ### Goal implementation → `lic`
 

@@ -12,10 +12,19 @@ import {
   buildGoalWorkflowExtra,
   resolveGoalImplementationRepo,
 } from "../handoffs/goal-workflow.js";
+import {
+  buildImplementGoalInstruction,
+  loadImplementGoals,
+  markBacklogTodoDone,
+  pickNextImplementWorkForAgent,
+  recordTodoGateResult,
+  runImplementGoalGates,
+} from "../implement-goals/load-goals.js";
+import type { BacklogTodo, ImplementGoal } from "../implement-goals/types.js";
 import { resolveBenchmarksRoot } from "../preflight.js";
 import { agentsPackageRoot, runAgent, shouldUseMock } from "../runner.js";
 import { isHandoffRunInProgress } from "./handoff-run-coordinator.js";
-import { loadLaneState, saveLaneState } from "./lane-state.js";
+import { loadLaneState, recordImplementGoalRun, saveLaneState } from "./lane-state.js";
 import type { AgentHandoff } from "../handoffs/types.js";
 import type { AgentId } from "../types.js";
 
@@ -24,8 +33,15 @@ export interface ImplementLaneTickResult {
   skip_reason?: string;
   agentId?: AgentId;
   handoff_id?: string;
+  implement_goal_id?: string;
+  backlog_todo_id?: string;
+  gate_pass?: boolean;
   status?: string;
 }
+
+export type ImplementLaneTarget =
+  | { kind: "handoff"; agentId: AgentId; handoff: AgentHandoff }
+  | { kind: "implement_goal"; agentId: AgentId; goal: ImplementGoal; todo: BacklogTodo };
 
 function handoffInstruction(h: AgentHandoff): string {
   const scaffold = buildGoalScaffoldBlock(h);
@@ -47,7 +63,7 @@ function handoffInstruction(h: AgentHandoff): string {
   ].join("\n");
 }
 
-export async function pickImplementLaneTarget(): Promise<{
+export async function pickHandoffImplementTarget(): Promise<{
   agentId: AgentId;
   handoff: AgentHandoff;
 } | null> {
@@ -79,6 +95,27 @@ export async function pickImplementLaneTarget(): Promise<{
   return null;
 }
 
+/** Handoff queue first; then goal-directed implement goals for code_implementer. */
+export async function pickImplementLaneTarget(): Promise<ImplementLaneTarget | null> {
+  const handoff = await pickHandoffImplementTarget();
+  if (handoff) return { kind: "handoff", ...handoff };
+
+  const state = loadLaneState();
+  const picked = pickNextImplementWorkForAgent(
+    "code_implementer",
+    loadImplementGoals(),
+    state.implement_goal_last_run_at ?? {},
+    state.implement_goal_last_gate_pass ?? {},
+  );
+  if (!picked) return null;
+  return {
+    kind: "implement_goal",
+    agentId: "code_implementer",
+    goal: picked.goal,
+    todo: picked.todo,
+  };
+}
+
 export async function implementLaneTick(options?: {
   mock?: boolean;
   dryRun?: boolean;
@@ -96,12 +133,50 @@ export async function implementLaneTick(options?: {
 
   const target = await pickImplementLaneTarget();
   if (!target) {
-    return { skipped: true, skip_reason: "no claimable handoff" };
+    return { skipped: true, skip_reason: "no claimable handoff or implement goal" };
   }
 
   const benchmarksRoot = resolveBenchmarksRoot(options?.benchmarksRoot);
   const packageRoot = agentsPackageRoot();
   const mock = options?.mock ?? shouldUseMock(false);
+
+  if (target.kind === "implement_goal") {
+    const { goal, todo } = target;
+    const result = await runAgent({
+      agentId: target.agentId,
+      cwd: benchmarksRoot ?? packageRoot,
+      benchmarksRoot,
+      mock: Boolean(mock),
+      dryRun: Boolean(options?.dryRun),
+      workflowRepo: goal.workflow_repo,
+      extraInstruction: buildImplementGoalInstruction(goal, todo),
+    });
+
+    let gatePass = false;
+    if (result.status === "finished" && !options?.dryRun) {
+      const gates = runImplementGoalGates(goal);
+      gatePass = gates.ok;
+      recordTodoGateResult(goal.id, todo.id, gatePass, result.status);
+      if (gatePass) markBacklogTodoDone(goal, todo.id);
+      recordImplementGoalRun(loadLaneState(), goal.id, gatePass);
+    } else if (result.status === "finished") {
+      gatePass = true;
+    }
+
+    const next = loadLaneState();
+    next.last_implement_tick_at = new Date().toISOString();
+    saveLaneState(next);
+
+    return {
+      skipped: false,
+      agentId: target.agentId,
+      implement_goal_id: goal.id,
+      backlog_todo_id: todo.id,
+      gate_pass: gatePass,
+      status: result.status,
+    };
+  }
+
   const workflowRepo = resolveGoalImplementationRepo(target.handoff);
   const prevPrTitle = process.env.LI_REPO_WORKFLOW_PR_TITLE;
   const prevPrBody = process.env.LI_REPO_WORKFLOW_PR_BODY;
@@ -164,9 +239,12 @@ export async function runImplementLaneLoop(options?: {
       // eslint-disable-next-line no-console
       console.error(`implement-lane: ${tick.skip_reason}`);
     } else {
+      const goalPart = tick.implement_goal_id
+        ? ` goal=${tick.implement_goal_id} todo=${tick.backlog_todo_id} gate=${tick.gate_pass}`
+        : ` handoff=${tick.handoff_id?.slice(0, 8)}`;
       // eslint-disable-next-line no-console
       console.error(
-        `implement-lane: agent=${tick.agentId} handoff=${tick.handoff_id?.slice(0, 8)} status=${tick.status}`,
+        `implement-lane: agent=${tick.agentId}${goalPart} status=${tick.status}`,
       );
     }
     if (once) break;
