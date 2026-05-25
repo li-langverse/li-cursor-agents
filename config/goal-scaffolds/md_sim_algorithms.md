@@ -17,5 +17,6 @@ Close gaps vs LAMMPS/GROMACS/OpenMM neighbor lists, integrators, and cutoffs in 
 
 ## Evidence required
 
-- Research study under `docs/numerics/studies/` linked in PR.
+- **Whitepaper** in `research-findings/whitepapers/YYYY-MM/md_sim_algorithms/<slug>/` (template: `templates/whitepaper-template.md`; skill `publish-research-whitepaper`).
+- Research study under `docs/numerics/studies/` linked from whitepaper and PR.
 - `./scripts/sim-plan-gates.sh` green for `li-sim-scientific`.

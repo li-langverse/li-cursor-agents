@@ -1,4 +1,9 @@
 # Goal-directed research missions — see plan §1
+# Whitepapers: publish_repo + whitepaper_root (defaults below) → ../research-findings
+defaults:
+  publish_repo: research-findings
+  whitepaper_root: ../research-findings/whitepapers
+
 goals:
   - id: numerics_sota
     title: Numerics / HPC benchmark SOTA
@@ -7,6 +12,8 @@ goals:
     priority: 7
     cadence_hours: 12
     enabled: true
+    publish_repo: research-findings
+    whitepaper_root: ../research-findings/whitepapers
     ph_ids: [PH-5b, PH-7e]
 
   # Swarm goal md_sim (retired li-sim-md-research-plan-loop)
@@ -19,6 +26,8 @@ goals:
     enabled: true
     uses_research_session: true
     allow_implementation: true
+    publish_repo: research-findings
+    whitepaper_root: ../research-findings/whitepapers
     handoff_to: [code_implementer, issue_planner]
 
   # Swarm goal chem_sim (retired li-sim-chem-research-plan-loop)
@@ -31,6 +40,8 @@ goals:
     enabled: true
     uses_research_session: true
     allow_implementation: true
+    publish_repo: research-findings
+    whitepaper_root: ../research-findings/whitepapers
     handoff_to: [code_implementer, issue_planner]
 
   - id: simulation_techniques
@@ -145,4 +156,6 @@ goals:
     enabled: true
     uses_research_session: true
     allow_implementation: true
+    publish_repo: research-findings
+    whitepaper_root: ../research-findings/whitepapers
     handoff_to: [code_implementer, issue_planner]

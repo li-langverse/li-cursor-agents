@@ -16,6 +16,10 @@ export interface ResearchGoal {
   handoff_to?: string[];
   ph_ids?: string[];
   needs_web?: boolean;
+  /** GitHub repo name under li-langverse (e.g. research-findings). */
+  publish_repo?: string;
+  /** Repo-relative path to whitepapers root. */
+  whitepaper_root?: string;
 }
 
 export interface ResearchGoalsFile {
@@ -61,7 +65,10 @@ export function loadResearchGoals(): ResearchGoal[] {
     } else if (trimmed.startsWith("ph_ids:")) {
       const m = trimmed.match(/\[(.*)\]/);
       current.ph_ids = m ? m[1]!.split(",").map((s) => s.trim().replace(/['"]/g, "")) : [];
-    }
+    } else if (trimmed.startsWith("publish_repo:"))
+      current.publish_repo = trimmed.slice(13).trim();
+    else if (trimmed.startsWith("whitepaper_root:"))
+      current.whitepaper_root = trimmed.slice(16).trim();
   }
   if (current?.id) goals.push(current as ResearchGoal);
   return goals.filter((g) => g.enabled !== false);

@@ -64,8 +64,31 @@ Use `repo-workflow-tools.md` template. PR body must include:
 
 Numerics PRs are **blocked** by `agent-pr-deliverable-gate.py` and `pr-merge-gate.py` without file changes under `li-tests/`, `benchmarks/`, or `docs/numerics/` (or bench dashboard URL in body).
 
+## Whitepaper deliverable (required)
+
+**Skill:** `publish-research-whitepaper`
+
+Each run **must** write or update a whitepaper under `research-findings`:
+
+`whitepapers/YYYY-MM/<goal_id>/<slug>/` — `README.md` (YAML frontmatter), `artifacts.json`, `snippets/`
+
+| Frontmatter field | Value |
+|-------------------|-------|
+| `goal_id` | From session / `research-goals.yaml` (e.g. `md_sim_algorithms`) |
+| `agent` | `numerics_researcher` |
+| `run_id` | Cursor run id |
+| `generated_at` | ISO-8601 UTC |
+| `domains` | From goal |
+| `validity_grade` | `study-only` until bench/test ids cited; then `verified` |
+| `status` | `active` \| `superseded` \| `draft` |
+
+Rebuild catalog: `./scripts/publish-research-whitepaper.sh` in **li-cursor-agents**.
+
+Legacy `docs/numerics/studies/` notes remain valid **deep dives** — link them from the whitepaper `links` frontmatter.
+
 ## Deliver
 
+- Whitepaper in **research-findings** (see above)
 - Issue labeled `numerics-research` with evidence pack
 - Optional lic PR only when proof path is clear — coordinate with **bench_improver**
 

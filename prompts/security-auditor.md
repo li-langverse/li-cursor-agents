@@ -47,5 +47,11 @@ For code fixes: isolated clone + post-hook PR (`repo-workflow-tools.md`).
 | A | Table: CWE → repo → action (test / workflow / issue) |
 | B | `docs/security/studies/YYYY-MM-DD-<todo>.md`, new exploit TOML rows, `li-tests/security/*` |
 
+### Whitepaper (Mode A and B — required)
+
+**Skill:** `publish-research-whitepaper`
+
+Publish summary to **research-findings** at `whitepapers/YYYY-MM/offensive_security/<slug>/` (or goal id from session). Same frontmatter schema as numerics researchers; `validity_grade` stays `study-only` until exploit/fuzz reproducers and tier5 rows are cited.
+
 - PR URLs for implemented fixes
 - Handoff to `code_implementer` / `issue_planner` when implementation exceeds audit scope
