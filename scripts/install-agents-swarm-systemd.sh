@@ -11,7 +11,15 @@ PORT="${LI_AGENT_DASHBOARD_PORT:-9477}"
 DASHBOARD_HOST="${LI_AGENT_DASHBOARD_HOST:-127.0.0.1}"
 SDK_MAX="${LI_SDK_MAX_CONCURRENT:-8}"
 STORE="${LI_CONTROL_PLANE_STORE:-supabase}"
-NODE_BIN="${NODE_BIN:-$(command -v node)}"
+if [[ -f "$ENV_FILE" ]]; then
+  # shellcheck disable=SC1090
+  _store_from_env="$(set -a; source "$ENV_FILE"; set +a; printf '%s' "${LI_CONTROL_PLANE_STORE:-}")"
+  [[ -n "$_store_from_env" && -z "${LI_CONTROL_PLANE_STORE:-}" ]] && STORE="$_store_from_env"
+fi
+DISABLE_AUTOSTART="${DATA_DIR}/DISABLE_AUTOSTART"
+# shellcheck source=lib/li-stack-env.sh
+source "$ROOT/scripts/lib/li-stack-env.sh"
+NODE_BIN="$(li_resolve_preferred_node_bin)"
 NODE_DIR="$(dirname "$NODE_BIN")"
 NPM_BIN="${NPM_BIN:-$(command -v npm 2>/dev/null || true)}"
 NPM_DIR=""
@@ -111,6 +119,12 @@ WantedBy=timers.target
 EOF
 fi
 systemctl --user daemon-reload
+systemctl --user stop li-agents-dashboard.service 2>/dev/null || true
+if command -v lsof >/dev/null 2>&1; then
+  # shellcheck source=free-port.sh
+  source "$ROOT/scripts/free-port.sh"
+  free_port "$PORT" 10 || true
+fi
 systemctl --user enable --now li-agents-dashboard.service
 [[ "$INSTALL_ASYNC" == "1" ]] && systemctl --user enable li-agents-async-swarm.service
 [[ "$INSTALL_WATCHDOG" == "1" ]] && systemctl --user enable --now li-agents-swarm-watchdog.timer
@@ -121,5 +135,9 @@ if [[ "$DASHBOARD_HOST" == "0.0.0.0" ]]; then
 else
   echo "OK dashboard http://127.0.0.1:${PORT}/ — LAN: reinstall with --lan or LI_AGENT_DASHBOARD_HOST=0.0.0.0"
 fi
-echo "Control plane store: ${STORE} (Supabase: npm run db:ensure before start; disk: LI_CONTROL_PLANE_STORE=disk)"
-echo "DISABLE autostart: ${DATA_DIR}/DISABLE_AUTOSTART"
+echo "Control plane store: ${STORE} (Supabase: npm run db:ensure + Docker; disk: LI_CONTROL_PLANE_STORE=disk in ${ENV_FILE})"
+if [[ -f "$DISABLE_AUTOSTART" ]]; then
+  echo "Autostart PAUSED (${DISABLE_AUTOSTART} exists) — rm -f to resume"
+else
+  echo "Autostart enabled — pause: touch ${DISABLE_AUTOSTART}"
+fi

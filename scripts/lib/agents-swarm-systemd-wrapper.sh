@@ -15,6 +15,9 @@ if [[ -f "$DISABLE_FILE" ]]; then
 fi
 mkdir -p "$DATA_DIR" "$ROOT/logs"
 cd "$ROOT"
+# shellcheck source=li-stack-env.sh
+source "$ROOT/scripts/lib/li-stack-env.sh"
+li_source_env_supabase "$ROOT" || true
 source "$ROOT/scripts/env.defaults.sh"
 [[ -f "$ROOT/.env" ]] && { set -a; source "$ROOT/.env"; set +a; }
 li_resolve_env_paths "$ROOT"
@@ -27,29 +30,31 @@ if [[ -n "$STORE_FROM_UNIT" ]]; then
 fi
 _store="${LI_CONTROL_PLANE_STORE:-supabase}"
 [[ "${LI_STACK_SKIP_SUPABASE:-}" == "1" ]] && _store="disk"
+_force_disk_store() {
+  echo "agents-swarm-systemd[$AGENTS_SWARM_ROLE]: $1 — using LI_CONTROL_PLANE_STORE=disk" >&2
+  _store="disk"
+  export LI_CONTROL_PLANE_STORE=disk
+  unset SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY SUPABASE_ANON_KEY LI_TEST_SUPABASE_URL 2>/dev/null || true
+}
+
 if [[ "$_store" == "supabase" ]]; then
-  if ! "$ROOT/scripts/ensure-supabase.sh"; then
-    echo "agents-swarm-systemd[$AGENTS_SWARM_ROLE]: Supabase ensure failed (Docker?). LI_CONTROL_PLANE_STORE=disk or: npm run db:ensure" >&2
-    exit 1
+  if ! li_supabase_rest_ready; then
+    if ! "$ROOT/scripts/ensure-supabase.sh"; then
+      _force_disk_store "Supabase ensure failed (Docker down?)"
+    else
+      li_source_env_supabase "$ROOT" || true
+    fi
   fi
-  if [[ -f "$ROOT/.env.supabase" ]]; then
-    set -a
-    # shellcheck source=/dev/null
-    source "$ROOT/.env.supabase"
-    set +a
-  fi
-  if [[ -z "${SUPABASE_URL:-}" || ( -z "${SUPABASE_SERVICE_ROLE_KEY:-}" && -z "${SUPABASE_ANON_KEY:-}" ) ]]; then
-    echo "agents-swarm-systemd[$AGENTS_SWARM_ROLE]: Supabase credentials missing — install Docker + Supabase CLI, then: npm run db:ensure" >&2
-    exit 1
+  if [[ "$_store" == "supabase" ]] && ! li_supabase_rest_ready; then
+    if [[ -z "${SUPABASE_URL:-}" || ( -z "${SUPABASE_SERVICE_ROLE_KEY:-}" && -z "${SUPABASE_ANON_KEY:-}" ) ]]; then
+      _force_disk_store "Supabase credentials missing — run npm run db:ensure when Docker is up"
+    else
+      _force_disk_store "Supabase REST unreachable at ${SUPABASE_URL:-?}"
+    fi
   fi
 fi
 export GH_TOKEN GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
-if [[ -z "${NODE_BIN:-}" || ! -x "${NODE_BIN}" ]]; then
-  for candidate in /opt/homebrew/bin/node /opt/homebrew/opt/node@22/bin/node; do
-    [[ -x "$candidate" ]] && NODE_BIN="$candidate" && break
-  done
-fi
-NODE_BIN="${NODE_BIN:-$(command -v node)}"
+NODE_BIN="$(li_resolve_preferred_node_bin)"
 NPM_DIR=""
 if command -v npm >/dev/null 2>&1; then
   NPM_DIR="$(dirname "$(command -v npm)")"
@@ -61,6 +66,11 @@ case "$AGENTS_SWARM_ROLE" in
   dashboard)
     export LI_AUTO_START_SUPERVISOR=0 LI_SWARM_DETACHED=1 LI_SWARM_EXTERNAL=0
     export LI_AUTO_START_ASYNC_SWARM="${LI_AUTO_START_ASYNC_SWARM:-0}"
+    if command -v lsof >/dev/null 2>&1; then
+      # shellcheck source=free-port.sh
+      source "$ROOT/scripts/free-port.sh"
+      free_port "$PORT" 8 || true
+    fi
     exec "$NODE_BIN" "$ROOT/dist/cli/serve-dashboard.js" --port "$PORT"
     ;;
   async-swarm)

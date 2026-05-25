@@ -9,6 +9,14 @@ set -euo pipefail
 
 _ensure_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$_ensure_root"
+# shellcheck source=lib/li-stack-env.sh
+source "$_ensure_root/scripts/lib/li-stack-env.sh"
+li_source_env_supabase "$_ensure_root" || true
+if li_supabase_rest_ready; then
+  _log() { [[ "${LI_SUPABASE_ENSURE_QUIET:-}" != "1" ]] && echo "$@"; }
+  _log "==> Supabase: REST already reachable at ${SUPABASE_URL}"
+  exit 0
+fi
 
 _log() {
   if [[ "${LI_SUPABASE_ENSURE_QUIET:-}" != "1" ]]; then
@@ -40,7 +48,7 @@ if ! command -v supabase >/dev/null 2>&1 && ! command -v npx >/dev/null 2>&1; th
   exit 0
 fi
 
-if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
+if ! li_docker_ok; then
   echo "WARN: Docker not running — Supabase skipped (disk cache only)" >&2
   exit 0
 fi
@@ -73,8 +81,8 @@ let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{
 _project="$(basename "$_ensure_root")"
 _db_container="supabase_db_${_project}"
 _jwt_secret=""
-if docker inspect "$_db_container" >/dev/null 2>&1; then
-  _jwt_secret="$(docker exec "$_db_container" printenv JWT_SECRET 2>/dev/null || true)"
+if li_docker inspect "$_db_container" >/dev/null 2>&1; then
+  _jwt_secret="$(li_docker exec "$_db_container" printenv JWT_SECRET 2>/dev/null || true)"
 fi
 
 _out="$(
