@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Local disk cleanup** — `scripts/disk-cleanup.sh` compacts Cursor `state.vscdb`, prunes Docker, and drops stale `data/workspaces/` runs; `npm run maintenance:install-schedule` installs daily 04:00 launchd (`docs/local-disk-cleanup.md`).
 - **Workflow repo routing** — `explore-li-ecosystem` skill section for implementers; `resolve-workflow-repo.ts`; `run-agent --goal-file` / `--workflow-repo` inference; `scripts/goal-directed-loop.sh`.
 - **Completion modes** — `LI_AGENT_VERIFY_MODE`, `digest_only` (skip-push), and `LI_REPO_WORKFLOW_SMOKE`; hard vs informational gaps; supervisor handoffs between agents in the same tick (`src/control-plane/run-completion.ts`, `src/supervisor/handoff.ts`).
 - **PR deduplication** — post-hook reuses open PR for branch instead of `gh pr create` duplicate (`src/repo-workflow/pr.ts`).

@@ -44,7 +44,9 @@
     "sync-ecosystem": "bash scripts/sync-ecosystem.sh",
     "sync-ecosystem:quick": "bash scripts/sync-ecosystem.sh --quick",
     "install-gh": "bash scripts/install-gh.sh",
-    "postinstall": "bash scripts/sync-agent-skills.sh || true"
+    "postinstall": "bash scripts/sync-agent-skills.sh || true",
+    "maintenance:disk-cleanup": "bash scripts/disk-cleanup.sh",
+    "maintenance:install-schedule": "bash scripts/install-disk-cleanup-launchd.sh"
   },
   "engines": {
     "node": ">=20"
