@@ -14,8 +14,10 @@ Verify **open plans** and PH trackers against the repo — not implementation.
 
 1. List open tracker items with file/line evidence; mark **done** only when tests/Lean cite exists.
 2. Cross-check **recommended_actions** from ecosystem audit vs plan debt.
-3. File up to **3** issues: label `plan-needed` or `master-plan-gap` with PH-/G- ids.
-4. Post a short digest (no code changes unless typo in plan doc).
+3. Cross-link **`lic/data/goal-directed-agents/snapshot.json`** — for each runner, map `plan_pending` → registry `plan_debt` entries (`gap-plan-pending-<runner>-<todo>`).
+4. File up to **3** issues: label `plan-needed` or `master-plan-gap` with PH-/G- ids when no orchestrator loop applies.
+5. Post a short digest (no code changes unless typo in plan doc).
+6. Run or confirm `lic/scripts/swarm-gap-ingest.py` after audit so `swarm_observer` can apply backlog patches.
 
 ## Output format (required)
 

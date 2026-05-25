@@ -34,6 +34,25 @@ You are invoked when the swarm is **degraded** or on a scheduled meta audit.
 - **Human-only blockers** — items that must not be auto-merged (governance PRs, missing API key)
 - **Agent deliverable** checklist
 
+## Gap orchestration (Mode B — registry + apply)
+
+When running under **`swarm_coverage`** / `swarm-observer-plan-loop`:
+
+1. Read **`lic/data/swarm-gap-registry/registry.yaml`** and **`benchmarks/data/latest/swarm-gap-actions.json`**.
+2. Confirm programmatic prep ran: `lic/scripts/swarm-gap-ingest.py` then `lic/scripts/swarm-gap-apply-actions.py` (patches backlogs like sim-algo research handoff).
+3. For each **open** gap, reconcile: patch target backlog todo, suggest a new systemd loop id (`install-goal-plan-loop-systemd.sh`), or enqueue handoff — **no product code in lic**.
+4. Maintain gap taxonomy:
+
+| `gap_kind` | Primary discoverer | Your role |
+|------------|-------------------|-----------|
+| `competitor_feature` | `gap_explorer` | patch sim/httpd backlogs, suggest research loops |
+| `ui_ux` | `gui_ux_tester` / studio-ui loop | link `studio-ui-ux` plan todos |
+| `plan_debt` | `plan_verifier`, `implementation_gaps` | map snapshot `plan_pending` per runner → registry |
+| `missing_package` | `gap_explorer` (e.g. line_profiler) | `ecosystem-package-backlog.md` → `issue_planner` |
+
+5. Write orchestrator notes under `lic/docs/ecosystem/orchestrator-notes/YYYY-MM-DD-<orch-todo>.md`.
+6. Spawn/update goal-directed loops only via documented `plan_def` ids — never invent new agent registry ids.
+
 ## Rules
 
 - Never merge PRs. Never push to protected branches.

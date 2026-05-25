@@ -34,6 +34,7 @@ import { enrichBriefingObject } from "../briefing/enrich-briefing-file.js";
 import { runPreflight, resolveBenchmarksRoot } from "../preflight.js";
 import type { AgentRunResult, PreflightBundle } from "../types.js";
 import type { ControlPlaneState, HumanIntervention, QueuedAgentTask } from "../control-plane/types.js";
+import { runSwarmGapIngestTick } from "../observer/gap-registry-ingest.js";
 import { loadObserverState, saveObserverState } from "../observer/state.js";
 import { scanSwarmHealth } from "../observer/swarm-health.js";
 import {
@@ -113,6 +114,10 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
       needs_meta_observer: false,
     } satisfies import("../observer/types.js").SwarmHealthReport);
   if (observerEnabled) {
+    const ingest = runSwarmGapIngestTick();
+    if (!ingest.ok) {
+      console.warn(`observer: swarm-gap-ingest failed: ${ingest.detail}`);
+    }
     const recentForObserver = await loadRecentRunSummariesAsync(16);
     swarmHealth = scanSwarmHealth({
       state,
