@@ -110,6 +110,11 @@ export function saveState(state: ControlPlaneState): void {
   void persistControlPlaneState(state).catch((err) => {
     agentLog("control-plane", "ERROR", `persist state failed: ${err}`);
   });
+  void import("../worker/heartbeat.js")
+    .then((m) => m.persistWorkerHeartbeat(state))
+    .catch((err) => {
+      agentLog("control-plane", "warn", `worker heartbeat persist failed: ${err}`);
+    });
 }
 
 export function pruneRecentTasks(state: ControlPlaneState, maxEntries: number, maxAgeMs: number): void {

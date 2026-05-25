@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Li World Studio — workspace (UX harness fixture)</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { width: 1920px; height: 1080px; overflow: hidden;
+      font-family: system-ui, sans-serif; background: #0d1117; color: #e6edf3; }
+    .dock { position: absolute; left: 0; top: 0; bottom: 0; width: 56px;
+      background: #161b22; border-right: 1px solid #30363d; }
+    .viewport { position: absolute; left: 56px; top: 44px; right: 320px; bottom: 0;
+      background: radial-gradient(circle at 50% 40%, #1a2332, #0d1117); }
+    .inspector { position: absolute; right: 0; top: 44px; width: 320px; bottom: 0;
+      background: #161b22; border-left: 1px solid #30363d; padding: 16px; font-size: 13px; }
+    .topbar { position: absolute; left: 56px; right: 0; top: 0; height: 44px;
+      background: #161b22; border-bottom: 1px solid #30363d; display: flex; align-items: center;
+      padding: 0 16px; font-size: 13px; }
+    .badge { background: #238636; color: #fff; padding: 2px 8px; border-radius: 4px; margin-left: 8px; }
+  </style>
+</head>
+<body>
+  <nav class="dock" aria-label="Tools"></nav>
+  <header class="topbar">Li World Studio <span class="badge">Agent: idle</span></header>
+  <main class="viewport" role="main" aria-label="3D viewport"></main>
+  <aside class="inspector"><h2>Inspector</h2><p>Particle tier: 10k (mock)</p></aside>
+</body>
+</html>

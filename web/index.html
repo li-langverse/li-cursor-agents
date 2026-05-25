@@ -35,6 +35,7 @@
           <div class="topbar-right">
             <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
             <span id="backend-pill" class="backend-pill sdk" title="Agent execution backend">cursor-sdk</span>
+            <span id="swarm-pill" class="pill swarm-pill hidden" title="Continuous async swarm">swarm off</span>
             <span id="status-pill" class="pill idle">loading</span>
             <span id="updated" class="updated"></span>
             <button type="button" id="refresh-briefing" class="btn ghost sm" title="Re-run agent-briefing.py">Refresh briefing</button>
@@ -45,14 +46,40 @@
         <main class="main-views">
           <section id="view-overview" class="view active" aria-label="Overview">
             <div id="backend-banner" class="backend-banner hidden" role="alert" aria-live="polite"></div>
+            <div id="swarm-status-banner" class="swarm-status-banner hidden" role="status" aria-live="polite"></div>
             <div class="stat-cards" id="stat-cards"></div>
+            <div id="swarm-agents-strip" class="swarm-agents-strip hidden" aria-label="Agents on duty"></div>
+            <div class="panel" id="swarm-handoffs-panel">
+              <div class="panel-head-row">
+                <h2>Swarm handoffs</h2>
+                <button type="button" class="btn ghost sm" id="swarm-handoffs-refresh" title="Single implement lane tick">Implement tick</button>
+              </div>
+              <p class="hint" id="swarm-handoffs-meta">Scorecard and open handoffs from briefing + control-plane store.</p>
+              <div id="swarm-scorecard-row" class="stat-cards swarm-scorecard-row"></div>
+              <div class="table-wrap">
+                <table class="data-table" id="handoffs-table">
+                  <thead>
+                    <tr>
+                      <th>Status</th>
+                      <th>To</th>
+                      <th>Goal</th>
+                      <th>Repo</th>
+                      <th>north_star_fit</th>
+                      <th>Updated</th>
+                    </tr>
+                  </thead>
+                  <tbody id="handoffs-table-body"></tbody>
+                </table>
+              </div>
+              <ul id="swarm-goals-list" class="simple-list compact-list"></ul>
+            </div>
             <div class="panel" id="gaps-panel" hidden>
               <h2>Implementation &amp; deliverable gaps</h2>
               <ul id="gaps-list" class="simple-list"></ul>
             </div>
             <div class="panel supervisor-panel">
-              <h2>Supervisor log <span id="supervisor-loop-badge" class="badge hidden">loop on</span></h2>
-              <p id="supervisor-loop-meta" class="hint">Footer: Supervisor mode (continuous) or Run all (parallel once).</p>
+              <h2>Swarm log <span id="supervisor-loop-badge" class="badge hidden">running</span></h2>
+              <p id="supervisor-loop-meta" class="hint">Click <strong>Start agents</strong> once — lanes and workers run continuously until you stop.</p>
               <ul id="supervisor-activity" class="activity-feed supervisor-feed"></ul>
             </div>
             <div class="split-panels">
@@ -61,7 +88,7 @@
                 <ul id="live-activity" class="activity-feed"></ul>
               </div>
               <div class="panel">
-                <h2>Recommended this briefing</h2>
+                <h2>Work queue</h2>
                 <ul id="queue" class="simple-list"></ul>
               </div>
             </div>
@@ -105,6 +132,7 @@
               <div class="filter-chips" id="agent-filters">
                 <button type="button" class="chip active" data-filter="all">All</button>
                 <button type="button" class="chip" data-filter="running">Running</button>
+                <button type="button" class="chip" data-filter="on_duty">On duty</button>
                 <button type="button" class="chip" data-filter="recommended">Recommended</button>
                 <button type="button" class="chip" data-filter="stopped">Stopped</button>
                 <button type="button" class="chip" data-filter="idle">Idle</button>
@@ -139,14 +167,11 @@
 
           <section id="view-statistics" class="view" aria-label="Statistics" hidden>
             <p class="hint" id="swarm-stats-meta">Swarm output metrics from agent runs and briefing snapshots.</p>
-            <motion></motion>
-            <motion></motion>
-            <div id="swarm-stats-panel" class="panel">
+      <div id="swarm-stats-panel" class="panel">
               <h2>Swarm statistics</h2>
               <p class="hint">Aggregated from run traces, PR URLs in outputs, and persisted counters.</p>
-              <motion></motion>
-              <div id="swarm-stat-cards" class="stat-cards swarm-stat-cards"></motion></div>
-              <div id="swarm-stats-notes" class="swarm-stats-notes hidden"></motion></motion>
+              <div id="swarm-stat-cards" class="stat-cards swarm-stat-cards"></div>
+                                          <div id="swarm-stats-notes" class="swarm-stats-notes hidden"></div>
             </div>
           </section>
 
@@ -180,8 +205,9 @@
     </div>
 
     <footer class="footer-controls footer-modes">
-      <button type="button" id="mode-supervisor" class="btn primary sm">Supervisor mode</button>
-      <button type="button" id="mode-parallel" class="btn ghost sm">Run all (parallel)</button>
+      <button type="button" id="mode-swarm" class="btn primary sm" title="Start all lanes and agents continuously (parallel SDK slots)">Start agents</button>
+      <button type="button" id="mode-parallel" class="btn ghost sm" title="One-shot research → placement → implement">Run handoff once</button>
+      <button type="button" id="mode-supervisor" class="btn ghost sm hidden-advanced" title="Legacy tick queue (optional)">Supervisor</button>
     </footer>
 
     <script src="/app.js" type="module"></script>

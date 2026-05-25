@@ -1,4 +1,6 @@
 import { agentsPackageRoot, runAgent } from "../runner.js";
+import { writeRunSidecar } from "../control-plane/finalize-run.js";
+import { shouldPersistRunToHistory } from "../control-plane/run-history.js";
 import { persistAgentRun } from "../db/persist.js";
 import { hashBriefing } from "../control-plane/briefing-hash.js";
 import { assembleReport, loadRecentRunSummariesAsync, writeReport } from "../control-plane/build-report.js";
@@ -22,13 +24,25 @@ import {
 } from "../preflight/agent-kit-sync.js";
 import { rolloutAgentKitPrs } from "../repo-workflow/agent-kit-rollout.js";
 import { buildPrMergerInstruction, mergePlanFromBriefing } from "../preflight/merge-queue.js";
+import {
+  buildAutoMergeInstruction,
+  evaluateNextMerge,
+} from "../merge/auto-merge-gate.js";
 import { runLocalCiSweepForMergeAgents } from "../local-ci/sweep.js";
+import { maybePruneWorkspaces } from "../repo-workflow/workspace-prune.js";
+import { enrichBriefingObject } from "../briefing/enrich-briefing-file.js";
 import { runPreflight, resolveBenchmarksRoot } from "../preflight.js";
 import type { AgentRunResult, PreflightBundle } from "../types.js";
 import type { ControlPlaneState, HumanIntervention, QueuedAgentTask } from "../control-plane/types.js";
-import { statusForTaskCooldown } from "../control-plane/run-audit-context.js";
-import { buildHandoffInstruction, handoffNoteFromRun, type HandoffNote } from "./handoff.js";
-import { maybeSyncEcosystem } from "../ecosystem-sync.js";
+import { runSwarmGapIngestTick } from "../observer/gap-registry-ingest.js";
+import { loadObserverState, saveObserverState } from "../observer/state.js";
+import { scanSwarmHealth } from "../observer/swarm-health.js";
+import {
+  applyInfrastructureRemediations,
+  mergeRemediationTasks,
+  recordRemediationOutcome,
+  remediationsToTasks,
+} from "../observer/remediate.js";
 
 export interface SupervisorOptions {
   benchmarksRoot?: string;
@@ -60,7 +74,6 @@ function extractRecommended(briefing: unknown): Array<{ agent: string; reason: s
 
 export async function supervisorTick(options: SupervisorOptions): Promise<TickResult> {
   ensureControlPlaneDirs();
-  maybeSyncEcosystem();
   const state = loadState();
   state.last_tick_at = new Date().toISOString();
   state.supervisor_status = "waiting";
@@ -69,6 +82,10 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
   const benchmarksRoot = resolveBenchmarksRoot(options.benchmarksRoot);
   const preflight: PreflightBundle = runPreflight(benchmarksRoot, options.skipSlowPreflight !== false);
   let briefing = preflight.briefing;
+  if (briefing && typeof briefing === "object") {
+    briefing = await enrichBriefingObject(briefing as Record<string, unknown>);
+    preflight.briefing = briefing;
+  }
   let briefingHash = hashBriefing(briefing);
   state.last_preflight_at = preflight.generated_at;
   state.last_briefing_hash = briefingHash;
@@ -83,6 +100,42 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
     cooldownMs: options.cooldownMs,
     maxTasks: options.maxTasksPerTick,
   });
+
+  const observerState = loadObserverState(state);
+  const observerEnabled = process.env.LI_OBSERVER_DISABLE !== "1";
+  let swarmHealth =
+    state.swarm_health ??
+    ({
+      scanned_at: new Date().toISOString(),
+      healthy: true,
+      findings: [],
+      remediations: [],
+      runs_sampled: 0,
+      error_rate: 0,
+      needs_meta_observer: false,
+    } satisfies import("../observer/types.js").SwarmHealthReport);
+  if (observerEnabled) {
+    const ingest = runSwarmGapIngestTick();
+    if (!ingest.ok) {
+      console.warn(`observer: swarm-gap-ingest failed: ${ingest.detail}`);
+    }
+    const recentForObserver = await loadRecentRunSummariesAsync(16);
+    swarmHealth = scanSwarmHealth({
+      state,
+      briefing,
+      observerState,
+      recentRuns: recentForObserver,
+    });
+    void applyInfrastructureRemediations(swarmHealth.remediations).catch((err) => {
+      console.warn(
+        `observer: infra remediation failed: ${err instanceof Error ? err.message : err}`,
+      );
+    });
+    const remediationTasks = remediationsToTasks(swarmHealth.remediations, briefingHash);
+    tasks = mergeRemediationTasks(tasks, remediationTasks, options.maxTasksPerTick);
+    state.swarm_health = swarmHealth;
+    saveObserverState(state, observerState);
+  }
 
   // Do not re-queue recommended agents when heap skipped them on cooldown.
   if (tasks.length === 0 && skippedCooldown === 0) {
@@ -104,7 +157,8 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
   if (tasks.length === 0 && options.force) {
     const stopped = new Set(state.stopped_agents ?? []);
     for (const def of AGENT_REGISTRY) {
-      if (def.id === "orchestrator") continue;
+      if (def.id === "orchestrator" || def.id === "swarm_observer" || def.id === "ecosystem_grader")
+        continue;
       if (stopped.has(def.id)) continue;
       tasks.push({
         fingerprint: taskFingerprint(def.id, "supervisor force dispatch"),
@@ -122,6 +176,28 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
     coordPath: options.coordPath ?? defaultCoordPath(),
     pendingWebAgents: options.mock ? [] : pendingWeb,
   });
+
+  if (
+    observerEnabled &&
+    !swarmHealth.healthy &&
+    swarmHealth.remediations.length === 0 &&
+    swarmHealth.findings.some((f) => !f.auto_healable || f.severity === "critical")
+  ) {
+    interventions.push({
+      id: "swarm_degraded:observer",
+      kind: "swarm_degraded",
+      severity: "high",
+      title: "Swarm degraded — auto-heal exhausted",
+      detail: swarmHealth.findings
+        .slice(0, 4)
+        .map((f) => f.title)
+        .join("; "),
+      action:
+        "Fix root cause (SDK key, stuck supervisor, preflight). Observer will retry when healable.",
+      links: [],
+      created_at: new Date().toISOString(),
+    });
+  }
 
   if (heapPlan.validation_errors.length > 0) {
     interventions.push({
@@ -173,27 +249,27 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
     const packageRoot = agentsPackageRoot();
     const workCwd = benchmarksRoot ?? packageRoot;
 
-    const handoffChain: HandoffNote[] = [];
-
     for (const task of tasks) {
       state.supervisor_status = "running_agent";
       state.current_supervisor_agent = task.agentId;
       saveState(state);
       const supervisorRunId = registerSupervisorRun(task.agentId, task.reason);
       try {
-        const parts: string[] = [];
-        const handoff = buildHandoffInstruction(handoffChain, task);
-        if (handoff) parts.push(handoff);
+        let extraInstruction: string | undefined;
         if (task.agentId === "pr_merger") {
-          parts.push(buildPrMergerInstruction(mergePlanFromBriefing(briefing)));
+          const mergePlan = mergePlanFromBriefing(briefing);
+          const autoEval = evaluateNextMerge(mergePlan, briefing);
+          extraInstruction = [
+            buildPrMergerInstruction(mergePlan),
+            buildAutoMergeInstruction(mergePlan, autoEval),
+          ].join("\n\n");
         } else if (task.agentId === "agent_kit_maintainer" && benchmarksRoot) {
           const rollout = rolloutAgentKitPrs(benchmarksRoot, briefing, {
             dryRun: options.mock,
           });
           refreshAgentKitAudit(benchmarksRoot);
-          parts.push(buildAgentKitMaintainerInstruction([], briefing, rollout));
+          extraInstruction = buildAgentKitMaintainerInstruction([], briefing, rollout);
         }
-        const extraInstruction = parts.length ? parts.join("\n\n---\n\n") : undefined;
         const result = await runAgent({
           agentId: task.agentId,
           cwd: workCwd,
@@ -203,23 +279,23 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
           extraInstruction,
         });
         executed.push(result);
-        handoffChain.push(handoffNoteFromRun(task, result));
         await persistRunMeta(task, result, briefingHash);
-        recordTaskRun(state, task, briefingHash, statusForTaskCooldown(result));
+        recordTaskRun(state, task, briefingHash, result.status);
+        if (observerEnabled) recordRemediationOutcome(observerState, task, result.status);
         tasksExecuted += 1;
-        const supervisorStatus =
+        completeSupervisorRun(
+          supervisorRunId,
           result.status === "error"
             ? "error"
             : result.status === "cancelled"
               ? "cancelled"
-              : result.status === "incomplete"
-                ? "incomplete"
-                : "finished";
-        completeSupervisorRun(supervisorRunId, supervisorStatus);
+              : "finished",
+        );
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
         state.last_error = msg;
         recordTaskRun(state, task, briefingHash, "error");
+        if (observerEnabled) recordRemediationOutcome(observerState, task, "error");
         completeSupervisorRun(supervisorRunId, "error");
         interventions.push({
           id: `agent_error:${task.agentId}`,
@@ -241,9 +317,11 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
 
   const pruneAgeMs = Math.max(options.cooldownMs * 2, 86_400_000);
   pruneRecentTasks(state, 80, pruneAgeMs);
+  maybePruneWorkspaces();
   state.supervisor_status = "idle";
   state.current_supervisor_agent = undefined;
   state.last_tick_at = new Date().toISOString();
+  if (observerEnabled) saveObserverState(state, observerState);
   saveState(state);
 
   const recentRuns =
@@ -262,8 +340,16 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
     tasksExecuted,
     tasksSkippedCooldown: skippedCooldown,
     recentRuns,
+    swarmHealth,
   });
   writeReport(report, interventions);
+  if (observerEnabled) {
+    pushSupervisorActivity(
+      swarmHealth.healthy ? "info" : "warn",
+      `observer: healthy=${swarmHealth.healthy} findings=${swarmHealth.findings.length} remediations=${swarmHealth.remediations.length}`,
+      { error_rate: swarmHealth.error_rate },
+    );
+  }
 
   return {
     briefingHash,
@@ -286,7 +372,10 @@ async function persistRunMeta(
     briefing_hash: briefingHash,
     coordinator: task.coordinator,
   };
-  await persistAgentRun({ run: enriched });
+  writeRunSidecar(enriched);
+  if (shouldPersistRunToHistory(enriched)) {
+    await persistAgentRun({ run: enriched });
+  }
 }
 
 function sleepMs(ms: number, signal?: AbortSignal): Promise<void> {
@@ -323,27 +412,7 @@ export async function runSupervisorLoop(
     if (signal?.aborted) break;
     const tickOptions =
       tickIndex === 0 && forceFirst ? { ...options, force: true } : options;
-    let tick: TickResult;
-    try {
-      tick = await supervisorTick(tickOptions);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      pushSupervisorActivity("error", `tick failed (continuing loop): ${msg}`);
-      const state = loadState();
-      state.last_error = msg;
-      state.supervisor_status = "idle";
-      state.current_supervisor_agent = undefined;
-      saveState(state);
-      tickIndex += 1;
-      if (options.once) break;
-      if (signal?.aborted) break;
-      try {
-        await sleepMs(options.intervalMs, signal);
-      } catch {
-        break;
-      }
-      continue;
-    }
+    const tick = await supervisorTick(tickOptions);
     tickIndex += 1;
     const msg = [
       `tick briefing=${tick.briefingHash}`,

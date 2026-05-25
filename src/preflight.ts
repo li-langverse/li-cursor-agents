@@ -7,6 +7,10 @@ import { dbEnabled } from "./db/client.js";
 import { schemaMarkdown } from "./db/schema-catalog.js";
 import { buildPrMergerInstruction, mergePlanFromBriefing } from "./preflight/merge-queue.js";
 import {
+  buildAutoMergeInstruction,
+  evaluateNextMerge,
+} from "./merge/auto-merge-gate.js";
+import {
   buildPrAlignmentCloseInstruction,
   buildPrBranchOpenerInstruction,
   prHygieneFromBriefing,
@@ -15,6 +19,7 @@ import {
   buildImplementationQueue,
   buildImplementationQueueInstruction,
 } from "./preflight/implementation-queue.js";
+import { compactBriefingForPrompt } from "./preflight/briefing-summary.js";
 
 function hasBriefingScript(root: string): boolean {
   return existsSync(join(root, "scripts", "agent-briefing.py"));
@@ -88,7 +93,25 @@ export function buildUserMessage(
   definitionId: string,
   preflight: PreflightBundle,
   extra?: string,
+  swarmBlocks?: string,
 ): string {
+  if (process.env.LI_AGENT_MINIMAL_PROMPT === "1") {
+    const lines = [
+      `Run **${definitionId}** (httpd plan loop — **goal only**).`,
+      "",
+      "Ignore swarm handoffs, implementation_queue, and unrelated briefing work.",
+      "Implement only **Additional instruction** below in the workflow clone.",
+      "",
+      "## Your task",
+      "- Follow Additional instruction and code-implementer PR rules.",
+      "- Run gates/tests cited in the goal before finishing.",
+      "- Open/update one PR; do not self-merge.",
+      "",
+    ];
+    if (extra) lines.push("## Additional instruction", extra);
+    return lines.join("\n");
+  }
+
   const isMerger = definitionId === "pr_merger";
   const mergePlan = mergePlanFromBriefing(preflight.briefing);
 
@@ -100,8 +123,18 @@ export function buildUserMessage(
     "",
   ];
 
+  if (swarmBlocks?.trim()) {
+    lines.push(swarmBlocks.trim(), "");
+  }
+
   if (isMerger) {
-    lines.push(buildPrMergerInstruction(mergePlan), "");
+    const autoEval = evaluateNextMerge(mergePlan, preflight.briefing);
+    lines.push(
+      buildPrMergerInstruction(mergePlan),
+      "",
+      buildAutoMergeInstruction(mergePlan, autoEval),
+      "",
+    );
   }
 
   const hygiene = prHygieneFromBriefing(preflight.briefing);
@@ -132,10 +165,17 @@ export function buildUserMessage(
     );
   }
 
+  const briefingPath =
+    preflight.briefing_path ??
+    (preflight.briefing && typeof preflight.briefing === "object"
+      ? (preflight.briefing as Record<string, unknown>).briefing_path
+      : undefined);
   lines.push(
-    "## Preflight JSON (deterministic scripts — already ran)",
+    "## Briefing (compact snapshot — scripts already ran)",
+    briefingPath ? `Full JSON on disk: \`${briefingPath}\`` : "Full JSON: `data/latest/agent-briefing.json` in benchmarks repo",
+    "Read that file with your read tool when you need PR lists, triage tables, or audit detail.",
     "```json",
-    JSON.stringify(preflight.briefing ?? preflight, null, 2).slice(0, 120_000),
+    compactBriefingForPrompt(preflight.briefing ?? preflight),
     "```",
     "",
     "## Your task",

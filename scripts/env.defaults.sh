@@ -21,14 +21,6 @@ _abs_file() {
 }
 
 export LI_CURSOR_AGENTS_ROOT="$ROOT"
-export LI_LANGVERSE_ROOT="${LI_LANGVERSE_ROOT:-$(_abs_dir "$ROOT/..")}"
-
-# Ecosystem pull + skill sync (see scripts/sync-ecosystem.sh)
-export LI_ECOSYSTEM_AUTO_SYNC="${LI_ECOSYSTEM_AUTO_SYNC:-1}"
-export LI_ECOSYSTEM_SYNC_INTERVAL_SEC="${LI_ECOSYSTEM_SYNC_INTERVAL_SEC:-3600}"
-export LI_ECOSYSTEM_SYNC_ON_START="${LI_ECOSYSTEM_SYNC_ON_START:-1}"
-export LI_ECOSYSTEM_REF="${LI_ECOSYSTEM_REF:-main}"
-export LI_ECOSYSTEM_CLONE_MISSING="${LI_ECOSYSTEM_CLONE_MISSING:-1}"
 
 # After sourcing .env, call this so relative sibling paths still resolve correctly.
 li_resolve_env_paths() {
@@ -49,21 +41,7 @@ li_resolve_env_paths() {
 }
 
 li_resolve_env_paths "$ROOT"
-
-# Shared secrets: Documents/Cursor/.env (workspace parent of li-langverse/)
-if [[ -z "${LI_SHARED_ENV:-}" ]]; then
-  if [[ -f "$ROOT/../../.env" ]]; then
-    export LI_SHARED_ENV="$(_abs_file "$ROOT/../../.env")"
-  elif [[ -f "$ROOT/../.env.github" ]]; then
-    export LI_SHARED_ENV="$(_abs_file "$ROOT/../.env.github")"
-  elif [[ -f "$ROOT/.env" ]]; then
-    export LI_SHARED_ENV="$(_abs_file "$ROOT/.env")"
-  fi
-fi
-export LI_GITHUB_ENV="${LI_GITHUB_ENV:-${LI_SHARED_ENV:-$(_abs_file "$ROOT/../.env.github")}}"
-
-# shellcheck source=source-shared-env.sh
-[[ -f "$ROOT/scripts/source-shared-env.sh" ]] && source "$ROOT/scripts/source-shared-env.sh" || true
+export LI_GITHUB_ENV="${LI_GITHUB_ENV:-$(_abs_file "$ROOT/../.env.github")}"
 
 # Local CI instead of GitHub Actions (merge queue / pr_merger)
 export LI_USE_LOCAL_CI="${LI_USE_LOCAL_CI:-1}"
@@ -75,15 +53,33 @@ export LI_LOCAL_CI_SKIP_GH="${LI_LOCAL_CI_SKIP_GH:-1}"
 # Disk-conscious: no LLVM docker image unless explicit
 export LI_LOCAL_CI_BUILD_LIC="${LI_LOCAL_CI_BUILD_LIC:-0}"
 
+# Isolated gh clones under data/workspaces/ (see npm run workspace:prune)
+export LI_WORKSPACE_PRUNE="${LI_WORKSPACE_PRUNE:-always}"
+export LI_WORKSPACE_PRUNE_MAX_AGE_DAYS="${LI_WORKSPACE_PRUNE_MAX_AGE_DAYS:-7}"
+export LI_WORKSPACE_PRUNE_KEEP_PER_REPO="${LI_WORKSPACE_PRUNE_KEEP_PER_REPO:-5}"
+export LI_WORKSPACE_PRUNE_MAX_RUNS_PER_REPO="${LI_WORKSPACE_PRUNE_MAX_RUNS_PER_REPO:-20}"
+export LI_WORKSPACE_PRUNE_INTERVAL_MS="${LI_WORKSPACE_PRUNE_INTERVAL_MS:-3600000}"
+
 # Supervisor defaults (sensible for one machine)
 export LI_SUPERVISOR_INTERVAL_MS="${LI_SUPERVISOR_INTERVAL_MS:-120000}"
 export LI_AGENTS_COOLDOWN_MS="${LI_AGENTS_COOLDOWN_MS:-300000}"
 export LI_SUPERVISOR_MAX_TASKS="${LI_SUPERVISOR_MAX_TASKS:-2}"
-# Run-all (parallel): 0 = spawn all leaf agents at once; set 4–12 if SDK rate-limits
-export LI_SWARM_MAX_PARALLEL="${LI_SWARM_MAX_PARALLEL:-0}"
+
+# Cursor SDK: parallel sessions (async swarm) + gap when max=1 + retries on instant error
+export LI_SDK_MAX_CONCURRENT="${LI_SDK_MAX_CONCURRENT:-4}"
+export LI_SDK_SESSION_GAP_MS="${LI_SDK_SESSION_GAP_MS:-8000}"
+export LI_SDK_MAX_ATTEMPTS="${LI_SDK_MAX_ATTEMPTS:-3}"
+export LI_SDK_RETRY_BACKOFF_MS="${LI_SDK_RETRY_BACKOFF_MS:-4000}"
+export LI_BRIEFING_PROMPT_MAX_CHARS="${LI_BRIEFING_PROMPT_MAX_CHARS:-16000}"
+export LI_HEAP_MAX_NUMERICS_PER_TICK="${LI_HEAP_MAX_NUMERICS_PER_TICK:-1}"
+
+# Local Cursor SDK: `default` (Auto) is reliable; `composer-2` often instant-errors on Agent.create
+export CURSOR_MODEL="${CURSOR_MODEL:-default}"
+export CURSOR_SDK_FALLBACK_MODEL="${CURSOR_SDK_FALLBACK_MODEL:-default}"
 export LI_AGENT_DASHBOARD_PORT="${LI_AGENT_DASHBOARD_PORT:-9477}"
-export LI_WATCH_INTERVAL_SEC="${LI_WATCH_INTERVAL_SEC:-30}"
-export LI_AUTO_START_SUPERVISOR="${LI_AUTO_START_SUPERVISOR:-1}"
+export LI_AUTO_START_SUPERVISOR="${LI_AUTO_START_SUPERVISOR:-0}"
+export LI_AUTO_START_ASYNC_SWARM="${LI_AUTO_START_ASYNC_SWARM:-1}"
+export LI_ASYNC_AGENT_INTERVAL_MS="${LI_ASYNC_AGENT_INTERVAL_MS:-120000}"
 
 # Prefer host lic CI (brew llvm) over 2GB docker image
 export LI_LOCAL_CI_LIC_MODE="${LI_LOCAL_CI_LIC_MODE:-host}"
@@ -92,6 +88,3 @@ export LI_LOCAL_CI_LIC_MODE="${LI_LOCAL_CI_LIC_MODE:-host}"
 export LI_CONTROL_PLANE_STORE="${LI_CONTROL_PLANE_STORE:-supabase}"
 # Legacy alias for disk: LI_STACK_SKIP_SUPABASE=1
 export LI_STACK_SKIP_SUPABASE="${LI_STACK_SKIP_SUPABASE:-0}"
-
-# Cursor SDK: `default` = Auto (dynamic model). Override in .env to pin a model id.
-export CURSOR_MODEL="${CURSOR_MODEL:-default}"

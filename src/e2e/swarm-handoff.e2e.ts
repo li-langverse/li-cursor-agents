@@ -12,8 +12,6 @@ import type { Server } from "node:http";
 import { startOpsServer } from "../ops-server.js";
 import { reportPath, interventionsPath } from "../control-plane/paths.js";
 import { setupE2eEnv, readReport, defaultTickOpts } from "./helpers.js";
-import { agentsPackageRoot } from "../runner.js";
-
 function httpGetJson(port: number, path: string): Promise<unknown> {
   return new Promise((resolve, reject) => {
     get(`http://127.0.0.1:${port}${path}`, (res) => {
@@ -144,9 +142,8 @@ describe("swarm handoff e2e (mock)", () => {
     await supervisorTick(defaultTickOpts(env.benchmarksRoot));
     const report = readReport(env.controlPlaneDir);
     const preflight = report.preflight as { briefing_path?: string };
-    assert.ok(preflight.briefing_path?.includes("e2e-benchmarks"));
-    assert.ok(
-      existsSync(join(agentsPackageRoot(), "fixtures", "e2e-benchmarks", "data", "latest", "agent-briefing.json")),
-    );
+    assert.ok(preflight.briefing_path?.includes("agent-briefing.json"));
+    assert.ok(existsSync(preflight.briefing_path ?? ""));
+    assert.ok(preflight.briefing_path?.startsWith(env.benchmarksRoot));
   });
 });

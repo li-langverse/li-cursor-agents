@@ -10,6 +10,11 @@ export {
   rolloutNeedsLlmFollowUp,
 } from "./agent-kit-rollout.js";
 export { prepareIsolatedClone, cloneDirFor, isGovernanceRepo, workspacesRoot } from "./workspace.js";
+export {
+  maybePruneWorkspaces,
+  pruneWorkspaces,
+  formatWorkspacePruneReport,
+} from "./workspace-prune.js";
 export { commitPushOpenPr } from "./pr.js";
 export {
   applyPostHookToRunResult,

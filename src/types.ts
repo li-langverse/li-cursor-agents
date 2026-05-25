@@ -12,7 +12,6 @@ export type AgentId =
   | "bug_fixer"
   | "security_auditor"
   | "issue_planner"
-  | "issue_hygiene"
   | "pr_branch_opener"
   | "pr_alignment"
   | "pr_reviewer"
@@ -23,7 +22,21 @@ export type AgentId =
   | "docs_maintainer"
   | "ci_maintainer"
   | "agent_kit_maintainer"
-  | "workspace_sweeper";
+  | "org_repo_onboarder"
+  | "workspace_sweeper"
+  | "package_architect"
+  | "goal_researcher"
+  | "proof_gap_researcher"
+  | "stdlib_researcher"
+  | "swarm_observer"
+  | "ecosystem_grader"
+  | "docs_ui_tester"
+  | "docs_ux_tester"
+  | "gui_ui_tester"
+  | "gui_ux_tester"
+  | "tui_ui_tester"
+  | "tui_ux_tester"
+  | "studio_ui_ux_builder";
 
 /** @deprecated Briefing/fixtures may still use legacy ids — resolved in registry. */
 export type LegacyAgentId =
@@ -39,7 +52,8 @@ export type AgentCategory =
   | "ecosystem"
   | "pull_requests"
   | "numerics"
-  | "platform";
+  | "platform"
+  | "ux";
 
 export interface AgentDefinition {
   id: AgentId;
@@ -56,6 +70,8 @@ export interface AgentDefinition {
   guaranteedPush?: boolean;
   /** Deterministic sibling-repo sweep (commit/push/PR/restart) — no isolated clone. */
   workspaceSweep?: boolean;
+  /** Cursor SDK interaction mode (plan / debug / agent / ask). */
+  cursorSdkMode?: "agent" | "plan" | "debug" | "ask";
 }
 
 export interface PreflightBundle {
@@ -74,11 +90,11 @@ export interface AgentRunOptions {
   apiKey?: string;
   modelId?: string;
   extraInstruction?: string;
-  /** Isolated clone target (li-langverse/<repo>); auto from goal file when omitted. */
+  /** Override repo for guaranteed-push workflow clone (e.g. `lic` for goal implementation). */
   workflowRepo?: string;
+  /** When set (supervisor tracking), output + DB use this run_id. */
+  runId?: string;
 }
-
-export type CompletionMode = "production" | "verify" | "digest_only";
 
 export interface AgentRunCompletionMeta {
   complete: boolean;
@@ -86,10 +102,6 @@ export interface AgentRunCompletionMeta {
   pr_urls: string[];
   deliverable_checked: boolean;
   skip_reason?: string;
-  /** production = PR/evidence required; verify/digest_only = digest OK without PR */
-  completion_mode?: CompletionMode;
-  /** Soft gaps (expected in verify/digest); do not mark premature */
-  notes?: string[];
   gaps: string[];
   evidence: string[];
 }

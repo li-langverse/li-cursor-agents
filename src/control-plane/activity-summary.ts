@@ -1,4 +1,5 @@
 import type { AgentRunInputRecord, AgentRunTrace } from "../agent-run-trace.js";
+import { deriveLiveStreamPreview } from "./live-stream-preview.js";
 import type { RunCatalogEntry } from "./runs-catalog.js";
 
 export interface ActivityListItem extends RunCatalogEntry {
@@ -12,7 +13,7 @@ export interface ActivityListItem extends RunCatalogEntry {
   output_snippet: string;
 }
 
-export function slimTraceForList(trace?: AgentRunTrace): AgentRunTrace | undefined {
+export function slimTraceForList(trace?: AgentRunTrace, live = false): AgentRunTrace | undefined {
   if (!trace) return undefined;
   return {
     version: trace.version,
@@ -21,7 +22,7 @@ export function slimTraceForList(trace?: AgentRunTrace): AgentRunTrace | undefin
     file_edits: trace.file_edits ?? [],
     tool_call_count: trace.tool_call_count,
     steps: (trace.steps ?? []).filter((s) => s.type === "toolCall").slice(0, 12),
-    deltas: [],
+    deltas: live ? (trace.deltas ?? []).slice(-120) : [],
   };
 }
 
@@ -43,18 +44,29 @@ export function toActivityListItem(entry: RunCatalogEntry): ActivityListItem {
   if (tools > 0) parts.push(`${tools} tool${tools === 1 ? "" : "s"}`);
   if (edits > 0) parts.push(`${edits} file edit${edits === 1 ? "" : "s"}`);
   if (trace?.thinking_text) parts.push("thinking");
-  const action_summary = parts.length ? parts.join(" · ") : input || trace ? "run logged" : "—";
+
+  const stream = entry.live
+    ? deriveLiveStreamPreview({ run_trace: trace, run_input: input, reason: entry.reason })
+    : null;
+  const action_summary = stream
+    ? stream.actionSummary
+    : parts.length
+      ? parts.join(" · ")
+      : input || trace
+        ? "run logged"
+        : "—";
 
   const output_snippet =
-    trace?.assistant_text?.slice(0, 320) ??
-    entry.output_preview?.slice(0, 320) ??
-    entry.summary?.slice(0, 320) ??
+    stream?.snippet ||
+    trace?.assistant_text?.slice(0, 320) ||
+    entry.output_preview?.slice(0, 320) ||
+    entry.summary?.slice(0, 320) ||
     "";
 
   return {
     ...entry,
     run_input: slimInputForList(input),
-    run_trace: slimTraceForList(trace),
+    run_trace: slimTraceForList(trace, Boolean(entry.live)),
     action_summary,
     edit_count: edits,
     tool_count: tools,

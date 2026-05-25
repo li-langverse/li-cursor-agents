@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Li goal-directed agent swarm — X infographic</title>
+  <style>
+    :root {
+      --bg: #0B0F14;
+      --surface: #1A2332;
+      --accent: #5B9FD4;
+      --text: #E8EDF4;
+      --muted: #94A3B8;
+      --border: #3D5568;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #06080c;
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 16px 40px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .toolbar {
+      width: 1200px;
+      max-width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .toolbar button {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .toolbar button:hover { border-color: var(--accent); }
+    .toolbar button.primary {
+      background: #243044;
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    #artboard {
+      width: 1200px;
+      height: 675px;
+      max-width: 100%;
+      background: var(--bg);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+      position: relative;
+    }
+
+    #artboard .viewport {
+      width: 1200px;
+      height: 675px;
+      transform-origin: top left;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    #capture-target {
+      width: 1200px;
+      height: 675px;
+      padding: 40px 48px 36px;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg);
+    }
+
+    .title {
+      text-align: center;
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      line-height: 1.15;
+      margin-bottom: 48px;
+    }
+
+    .pipeline-wrap {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+    }
+
+    .pipeline {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      width: 100%;
+      max-width: 1080px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .node {
+      flex: 1;
+      min-width: 0;
+      text-align: center;
+    }
+
+    .node-box {
+      background: var(--surface);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 12px 18px;
+      margin: 0 4px;
+    }
+
+    .node-box.accent {
+      border-color: var(--accent);
+      box-shadow: 0 0 28px rgba(91, 159, 212, 0.18);
+    }
+
+    .node-label {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.02em;
+    }
+
+    .node-box.accent .node-label { color: var(--accent); }
+
+    .slots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .slot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(91, 159, 212, 0.6);
+    }
+
+    .arrow-seg {
+      flex: 0 0 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      font-size: 22px;
+      font-weight: 300;
+      line-height: 1;
+    }
+
+    .feedback-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .compare {
+      margin-top: 36px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.01em;
+    }
+
+    .compare .old { color: #c08060; text-decoration: line-through; text-decoration-color: rgba(192, 128, 96, 0.6); }
+    .compare .arrow { color: var(--accent); margin: 0 12px; font-weight: 400; }
+    .compare .new { color: var(--accent); }
+
+    .tagline {
+      margin-top: auto;
+      padding-top: 28px;
+      text-align: center;
+      font-size: 15px;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+    }
+
+    .hint {
+      width: 1200px;
+      max-width: 100%;
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 14px;
+    }
+
+    @media (max-width: 1220px) {
+      #artboard { width: 100%; height: auto; aspect-ratio: 1200 / 675; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <button type="button" class="primary" id="btn-png-x">Download PNG for X</button>
+    <button type="button" id="btn-png-hd">Export 1600×900</button>
+  </div>
+
+  <div id="artboard">
+    <div class="viewport" id="viewport">
+      <div id="capture-target">
+        <h1 class="title">Goal-directed agent swarm</h1>
+
+        <div class="pipeline-wrap">
+          <svg class="feedback-svg" viewBox="0 0 1104 200" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <marker id="fb" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+                <path d="M0,0 L8,4 L0,8 Z" fill="#94A3B8"/>
+              </marker>
+            </defs>
+            <path d="M 60 175 C 40 175, 20 40, 520 28" fill="none" stroke="#94A3B8" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#fb)"/>
+            <text x="18" y="105" fill="#94A3B8" font-family="system-ui,sans-serif" font-size="13" transform="rotate(-78 18 105)">feedback</text>
+          </svg>
+
+          <div class="pipeline" role="img" aria-label="Signals to Goals to Swarm with four slots to Agents to Codebase with feedback loop">
+            <div class="node">
+              <div class="node-box"><div class="node-label">Signals</div></div>
+            </div>
+            <div class="arrow-seg" aria-hidden="true">→</div>
+            <div class="node">
+              <div class="node-box"><div class="node-label">Goals</div></div>
+            </div>
+            <div class="arrow-seg" aria-hidden="true">→</div>
+            <div class="node">
+              <div class="node-box accent">
+                <div class="node-label">Swarm</div>
+                <div class="slots" aria-label="4 SDK slots">
+                  <span class="slot"></span><span class="slot"></span>
+                  <span class="slot"></span><span class="slot"></span>
+                </div>
+              </div>
+            </div>
+            <div class="arrow-seg" aria-hidden="true">→</div>
+            <div class="node">
+              <div class="node-box"><div class="node-label">Agents</div></div>
+            </div>
+            <div class="arrow-seg" aria-hidden="true">→</div>
+            <div class="node">
+              <div class="node-box"><div class="node-label">Codebase</div></div>
+            </div>
+          </div>
+        </div>
+
+        <p class="compare">
+          <span class="old">9 lic loops</span>
+          <span class="arrow">→</span>
+          <span class="new">1 swarm</span>
+        </p>
+
+        <p class="tagline">Self-driving codebase · goal-directed swarm</p>
+      </div>
+    </div>
+  </div>
+
+  <p class="hint">Artboard 1200×675 (16:9) · optional 1600×900 export · brand #0B0F14 #1A2332 #5B9FD4</p>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
+  <script>
+    (function scalePreview() {
+      const board = document.getElementById('artboard');
+      const vp = document.getElementById('viewport');
+      function apply() {
+        if (board.clientWidth >= 1200) {
+          vp.style.transform = '';
+          board.style.height = '675px';
+          return;
+        }
+        const scale = board.clientWidth / 1200;
+        vp.style.transform = 'scale(' + scale + ')';
+        board.style.height = Math.round(675 * scale) + 'px';
+      }
+      apply();
+      window.addEventListener('resize', apply);
+    })();
+
+    async function exportPng(width, height, filename) {
+      const target = document.getElementById('capture-target');
+      const vp = document.getElementById('viewport');
+      const board = document.getElementById('artboard');
+      const prevTransform = vp.style.transform;
+      const prevHeight = board.style.height;
+      vp.style.transform = 'none';
+      board.style.height = '675px';
+
+      try {
+        const base = await html2canvas(target, {
+          backgroundColor: '#0B0F14',
+          scale: 1,
+          width: 1200,
+          height: 675,
+          windowWidth: 1200,
+          windowHeight: 675,
+          useCORS: true,
+          logging: false,
+        });
+
+        let out = base;
+        if (width !== 1200 || height !== 675) {
+          const scaled = document.createElement('canvas');
+          scaled.width = width;
+          scaled.height = height;
+          const ctx = scaled.getContext('2d');
+          ctx.fillStyle = '#0B0F14';
+          ctx.fillRect(0, 0, width, height);
+          const scale = Math.min(width / 1200, height / 675);
+          const dw = 1200 * scale;
+          const dh = 675 * scale;
+          const dx = (width - dw) / 2;
+          const dy = (height - dh) / 2;
+          ctx.drawImage(base, dx, dy, dw, dh);
+          out = scaled;
+        }
+
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = out.toDataURL('image/png');
+        link.click();
+      } finally {
+        vp.style.transform = prevTransform;
+        board.style.height = prevHeight;
+        const board2 = document.getElementById('artboard');
+        if (board2.clientWidth < 1200) {
+          const scale = board2.clientWidth / 1200;
+          vp.style.transform = 'scale(' + scale + ')';
+          board2.style.height = Math.round(675 * scale) + 'px';
+        }
+      }
+    }
+
+    function bindExport(btnId, w, h, name) {
+      document.getElementById(btnId).addEventListener('click', async function () {
+        const btn = this;
+        const label = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Rendering…';
+        try {
+          await exportPng(w, h, name);
+        } catch (e) {
+          alert('Export failed: ' + (e && e.message ? e.message : e));
+        } finally {
+          btn.disabled = false;
+          btn.textContent = label;
+        }
+      });
+    }
+
+    bindExport('btn-png-x', 1200, 675, 'li-swarm-x-1200x675.png');
+    bindExport('btn-png-hd', 1600, 900, 'li-swarm-x-1600x900.png');
+  </script>
+</body>
+</html>

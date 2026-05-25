@@ -1,15 +1,4 @@
 import type { AgentDefinition, AgentId, LegacyAgentId } from "../types.js";
-import {
-  AGENT_SKILLS_DIR,
-  assertRegistrySkillsOnDisk,
-  resolveAgentSkillPaths,
-} from "./skills.js";
-
-/**
- * Registry `skills[]` ids resolve to `li-cursor-agents/${AGENT_SKILLS_DIR}/<id>/SKILL.md`.
- * Sync sources: `./scripts/sync-agent-skills.sh` (benchmarks + lic + agent-kit).
- */
-export { AGENT_SKILLS_DIR };
 
 /** Legacy briefing / fixture ids → canonical registry ids. */
 export const AGENT_ALIASES: Record<LegacyAgentId, AgentId> = {
@@ -44,6 +33,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     skills: ["audit-plan-completion"],
     needsWeb: false,
     preflightKeys: ["plan_audit", "briefing"],
+    cursorSdkMode: "plan",
   },
   {
     id: "gap_explorer",
@@ -64,6 +54,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     skills: ["explore-li-ecosystem", "audit-plan-completion"],
     needsWeb: true,
     preflightKeys: ["plan_audit", "explorer", "issue_triage", "briefing"],
+    cursorSdkMode: "plan",
   },
   {
     id: "code_implementer",
@@ -71,11 +62,12 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     description: "Implements gaps, bugs, and queue items; opens PRs via post-hook.",
     category: "governance",
     promptFile: "code-implementer.md",
-    skills: ["explore-li-ecosystem", "audit-plan-completion", "push-li-github"],
+    skills: ["explore-li-ecosystem", "audit-plan-completion"],
     needsWeb: false,
     preflightKeys: ["plan_audit", "explorer", "ci_bug_triage", "briefing"],
     repoWorkflow: true,
     guaranteedPush: true,
+    cursorSdkMode: "agent",
   },
   {
     id: "bug_fixer",
@@ -83,11 +75,12 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     description: "Fixes CI failures (local-ci + GHA) and bug-labeled GitHub issues.",
     category: "governance",
     promptFile: "bug-fixer.md",
-    skills: ["explore-li-ecosystem", "agent-diagnose-fix-li", "push-li-github"],
+    skills: ["explore-li-ecosystem", "li-ecosystem-discipline"],
     needsWeb: false,
     preflightKeys: ["ci_bug_triage", "pr_program", "briefing"],
     repoWorkflow: true,
     guaranteedPush: true,
+    cursorSdkMode: "debug",
   },
   {
     id: "security_auditor",
@@ -95,9 +88,9 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     description: "Audits org repos against lic CVE/CWE catalog and security tests.",
     category: "security",
     promptFile: "security-auditor.md",
-    skills: ["li-ecosystem-discipline"],
-    needsWeb: false,
-    preflightKeys: ["security_cwe_audit", "briefing"],
+    skills: ["li-ecosystem-discipline", "security-offensive-research"],
+    needsWeb: true,
+    preflightKeys: ["security_cwe_audit", "cwe_feed_delta", "briefing"],
     repoWorkflow: true,
     guaranteedPush: true,
   },
@@ -110,17 +103,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     skills: ["plan-feature-from-issue"],
     needsWeb: false,
     preflightKeys: ["issue_triage", "briefing"],
-  },
-  {
-    id: "issue_hygiene",
-    name: "Issue hygiene",
-    description:
-      "Backlog triage: duplicate clusters, stale issues, explorer-finding bursts; routes planner vs implementer.",
-    category: "governance",
-    promptFile: "issue-hygiene-agent.md",
-    skills: ["plan-feature-from-issue", "review-pr-alignment"],
-    needsWeb: false,
-    preflightKeys: ["issue_hygiene", "issue_triage", "briefing"],
+    cursorSdkMode: "plan",
   },
   {
     id: "pr_branch_opener",
@@ -218,6 +201,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     preflightKeys: ["org_ci_audit", "ecosystem_audit", "briefing"],
     repoWorkflow: true,
     guaranteedPush: true,
+    cursorSdkMode: "debug",
   },
   {
     id: "agent_kit_maintainer",
@@ -231,6 +215,23 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     repoWorkflow: true,
   },
   {
+    id: "org_repo_onboarder",
+    name: "Org repo onboarder",
+    description:
+      "Discover new li-langverse GitHub repos and fan out CI, agent-kit, docs, and catalog handoffs.",
+    category: "platform",
+    promptFile: "org-repo-onboarder.md",
+    skills: ["explore-li-ecosystem"],
+    needsWeb: false,
+    preflightKeys: [
+      "org_new_repos_discovery",
+      "org_ci_audit",
+      "org_agent_kit_audit",
+      "briefing",
+    ],
+    cursorSdkMode: "plan",
+  },
+  {
     id: "workspace_sweeper",
     name: "Workspace sweeper",
     description:
@@ -241,6 +242,161 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     needsWeb: false,
     preflightKeys: ["workspace_dirty_sweep", "briefing"],
     workspaceSweep: true,
+  },
+  {
+    id: "package_architect",
+    name: "Package architect",
+    description: "Semantic placement: extend existing package vs create monorepo/official PKG.",
+    category: "governance",
+    promptFile: "package-architect.md",
+    skills: ["create-li-package", "explore-li-ecosystem"],
+    needsWeb: false,
+    preflightKeys: ["explorer", "briefing"],
+    cursorSdkMode: "plan",
+  },
+  {
+    id: "goal_researcher",
+    name: "Goal researcher",
+    description: "Domain goal-directed research (simulation, game, AI, web, CAD).",
+    category: "ecosystem",
+    promptFile: "goal-researcher.md",
+    skills: ["explore-li-ecosystem"],
+    needsWeb: true,
+    preflightKeys: ["briefing"],
+    cursorSdkMode: "agent",
+  },
+  {
+    id: "proof_gap_researcher",
+    name: "Proof gap researcher",
+    description: "Hunts provability holes, G-* gaps, external trust boundaries.",
+    category: "governance",
+    promptFile: "proof-gap-researcher.md",
+    skills: ["li-ecosystem-discipline"],
+    needsWeb: false,
+    preflightKeys: ["plan_audit", "briefing"],
+    cursorSdkMode: "agent",
+  },
+  {
+    id: "stdlib_researcher",
+    name: "Stdlib researcher",
+    description: "Deep std + li-std-* audit; packages to build vs improve.",
+    category: "ecosystem",
+    promptFile: "stdlib-researcher.md",
+    skills: ["explore-li-ecosystem"],
+    needsWeb: true,
+    preflightKeys: ["explorer", "briefing"],
+    cursorSdkMode: "agent",
+  },
+  {
+    id: "swarm_observer",
+    name: "Swarm observer",
+    description:
+      "Meta-agent: audits swarm health, failed handoffs, prompt/supervisor gaps; proposes self-healing fixes.",
+    category: "platform",
+    promptFile: "swarm-observer.md",
+    skills: ["explore-control-plane-db"],
+    needsWeb: false,
+    preflightKeys: ["briefing"],
+    cursorSdkMode: "plan",
+  },
+  {
+    id: "ecosystem_grader",
+    name: "Ecosystem grader",
+    description:
+      "Scores swarm/ecosystem quality from briefing, goal-directed snapshot, and run samples; recommends meta fixes.",
+    category: "platform",
+    promptFile: "ecosystem-grader.md",
+    skills: ["explore-control-plane-db"],
+    needsWeb: false,
+    preflightKeys: ["briefing"],
+    cursorSdkMode: "plan",
+  },
+  {
+    id: "docs_ui_tester",
+    name: "Docs UI tester",
+    description: "Visual audit for MkDocs/docs: screenshots, axe, baselines; files ui_remediation issues.",
+    category: "ux",
+    promptFile: "docs-ui-tester.md",
+    skills: ["explore-li-ecosystem"],
+    needsWeb: false,
+    preflightKeys: ["ui_audit", "briefing"],
+    cursorSdkMode: "plan",
+  },
+  {
+    id: "docs_ux_tester",
+    name: "Docs UX tester",
+    description: "Docs journeys vs SOTA; files ux_remediation issues for implementers.",
+    category: "ux",
+    promptFile: "docs-ux-tester.md",
+    skills: ["explore-li-ecosystem"],
+    needsWeb: true,
+    preflightKeys: ["ux_audit", "ui_audit", "briefing"],
+    cursorSdkMode: "plan",
+  },
+  {
+    id: "gui_ui_tester",
+    name: "GUI UI tester",
+    description: "Visual audit for dashboard/SDL/gui-gen; pixel diff and axe.",
+    category: "ux",
+    promptFile: "gui-ui-tester.md",
+    skills: ["studio-design-review", "studio-accessibility-web-quality"],
+    needsWeb: false,
+    preflightKeys: ["ui_audit", "briefing"],
+    cursorSdkMode: "plan",
+  },
+  {
+    id: "gui_ux_tester",
+    name: "GUI UX tester",
+    description: "GUI flows vs SOTA; empty states and journey friction.",
+    category: "ux",
+    promptFile: "gui-ux-tester.md",
+    skills: ["studio-agentic-ux", "studio-ui-ux-rubric", "studio-design-review"],
+    needsWeb: true,
+    preflightKeys: ["ux_audit", "briefing"],
+    cursorSdkMode: "plan",
+  },
+  {
+    id: "tui_ui_tester",
+    name: "TUI UI tester",
+    description: "Terminal UI captures for tui_app and tui_gen targets.",
+    category: "ux",
+    promptFile: "tui-ui-tester.md",
+    skills: [],
+    needsWeb: false,
+    preflightKeys: ["ui_audit", "briefing"],
+    cursorSdkMode: "plan",
+  },
+  {
+    id: "tui_ux_tester",
+    name: "TUI UX tester",
+    description: "TUI journeys vs Textual/Bubble Tea SOTA.",
+    category: "ux",
+    promptFile: "tui-ux-tester.md",
+    skills: [],
+    needsWeb: true,
+    preflightKeys: ["ux_audit", "briefing"],
+    cursorSdkMode: "plan",
+  },
+  {
+    id: "studio_ui_ux_builder",
+    name: "Studio UI/UX builder",
+    description:
+      "Implements Li Studio native UI/render slices; captures screenshots/video; benchmarks particles/memory; scores PH-UX each iteration.",
+    category: "ux",
+    promptFile: "studio-ui-ux-builder.md",
+    skills: [
+      "explore-li-ecosystem",
+      "studio-design-system-generator",
+      "studio-design-review",
+      "studio-agentic-ux",
+      "studio-accessibility-web-quality",
+      "studio-ui-ux-rubric",
+    ],
+    needsWeb: true,
+    preflightKeys: ["briefing"],
+    repoWorkflow: true,
+    guaranteedPush: true,
+    cursorSdkMode: "agent",
   },
 ];
 
@@ -267,7 +423,6 @@ export function listAgentsPublic(): Array<{
   category: string;
   needsWeb: boolean;
   skills: string[];
-  skill_paths: string[];
 }> {
   return AGENT_REGISTRY.map(({ id, name, description, category, needsWeb, skills }) => ({
     id,
@@ -276,15 +431,5 @@ export function listAgentsPublic(): Array<{
     category,
     needsWeb,
     skills,
-    skill_paths: resolveAgentSkillPaths(skills),
   }));
-}
-
-/** Validate every registry skill exists under `.cursor/skills/` (call from tests / CI). */
-export function validateRegistrySkills(): { ok: true } | { ok: false; missing: string[] } {
-  const ids = new Set<string>();
-  for (const a of AGENT_REGISTRY) {
-    for (const s of a.skills) ids.add(s);
-  }
-  return assertRegistrySkillsOnDisk(ids);
 }

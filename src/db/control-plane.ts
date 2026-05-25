@@ -59,11 +59,13 @@ export async function saveReportToDb(
   if (briefing && report.briefing_hash) {
     const generated =
       (briefing as Record<string, unknown>).generated_at ?? report.briefing_generated_at ?? generatedAt;
+    await supabase.from("briefing_snapshots").update({ is_latest: false }).eq("is_latest", true);
     await supabase.from("briefing_snapshots").upsert({
       briefing_hash: report.briefing_hash,
       generated_at: String(generated),
       source_path: report.preflight.briefing_path ?? null,
       payload: briefing,
+      is_latest: true,
     });
   }
 
@@ -75,40 +77,39 @@ export async function saveReportToDb(
     });
   }
 
-  await saveQueuedTasks(report.briefing_hash, report.heap_plan);
+  await saveQueuedTasksFromHeap(report.briefing_hash, report.heap_plan);
 }
 
-async function saveQueuedTasks(briefingHash: string, heapPlan?: HeapPlan): Promise<void> {
+async function saveQueuedTasksFromHeap(briefingHash: string, heapPlan?: HeapPlan): Promise<void> {
   if (!dbEnabled() || !heapPlan?.flat_tasks?.length) return;
 
-  const supabase = getSupabase();
-  await supabase.from("queued_agent_tasks").delete().eq("briefing_hash", briefingHash);
-
-  const rows = heapPlan.flat_tasks.map((t) => ({
-    briefing_hash: briefingHash,
-    fingerprint: `${t.agent}:${t.reason}`.slice(0, 200),
+  const { syncWorkQueueToDb } = await import("./queued-tasks.js");
+  const items = heapPlan.flat_tasks.map((t) => ({
+    id: `heap:${t.coordinator}:${t.agent}:${t.reason}`.slice(0, 200),
     agent_id: t.agent,
-    reason: t.reason,
-    source: "recommended",
-    coordinator: t.coordinator,
+    source: "heap" as const,
+    priority: 50 + Math.min(10, t.priority ?? 0),
+    reason: `[${t.coordinator}] ${t.reason}`,
+    status: "pending" as const,
+    meta: { coordinator: t.coordinator },
   }));
-
-  const { error } = await supabase.from("queued_agent_tasks").insert(rows);
-  if (error) throw new Error(`queued_agent_tasks: ${error.message}`);
+  await syncWorkQueueToDb(briefingHash, items);
 }
 
 export async function loadLatestReportFromDb(): Promise<ControlPlaneReport | null> {
   if (!dbEnabled()) return null;
 
-  const { data, error } = await getSupabase()
-    .from("control_plane_reports")
-    .select("payload")
-    .eq("is_latest", true)
-    .maybeSingle();
+  return withSupabaseRetry("loadLatestReport", async () => {
+    const { data, error } = await getSupabase()
+      .from("control_plane_reports")
+      .select("payload")
+      .eq("is_latest", true)
+      .maybeSingle();
 
-  if (error) throw new Error(`loadLatestReport: ${error.message}`);
-  if (!data?.payload) return null;
-  return data.payload as ControlPlaneReport;
+    if (error) throw new Error(`loadLatestReport: ${error.message}`);
+    if (!data?.payload) return null;
+    return data.payload as ControlPlaneReport;
+  });
 }
 
 export async function loadLatestInterventionsFromDb(): Promise<HumanIntervention[]> {
@@ -159,14 +160,16 @@ export async function saveLiveInterventionsToDb(params: {
 export async function loadLiveInterventionsFromDb(): Promise<HumanIntervention[]> {
   if (!dbEnabled()) return [];
 
-  const { data, error } = await getSupabase()
-    .from("interventions_latest")
-    .select("items, briefing_generated_at, generated_at")
-    .eq("id", 1)
-    .maybeSingle();
+  return withSupabaseRetry("loadLiveInterventions", async () => {
+    const { data, error } = await getSupabase()
+      .from("interventions_latest")
+      .select("items")
+      .eq("id", 1)
+      .maybeSingle();
 
-  if (error) throw new Error(`loadLiveInterventions: ${error.message}`);
-  return (data?.items as HumanIntervention[]) ?? [];
+    if (error) throw new Error(`loadLiveInterventions: ${error.message}`);
+    return (data?.items as HumanIntervention[]) ?? [];
+  });
 }
 
 export async function loadBriefingFromDb(briefingHash: string): Promise<unknown | null> {

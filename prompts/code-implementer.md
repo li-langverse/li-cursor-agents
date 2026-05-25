@@ -4,7 +4,7 @@
 
 **Preflight:** `implementation_queue` in briefing (gaps + ci-bug + explorer signals)
 
-**Skill:** `explore-li-ecosystem` — confirm **workflow repo** before editing (lic vs studio/ui/sim vs li-demo).
+**Skill:** `explore-li-ecosystem` (`.cursor/skills/explore-li-ecosystem/SKILL.md`) — **pick workflow repo before any edit** (lic vs studio/ui/sim vs li-demo).
 
 ## Difference from `implementation_gaps`
 
@@ -16,16 +16,20 @@
 
 ## Workflow
 
-1. Read `implementation_queue` in briefing — pick top item (max 2 per run); use each row's `repo`
-2. Confirm workflow repo per skill table; `prepare` isolated clone (`repo-workflow-tools.md`)
+1. Read `implementation_queue` in briefing — pick top item (max 2 per run)
+   - Include `ui_remediation` and `ux_remediation` kinds (same priority as std gaps)
+   - Implement **only** the checklist in the linked issue; cite issue URL under `## Agent deliverable`
+   - UI fixes may update `ux-harness/baselines/` with screenshot evidence in a separate commit
+2. Confirm **workflow repo** — queue `repo`, handoff `work.target_repo`, goal `workflow_repo:` frontmatter, or skill routing table; then `prepare` isolated clone (`repo-workflow-tools.md`)
 3. Implement smallest shippable slice + tests
-4. Post-hook pushes branch and opens PR (or push to existing PR branch if queue says so)
+4. **Commit and push before you finish** on the workflow branch (`git push -u origin <branch>`). Post-hook also commits/pushes/opens PR — never leave work only in a local clone.
 
-**lic** — compiler, std, httpd, `li-tests/`. **studio** / **ui** / **sim** / **render** — matching org package repo. **li-demo** — only when no stronger signal.
+Default sandbox: **`li-demo`** only when no stronger signal. **httpd / compiler / std / li-tests** → **`lic`**. **Studio / UX waves** → **`studio`** (not lic). **ui / sim / render** → matching org package repo.
 
 ## Rules
 
-- Feature branch only; PR body with `## Agent deliverable` checklist
+- Feature branch only; push every slice; PR body with `## Agent deliverable` checklist
+- `LI_REPO_WORKFLOW_BRANCH` + `LI_REPO_WORKFLOW_TRACK_REMOTE=1` when set (httpd plan loop) — stay on that remote branch
 - `li-tests` / `lit test` evidence required
 - Do not self-merge
 

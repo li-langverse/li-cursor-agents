@@ -1,20 +1,26 @@
-import { writeFileSync, readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { writeFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { getAgent } from "./agents/registry.js";
-import { appendSkillsToSystemPrompt, resolveAgentSkillPaths } from "./agents/skills.js";
 import { MockBackend } from "./backends/mock-backend.js";
+import { isSdkSlotLockError } from "./backends/sdk-session-lock.js";
 import { buildMockTrace, buildRunInput } from "./agent-run-trace.js";
 import { resolveCursorApiKey } from "./env.js";
 import { hashBriefing } from "./control-plane/briefing-hash.js";
 import { finalizeAgentRun } from "./control-plane/finalize-run.js";
-import { resolveRunAuditContext } from "./control-plane/run-audit-context.js";
+import { applySwarmPostRunEffects } from "./handoffs/post-run.js";
+import { shouldPersistRunToHistory } from "./control-plane/run-history.js";
 import { persistAgentRun } from "./db/persist.js";
 import { runsDir } from "./control-plane/paths.js";
 import {
   buildAgentKitMaintainerInstruction,
   refreshAgentKitAudit,
 } from "./preflight/agent-kit-sync.js";
+import { buildSwarmPromptBlocks } from "./preflight/swarm-context.js";
+import { buildSkillsPromptAppendix } from "./agents/load-skills.js";
 import { buildUserMessage, runPreflight, resolveBenchmarksRoot } from "./preflight.js";
+import { resolveCursorSdkMode, sdkModeSystemPrefix } from "./agents/sdk-mode.js";
 import {
   formatRolloutDigest,
   rolloutAgentKitPrs,
@@ -32,11 +38,71 @@ import {
   agentUsesGuaranteedPush,
   beginRepoWorkflowSession,
 } from "./repo-workflow/workspace-session.js";
-import type { AgentRunOptions, AgentRunResult } from "./types.js";
+import {
+  completeSupervisorRun,
+  hasActiveRunningTrack,
+  registerSupervisorRun,
+} from "./control-plane/runtime.js";
+import { publishRunInputLive } from "./control-plane/live-run-trace.js";
+import { allocateRunId, runOutputPath } from "./control-plane/run-paths.js";
+import type { AgentRunLifecycle } from "./control-plane/types.js";
+import type { AgentId, AgentRunOptions, AgentRunResult } from "./types.js";
 import type { RepoWorkflowSession } from "./repo-workflow/workspace-session.js";
-import { agentsPackageRoot } from "./package-root.js";
 
-export { agentsPackageRoot } from "./package-root.js";
+function runLifecycleFromResult(status: AgentRunResult["status"]): AgentRunLifecycle {
+  if (status === "finished") return "finished";
+  if (status === "cancelled") return "cancelled";
+  return "error";
+}
+
+async function scheduleWorkerHeartbeatFromRunner(): Promise<void> {
+  try {
+    const m = await import("./worker/heartbeat-loop.js");
+    await m.flushWorkerHeartbeat();
+  } catch {
+    /* disk-only */
+  }
+}
+
+async function withRunAgentTracking(
+  agentId: AgentId,
+  fn: (runId: string) => Promise<AgentRunResult>,
+): Promise<AgentRunResult> {
+  if (hasActiveRunningTrack(agentId)) {
+    await scheduleWorkerHeartbeatFromRunner();
+    // Still register a run so live trace + dashboard stream work for overlapping calls.
+    const runId = registerSupervisorRun(agentId, "runAgent:parallel");
+    try {
+      const result = await fn(runId);
+      completeSupervisorRun(runId, runLifecycleFromResult(result.status));
+      return result;
+    } catch (err) {
+      completeSupervisorRun(runId, "error");
+      throw err;
+    }
+  }
+
+  const runId = registerSupervisorRun(agentId, "runAgent");
+  await scheduleWorkerHeartbeatFromRunner();
+  try {
+    const result = await fn(runId);
+    completeSupervisorRun(runId, runLifecycleFromResult(result.status));
+    return result;
+  } catch (err) {
+    completeSupervisorRun(runId, "error");
+    throw err;
+  }
+}
+
+/** li-cursor-agents package root (where prompts/ lives). */
+export function agentsPackageRoot(): string {
+  const env = process.env.LI_CURSOR_AGENTS_ROOT;
+  if (env && existsSync(join(env, "package.json"))) return env;
+  const here = dirname(fileURLToPath(import.meta.url));
+  const root = join(here, "..");
+  if (existsSync(join(root, "prompts"))) return root;
+  return process.cwd();
+}
 
 export function loadPrompt(repoRoot: string, promptFile: string): string {
   const p = join(repoRoot, "prompts", promptFile);
@@ -73,15 +139,25 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
     throw new Error(`Unknown agent: ${options.agentId} (see npm run agents:list)`);
   }
 
+  return withRunAgentTracking(definition.id, async (runId) =>
+    runAgentBody({ ...options, runId }, definition),
+  );
+}
+
+async function runAgentBody(
+  options: AgentRunOptions,
+  definition: NonNullable<ReturnType<typeof getAgent>>,
+): Promise<AgentRunResult> {
   const packageRoot = agentsPackageRoot();
   const benchmarksRoot = resolveBenchmarksRoot(options.benchmarksRoot);
   const preflight = runPreflight(benchmarksRoot, true);
   let systemPrompt = loadPrompt(packageRoot, definition.promptFile);
+  const skillsAppendix = buildSkillsPromptAppendix(definition.skills, packageRoot);
+  if (skillsAppendix) {
+    systemPrompt += `\n\n---\n\n# Agent skills (follow before editing)\n\n${skillsAppendix}`;
+  }
   if (definition.repoWorkflow) {
     systemPrompt += `\n\n---\n\n${loadPrompt(packageRoot, "repo-workflow-tools.md")}`;
-  }
-  if (definition.skills.length) {
-    systemPrompt = appendSkillsToSystemPrompt(systemPrompt, definition.skills, packageRoot);
   }
   let workCwd = options.cwd || packageRoot;
   const mock = shouldUseMock(options.mock);
@@ -93,6 +169,7 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
       repo: options.workflowRepo,
       dryRun: options.dryRun,
       skipPush: mock || options.dryRun || process.env.LI_REPO_WORKFLOW_SKIP_PUSH === "1",
+      useFixture: mock,
     });
     if (workflowSession.ok) {
       workCwd = workflowSession.cloneDir;
@@ -100,10 +177,6 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
   }
 
   let extra = options.extraInstruction;
-  const envExtra = process.env.LI_AGENT_EXTRA_INSTRUCTION?.trim();
-  if (envExtra) {
-    extra = extra ? `${extra}\n\n---\n\n${envExtra}` : envExtra;
-  }
 
   if (definition.workspaceSweep) {
     const start = Date.now();
@@ -116,7 +189,7 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
       agentId: definition.id,
     });
     const text = formatWorkspaceSweepReport(sweep);
-    const outputPath = join(runsDir(), `${definition.id}-${Date.now()}.md`);
+    const outputPath = runOutputPath(definition.id, options.runId ?? allocateRunId(definition.id), mock);
     writeFileSync(outputPath, text, "utf8");
     const prUrls = sweep.sweeps.map((s) => s.push.pr_url).filter((u): u is string => Boolean(u));
     const forceLlm = process.env.LI_WORKSPACE_SWEEP_FORCE_LLM === "1";
@@ -159,13 +232,20 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
         },
         { definition, rolloutPrUrls: prUrls, preflight, extraEvidence: ["workspace_sweep"] },
       );
-      await persistAgentRun({ run: finalized });
+      if (shouldPersistRunToHistory(finalized)) {
+        await persistAgentRun({ run: finalized });
+      }
       return finalized;
     }
     extra = [text, extra].filter(Boolean).join("\n\n");
   }
 
-  if (definition.id === "agent_kit_maintainer" && benchmarksRoot && preflight.briefing) {
+  if (
+    definition.id === "agent_kit_maintainer" &&
+    benchmarksRoot &&
+    preflight.briefing &&
+    !process.env.LI_SDK_MATRIX_MODE?.trim()
+  ) {
     const rollout = rolloutAgentKitPrs(benchmarksRoot, preflight.briefing, {
       dryRun: mock || options.dryRun,
     });
@@ -177,7 +257,11 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
     const forceLlm = process.env.LI_AGENT_KIT_FORCE_LLM === "1";
     if (!forceLlm && !rolloutNeedsLlmFollowUp(rollout)) {
       const start = Date.now();
-      const outputPath = join(runsDir(), `${definition.id}-${Date.now()}.md`);
+      const outputPath = runOutputPath(
+        definition.id,
+        options.runId ?? allocateRunId(definition.id),
+        mock,
+      );
       const text = formatRolloutDigest(rollout);
       writeFileSync(outputPath, text, "utf8");
       const prUrls = rollout.map((r) => r.pr_url).filter((u): u is string => Boolean(u));
@@ -219,12 +303,18 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
         },
         { definition, rolloutPrUrls: prUrls, preflight },
       );
-      await persistAgentRun({ run: finalized, rolloutRows: rollout });
+      if (shouldPersistRunToHistory(finalized)) {
+        await persistAgentRun({ run: finalized, rolloutRows: rollout });
+      }
       return finalized;
     }
   }
 
-  const userMessage = buildUserMessage(definition.id, preflight, extra);
+  const swarmBlocks =
+    process.env.LI_AGENT_MINIMAL_PROMPT === "1"
+      ? ""
+      : await buildSwarmPromptBlocks(definition.id, preflight.briefing ?? preflight);
+  const userMessage = buildUserMessage(definition.id, preflight, extra, swarmBlocks);
   const backend = mock
     ? new MockBackend()
     : new (await import("./backends/cursor-sdk-backend.js")).CursorSdkBackend();
@@ -245,16 +335,34 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
     preflightGeneratedAt: preflight.generated_at,
     modelId: options.modelId,
     extraInstruction: extra,
-    skillPaths: resolveAgentSkillPaths(definition.skills, packageRoot),
     dryRun: options.dryRun,
     mock,
   });
 
+  if (options.runId) {
+    publishRunInputLive(
+      options.runId,
+      runInput,
+      runOutputPath(definition.id, options.runId, mock),
+    );
+  }
+
   let result: AgentRunResult;
   try {
-    result = await backend.run(definition, systemPrompt, userMessage, { ...options, cwd: workCwd });
+    result = await backend.run(definition, systemPrompt, userMessage, {
+      ...options,
+      cwd: workCwd,
+      runId: options.runId,
+    });
   } catch (err) {
-    const outputPath = join(runsDir(), `${definition.id}-${Date.now()}.md`);
+    if (isSdkSlotLockError(err)) {
+      throw err;
+    }
+    const outputPath = runOutputPath(
+      definition.id,
+      options.runId ?? allocateRunId(definition.id),
+      mock,
+    );
     result = {
       agentId: definition.id,
       backend: mock ? "mock" : "cursor-sdk",
@@ -272,7 +380,6 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
   }
   let rolloutPrUrls: string[] | undefined;
   const extraEvidence: string[] = [];
-  const auditContext = resolveRunAuditContext();
   if (
     workflowSession?.ok &&
     agentUsesGuaranteedPush(definition) &&
@@ -289,23 +396,16 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
     if (push.pr_url) rolloutPrUrls = [push.pr_url];
     if (push.committed) extraEvidence.push("post_hook_committed");
     if (push.pushed) extraEvidence.push("post_hook_pushed");
-    if (push.skip_reason === "reused_existing_open_pr") {
-      extraEvidence.push("post_hook_pr_reused");
-    }
-    const skipPush =
-      workflowSession.skipPush || process.env.LI_REPO_WORKFLOW_SKIP_PUSH === "1";
-    if (!skipPush && push.error && !push.pr_url) {
-      auditContext.postHookPushFailed = true;
-      auditContext.postHookError = push.error;
-      extraEvidence.push("post_hook_push_failed");
-    }
   }
 
   const finalized = finalizeAgentRun(
     { ...result, runInput: result.runInput ?? runInput },
-    { definition, rolloutPrUrls, preflight, extraEvidence, auditContext },
+    { definition, rolloutPrUrls, preflight, extraEvidence },
   );
 
-  await persistAgentRun({ run: finalized });
+  if (shouldPersistRunToHistory(finalized)) {
+    await persistAgentRun({ run: finalized });
+  }
+  await applySwarmPostRunEffects(finalized, preflight.briefing ?? preflight, briefingHash);
   return finalized;
 }

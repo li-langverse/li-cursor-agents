@@ -1,7 +1,8 @@
 /**
  * Per-leaf-agent mock E2E — isolated briefing dir per agent (no shared JSON races).
+ * Uses disk control-plane only (never prod Supabase).
  */
-import { test, describe, after } from "node:test";
+import { test, describe, after, before } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -10,31 +11,45 @@ import { spawnSync } from "node:child_process";
 import { AGENT_REGISTRY } from "../agents/registry.js";
 import { runAgent } from "../runner.js";
 import { agentsPackageRoot } from "../runner.js";
+import { leafAgentIds, setupE2eEnv } from "./helpers.js";
 
 const LEAVES = AGENT_REGISTRY.filter((a) => a.id !== "orchestrator");
 
-describe("agent matrix (mock)", () => {
-  const prevMock = process.env.CURSOR_MOCK;
+describe("agent matrix (mock, disk store)", () => {
+  let env: ReturnType<typeof setupE2eEnv>;
   const tempDirs: string[] = [];
 
+  before(() => {
+    env = setupE2eEnv("v1");
+    const ids = leafAgentIds();
+    assert.equal(LEAVES.length, ids.length);
+    assert.deepEqual(
+      new Set(LEAVES.map((a) => a.id)),
+      new Set(ids),
+      "every registry leaf must have a matrix test",
+    );
+  });
+
   after(() => {
-    if (prevMock === undefined) delete process.env.CURSOR_MOCK;
-    else process.env.CURSOR_MOCK = prevMock;
+    env?.restoreEnv();
     for (const d of tempDirs) rmSync(d, { recursive: true, force: true });
   });
 
   for (const def of LEAVES) {
-    test(`mock run: ${def.id}`, async () => {
-      process.env.CURSOR_MOCK = "1";
-      const pkg = agentsPackageRoot();
-      const benchRoot = mkdtempSync(join(tmpdir(), `li-agent-matrix-${def.id}-`));
-      tempDirs.push(benchRoot);
+    const timeoutMs = def.id === "workspace_sweeper" ? 120_000 : 90_000;
+    test(
+      `mock run: ${def.id}`,
+      { timeout: timeoutMs },
+      async () => {
+        const pkg = agentsPackageRoot();
+        const benchRoot = mkdtempSync(join(tmpdir(), `li-agent-matrix-${def.id}-`));
+        tempDirs.push(benchRoot);
 
-      const scripts = join(pkg, "fixtures", "e2e-benchmarks", "scripts");
-      mkdirSync(join(benchRoot, "scripts"), { recursive: true });
-      writeFileSync(
-        join(benchRoot, "scripts", "agent-briefing.py"),
-        `#!/usr/bin/env python3
+        const scripts = join(pkg, "fixtures", "e2e-benchmarks", "scripts");
+        mkdirSync(join(benchRoot, "scripts"), { recursive: true });
+        writeFileSync(
+          join(benchRoot, "scripts", "agent-briefing.py"),
+          `#!/usr/bin/env python3
 import json, sys
 from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
@@ -50,30 +65,31 @@ data = {
 OUT.parent.mkdir(parents=True, exist_ok=True)
 OUT.write_text(json.dumps(data, indent=2))
 `,
-      );
-      const proc = spawnSync("python3", [join(benchRoot, "scripts", "agent-briefing.py")], {
-        encoding: "utf8",
-      });
-      assert.equal(proc.status, 0, proc.stderr || proc.stdout);
-
-      process.env.BENCHMARKS_ROOT = benchRoot;
-      const result = await runAgent({
-        agentId: def.id,
-        cwd: pkg,
-        benchmarksRoot: benchRoot,
-        mock: true,
-        dryRun: false,
-      });
-      if (def.repoWorkflow) {
-        assert.ok(
-          result.status === "finished" || result.status === "incomplete",
-          `${def.id}: ${result.status}`,
         );
-      } else {
-        assert.equal(result.status, "finished", def.id);
-      }
-      assert.equal(result.agentId, def.id);
-      assert.ok(result.outputPath.endsWith(".md"));
-    });
+        const proc = spawnSync("python3", [join(benchRoot, "scripts", "agent-briefing.py")], {
+          encoding: "utf8",
+        });
+        assert.equal(proc.status, 0, proc.stderr || proc.stdout);
+
+        process.env.BENCHMARKS_ROOT = benchRoot;
+        const result = await runAgent({
+          agentId: def.id,
+          cwd: pkg,
+          benchmarksRoot: benchRoot,
+          mock: true,
+          dryRun: false,
+        });
+        if (def.repoWorkflow) {
+          assert.ok(
+            result.status === "finished" || result.status === "incomplete",
+            `${def.id}: ${result.status}`,
+          );
+        } else {
+          assert.equal(result.status, "finished", def.id);
+        }
+        assert.equal(result.agentId, def.id);
+        assert.ok(result.outputPath.endsWith(".md"));
+      },
+    );
   }
 });

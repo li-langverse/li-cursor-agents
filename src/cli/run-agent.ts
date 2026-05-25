@@ -29,7 +29,7 @@ function parseArgs(argv: string[]) {
   let mock = false;
   let dryRun = false;
   let list = false;
-  let cwd = process.cwd();
+  let cwd = process.cwd(); // SDK working tree (often benchmarks); prompts use package root
   let benchmarksRoot: string | undefined;
   let workflowRepo: string | undefined;
   let instruction: string | undefined;
@@ -78,19 +78,22 @@ function printHelp() {
 Usage:
   li-agent --list
   li-agent --agent <id> [--dry-run]
+  li-agent --agent orchestrator --benchmarks ../benchmarks
   li-agent --agent code_implementer --workflow-repo lic --goal-file ./goal.md
 
 Agents: ${AGENT_REGISTRY.map((a) => a.id).join(", ")}
 
-Goal-directed:
-  --goal / --goal-file     Extra instruction; repo inferred from frontmatter or paths
-  LI_AGENT_GOAL            Env fallback for goal text
+Goal-directed (reusable — no per-plan agent id):
+  --goal / --instruction <text>   Injected as "## Additional instruction"
+  --goal-file <path>              Same, from file
+  LI_AGENT_GOAL / LI_AGENT_EXTRA_INSTRUCTION   Env fallback when flags omitted
 
 Env:
-  CURSOR_API_KEY           Required for real runs
-  BENCHMARKS_ROOT          Benchmarks repo for preflight
-  LI_REPO_WORKFLOW_REPO    Override workflow clone repo
-  --mock                   Mock backend (CURSOR_MOCK=1 in CI)
+  CURSOR_API_KEY     Required for real runs (.env or shell)
+  BENCHMARKS_ROOT    Path to benchmarks repo for preflight
+  LI_REPO_WORKFLOW_REPO   Target repo for repoWorkflow agents (e.g. lic)
+                          Auto from --goal-file frontmatter workflow_repo: or path signals
+  --mock             Dry-run mock backend (CI/tests set CURSOR_MOCK=1)
 `);
 }
 
@@ -110,8 +113,13 @@ async function main() {
   }
 
   console.error(`backend: ${agentBackendLabel(args.mock)} agent: ${args.agent}`);
-  if (args.workflowRepo) {
-    console.error(`workflow_repo: ${args.workflowRepo}`);
+  if (!args.mock && !args.dryRun) {
+    const { terminalStreamEnabled } = await import("../sdk/terminal-stream.js");
+    if (terminalStreamEnabled()) {
+      console.error(
+        "SDK tool activity streams to stderr ([sdk] ▶/✓ lines). Set LI_SDK_TERMINAL_STREAM=0 to disable.",
+      );
+    }
   }
 
   const result = await runAgent({

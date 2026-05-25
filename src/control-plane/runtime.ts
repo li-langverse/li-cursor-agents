@@ -12,7 +12,19 @@ import { pushSupervisorActivity } from "./supervisor-activity.js";
 import { loadState, saveState } from "./state.js";
 import type { ActiveAgentRun, AgentRunLifecycle, ControlPlaneState } from "./types.js";
 import type { AgentId } from "../types.js";
-import { runWithConcurrencyLimit, swarmMaxParallelFromEnv } from "./parallel-pool.js";
+import { asyncSwarmSnapshot } from "../async-swarm/async-swarm-state.js";
+import { computeInSdkCount } from "./active-run-metrics.js";
+import {
+  sdkMaxConcurrent,
+  sdkSessionInProcessActive,
+  sdkSlotsInUse,
+} from "../backends/sdk-session-lock.js";
+import { swarmWorkersPaused } from "../swarm/swarm-worker-pause.js";
+import { upsertLiveAgentRunStart } from "../db/live-stream-persist.js";
+import { allocateRunId } from "./run-paths.js";
+import { handoffRunStatus } from "../lanes/handoff-run-coordinator.js";
+import { runHandoffPhasedSwarm } from "../lanes/run-handoff-phases.js";
+import { resolveSpawnWorkflowRepo } from "../handoffs/resolve-spawn-workflow-repo.js";
 
 const activeRuns = new Map<string, ActiveAgentRun>();
 const childByRunId = new Map<string, ChildProcess>();
@@ -41,23 +53,52 @@ export function listActiveRuns(): ActiveAgentRun[] {
   );
 }
 
+export function hasActiveRunningTrack(agentId: AgentId): boolean {
+  return [...activeRuns.values()].some(
+    (r) => r.agent_id === agentId && r.status === "running",
+  );
+}
+
 /** Track in-process supervisor runs (same map as spawnAgentRun child processes). */
-export function registerSupervisorRun(agentId: AgentId, reason: string): string {
-  const runId = `${agentId}-supervisor-${Date.now()}`;
-  activeRuns.set(runId, {
-    run_id: runId,
+export function registerSupervisorRun(agentId: AgentId, reason: string, runId?: string): string {
+  const id = runId ?? allocateRunId(agentId);
+  const startedAt = new Date().toISOString();
+  activeRuns.set(id, {
+    run_id: id,
     agent_id: agentId,
     pid: process.pid,
-    started_at: new Date().toISOString(),
+    started_at: startedAt,
     status: "running",
     reason,
   });
-  return runId;
+  void upsertLiveAgentRunStart({
+    runId: id,
+    agentId,
+    startedAt,
+    reason,
+  });
+  scheduleWorkerHeartbeat();
+  return id;
+}
+
+export function patchActiveRun(runId: string, patch: Partial<ActiveAgentRun>): void {
+  const row = activeRuns.get(runId);
+  if (!row) return;
+  activeRuns.set(runId, { ...row, ...patch });
 }
 
 export function completeSupervisorRun(runId: string, status: AgentRunLifecycle): void {
   setRunStatus(runId, status);
+  scheduleWorkerHeartbeat();
   setTimeout(() => clearRun(runId), 30_000);
+}
+
+function scheduleWorkerHeartbeat(): void {
+  void import("../worker/heartbeat-loop.js")
+    .then((m) => m.flushWorkerHeartbeat())
+    .catch(() => {
+      /* disk-only store — no worker_status row */
+    });
 }
 
 export function isSupervisorLoopRunning(): boolean {
@@ -118,7 +159,13 @@ export function runtimeSnapshot(state: ControlPlaneState) {
     stopped_agents: state.stopped_agents ?? [],
     current_supervisor_agent: state.current_supervisor_agent ?? null,
     active_runs: listActiveRuns(),
-    active_run_count: activeRuns.size,
+    active_run_count: computeInSdkCount(listActiveRuns(), sdkSessionInProcessActive()),
+    ...asyncSwarmSnapshot(),
+    handoff_run: handoffRunStatus(),
+    sdk_max_concurrent: sdkMaxConcurrent(),
+    sdk_slots_in_use: sdkSlotsInUse(),
+    sdk_sessions_active: sdkSessionInProcessActive(),
+    workers_paused: swarmWorkersPaused(),
   };
 }
 
@@ -135,6 +182,7 @@ function clearRun(runId: string): void {
 export function spawnAgentRun(
   agentId: AgentId,
   reason = "dashboard manual start",
+  options?: { workflowRepo?: string },
 ): { ok: true; run: ActiveAgentRun } | { ok: false; error: string } {
   const state = loadState();
   if ((state.stopped_agents ?? []).includes(agentId)) {
@@ -153,6 +201,7 @@ export function spawnAgentRun(
   const args = ["--agent", agentId];
   if (mock) args.push("--mock");
   if (benchmarksRoot) args.push("--benchmarks", benchmarksRoot);
+  if (options?.workflowRepo) args.push("--workflow-repo", options.workflowRepo);
 
   const child = spawn(process.execPath, [cli, ...args], {
     cwd: benchmarksRoot ?? packageRoot,
@@ -322,11 +371,18 @@ export async function stopSupervisorLoop(): Promise<{ stopped: boolean; message:
   return { stopped: true, message: "Supervisor loop stopped" };
 }
 
-/** Fire-and-forget: spawn every leaf agent once (parallel processes). */
+/** Fire-and-forget: handoff phases or parallel leaf spawns. */
 export async function runAllAgentsNow(): Promise<{
   spawned: ActiveAgentRun[];
   skipped: Array<{ agent: AgentId; reason: string }>;
+  handoff_phases?: Awaited<ReturnType<typeof runHandoffPhasedSwarm>>;
 }> {
+  if (process.env.LI_SWARM_HANDOFF_PHASES !== "0") {
+    const mock = shouldUseMock(false);
+    const phases = await runHandoffPhasedSwarm({ mock });
+    return { spawned: [], skipped: [], handoff_phases: phases };
+  }
+
   const options = defaultSupervisorOptions({ once: true, force: true });
   const benchmarksRoot = options.benchmarksRoot;
   const preflight = runPreflight(benchmarksRoot, options.skipSlowPreflight !== false);
@@ -351,22 +407,18 @@ export async function runAllAgentsNow(): Promise<{
 
   const spawned: ActiveAgentRun[] = [];
   const skipped: Array<{ agent: AgentId; reason: string }> = [];
-  const toSpawn: AgentId[] = [];
 
   for (const agentId of agentIds) {
     if (stopped.has(agentId)) {
       skipped.push({ agent: agentId, reason: "stopped" });
       continue;
     }
-    toSpawn.push(agentId);
-  }
-
-  const maxParallel = swarmMaxParallelFromEnv();
-  await runWithConcurrencyLimit(toSpawn, maxParallel, async (agentId) => {
-    const result = spawnAgentRun(agentId, "swarm run-all");
+    const workflowRepo =
+      agentId === "code_implementer" ? await resolveSpawnWorkflowRepo(agentId) : undefined;
+    const result = spawnAgentRun(agentId, "swarm run-all", { workflowRepo });
     if (result.ok) spawned.push(result.run);
     else skipped.push({ agent: agentId, reason: result.error });
-  });
+  }
 
   return { spawned, skipped };
 }

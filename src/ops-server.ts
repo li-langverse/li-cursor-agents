@@ -1,5 +1,4 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { spawnSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
 import { join, extname } from "node:path";
 import { dashboardRosterSummary } from "./agents/dashboard-roster.js";
@@ -17,9 +16,19 @@ import {
   stopAllActiveRuns,
   stopSupervisorLoop,
 } from "./control-plane/runtime.js";
+import { startAsyncSwarm, stopAsyncSwarm } from "./async-swarm/async-swarm-runtime.js";
+import {
+  handoffRunStatus,
+  startHandoffRunInBackground,
+} from "./lanes/handoff-run-coordinator.js";
+import { formatHandoffPhasesSummary } from "./lanes/handoff-run-summary.js";
+import { resolveGoalImplementationRepo } from "./handoffs/goal-workflow.js";
+import { resolveSpawnWorkflowRepo } from "./handoffs/resolve-spawn-workflow-repo.js";
 import { sortedCoordinators } from "./heap/coordinators.js";
+import { parseHeapPlanFromBriefing, parseOrgRoadmapFromBriefing } from "./heap/plan.js";
+import { loadCachedBriefing } from "./briefing/load-cached-briefing.js";
 import { agentsPackageRoot, agentBackendLabel } from "./runner.js";
-import { resolveCursorApiKey, resolveCursorModelId } from "./env.js";
+import { resolveCursorApiKey } from "./env.js";
 import { interventionsPath, reportPath, statePath } from "./control-plane/paths.js";
 import { loadLiveInterventionsPayload, loadLiveReportAsync } from "./control-plane/live-report.js";
 import { readJson } from "./control-plane/read-json.js";
@@ -30,25 +39,52 @@ import {
   listRecentActivity,
   listRunsMerged,
 } from "./control-plane/runs-catalog.js";
+import { readFileSafe } from "./control-plane/safe-file-read.js";
 import { listActiveRuns } from "./control-plane/runtime.js";
-import { listSupervisorActivity } from "./control-plane/supervisor-activity.js";
+import { listSupervisorActivityAsync } from "./control-plane/supervisor-activity.js";
+import { loadRecentRunSummariesAsync } from "./control-plane/build-report.js";
+import { loadObserverState } from "./observer/state.js";
+import { scanSwarmHealth } from "./observer/swarm-health.js";
 import { buildSwarmStatistics } from "./control-plane/swarm-statistics.js";
+import { defaultStatsRunLimit, parseStatsTimeRange } from "./control-plane/stats-time-range.js";
 import { agentLog } from "./agent-log.js";
+import {
+  installOpsProcessGuards,
+  startOpsBackgroundServices,
+} from "./ops-server-lifecycle.js";
+import { hydrateBriefingFromDb } from "./briefing/load-cached-briefing.js";
+import { hydrateRuntimeSettingsFromDb } from "./config/runtime-settings.js";
+import { hydrateLaneStateFromDb } from "./lanes/lane-state.js";
 import { hydrateStateFromDb, loadState, loadStateForApi } from "./control-plane/state.js";
 import { assertStoreReady, configuredStore, dataStoreLabel, dbEnabled } from "./db/client.js";
 import type { ControlPlaneReport, ControlPlaneState } from "./control-plane/types.js";
-import { resolveBenchmarksRoot } from "./preflight.js";
+import { listSettingsViews, patchSettings } from "./config/runtime-settings.js";
+import { SETTING_CATEGORIES } from "./config/settings-schema.js";
+import { runPreflight, resolveBenchmarksRoot } from "./preflight.js";
 import type { AgentId } from "./types.js";
 import type { SwarmStatistics } from "./control-plane/swarm-statistics.js";
-
-function installProcessGuards(): void {
-  const logFatal = (label: string, err: unknown) => {
-    const msg = err instanceof Error ? err.stack ?? err.message : String(err);
-    agentLog("dashboard", "ERROR", `${label}: ${msg}`);
-  };
-  process.on("uncaughtException", (err) => logFatal("uncaughtException", err));
-  process.on("unhandledRejection", (reason) => logFatal("unhandledRejection", reason));
-}
+import { buildSwarmScorecard, buildResearchGoalsStatus } from "./briefing/swarm-scorecard.js";
+import { listActiveGoals } from "./goals/list-active-goals.js";
+import { listHandoffs } from "./handoffs/handoff-store.js";
+import {
+  agentHandoffsTableUnavailable,
+  isMissingAgentHandoffsTable,
+  noteAgentHandoffsUnavailable,
+  probeAgentHandoffsTable,
+} from "./handoffs/handoffs-schema.js";
+import { loadSwarmBriefingSnapshot } from "./ops/swarm-briefing-snapshot.js";
+import { researchLaneTick } from "./lanes/research-lane.js";
+import { implementLaneTick } from "./lanes/implement-lane.js";
+import { maintenanceLaneTick } from "./lanes/maintenance-lane.js";
+import {
+  laneRuntimeSnapshot,
+  startImplementLaneLoop,
+  startResearchLaneLoop,
+  stopImplementLaneLoop,
+  stopResearchLaneLoop,
+  updateLaneFlags,
+} from "./lanes/lane-runtime.js";
+import { loadLaneState } from "./lanes/lane-state.js";
 
 const MIME: Record<string, string> = {
   ".html": "text/html; charset=utf-8",
@@ -60,7 +96,15 @@ export function defaultOpsPort(): number {
   return Number(process.env.LI_AGENTS_OPS_PORT ?? process.env.LI_AGENT_DASHBOARD_PORT ?? 9477);
 }
 
-let statisticsCache: { at: number; stats: SwarmStatistics } | null = null;
+/** Bind address for ops-server (default loopback). Set LI_AGENT_DASHBOARD_HOST=0.0.0.0 for LAN. */
+export function defaultOpsHost(): string {
+  return process.env.LI_AGENT_DASHBOARD_HOST ?? "127.0.0.1";
+}
+
+let statisticsCache: { at: number; stats: SwarmStatistics; key: string } | null = null;
+let reportCache: { at: number; body: unknown } | null = null;
+let interventionsCache: { at: number; body: unknown } | null = null;
+const REPORT_CACHE_MS = Number(process.env.LI_REPORT_CACHE_MS ?? 20_000);
 const STATS_CACHE_MS = Number(process.env.LI_STATISTICS_CACHE_MS ?? 45_000);
 
 async function getSwarmStatisticsForApi(
@@ -68,21 +112,66 @@ async function getSwarmStatisticsForApi(
 ): Promise<SwarmStatistics> {
   const refresh = url.searchParams.get("refresh") === "1";
   const includeGh = url.searchParams.get("gh") === "1";
+  const timeRange = parseStatsTimeRange(url.searchParams);
+  const cacheKey = `${timeRange.preset}:${timeRange.since?.toISOString() ?? ""}:${timeRange.until.toISOString()}`;
   const now = Date.now();
-  if (!refresh && statisticsCache && now - statisticsCache.at < STATS_CACHE_MS) {
+  if (
+    !refresh &&
+    statisticsCache &&
+    statisticsCache.key === cacheKey &&
+    now - statisticsCache.at < STATS_CACHE_MS
+  ) {
     return statisticsCache.stats;
   }
-  const limit = Math.min(800, Math.max(50, Number(url.searchParams.get("runs") ?? 200)));
+  const limit = Math.min(
+    50_000,
+    Math.max(
+      50,
+      Number(url.searchParams.get("runs") ?? defaultStatsRunLimit(timeRange.preset)),
+    ),
+  );
   const stats = await buildSwarmStatistics(limit, {
     runLimit: limit,
     skipGh: !includeGh,
+    timeRange,
   });
-  statisticsCache = { at: now, stats };
+  statisticsCache = { at: now, stats, key: cacheKey };
   return stats;
 }
 
+/** Scorecard uses Supabase handoffs — must not break /api/status polling. */
+async function safeSwarmScorecard(): Promise<Awaited<ReturnType<typeof buildSwarmScorecard>> | null> {
+  if (agentHandoffsTableUnavailable()) return null;
+  try {
+    return await buildSwarmScorecard();
+  } catch (err) {
+    if (isMissingAgentHandoffsTable(err)) {
+      noteAgentHandoffsUnavailable(err);
+      return null;
+    }
+    const msg = err instanceof Error ? err.message : String(err);
+    agentLog("dashboard", "warn", `swarm scorecard skipped: ${msg}`);
+    return null;
+  }
+}
+
+async function buildLanesStatusPayload(): Promise<
+  ReturnType<typeof laneRuntimeSnapshot> & {
+    scorecard?: Awaited<ReturnType<typeof buildSwarmScorecard>>;
+    scorecard_error?: string;
+  }
+> {
+  const scorecard = await safeSwarmScorecard();
+  if (scorecard) {
+    return { ...laneRuntimeSnapshot(loadLaneState()), scorecard };
+  }
+  return {
+    ...laneRuntimeSnapshot(loadLaneState()),
+    scorecard_error: "handoffs table unavailable — run npm run db:ensure",
+  };
+}
+
 export function startOpsServer(port: number): ReturnType<typeof createServer> {
-  installProcessGuards();
   assertStoreReady();
   const packageRoot = agentsPackageRoot();
   const webRoot = join(packageRoot, "web");
@@ -103,23 +192,44 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
     }
   });
 
+  installOpsProcessGuards(server);
+
   server.listen(port, "127.0.0.1", () => {
     const addr = server.address();
     const p = typeof addr === "object" && addr ? addr.port : port;
     const backend = agentBackendLabel();
     const keyOk = Boolean(resolveCursorApiKey());
+    void import("./backends/sdk-session-lock.js").then((m) => {
+      const reclaimed = m.reclaimAllStaleSdkSlots();
+      if (reclaimed > 0) {
+        agentLog("worker", "info", `reclaimed ${reclaimed} stale sdk-session lock(s) on startup`);
+      }
+    });
+    startOpsBackgroundServices(currentApiState);
     agentLog("dashboard", "info", `Agent dashboard: http://127.0.0.1:${p}/`);
     agentLog(
       "dashboard",
       "info",
-      `Agent backend: ${backend} model=${resolveCursorModelId()}${backend === "cursor-sdk" && !keyOk ? " (missing CURSOR_API_KEY — add to .env)" : ""}`,
+      `Agent backend: ${backend}${backend === "cursor-sdk" && !keyOk ? " (missing CURSOR_API_KEY — add to .env)" : ""}`,
     );
     if (dbEnabled()) {
-      void hydrateStateFromDb().catch((err) => {
-        agentLog("db", "ERROR", `hydrate state: ${err instanceof Error ? err.message : err}`);
+      void Promise.all([
+        hydrateStateFromDb(),
+        hydrateLaneStateFromDb(),
+        hydrateRuntimeSettingsFromDb(),
+        hydrateBriefingFromDb(),
+      ])
+        .then(() => import("./worker/swarm-reconcile.js"))
+        .then((m) => m.reconcileSwarmAfterStartup())
+        .catch((err) => {
+          agentLog("db", "ERROR", `hydrate/reconcile: ${err instanceof Error ? err.message : err}`);
+        });
+      void probeAgentHandoffsTable();
+    } else if (process.env.LI_AUTO_START_ASYNC_SWARM === "1" || process.env.LI_AUTO_START_ASYNC_SWARM === "true") {
+      void startAsyncSwarm({ stopSupervisor: true }).then((r) => {
+        agentLog("dashboard", "info", `auto-start async swarm: ${r.message}`);
       });
-    }
-    if (process.env.LI_AUTO_START_SUPERVISOR === "1" || process.env.LI_AUTO_START_SUPERVISOR === "true") {
+    } else if (process.env.LI_AUTO_START_SUPERVISOR === "1" || process.env.LI_AUTO_START_SUPERVISOR === "true") {
       void startSupervisorLoop({ forceFirstTick: true }).then((r) => {
         agentLog("dashboard", "info", `auto-start supervisor: ${r.message}`);
       });
@@ -127,20 +237,31 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
       agentLog(
         "dashboard",
         "info",
-        "Start loop from footer or: LI_AUTO_START_SUPERVISOR=1 npm run dashboard",
+        "Start async swarm: LI_AUTO_START_ASYNC_SWARM=1 or footer Start agents",
       );
     }
   });
   return server;
 }
 
-async function liveReportPayload(): Promise<ControlPlaneReport | { error: string }> {
-  const report = await loadLiveReportAsync();
+async function liveReportPayload(options?: {
+  persist?: boolean;
+}): Promise<ControlPlaneReport | { error: string }> {
+  const report = await loadLiveReportAsync({ persist: options?.persist ?? false });
   return report ?? { error: "no report — run supervisor or start swarm" };
 }
 
+function currentApiState(): ReturnType<typeof loadState> {
+  return isSupervisorLoopRunning() ? loadStateForApi() : loadState();
+}
+
 async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const state = isSupervisorLoopRunning() ? loadStateForApi() : loadState();
+  if (url.pathname === "/api/health") {
+    json(res, 200, { ok: true, ts: new Date().toISOString() });
+    return;
+  }
+
+  const state = currentApiState();
   const store = dataStoreLabel();
   const runtime = runtimeSnapshot(state);
 
@@ -158,11 +279,83 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
         current_supervisor_agent: state.current_supervisor_agent ?? null,
       },
       supervisor_loop_running: isSupervisorLoopRunning(),
+      async_swarm_running: runtime.async_swarm_running ?? false,
       store,
       agent_backend: agentBackendLabel(),
-      cursor_model_id: resolveCursorModelId(),
       sdk_ready: agentBackendLabel() === "cursor-sdk" && Boolean(resolveCursorApiKey()),
+      // Fast path: scorecard belongs on /api/swarm/briefing — do not block dashboard polls.
+      lanes: laneRuntimeSnapshot(loadLaneState()),
     });
+    return;
+  }
+
+  if (url.pathname === "/api/lanes" && req.method === "GET") {
+    const scorecard = await safeSwarmScorecard();
+    json(res, 200, {
+      state: loadLaneState(),
+      runtime: laneRuntimeSnapshot(),
+      ...(scorecard ? { scorecard } : {}),
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/lanes/config" && req.method === "POST") {
+    const body = await readJsonBody(req);
+    const patch: Partial<ReturnType<typeof loadLaneState>> = {};
+    if (body.research_lane_enabled !== undefined) {
+      patch.research_lane_enabled = Boolean(body.research_lane_enabled);
+    }
+    if (body.implement_lane_enabled !== undefined) {
+      patch.implement_lane_enabled = Boolean(body.implement_lane_enabled);
+    }
+    const next = updateLaneFlags(patch);
+    json(res, 200, { ok: true, state: next, runtime: laneRuntimeSnapshot(next) });
+    return;
+  }
+
+  if (url.pathname === "/api/lanes/research/start" && req.method === "POST") {
+    const mock = process.env.CURSOR_MOCK === "1";
+    const r = startResearchLaneLoop({ mock });
+    json(res, 200, { ok: r.started, ...r, runtime: laneRuntimeSnapshot() });
+    return;
+  }
+
+  if (url.pathname === "/api/lanes/research/stop" && req.method === "POST") {
+    const r = stopResearchLaneLoop();
+    json(res, 200, { ok: r.stopped, ...r, runtime: laneRuntimeSnapshot() });
+    return;
+  }
+
+  if (url.pathname === "/api/lanes/implement/start" && req.method === "POST") {
+    const mock = process.env.CURSOR_MOCK === "1";
+    const r = startImplementLaneLoop({ mock });
+    json(res, 200, { ok: r.started, ...r, runtime: laneRuntimeSnapshot() });
+    return;
+  }
+
+  if (url.pathname === "/api/lanes/implement/stop" && req.method === "POST") {
+    const r = stopImplementLaneLoop();
+    json(res, 200, { ok: r.stopped, ...r, runtime: laneRuntimeSnapshot() });
+    return;
+  }
+
+  if (url.pathname === "/api/lanes/research/tick" && req.method === "POST") {
+    const mock = process.env.CURSOR_MOCK === "1" || url.searchParams.get("mock") === "1";
+    const tick = await researchLaneTick({ mock });
+    json(res, 200, { ok: true, tick, runtime: laneRuntimeSnapshot() });
+    return;
+  }
+
+  if (url.pathname === "/api/lanes/implement/tick" && req.method === "POST") {
+    const mock = process.env.CURSOR_MOCK === "1" || url.searchParams.get("mock") === "1";
+    const tick = await implementLaneTick({ mock });
+    json(res, 200, { ok: true, tick, runtime: laneRuntimeSnapshot() });
+    return;
+  }
+
+  if (url.pathname === "/api/lanes/maintenance/tick" && req.method === "POST") {
+    const tick = await maintenanceLaneTick();
+    json(res, 200, { ok: tick.ok, tick, runtime: laneRuntimeSnapshot() });
     return;
   }
 
@@ -171,9 +364,13 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     json(res, 200, {
       ...runtime,
       agent_backend: backend,
-      cursor_model_id: resolveCursorModelId(),
       sdk_ready: backend === "cursor-sdk" && Boolean(resolveCursorApiKey()),
     });
+    return;
+  }
+
+  if (url.pathname === "/api/goals" && req.method === "GET") {
+    json(res, 200, listActiveGoals());
     return;
   }
 
@@ -181,20 +378,70 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     json(res, 200, {
       loop_running: isSupervisorLoopRunning(),
       started_at: state.supervisor_loop_started_at ?? null,
-      entries: listSupervisorActivity(40),
+      entries: await listSupervisorActivityAsync(40),
     });
     return;
   }
 
+  if (url.pathname === "/api/settings" && req.method === "GET") {
+    json(res, 200, { categories: SETTING_CATEGORIES, ...listSettingsViews() });
+    return;
+  }
+
+  if (url.pathname === "/api/settings" && req.method === "PATCH") {
+    const body = (await readJsonBody(req)) as {
+      values?: Record<string, string>;
+      reset_keys?: string[];
+    };
+    try {
+      const payload = patchSettings(body.values ?? {}, { resetKeys: body.reset_keys });
+      json(res, 200, { ok: true, categories: SETTING_CATEGORIES, ...payload });
+    } catch (e) {
+      json(res, 400, { error: e instanceof Error ? e.message : String(e) });
+    }
+    return;
+  }
+
+  if (url.pathname === "/api/swarm/health") {
+    const root = resolveBenchmarksRoot();
+    const preflight = root ? runPreflight(root, true) : { briefing: null, generated_at: "" };
+    const health = scanSwarmHealth({
+      state,
+      briefing: preflight.briefing,
+      observerState: loadObserverState(state),
+      recentRuns: await loadRecentRunSummariesAsync(16),
+    });
+    json(res, 200, health);
+    return;
+  }
+
   if (url.pathname === "/api/interventions") {
+    const now = Date.now();
+    if (interventionsCache && now - interventionsCache.at < REPORT_CACHE_MS) {
+      json(res, 200, interventionsCache.body);
+      void loadLiveInterventionsPayload().then((payload) => {
+        interventionsCache = { at: Date.now(), body: payload };
+      });
+      return;
+    }
     const payload = await loadLiveInterventionsPayload();
+    interventionsCache = { at: now, body: payload };
     json(res, 200, payload);
     return;
   }
 
-  const report = await liveReportPayload();
-
   if (url.pathname === "/api/report") {
+    const refresh = url.searchParams.get("refresh") === "1";
+    const now = Date.now();
+    if (!refresh && reportCache && now - reportCache.at < REPORT_CACHE_MS) {
+      json(res, 200, reportCache.body);
+      void liveReportPayload().then((report) => {
+        reportCache = { at: Date.now(), body: report };
+      });
+      return;
+    }
+    const report = await liveReportPayload({ persist: refresh });
+    reportCache = { at: now, body: report };
     json(res, 200, report);
     return;
   }
@@ -205,23 +452,88 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       json(res, 400, { error: "BENCHMARKS_ROOT not set" });
       return;
     }
-    const proc = spawnSync("python3", ["scripts/agent-briefing.py"], {
-      cwd: root,
-      encoding: "utf8",
-      env: { ...process.env },
-    });
+    const tick = await maintenanceLaneTick({ benchmarksRoot: root, skipSlowPreflight: true });
+    const report = await liveReportPayload({ persist: true });
+    reportCache = { at: Date.now(), body: report };
     json(res, 200, {
-      ok: proc.status === 0,
-      exit_code: proc.status,
-      stderr: proc.stderr?.slice(-500),
-      report: await liveReportPayload(),
+      ok: tick.ok,
+      briefing_path: tick.briefing_path,
+      skip_reason: tick.skip_reason,
+      report,
+      swarm: loadSwarmBriefingSnapshot(null),
     });
     return;
   }
 
-  if (url.pathname === "/api/queue") {
+  if (url.pathname === "/api/swarm/briefing" && req.method === "GET") {
+    const report = await loadLiveReportAsync();
+    const embedded =
+      report?.preflight?.briefing && typeof report.preflight.briefing === "object"
+        ? (report.preflight.briefing as Record<string, unknown>)
+        : null;
+    const snapshot = loadSwarmBriefingSnapshot(embedded);
+    const scorecard = snapshot?.swarm_scorecard ?? (await buildSwarmScorecard());
     json(res, 200, {
-      queue: [],
+      snapshot,
+      scorecard,
+      research_goals_status: snapshot?.research_goals_status ?? buildResearchGoalsStatus(),
+      handoff_audit: snapshot?.handoff_audit,
+      goals: buildResearchGoalsStatus(),
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/handoffs" && req.method === "GET") {
+    const statusParam = url.searchParams.get("status");
+    const toAgent = url.searchParams.get("to_agent") ?? undefined;
+    const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit") ?? 40)));
+    const status = statusParam
+      ? (statusParam.includes(",")
+          ? (statusParam.split(",") as import("./handoffs/types.js").HandoffStatus[])
+          : (statusParam as import("./handoffs/types.js").HandoffStatus))
+      : undefined;
+    const handoffs = await listHandoffs({ status, toAgent, limit });
+    const enriched = handoffs.map((h) => ({
+      ...h,
+      workflow_repo:
+        resolveGoalImplementationRepo(h) ??
+        (typeof h.work?.target_repo === "string" ? h.work.target_repo : undefined),
+    }));
+    json(res, 200, { handoffs: enriched, store, count: enriched.length });
+    return;
+  }
+
+  if (url.pathname === "/api/queue") {
+    const {
+      buildAgentWorkQueue,
+      peekAgentWorkQueueSnapshot,
+      scheduleAgentWorkQueueRefresh,
+    } = await import("./control-plane/agent-work-queue.js");
+    const light = url.searchParams.get("full") !== "1";
+    const wait = url.searchParams.get("wait") === "1";
+    const options = { light };
+    const cached = peekAgentWorkQueueSnapshot(state, options);
+    if (cached && !wait) {
+      scheduleAgentWorkQueueRefresh(state, options);
+      json(res, 200, {
+        queue: cached.items,
+        by_agent: cached.by_agent,
+        generated_at: cached.generated_at,
+        swarm: cached.swarm,
+        briefing_hash: state.last_briefing_hash,
+        completed: state.recent_tasks,
+        stopped_agents: state.stopped_agents ?? [],
+        active_runs: runtime.active_runs,
+        queue_stale: true,
+      });
+      return;
+    }
+    const snapshot = cached ?? (await buildAgentWorkQueue(state, options));
+    json(res, 200, {
+      queue: snapshot.items,
+      by_agent: snapshot.by_agent,
+      generated_at: snapshot.generated_at,
+      swarm: snapshot.swarm,
       briefing_hash: state.last_briefing_hash,
       completed: state.recent_tasks,
       stopped_agents: state.stopped_agents ?? [],
@@ -241,9 +553,16 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
   }
 
   if (url.pathname === "/api/heap") {
-    const hp = (report as Record<string, unknown> | null)?.heap_plan ?? null;
-    const org = (report as Record<string, unknown> | null)?.org_roadmap ?? null;
-    json(res, 200, { heap_plan: hp, org_roadmap: org });
+    const briefing = loadCachedBriefing();
+    const heapPlan =
+      parseHeapPlanFromBriefing(briefing) ??
+      (briefing as Record<string, unknown>).heap_plan ??
+      null;
+    const org =
+      parseOrgRoadmapFromBriefing(briefing) ??
+      (briefing as Record<string, unknown>).org_roadmap ??
+      null;
+    json(res, 200, { heap_plan: heapPlan, org_roadmap: org });
     return;
   }
 
@@ -256,9 +575,31 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     return;
   }
 
+  if (url.pathname === "/api/files/read" && req.method === "GET") {
+    const filePath = url.searchParams.get("path")?.trim();
+    if (!filePath) {
+      json(res, 400, { error: "path query parameter required" });
+      return;
+    }
+    const cwd = url.searchParams.get("cwd")?.trim() || undefined;
+    const file = readFileSafe(filePath, cwd);
+    if (!file) {
+      json(res, 404, { error: "file not found or path not allowed" });
+      return;
+    }
+    json(res, 200, file);
+    return;
+  }
+
   if (url.pathname === "/api/statistics" && req.method === "GET") {
-    const stats = await getSwarmStatisticsForApi(url);
-    json(res, 200, { statistics: stats, store });
+    try {
+      const stats = await getSwarmStatisticsForApi(url);
+      json(res, 200, { statistics: stats, store });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      agentLog("dashboard", "warn", `statistics failed: ${message}`);
+      json(res, 500, { error: message, statistics: null, store });
+    }
     return;
   }
 
@@ -325,6 +666,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
   }
 
   if (url.pathname === "/api/supervisor/start" && req.method === "POST") {
+    await stopAsyncSwarm();
     const result = await startSupervisorLoop({
       forceFirstTick: true,
       force: false,
@@ -338,7 +680,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       ...result,
       message,
       runtime: runtimeSnapshot(loopState),
-      activity: listSupervisorActivity(8),
+      activity: await listSupervisorActivityAsync(8),
     });
     return;
   }
@@ -350,20 +692,86 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       ok: true,
       ...stopped,
       runtime: runtimeSnapshot(stopState),
-      activity: listSupervisorActivity(5),
+      activity: await listSupervisorActivityAsync(5),
     });
     return;
   }
 
+  if (url.pathname === "/api/swarm/run-all/status" && req.method === "GET") {
+    json(res, 200, handoffRunStatus());
+    return;
+  }
+
   if (url.pathname === "/api/swarm/run-all" && req.method === "POST") {
+    const useBackground = process.env.LI_SWARM_HANDOFF_SYNC !== "1";
+    if (useBackground && process.env.LI_SWARM_HANDOFF_PHASES !== "0") {
+      const mock = process.env.CURSOR_MOCK === "1";
+      const started = startHandoffRunInBackground({ mock });
+      const swarmState = await loadStateForApi();
+      json(res, 202, {
+        ok: started.accepted,
+        accepted: started.accepted,
+        already_running: started.already_running,
+        message: started.message,
+        handoff_run: handoffRunStatus(),
+        runtime: runtimeSnapshot(swarmState),
+        activity: await listSupervisorActivityAsync(12),
+      });
+      return;
+    }
+
     const result = await runAllAgentsNow();
     const swarmState = await loadStateForApi();
-    json(res, 200, { ok: true, ...result, runtime: runtimeSnapshot(swarmState) });
+    const message = result.handoff_phases
+      ? formatHandoffPhasesSummary(result.handoff_phases)
+      : result.spawned?.length
+        ? `Spawned ${result.spawned.length} agent(s)`
+        : "Run-all complete";
+    json(res, 200, {
+      ok: true,
+      message,
+      ...result,
+      runtime: runtimeSnapshot(swarmState),
+      activity: await listSupervisorActivityAsync(12),
+    });
+    return;
+  }
+
+  if (url.pathname === "/api/async-swarm/start" && req.method === "POST") {
+    const mock = process.env.CURSOR_MOCK === "1";
+    const { detachedSwarmEnabled, spawnDetachedAsyncSwarm } = await import(
+      "./swarm/detached-swarm-process.js"
+    );
+    const result = detachedSwarmEnabled()
+      ? spawnDetachedAsyncSwarm()
+      : await startAsyncSwarm({ mock, stopSupervisor: true });
+    const st = await loadStateForApi();
+    json(res, 200, { ok: result.started, ...result, runtime: runtimeSnapshot(st) });
+    return;
+  }
+
+  if (url.pathname === "/api/async-swarm/stop" && req.method === "POST") {
+    const { detachedSwarmEnabled, stopDetachedAsyncSwarm } = await import(
+      "./swarm/detached-swarm-process.js"
+    );
+    const result = detachedSwarmEnabled()
+      ? stopDetachedAsyncSwarm()
+      : await stopAsyncSwarm();
+    const st = await loadStateForApi();
+    json(res, 200, { ok: result.stopped, ...result, runtime: runtimeSnapshot(st) });
     return;
   }
 
   if (url.pathname === "/api/swarm/stop-all" && req.method === "POST") {
     void stopSupervisorLoop();
+    const { detachedSwarmEnabled, stopDetachedAsyncSwarm } = await import(
+      "./swarm/detached-swarm-process.js"
+    );
+    if (detachedSwarmEnabled()) {
+      stopDetachedAsyncSwarm();
+    } else {
+      void stopAsyncSwarm();
+    }
     const killed = await stopAllActiveRuns();
     const haltState = await loadStateForApi();
     json(res, 200, { ok: true, killed, runtime: runtimeSnapshot(haltState) });
@@ -377,13 +785,14 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       json(res, 404, { error: "unknown agent" });
       return;
     }
-    const result = spawnAgentRun(agentId, "dashboard start");
+    const workflowRepo = await resolveSpawnWorkflowRepo(agentId);
+    const result = spawnAgentRun(agentId, "dashboard start", { workflowRepo });
     if (!result.ok) {
       json(res, 409, { error: result.error });
       return;
     }
     const startState = await loadStateForApi();
-    json(res, 200, { ok: true, run: result.run, runtime: runtimeSnapshot(startState) });
+    json(res, 200, { ok: true, run: result.run, workflowRepo, runtime: runtimeSnapshot(startState) });
     return;
   }
 
@@ -444,6 +853,14 @@ function serveStatic(pathname: string, webRoot: string, res: ServerResponse): vo
   }
   res.writeHead(200, { "Content-Type": MIME[extname(full)] ?? "text/plain", "Cache-Control": "no-store" });
   res.end(readFileSync(full));
+}
+
+async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown>> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) chunks.push(chunk as Buffer);
+  const raw = Buffer.concat(chunks).toString("utf8").trim();
+  if (!raw) return {};
+  return JSON.parse(raw) as Record<string, unknown>;
 }
 
 function corsPreflight(res: ServerResponse): void {

@@ -1,0 +1,57 @@
+# Goal-directed implement missions (retired lic plan loops → swarm registry)
+# backlog_path and gates_script are relative to lic_root under li-langverse.
+goals:
+  - id: httpd_parity
+    title: li-httpd server parity vs nginx oracle (plan loop)
+    agent: code_implementer
+    workflow_repo: lic
+    lic_root: lic
+    backlog_path: docs/superpowers/plans/2026-05-16-li-httpd-plan.md
+    backlog_format: plan_yaml
+    gates_script: scripts/httpd-plan-gates.sh
+    branch: cursor/httpd-plan-continue
+    priority: 9
+    cadence_hours: 4
+    gate_fail_retry_minutes: 30
+    enabled: true
+
+  - id: sim_algorithms
+    title: Simulation algorithm backlog — packages, registry, bench gates
+    agent: code_implementer
+    workflow_repo: lic
+    lic_root: lic-worktrees/sim-algo
+    backlog_path: docs/ecosystem/sim-algorithm-backlog.md
+    backlog_format: markdown_todos
+    gates_script: scripts/sim-plan-gates.sh
+    branch: cursor/sim-algo-plan-loop
+    priority: 8
+    cadence_hours: 6
+    gate_fail_retry_minutes: 30
+    enabled: true
+
+  - id: compiler_studio
+    title: Compiler Wave A/B + Studio verticals (compiler-studio plan)
+    agent: code_implementer
+    workflow_repo: lic
+    lic_root: lic-worktrees/compiler-studio
+    backlog_path: docs/superpowers/plans/2026-05-22-compiler-studio-plan-loop.md
+    backlog_format: plan_yaml
+    gates_script: scripts/compiler-studio-plan-gates.sh
+    branch: cursor/compiler-studio-plan-loop
+    priority: 8
+    cadence_hours: 8
+    gate_fail_retry_minutes: 45
+    enabled: true
+
+  - id: studio_ui_ux
+    title: Studio UI/UX quality loop — tokens, capture, competitive bench
+    agent: gui_ux_tester
+    workflow_repo: studio
+    lic_root: lic-studio-ui
+    backlog_path: docs/superpowers/plans/2026-05-24-studio-ui-ux-plan-loop.md
+    backlog_format: plan_yaml
+    gates_script: scripts/studio-ui-ux-plan-gates.sh
+    branch: cursor/studio-ui-ux-plan-loop
+    priority: 7
+    cadence_hours: 12
+    enabled: true

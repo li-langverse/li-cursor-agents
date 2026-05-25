@@ -22,6 +22,11 @@ test("safeChangedPaths skips secret files", () => {
   assert.deepEqual(paths, ["README.md"]);
 });
 
+test("safeChangedPaths preserves data/ prefix on first porcelain line", () => {
+  const paths = safeChangedPaths(" M data/latest/agent-briefing.json\n M data/other.json");
+  assert.deepEqual(paths, ["data/latest/agent-briefing.json", "data/other.json"]);
+});
+
 test("discoverDirtyRepos finds uncommitted sibling clone", () => {
   const root = mkdtempSync(join(tmpdir(), "li-sweep-"));
   const repo = join(root, "li-demo-sweep");

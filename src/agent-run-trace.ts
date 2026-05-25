@@ -19,7 +19,6 @@ export interface AgentRunInputRecord {
   system_prompt: string;
   user_message: string;
   extra_instruction?: string;
-  skill_paths?: string[];
 }
 
 export interface AgentRunTraceFileEdit {
@@ -38,6 +37,15 @@ export interface AgentRunTraceEvent {
   payload: unknown;
 }
 
+export interface SdkAttemptTraceMeta {
+  attempt: number;
+  force: boolean;
+  durationMs: number;
+  toolCalls: number;
+  status: string;
+  runId?: string;
+}
+
 export interface AgentRunTrace {
   version: typeof TRACE_VERSION;
   assistant_text: string;
@@ -46,6 +54,9 @@ export interface AgentRunTrace {
   deltas: AgentRunTraceEvent[];
   file_edits: AgentRunTraceFileEdit[];
   tool_call_count: number;
+  /** Cursor SDK retry diagnostics (live runs only). */
+  sdk_attempts?: SdkAttemptTraceMeta[];
+  sdk_session_gap_ms?: number;
 }
 
 export function buildRunInput(params: {
@@ -60,7 +71,6 @@ export function buildRunInput(params: {
   preflightGeneratedAt?: string;
   modelId?: string;
   extraInstruction?: string;
-  skillPaths?: string[];
   dryRun: boolean;
   mock: boolean;
 }): AgentRunInputRecord {
@@ -79,13 +89,13 @@ export function buildRunInput(params: {
     system_prompt: params.systemPrompt,
     user_message: params.userMessage,
     extra_instruction: params.extraInstruction,
-    skill_paths: params.skillPaths,
   };
 }
 
 export function createTraceCollector(): {
   onStep: (args: { step: ConversationStep }) => void;
   onDelta: (args: { update: InteractionUpdate }) => void;
+  peek: (assistantText?: string) => AgentRunTrace;
   finalize: (assistantText: string) => AgentRunTrace;
 } {
   const steps: ConversationStep[] = [];
@@ -115,19 +125,27 @@ export function createTraceCollector(): {
       deltas.push(row);
       if (deltas.length > MAX_DELTAS) deltas.shift();
     },
-    finalize: (assistantText: string) => {
-      const file_edits = extractFileEdits(steps);
-      const tool_call_count = steps.filter((s) => s.type === "toolCall").length;
-      return {
-        version: TRACE_VERSION,
-        assistant_text: assistantText,
-        thinking_text: thinkingParts.join(""),
-        steps,
-        deltas,
-        file_edits,
-        tool_call_count,
-      };
-    },
+    peek: (assistantText = "") => buildTraceSnapshot(steps, deltas, thinkingParts, assistantText),
+    finalize: (assistantText: string) => buildTraceSnapshot(steps, deltas, thinkingParts, assistantText),
+  };
+}
+
+function buildTraceSnapshot(
+  steps: ConversationStep[],
+  deltas: AgentRunTraceEvent[],
+  thinkingParts: string[],
+  assistantText: string,
+): AgentRunTrace {
+  const file_edits = extractFileEdits(steps);
+  const tool_call_count = steps.filter((s) => s.type === "toolCall").length;
+  return {
+    version: TRACE_VERSION,
+    assistant_text: assistantText,
+    thinking_text: thinkingParts.join(""),
+    steps,
+    deltas,
+    file_edits,
+    tool_call_count,
   };
 }
 

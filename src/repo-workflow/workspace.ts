@@ -1,7 +1,8 @@
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
-import { defaultBranch, runCmd, scrubCloneGitInsteadof } from "./git.js";
+import { defaultBranch, runCmd } from "./git.js";
+import { maybePruneWorkspaces } from "./workspace-prune.js";
 import type { PrepareWorkspaceResult, RepoWorkflowOptions } from "./types.js";
 
 const GOVERNANCE_REPOS = new Set(["roadmap"]);
@@ -62,13 +63,6 @@ export function prepareIsolatedClone(
         error: clone.stderr || clone.stdout || "gh repo clone failed",
       };
     }
-    scrubCloneGitInsteadof(cloneDir);
-    runCmd(
-      "git",
-      ["remote", "set-url", "origin", `https://github.com/${org}/${repo}.git`],
-      cloneDir,
-      false,
-    );
   } else {
     runCmd("git", ["fetch", "origin"], cloneDir, false);
     runCmd("git", ["checkout", baseBranch], cloneDir, false);
@@ -84,7 +78,23 @@ export function prepareIsolatedClone(
     }
   }
 
-  runCmd("git", ["checkout", "-B", options.branchName], cloneDir, false);
+  const trackRemote = process.env.LI_REPO_WORKFLOW_TRACK_REMOTE?.trim().toLowerCase();
+  if (trackRemote && ["1", "true", "yes", "on"].includes(trackRemote)) {
+    runCmd("git", ["fetch", "origin", options.branchName], cloneDir, false);
+    const tracked = runCmd(
+      "git",
+      ["checkout", "-B", options.branchName, `origin/${options.branchName}`],
+      cloneDir,
+      false,
+    );
+    if (!tracked.ok) {
+      runCmd("git", ["checkout", "-B", options.branchName], cloneDir, false);
+    }
+  } else {
+    runCmd("git", ["checkout", "-B", options.branchName], cloneDir, false);
+  }
+
+  maybePruneWorkspaces({ workspaceRoot: options.workspaceRoot });
 
   return { ok: true, cloneDir, baseBranch, branch: options.branchName };
 }

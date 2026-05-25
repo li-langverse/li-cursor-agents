@@ -1,21 +1,15 @@
-import type { AgentDefinition } from "./types.js";
+import type { AgentDefinition, AgentId } from "./types.js";
 import type { AgentRunCompletionMeta, AgentRunResult, PreflightBundle } from "./types.js";
 import type { AgentRunTrace } from "./agent-run-trace.js";
+import {
+  buildRemediationManifest,
+  formatRemediationDeliverableSection,
+} from "./ux-audit/remediation-manifest.js";
 
 export interface AgentRunErrorDetail {
   name?: string;
   message: string;
   stack?: string;
-  /** Cursor SDK / Connect stable code when present (e.g. `internal`, `unauthenticated`). */
-  code?: string;
-  /** HTTP status from SDK/backend when present. */
-  status?: number;
-  requestId?: string;
-  operation?: string;
-  endpoint?: string;
-  isRetryable?: boolean;
-  /** Condensed `error.cause` (one hop) for wrapped Connect/gRPC failures. */
-  causeLine?: string;
 }
 
 export interface FormatAgentOutputParams {
@@ -37,62 +31,19 @@ export interface FormatAgentOutputParams {
 
 export function errorDetailFromUnknown(err: unknown): AgentRunErrorDetail {
   if (err instanceof Error) {
-    const base: AgentRunErrorDetail = {
+    return {
       name: err.name,
-      message: normalizeErrorMessage(err.message || String(err)),
+      message: err.message || String(err),
       stack: err.stack,
     };
-    Object.assign(base, pickSdkStyleFields(err));
-    if ((!base.message || base.message === "Error") && base.code) {
-      base.message = `SDK/backend error (code: ${base.code})`;
-    }
-    const cause = (err as Error & { cause?: unknown }).cause;
-    if (cause !== undefined && cause !== null && cause !== err) {
-      const c = errorDetailFromUnknown(cause);
-      const line = [c.name && `${c.name}: `, c.message].filter(Boolean).join("");
-      if (line.trim()) {
-        base.causeLine = line.trim().slice(0, 800);
-        if (!base.code && c.code) base.code = c.code;
-        if (base.status === undefined && c.status !== undefined) base.status = c.status;
-      }
-    }
-    return base;
   }
   if (typeof err === "object" && err !== null) {
     const o = err as Record<string, unknown>;
-    const message = normalizeErrorMessage(String(o.message ?? o.error ?? err));
+    const message = String(o.message ?? o.error ?? err);
     const stack = typeof o.stack === "string" ? o.stack : undefined;
-    const detail: AgentRunErrorDetail = {
-      name: typeof o.name === "string" ? o.name : undefined,
-      message,
-      stack,
-    };
-    Object.assign(detail, pickSdkStyleFields(o));
-    if ((!detail.message || detail.message === "Error") && detail.code) {
-      detail.message = `SDK/backend error (code: ${detail.code})`;
-    }
-    return detail;
+    return { name: typeof o.name === "string" ? o.name : undefined, message, stack };
   }
-  return { message: normalizeErrorMessage(String(err)) };
-}
-
-/** Avoid useless single-word messages from some RPC layers when JSON has more context. */
-function normalizeErrorMessage(raw: string): string {
-  const t = raw.trim();
-  if (t && t.toLowerCase() !== "error") return t;
-  return t || "(empty error message)";
-}
-
-function pickSdkStyleFields(source: object): Partial<AgentRunErrorDetail> {
-  const o = source as Record<string, unknown>;
-  const out: Partial<AgentRunErrorDetail> = {};
-  if (typeof o.code === "string" && o.code.trim()) out.code = o.code.trim();
-  if (typeof o.status === "number" && Number.isFinite(o.status)) out.status = o.status;
-  if (typeof o.requestId === "string" && o.requestId.trim()) out.requestId = o.requestId.trim();
-  if (typeof o.operation === "string" && o.operation.trim()) out.operation = o.operation.trim();
-  if (typeof o.endpoint === "string" && o.endpoint.trim()) out.endpoint = o.endpoint.trim();
-  if (typeof o.isRetryable === "boolean") out.isRetryable = o.isRetryable;
-  return out;
+  return { message: String(err) };
 }
 
 export function formatErrorMarkdown(detail: AgentRunErrorDetail): string {
@@ -104,17 +55,6 @@ export function formatErrorMarkdown(detail: AgentRunErrorDetail): string {
     `| **Type** | \`${detail.name ?? "Error"}\` |`,
     `| **Message** | ${escapeTableCell(detail.message)} |`,
   ];
-  if (detail.code) lines.push(`| **Code** | \`${escapeTableCell(detail.code)}\` |`);
-  if (detail.status !== undefined) lines.push(`| **HTTP status** | ${detail.status} |`);
-  if (detail.requestId) lines.push(`| **Request ID** | \`${escapeTableCell(detail.requestId)}\` |`);
-  if (detail.operation) lines.push(`| **Operation** | ${escapeTableCell(detail.operation)} |`);
-  if (detail.endpoint) lines.push(`| **Endpoint** | ${escapeTableCell(detail.endpoint)} |`);
-  if (detail.isRetryable !== undefined) {
-    lines.push(`| **Retryable** | ${detail.isRetryable ? "yes" : "no"} |`);
-  }
-  if (detail.causeLine) {
-    lines.push(`| **Cause** | ${escapeTableCell(detail.causeLine)} |`);
-  }
   if (detail.stack?.trim()) {
     lines.push("", "### Stack trace", "", "```", detail.stack.trim(), "```");
   } else {
@@ -125,12 +65,7 @@ export function formatErrorMarkdown(detail: AgentRunErrorDetail): string {
 
 export function buildFormattedOutput(p: FormatAgentOutputParams): string {
   const sections: string[] = [];
-  const statusLabel =
-    p.status === "incomplete"
-      ? `incomplete (${p.completion?.completion_mode ?? "production"} — hard gaps)`
-      : p.status === "error"
-        ? "error"
-        : p.status;
+  const statusLabel = p.status === "incomplete" ? "incomplete (premature)" : p.status;
 
   sections.push(
     `# Agent run: ${p.definition.name}`,
@@ -181,7 +116,12 @@ export function buildFormattedOutput(p: FormatAgentOutputParams): string {
     sections.push("", formatErrorMarkdown({ message: p.error.trim() }));
   }
 
-  sections.push("", "---", `_Formatted by li-cursor-agents · ${new Date().toISOString()}_`);
+  sections.push(
+    "",
+    "---",
+    `_Formatted by li-cursor-agents · ${new Date().toISOString()}_`,
+    `<!-- li-agent-role: ${p.definition.id} -->`,
+  );
   return sections.join("\n");
 }
 
@@ -197,6 +137,7 @@ export function buildMockDeliverable(
     case "implementation_gaps":
       return buildImplementationGapsMockBody(briefing);
     case "code_implementer":
+    case "studio_ui_ux_builder":
     case "bug_fixer":
     case "security_auditor":
       return buildImplementationGapsMockBody(briefing);
@@ -210,12 +151,19 @@ export function buildMockDeliverable(
       return buildGapExplorerMockBody(briefing);
     case "issue_planner":
       return buildIssuePlannerMockBody(briefing);
-    case "issue_hygiene":
-      return buildIssueHygieneMockBody(briefing);
     case "numerics_researcher":
     case "autoresearch":
     case "bench_improver":
       return buildNumericsMockBody(definition.id, briefing);
+    case "org_repo_onboarder":
+      return buildOrgRepoOnboarderMockBody(briefing);
+    case "docs_ui_tester":
+    case "docs_ux_tester":
+    case "gui_ui_tester":
+    case "gui_ux_tester":
+    case "tui_ui_tester":
+    case "tui_ux_tester":
+      return buildUiUxTesterMockBody(definition.id, briefing);
     default:
       return buildGenericMockBody(definition, briefing, userMessage);
   }
@@ -362,25 +310,20 @@ function buildTraceSummarySection(trace: AgentRunTrace): string {
 }
 
 function buildCompletionSection(c: AgentRunCompletionMeta): string {
-  const mode = c.completion_mode ?? "production";
   const lines = [
     "## Completion audit",
     "",
     "| Check | Result |",
     "|-------|--------|",
-    `| **Mode** | \`${mode}\` |`,
     `| Complete | ${c.complete ? "yes" : "no"} |`,
-    `| Premature | ${c.premature ? "yes (hard gaps)" : "no"} |`,
+    `| Premature | ${c.premature ? "yes" : "no"} |`,
     `| Deliverable section | ${c.deliverable_checked ? "yes" : "no"} |`,
   ];
   if (c.pr_urls.length) {
     lines.push("", "### PR URLs", "", ...c.pr_urls.map((u) => `- ${u}`));
   }
   if (c.gaps.length) {
-    lines.push("", "### Hard gaps (block completion)", "", ...c.gaps.map((g) => `- ${g}`));
-  }
-  if (c.notes?.length) {
-    lines.push("", "### Notes (informational)", "", ...c.notes.map((n) => `- ${n}`));
+    lines.push("", "### Gaps", "", ...c.gaps.map((g) => `- ${g}`));
   }
   if (c.evidence.length) {
     lines.push("", "### Evidence", "", ...c.evidence.map((e) => `- ${e}`));
@@ -495,24 +438,22 @@ function buildIssuePlannerMockBody(briefing: Record<string, unknown> | null): st
   ].join("\n");
 }
 
-function buildIssueHygieneMockBody(briefing: Record<string, unknown> | null): string {
-  const hygiene = briefing?.issue_backlog_hygiene as Record<string, unknown> | undefined;
-  const summary = (hygiene?.summary ?? {}) as Record<string, number>;
+function buildOrgRepoOnboarderMockBody(briefing: Record<string, unknown> | null): string {
+  const disc = briefing?.org_new_repos_discovery as Record<string, unknown> | undefined;
+  const newRepos = (disc?.new_repos as string[]) ?? [];
+  const stale = (disc?.stale_known_repos as string[]) ?? [];
   return [
     "## Executive summary",
-    "- Scanned org issue backlog for duplicates, stale items, and routing (mock).",
-    hygiene
-      ? `- duplicate_clusters=${summary.duplicate_clusters ?? 0} stale=${summary.stale_candidates ?? 0}`
-      : "- _No issue_backlog_hygiene in briefing._",
+    `- Org repo discovery: **${newRepos.length}** new, **${stale.length}** stale catalog entries.`,
+    newRepos.length
+      ? `- New: ${newRepos.slice(0, 6).join(", ")}${newRepos.length > 6 ? ", …" : ""}`
+      : "- No new repos in briefing — mock pass only.",
     "",
-    "## Deliverable (mock)",
-    "| Cluster | Action |",
-    "|---------|--------|",
-    "| similar titles | comment + recommend close as duplicate |",
+    "## New repos (mock handoff plan)",
+    ...newRepos.map((r) => `- **${r}** → ci_maintainer, agent_kit_maintainer, docs_maintainer`),
     "",
-    "## Routing (mock)",
-    "- plan-needed → **issue_planner**",
-    "- plan-approved → **code_implementer**",
+    "## Stale catalog (mock)",
+    ...(stale.length ? stale.map((r) => `- ${r} — verify archived on GitHub`) : ["- _None._"]),
   ].join("\n");
 }
 
@@ -526,6 +467,28 @@ function buildNumericsMockBody(agentId: string, briefing: Record<string, unknown
     "## Findings (mock)",
     "- Compare tier-1 rows vs cpp reference",
     "- File issue if ratio > 1.2× policy",
+  ].join("\n");
+}
+
+function buildUiUxTesterMockBody(agentId: string, briefing: Record<string, unknown> | null): string {
+  const manifest = buildRemediationManifest(agentId as AgentId, briefing);
+  const kind = agentId.includes("_ui_") ? "ui" : "ux";
+  const auditKey = kind === "ui" ? "ui_audit" : "ux_audit";
+  const audit = briefing?.[auditKey] as Record<string, unknown> | undefined;
+  const failing = (audit?.summary as Record<string, number> | undefined)?.failing ?? manifest.issues.length;
+  return [
+    "## Executive summary",
+    `- **${agentId}** ${kind.toUpperCase()} audit pass (mock).`,
+    `- Failing targets in briefing: **${failing}**`,
+    `- Remediation issues (mock): **${manifest.issues.length}**`,
+    "",
+    formatRemediationDeliverableSection(manifest),
+    "",
+    "## SOTA reference (mock)",
+    kind === "ux" ? "- Ran 3+ web queries against ux-harness/sota/manifest.yaml (mock URLs logged)." : "- UI metrics from ui-audit.json artifacts.",
+    "",
+    "## Digest",
+    `- benchmarks/docs/ecosystem/ux-digests/${new Date().toISOString().slice(0, 10)}-${agentId.split("_")[0]}-${kind}.md`,
   ].join("\n");
 }
 

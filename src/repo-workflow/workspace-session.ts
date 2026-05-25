@@ -41,6 +41,36 @@ function fixtureDemoRoot(): string {
   return join(agentsPackageRoot(), "fixtures", "li-demo-workflow");
 }
 
+function fixtureLicRoot(): string {
+  return join(agentsPackageRoot(), "fixtures", "lic-workflow");
+}
+
+/** Local git repo for lic goal_implementation mock runs — no `gh clone`. */
+function prepareFixtureLicClone(
+  branchName: string,
+  workspaceRoot: string,
+  runId: string,
+): PrepareWorkspaceResult {
+  const org = process.env.GH_ORG ?? "li-langverse";
+  const cloneDir = join(workspaceRoot, org, "lic", runId, "repo");
+  mkdirSync(cloneDir, { recursive: true });
+  const src = fixtureLicRoot();
+  if (existsSync(src)) {
+    cpSync(src, cloneDir, { recursive: true, force: true });
+  }
+
+  if (!existsSync(join(cloneDir, ".git"))) {
+    runCmd("git", ["init"], cloneDir, false);
+    runCmd("git", ["config", "user.email", "agent@li-langverse.test"], cloneDir, false);
+    runCmd("git", ["config", "user.name", "li-cursor-agents"], cloneDir, false);
+    runCmd("git", ["add", "-A"], cloneDir, false);
+    runCmd("git", ["commit", "-m", "fixture: initial lic workflow test repo"], cloneDir, false);
+  }
+
+  runCmd("git", ["checkout", "-B", branchName], cloneDir, false);
+  return { ok: true, cloneDir, baseBranch: "main", branch: branchName };
+}
+
 /** Local git repo for tests — no `gh clone`. */
 function prepareFixtureDemoClone(
   branchName: string,
@@ -97,6 +127,11 @@ export function beginRepoWorkflowSession(input: {
       input.workspaceRoot ?? join(agentsPackageRoot(), "data", "workspaces-test");
     mkdirSync(root, { recursive: true });
     prep = prepareFixtureDemoClone(branchName, root, runId);
+  } else if (useFixture && repo === "lic") {
+    const root =
+      input.workspaceRoot ?? join(agentsPackageRoot(), "data", "workspaces-test");
+    mkdirSync(root, { recursive: true });
+    prep = prepareFixtureLicClone(branchName, root, runId);
   } else {
     prep = prepareIsolatedClone(repo, {
       org,

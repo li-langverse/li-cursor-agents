@@ -1,0 +1,148 @@
+# Goal-directed research missions — see plan §1
+goals:
+  - id: numerics_sota
+    title: Numerics / HPC benchmark SOTA
+    domains: [scientific_computing, hpc]
+    agent: numerics_researcher
+    priority: 7
+    cadence_hours: 12
+    enabled: true
+    ph_ids: [PH-5b, PH-7e]
+
+  # Swarm goal md_sim (retired li-sim-md-research-plan-loop)
+  - id: md_sim_algorithms
+    title: MD algorithms — SOTA survey and Li gap analysis
+    domains: [scientific_computing, hpc]
+    agent: numerics_researcher
+    priority: 8
+    cadence_hours: 8
+    enabled: true
+    uses_research_session: true
+    allow_implementation: true
+    handoff_to: [code_implementer, issue_planner]
+
+  # Swarm goal chem_sim (retired li-sim-chem-research-plan-loop)
+  - id: chem_sim_algorithms
+    title: Chemistry / QM algorithms — SOTA survey and Li gap analysis
+    domains: [scientific_computing, hpc]
+    agent: numerics_researcher
+    priority: 8
+    cadence_hours: 8
+    enabled: true
+    uses_research_session: true
+    allow_implementation: true
+    handoff_to: [code_implementer, issue_planner]
+
+  - id: simulation_techniques
+    title: Simulation methods and reference architectures
+    domains: [scientific_computing, hpc]
+    agent: goal_researcher
+    priority: 6
+    cadence_hours: 24
+    enabled: true
+    uses_research_session: true
+    handoff_to: [package_architect, code_implementer, issue_planner]
+
+  - id: game_engine_ux
+    title: Easy game engine + AI integration patterns
+    domains: [gaming, ai]
+    agent: goal_researcher
+    priority: 5
+    cadence_hours: 48
+    allow_implementation: true
+    enabled: true
+    uses_research_session: true
+    handoff_to: [package_architect, code_implementer, issue_planner]
+
+  - id: cad_fundamentals
+    title: CAD/geometry — kernels, packages, and Li std gaps
+    domains: [ecosystem, scientific_computing]
+    agent: goal_researcher
+    priority: 5
+    cadence_hours: 48
+    allow_implementation: true
+    enabled: true
+    uses_research_session: true
+    handoff_to: [package_architect, code_implementer, issue_planner]
+
+  - id: ai_ecosystem
+    title: AI-first tooling on Li (training, inference, agents)
+    domains: [ai, scientific_computing]
+    agent: goal_researcher
+    priority: 6
+    cadence_hours: 24
+    enabled: true
+    uses_research_session: true
+    handoff_to: [package_architect, issue_planner]
+
+  - id: web_platform
+    title: Web stack, HTTP, WASM, secure deploy story
+    domains: [web]
+    agent: goal_researcher
+    priority: 5
+    cadence_hours: 36
+    enabled: true
+    uses_research_session: true
+    handoff_to: [package_architect, issue_planner]
+
+  - id: ecosystem_gaps
+    title: Org-wide std/packages + ecosystem signals
+    domains: [ecosystem, hpc, web]
+    agent: gap_explorer
+    priority: 4
+    cadence_hours: 24
+    enabled: true
+    handoff_to: [package_architect, issue_planner]
+
+  - id: stdlib_ecosystem
+    title: Deep std + li-std-* audit; packages to build vs improve
+    domains: [ecosystem, scientific_computing, hpc]
+    agent: stdlib_researcher
+    priority: 8
+    cadence_hours: 18
+    enabled: true
+    uses_research_session: true
+    handoff_to: [package_architect, code_implementer]
+
+  - id: ui_ux_quality
+    title: Internal UI/UX vs SOTA (docs, GUI, TUI)
+    domains: [ecosystem, web]
+    agent: gui_ux_tester
+    priority: 5
+    cadence_hours: 48
+    allow_implementation: false
+    enabled: true
+    handoff_to: [code_implementer, docs_maintainer, issue_planner]
+
+  - id: provability_holes
+    title: Proof holes — compiler, contracts, trusted axioms
+    domains: [ecosystem]
+    agent: proof_gap_researcher
+    priority: 9
+    cadence_hours: 12
+    enabled: true
+    uses_research_session: true
+    ph_ids: [PH-2e, PH-2f]
+    handoff_to: [package_architect, code_implementer, issue_planner]
+
+  # Swarm goal (retired li-swarm-observer-plan-loop — use async swarm, not new systemd loops)
+  - id: swarm_coverage
+    title: Swarm gap orchestration — registry, backlog apply, handoffs
+    domains: [ecosystem, ai]
+    agent: swarm_observer
+    priority: 10
+    cadence_hours: 6
+    enabled: true
+    handoff_to: [gap_explorer, plan_verifier, issue_planner]
+
+  # Swarm goal (retired li-security-research-plan-loop)
+  - id: offensive_security
+    title: Offensive security — fuzz, tier5 exploits, CWE feed
+    domains: [ecosystem, web]
+    agent: security_auditor
+    priority: 9
+    cadence_hours: 12
+    enabled: true
+    uses_research_session: true
+    allow_implementation: true
+    handoff_to: [code_implementer, issue_planner]

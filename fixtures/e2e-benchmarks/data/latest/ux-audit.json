@@ -1,0 +1,235 @@
+{
+  "generated_at": "2026-05-19T12:50:52.683582+00:00",
+  "platform": "Darwin",
+  "summary": {
+    "total": 6,
+    "failing": 2,
+    "passing": 3,
+    "skipped": 1
+  },
+  "targets": [
+    {
+      "target_id": "lic-docs",
+      "repo": "lic",
+      "surface": "docs",
+      "surface_class": "docs",
+      "status": "pass",
+      "journeys": [
+        {
+          "id": "first_reading_path",
+          "steps": [
+            "home",
+            "language-design",
+            "verification"
+          ],
+          "completed": true,
+          "step_count": 3
+        },
+        {
+          "id": "mobile_nav",
+          "steps": [
+            "home_mobile",
+            "nav_drawer"
+          ],
+          "completed": true,
+          "step_count": 2
+        }
+      ],
+      "friction_points": [],
+      "sota_refs": [
+        "mkdocs-material",
+        "shadcn-ui",
+        "textual"
+      ],
+      "rubric_scores": {
+        "nav_clarity": 0.85,
+        "task_efficiency": 0.8,
+        "empty_states": 0.9,
+        "error_handling": 0.75,
+        "cognitive_load": 0.7
+      },
+      "rubric_threshold": 0.6,
+      "missing_states": [],
+      "artifacts": [
+        "/Users/julian/Documents/coding-projects/li-cursor-agents/ux-harness/artifacts/lic-docs/journey-log.json"
+      ]
+    },
+    {
+      "target_id": "agents-dashboard",
+      "repo": "li-cursor-agents",
+      "surface": "gui",
+      "surface_class": "gui_app",
+      "status": "fail",
+      "journeys": [
+        {
+          "id": "agents_list_empty",
+          "steps": [
+            "open_agents",
+            "check_empty_state"
+          ],
+          "completed": false,
+          "step_count": 2
+        },
+        {
+          "id": "live_stream",
+          "steps": [
+            "open_run",
+            "read_stream"
+          ],
+          "completed": false,
+          "step_count": 2
+        }
+      ],
+      "friction_points": [
+        {
+          "journey": "agents_list_empty",
+          "issue": "No empty state when zero runs"
+        }
+      ],
+      "sota_refs": [
+        "mkdocs-material",
+        "shadcn-ui",
+        "textual"
+      ],
+      "rubric_scores": {
+        "nav_clarity": 0.45,
+        "task_efficiency": 0.5,
+        "empty_states": 0.35,
+        "error_handling": 0.75,
+        "cognitive_load": 0.55
+      },
+      "rubric_threshold": 0.6,
+      "missing_states": [
+        "empty"
+      ],
+      "artifacts": [
+        "/Users/julian/Documents/coding-projects/li-cursor-agents/ux-harness/artifacts/agents-dashboard/journey-log.json"
+      ]
+    },
+    {
+      "target_id": "lic-tetris",
+      "repo": "lic",
+      "surface": "gui",
+      "surface_class": "gui_app",
+      "status": "skip",
+      "skip_reason": "skipped on Darwin"
+    },
+    {
+      "target_id": "gui-gen-fixture",
+      "repo": "li-cursor-agents",
+      "surface": "gui",
+      "surface_class": "gui_gen",
+      "status": "pass",
+      "journeys": [
+        {
+          "id": "gen_preview_loop",
+          "steps": [
+            "prompt",
+            "preview",
+            "edit"
+          ],
+          "completed": true,
+          "step_count": 3
+        }
+      ],
+      "friction_points": [],
+      "sota_refs": [
+        "mkdocs-material",
+        "shadcn-ui",
+        "textual"
+      ],
+      "rubric_scores": {
+        "nav_clarity": 0.85,
+        "task_efficiency": 0.8,
+        "empty_states": 0.9,
+        "error_handling": 0.75,
+        "cognitive_load": 0.7
+      },
+      "rubric_threshold": 0.6,
+      "missing_states": [],
+      "artifacts": [
+        "/Users/julian/Documents/coding-projects/li-cursor-agents/ux-harness/artifacts/gui-gen-fixture/journey-log.json"
+      ]
+    },
+    {
+      "target_id": "tui-app-fixture",
+      "repo": "li-cursor-agents",
+      "surface": "tui",
+      "surface_class": "tui_app",
+      "status": "fail",
+      "journeys": [
+        {
+          "id": "key_nav_help",
+          "steps": [
+            "launch",
+            "tab_help",
+            "quit"
+          ],
+          "completed": false,
+          "step_count": 3
+        }
+      ],
+      "friction_points": [
+        {
+          "journey": "agents_list_empty",
+          "issue": "No empty state when zero runs"
+        }
+      ],
+      "sota_refs": [
+        "mkdocs-material",
+        "shadcn-ui",
+        "textual"
+      ],
+      "rubric_scores": {
+        "nav_clarity": 0.45,
+        "task_efficiency": 0.5,
+        "empty_states": 0.35,
+        "error_handling": 0.75,
+        "cognitive_load": 0.55
+      },
+      "rubric_threshold": 0.6,
+      "missing_states": [
+        "empty"
+      ],
+      "artifacts": [
+        "/Users/julian/Documents/coding-projects/li-cursor-agents/ux-harness/artifacts/tui-app-fixture/journey-log.json"
+      ]
+    },
+    {
+      "target_id": "tui-gen-fixture",
+      "repo": "li-cursor-agents",
+      "surface": "tui",
+      "surface_class": "tui_gen",
+      "status": "pass",
+      "journeys": [
+        {
+          "id": "cli_to_tui",
+          "steps": [
+            "run_generator",
+            "capture_screen"
+          ],
+          "completed": true,
+          "step_count": 2
+        }
+      ],
+      "friction_points": [],
+      "sota_refs": [
+        "mkdocs-material",
+        "shadcn-ui",
+        "textual"
+      ],
+      "rubric_scores": {
+        "nav_clarity": 0.85,
+        "task_efficiency": 0.8,
+        "empty_states": 0.9,
+        "error_handling": 0.75,
+        "cognitive_load": 0.7
+      },
+      "rubric_threshold": 0.6,
+      "missing_states": [],
+      "artifacts": [
+        "/Users/julian/Documents/coding-projects/li-cursor-agents/ux-harness/artifacts/tui-gen-fixture/journey-log.json"
+      ]
+    }
+  ]
+}

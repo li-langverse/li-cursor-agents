@@ -7,7 +7,8 @@ export type CoordinatorId =
   | "coord_ecosystem"
   | "coord_pull_requests"
   | "coord_numerics"
-  | "coord_platform";
+  | "coord_platform"
+  | "coord_ux";
 
 export interface CoordinatorDefinition {
   id: CoordinatorId;
@@ -49,7 +50,8 @@ export const COORDINATOR_REGISTRY: CoordinatorDefinition[] = [
       "bug_fixer",
       "security_auditor",
       "issue_planner",
-      "issue_hygiene",
+      "package_architect",
+      "proof_gap_researcher",
     ],
     priority: 30,
     promptFile: "coord-governance.md",
@@ -58,7 +60,7 @@ export const COORDINATOR_REGISTRY: CoordinatorDefinition[] = [
     id: "coord_ecosystem",
     name: "Ecosystem coordinator",
     description: "Gap exploration, docs, HPC/Reddit signals.",
-    leafAgents: ["gap_explorer", "docs_maintainer"],
+    leafAgents: ["gap_explorer", "docs_maintainer", "goal_researcher", "stdlib_researcher"],
     priority: 40,
     promptFile: "coord-ecosystem.md",
   },
@@ -66,9 +68,31 @@ export const COORDINATOR_REGISTRY: CoordinatorDefinition[] = [
     id: "coord_platform",
     name: "Platform coordinator",
     description: "Org CI templates and repo hygiene.",
-    leafAgents: ["ci_maintainer", "agent_kit_maintainer", "workspace_sweeper"],
+    leafAgents: [
+      "ci_maintainer",
+      "agent_kit_maintainer",
+      "org_repo_onboarder",
+      "workspace_sweeper",
+      "swarm_observer",
+      "ecosystem_grader",
+    ],
     priority: 50,
     promptFile: "coord-platform.md",
+  },
+  {
+    id: "coord_ux",
+    name: "UX coordinator",
+    description: "Docs/GUI/TUI UI+UX audits vs SOTA; remediation queue for implementers.",
+    leafAgents: [
+      "docs_ui_tester",
+      "docs_ux_tester",
+      "gui_ui_tester",
+      "gui_ux_tester",
+      "tui_ui_tester",
+      "tui_ux_tester",
+    ],
+    priority: 45,
+    promptFile: "coord-ux.md",
   },
 ];
 

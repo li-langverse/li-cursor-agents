@@ -1,6 +1,7 @@
 import type { AgentRunResult } from "../types.js";
 import type { AgentKitRolloutRow } from "../repo-workflow/types.js";
 import { dbEnabled, getSupabase } from "./client.js";
+import { withSupabaseRetry } from "./supabase-retry.js";
 
 export interface PersistRunInput {
   run: AgentRunResult & {
@@ -29,6 +30,7 @@ export interface AgentRunHistoryRow {
   pr_urls?: string[] | null;
   run_input?: AgentRunResult["runInput"] | null;
   run_trace?: AgentRunResult["trace"] | null;
+  meta?: Record<string, unknown> | null;
   summary?: string;
   premature?: boolean;
 }
@@ -59,6 +61,7 @@ function rowToHistory(row: Record<string, unknown>): AgentRunHistoryRow {
     pr_urls: (row.pr_urls as string[]) ?? [],
     run_input: (row.run_input as AgentRunResult["runInput"]) ?? null,
     run_trace: (row.run_trace as AgentRunResult["trace"]) ?? null,
+    meta: (row.meta as Record<string, unknown>) ?? null,
     summary: summaryFromOutput(output),
     premature: completion?.premature ?? false,
   };
@@ -174,6 +177,7 @@ export async function listAgentRunHistory(agentId: string, limit = 50): Promise<
     .from("agent_runs")
     .select("*")
     .eq("agent_id", agentId)
+    .neq("backend", "mock")
     .order("started_at", { ascending: false })
     .limit(limit);
 
@@ -182,16 +186,66 @@ export async function listAgentRunHistory(agentId: string, limit = 50): Promise<
 }
 
 export async function listRunsGlobal(limit = 80): Promise<AgentRunHistoryRow[]> {
+  return listRunsGlobalInRange({ limit });
+}
+
+export interface ListRunsGlobalInRangeOptions {
+  since?: Date | null;
+  until?: Date | null;
+  /** Max rows to return (paginates in pages of 500). */
+  limit?: number;
+  /**
+   * Omit heavy columns (`output_md`, etc.) for statistics aggregation.
+   * Keeps `meta` + `run_trace` for tool/edit counts.
+   */
+  light?: boolean;
+}
+
+const RUNS_FULL_SELECT = "*";
+const RUNS_LIGHT_SELECT =
+  "run_id, agent_id, started_at, status, pr_urls, completion, meta, run_trace";
+
+/** Scan agent_runs history with optional time bounds (newest first). */
+export async function listRunsGlobalInRange(
+  options: ListRunsGlobalInRangeOptions = {},
+): Promise<AgentRunHistoryRow[]> {
   if (!dbEnabled()) return [];
 
-  const { data, error } = await getSupabase()
-    .from("agent_runs")
-    .select("*")
-    .order("started_at", { ascending: false })
-    .limit(limit);
+  const max = Math.min(50_000, Math.max(1, options.limit ?? 10_000));
+  const pageSize = options.light ? 200 : 500;
+  const selectCols = options.light ? RUNS_LIGHT_SELECT : RUNS_FULL_SELECT;
+  const out: AgentRunHistoryRow[] = [];
+  let offset = 0;
 
-  if (error) throw new Error(`listRunsGlobal: ${error.message}`);
-  return (data ?? []).map((row) => rowToHistory(row as Record<string, unknown>));
+  return withSupabaseRetry("listRunsGlobalInRange", async () => {
+  while (out.length < max) {
+    let q = getSupabase()
+      .from("agent_runs")
+      .select(selectCols)
+      .neq("backend", "mock")
+      .order("started_at", { ascending: false })
+      .range(offset, offset + pageSize - 1);
+
+    if (options.since) {
+      q = q.gte("started_at", options.since.toISOString());
+    }
+    if (options.until) {
+      q = q.lte("started_at", options.until.toISOString());
+    }
+
+    const { data, error } = await q;
+    if (error) throw new Error(`listRunsGlobalInRange: ${error.message}`);
+    const batch = ((data ?? []) as unknown as Record<string, unknown>[]).map((row) =>
+      rowToHistory(row),
+    );
+    if (!batch.length) break;
+    out.push(...batch);
+    if (batch.length < pageSize) break;
+    offset += pageSize;
+  }
+
+  return out.slice(0, max);
+  });
 }
 
 export async function getRunById(runId: string): Promise<AgentRunHistoryRow | null> {
@@ -199,6 +253,36 @@ export async function getRunById(runId: string): Promise<AgentRunHistoryRow | nu
 
   const { data, error } = await getSupabase().from("agent_runs").select("*").eq("run_id", runId).maybeSingle();
   if (error) throw new Error(`getRunById: ${error.message}`);
+  if (!data) return null;
+  return rowToHistory(data as Record<string, unknown>);
+}
+
+/** All in-progress runs (for dashboard live list when worker is not in-process). */
+export async function listRunningAgentRuns(limit = 30): Promise<AgentRunHistoryRow[]> {
+  if (!dbEnabled()) return [];
+
+  const { data, error } = await getSupabase()
+    .from("agent_runs")
+    .select("*")
+    .eq("status", "running")
+    .order("started_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw new Error(`listRunningAgentRuns: ${error.message}`);
+  return (data ?? []).map((row) => rowToHistory(row as Record<string, unknown>));
+}
+
+/** Live run row persisted by live-stream-persist (status still running). */
+export async function getRunningRunById(runId: string): Promise<AgentRunHistoryRow | null> {
+  if (!dbEnabled()) return null;
+
+  const { data, error } = await getSupabase()
+    .from("agent_runs")
+    .select("*")
+    .eq("run_id", runId)
+    .eq("status", "running")
+    .maybeSingle();
+  if (error) throw new Error(`getRunningRunById: ${error.message}`);
   if (!data) return null;
   return rowToHistory(data as Record<string, unknown>);
 }

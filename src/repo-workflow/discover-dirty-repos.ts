@@ -17,6 +17,10 @@ export interface DirtyRepoDiscovery {
 const SECRET_PATH =
   /(?:^|\/)(?:\.env(?:\.|$)|\.env\.github|credentials\.json|\.pem$|id_rsa$|\.supabase\/|node_modules\/)/i;
 
+/** Local-only artifacts — never stage in workspace sweep. */
+const SWEEP_SKIP_PATH =
+  /(?:^|\/)(?:logs\/|data\/workspaces-test\/|supabase\/\.(?:branches|temp)\/|docs\/\.mock-)/i;
+
 export function resolveSweepRoots(benchmarksRoot?: string): string[] {
   const fromEnv = process.env.LI_WORKSPACE_SWEEP_ROOTS?.trim();
   if (fromEnv) {
@@ -91,13 +95,13 @@ export function discoverDirtyRepos(roots?: string[]): DirtyRepoDiscovery[] {
     if (seen.has(resolved)) continue;
     seen.add(resolved);
 
-    const porcelain = gitStatusPorcelain(resolved, false).trim();
+    const porcelain = gitStatusPorcelain(resolved, false);
     if (!porcelain) continue;
 
     const files = porcelain
       .split("\n")
       .map((l) => l.slice(3).trim())
-      .filter((p) => p && !SECRET_PATH.test(p));
+      .filter((p) => p && !SECRET_PATH.test(p) && !SWEEP_SKIP_PATH.test(p));
     if (files.length === 0) continue;
 
     const remote = remoteRepoSlug(resolved);
@@ -128,5 +132,5 @@ export function safeChangedPaths(porcelain: string): string[] {
   return porcelain
     .split("\n")
     .map((l) => l.slice(3).trim())
-    .filter((p) => p && !SECRET_PATH.test(p));
+    .filter((p) => p && !SECRET_PATH.test(p) && !SWEEP_SKIP_PATH.test(p));
 }

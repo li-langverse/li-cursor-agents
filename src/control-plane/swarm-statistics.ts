@@ -5,11 +5,16 @@ import type { AgentRunTrace, AgentRunTraceFileEdit } from "../agent-run-trace.js
 import { extractPrUrls } from "./run-completion.js";
 import { readJson } from "./read-json.js";
 import { controlPlaneRoot } from "./paths.js";
-import { listRunsMerged, type RunCatalogEntry } from "./runs-catalog.js";
+import { listRunsMergedInRange, type RunCatalogEntry } from "./runs-catalog.js";
+import type { ParsedStatsTimeRange } from "./stats-time-range.js";
 import { resolveBenchmarksRoot } from "../preflight.js";
 
 export interface SwarmStatistics {
   generated_at: string;
+  range_preset?: string;
+  range_label?: string;
+  range_since?: string | null;
+  range_until?: string;
   runs_scanned: number;
   /** Tool calls across recorded runs */
   actions_taken: number;
@@ -73,7 +78,10 @@ function prKey(repo: string, num: number | string): string {
   return `${repo}#${num}`;
 }
 
-export function aggregateRunTraceStats(trace?: AgentRunTrace): {
+export function aggregateRunTraceStats(
+  trace?: AgentRunTrace,
+  meta?: Record<string, unknown> | null,
+): {
   tools: number;
   edits: number;
   lines_added: number;
@@ -84,6 +92,17 @@ export function aggregateRunTraceStats(trace?: AgentRunTrace): {
   let edits = 0;
   let lines_added = 0;
   let lines_deleted = 0;
+  if (!trace?.file_edits?.length && meta && typeof meta === "object") {
+    const tools = Number(meta.tool_call_count) || 0;
+    const editsFromMeta = Number(meta.file_edit_count) || 0;
+    return {
+      tools,
+      edits: editsFromMeta,
+      lines_added: Number(meta.lines_added) || 0,
+      lines_deleted: Number(meta.lines_deleted) || 0,
+      packageRoots,
+    };
+  }
   for (const e of trace?.file_edits ?? []) {
     edits++;
     lines_added += e.lines_added ?? 0;
@@ -254,7 +273,7 @@ function aggregateRuns(runs: RunCatalogEntry[]): Omit<
   const packageRoots = new Set<string>();
 
   for (const run of runs) {
-    const t = aggregateRunTraceStats(run.run_trace);
+    const t = aggregateRunTraceStats(run.run_trace, run.meta ?? null);
     actions_taken += t.tools;
     file_edits += t.edits;
     lines_added += t.lines_added;
@@ -290,6 +309,7 @@ export interface BuildSwarmStatisticsOptions {
   runLimit?: number;
   /** Skip `gh search` (blocks ~20s); use runs + briefing artifacts only. */
   skipGh?: boolean;
+  timeRange?: ParsedStatsTimeRange;
 }
 
 export async function buildSwarmStatistics(
@@ -298,8 +318,17 @@ export async function buildSwarmStatistics(
 ): Promise<SwarmStatistics> {
   const notes: string[] = [];
   const benchmarksRoot = resolveBenchmarksRoot();
+  const range = options.timeRange;
   const limit = options.runLimit ?? runLimit;
-  const runs = await listRunsMerged(limit);
+  const runs = await listRunsMergedInRange({
+    since: range?.since ?? null,
+    until: range?.until ?? new Date(),
+    limit: range?.preset === "all" ? Math.max(limit, 10_000) : limit,
+    forStatistics: true,
+  });
+  if (range) {
+    notes.push(`runs filtered: ${range.label} (${runs.length} rows)`);
+  }
   const agg = aggregateRuns(runs);
 
   const persisted = loadPersisted();
@@ -338,6 +367,10 @@ export async function buildSwarmStatistics(
 
   return {
     generated_at: new Date().toISOString(),
+    range_preset: range?.preset,
+    range_label: range?.label,
+    range_since: range?.since?.toISOString() ?? null,
+    range_until: (range?.until ?? new Date()).toISOString(),
     runs_scanned: agg.runs_scanned,
     actions_taken: agg.actions_taken,
     file_edits: agg.file_edits,

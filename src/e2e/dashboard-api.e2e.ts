@@ -9,7 +9,7 @@ import type { Server } from "node:http";
 import { get, request } from "node:http";
 import { supervisorTick } from "../supervisor/loop.js";
 import { startOpsServer } from "../ops-server.js";
-import { setupE2eEnv, defaultTickOpts } from "./helpers.js";
+import { setupE2eEnv, defaultTickOpts, readReport } from "./helpers.js";
 import { listAgentsPublic } from "../agents/registry.js";
 
 function httpGetJson(port: number, path: string): Promise<{ status: number; body: unknown }> {
@@ -113,16 +113,34 @@ describe("dashboard drilldown API e2e", () => {
     assert.ok(typeof stats.agent_prs_open_now === "number");
     assert.ok(Array.isArray(stats.notes));
 
+    const handoffsRes = await httpGetJson(port, "/api/handoffs?limit=5");
+    assert.equal(handoffsRes.status, 200);
+    const handoffsBody = handoffsRes.body as { handoffs?: unknown[] };
+    assert.ok(Array.isArray(handoffsBody.handoffs));
+
+    const swarmRes = await httpGetJson(port, "/api/swarm/briefing");
+    assert.equal(swarmRes.status, 200);
+    const swarmBody = swarmRes.body as { scorecard?: Record<string, unknown> };
+    assert.ok(swarmBody.scorecard);
+
+    const reportDisk = readReport(env.controlPlaneDir);
+    const recentRuns = reportDisk.recent_runs as Array<{ agentId: string; outputPath: string }>;
+    assert.ok(recentRuns.length >= 1, "supervisor tick produced runs in report");
+    const runId = recentRuns[0].outputPath.split("/").pop()!.replace(/\.md$/, "");
+    const agentId = recentRuns[0].agentId;
+
     const runsRes = await httpGetJson(port, "/api/runs");
     assert.equal(runsRes.status, 200);
     const runsPayload = runsRes.body as { runs?: Array<{ run_id: string; agent_id: string }> };
-    assert.ok(runsPayload.runs && runsPayload.runs.length >= 1, "disk runs from supervisor");
+    assert.ok(
+      !(runsPayload.runs ?? []).some((r) => r.run_id === runId),
+      "mock runs excluded from production run catalog",
+    );
 
-    const firstRun = runsPayload.runs![0];
-    const runDetailRes = await httpGetJson(port, `/api/runs/${encodeURIComponent(firstRun.run_id)}`);
+    const runDetailRes = await httpGetJson(port, `/api/runs/${encodeURIComponent(runId)}`);
     assert.equal(runDetailRes.status, 200);
     const runDetail = runDetailRes.body as { run_id: string; output_preview?: string };
-    assert.equal(runDetail.run_id, firstRun.run_id);
+    assert.equal(runDetail.run_id, runId);
     assert.ok(
       typeof runDetail.output_preview === "string" && runDetail.output_preview.length > 0,
       "run output drilldown",
@@ -141,13 +159,11 @@ describe("dashboard drilldown API e2e", () => {
         has_trace?: boolean;
       }>;
     };
-    assert.ok(actBody.items && actBody.items.length >= 1, "activity recent list");
-    const firstItem = actBody.items![0];
-    assert.equal(firstItem.run_id, firstRun.run_id);
-    assert.ok(typeof firstItem.action_summary === "string");
-    assert.ok(firstItem.has_trace || firstItem.prompt_preview, "activity summaries");
+    assert.ok(
+      !(actBody.items ?? []).some((i) => i.run_id === runId),
+      "mock runs excluded from activity feed",
+    );
 
-    const agentId = firstRun.agent_id;
     const agentDetailRes = await httpGetJson(
       port,
       `/api/agents/${encodeURIComponent(agentId)}/detail`,
@@ -197,6 +213,7 @@ describe("dashboard drilldown API e2e", () => {
     assert.ok(indexHtml.includes('data-view="statistics"'), "Statistics nav");
     assert.ok(indexHtml.includes('id="view-statistics"'), "Statistics view section");
     assert.ok(indexHtml.includes('id="swarm-stat-cards"'), "Statistics stat cards mount");
+    assert.ok(indexHtml.includes('id="mode-swarm"'), "Start agents button");
 
     for (const path of ["/", "/index.html", "/app.js", "/style.css"]) {
       const res = await new Promise<{ status: number; type: string }>((resolve, reject) => {
@@ -207,6 +224,25 @@ describe("dashboard drilldown API e2e", () => {
       assert.equal(res.status, 200, path);
       assert.ok(res.type.length > 0);
     }
+  });
+
+  test("GET /api/files/read serves package files safely", async () => {
+    if (!server) {
+      env = setupE2eEnv("v1");
+      server = startOpsServer(0);
+      await new Promise((r) => setTimeout(r, 150));
+    }
+    const port = opsPort(server);
+    const ok = await httpGetJson(port, "/api/files/read?path=package.json");
+    assert.equal(ok.status, 200);
+    const body = ok.body as { content: string; path: string };
+    assert.match(body.content, /"name"/);
+
+    const denied = await httpGetJson(
+      port,
+      "/api/files/read?path=../../../etc/passwd",
+    );
+    assert.equal(denied.status, 404);
   });
 
   test("POST supervisor start returns feedback and activity log", async () => {
@@ -221,32 +257,18 @@ describe("dashboard drilldown API e2e", () => {
     assert.equal(startRes.status, 200);
     const body = startRes.body as {
       started?: boolean;
-      already_running?: boolean;
       message?: string;
       runtime?: { supervisor_loop_running?: boolean };
     };
-    assert.ok(
-      body.started === true || body.already_running === true,
-      `supervisor/start: ${JSON.stringify(body)}`,
-    );
-    if (body.started) {
-      assert.ok(body.message?.includes("started"), body.message);
-    } else {
-      assert.ok(body.message?.includes("already running"), body.message);
-    }
+    assert.equal(body.started, true);
+    assert.ok(body.message?.includes("started"));
     assert.equal(body.runtime?.supervisor_loop_running, true);
 
     const activity = await httpGetJson(port, "/api/supervisor/activity");
     assert.equal(activity.status, 200);
     const act = activity.body as { loop_running?: boolean; entries?: Array<{ message: string }> };
     assert.equal(act.loop_running, true);
-    assert.ok(
-      act.entries?.some(
-        (e) =>
-          e.message.includes("started") || e.message.toLowerCase().includes("already running"),
-      ),
-      "activity should mention start or already-running",
-    );
+    assert.ok(act.entries?.some((e) => e.message.includes("started")));
 
     const stopRes = await httpPostJson(port, "/api/supervisor/stop");
     assert.equal(stopRes.status, 200);

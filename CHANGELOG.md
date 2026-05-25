@@ -8,38 +8,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- **Org hygiene multi-agent plan** — `docs/plans/2026-05-25-org-hygiene-multi-agent-plan.md`.
-- **PH-DB-2/10 liq MCP stub** — `src/mcp/lidb-liq-mcp.ts`, `src/db/liq-query.ts` (mock `read <table> limit N`), `buildControlPlaneLiqMcpServers()` when `LI_CONTROL_PLANE_STORE=lidb`; `npm run test:e2e:lidb`; expanded `lidb-control-plane.e2e.ts` skip reasons (`docs/plans/lidb-migration-control-plane.md`).
-- **Workflow repo routing** — `explore-li-ecosystem` skill section for implementers; `resolve-workflow-repo.ts`; `run-agent --goal-file` / `--workflow-repo` inference; `scripts/goal-directed-loop.sh`.
-- **Completion modes** — `LI_AGENT_VERIFY_MODE`, `digest_only` (skip-push), and `LI_REPO_WORKFLOW_SMOKE`; hard vs informational gaps; supervisor handoffs between agents in the same tick (`src/control-plane/run-completion.ts`, `src/supervisor/handoff.ts`).
-- **PR deduplication** — post-hook reuses open PR for branch instead of `gh pr create` duplicate (`src/repo-workflow/pr.ts`).
-- **Classified git errors** — `git_auth_cursor_bot`, `pr_already_exists`, etc. (`src/repo-workflow/git-errors.ts`).
-- **Live li-demo smoke** — `npm run smoke:li-demo:live` runs `docs_maintainer` on real `gh repo clone` of `li-langverse/li-demo` with Cursor SDK and post-hook push (`scripts/live-li-demo-smoke.mjs`).
-- **Long-run swarm monitor** — `npm run agents:monitor` runs `scripts/monitor-swarm-long.sh` (default 3h, 5m interval): clones `li-local-ci` when missing, checks Docker/Supabase containers (project-scoped names), `GET /api/runtime`, optional `LI_MONITOR_SDK_SMOKE` / `LI_MONITOR_SUPABASE_ENSURE` / `LI_MONITOR_MIGRATION_DRY_RUN`.
-- **`scripts/ensure-li-local-ci.sh`** — clones `https://github.com/li-langverse/li-local-ci` when `LI_USE_LOCAL_CI≠0`, `LI_AUTO_CLONE_LOCAL_CI≠0`, and `bin/li-local-ci` is missing.
-- **`agents:keep` + local CI** — `scripts/keep-agents-running.sh` invokes `ensure-li-local-ci.sh` after Supabase setup (warns on failure, does not block dashboard).
-- **Swarm watchdog** — `npm run agents:watch` / `scripts/watch-control-plane.sh` restarts dashboard + supervisor when `/api/status` fails; re-POSTs `/api/supervisor/start` if loop stops.
-- **`LI_SWARM_MAX_PARALLEL`** — optional cap for run-all parallel spawns (`0` = all leaf agents at once).
-
-### Changed
-
-- **WP9 intervention links:** red benchmark interventions use `/bench/{id}/` deep links — [2026-05-25-benchmark-intervention-deep-links.md](docs/release-notes/2026-05-25-benchmark-intervention-deep-links.md).
-
-- **Cursor API key resolution** — skip `http(s)://` dashboard URLs in `CURSOR_API_KEY` / `CURSOR_SDK`; pick first plausible key across all credential env vars; `.env` no longer overrides a good shell key with a URL; `check-sdk-key.sh` probes `GET /v1/me` per candidate (`src/env.ts`).
-- **Cursor Auto model everywhere by default** — `CURSOR_MODEL` defaults to `default` (Auto) in `env.defaults.sh`, `keep-agents-running.sh`, and `.env.example`; `auto`/`default` aliases normalized in `resolveCursorModelId()`; `/api/status` and `/api/runtime` expose `cursor_model_id`.
-- **SDK / Cursor error visibility** — `errorDetailFromUnknown` and `formatErrorMarkdown` capture `code`, HTTP `status`, `requestId`, `operation`, `endpoint`, `isRetryable`, and one-hop `causeLine`; generic message `"Error"` is expanded when `code` is set (`src/agent-output-format.ts`, `src/backends/cursor-sdk-backend.ts`).
-- **Dashboard API e2e** — `POST /api/supervisor/start` accepts `already_running` when auto-start beat the test (`src/e2e/dashboard-api.e2e.ts`).
+- **`explore-li-ecosystem` skill** — repo routing table for goal-directed / implementer agents; injected into SDK system prompt; `resolve-workflow-repo.ts` auto-picks repo from goal frontmatter or path signals; `goal-directed-loop.sh` sets `--workflow-repo` and sibling `--cwd`.
+- **Goal-directed SDK loop** — `run-agent --goal` / `--goal-file` / `LI_AGENT_GOAL`; reusable `scripts/goal-directed-loop.sh` (any registry agent + goal text until done or `--max`).
+- **Parallel Cursor SDK sessions** — `LI_SDK_MAX_CONCURRENT` (default `4` in `env.defaults.sh`) with cross-process slot locks; re-entrant lock fixes lane + backend deadlock.
+- **Dashboard Start agents** — one button starts/stops continuous async swarm (`/api/async-swarm/start|stop`); work queue panel uses `GET /api/queue`.
+- **Mock runs excluded from history** — artifacts under `data/runs/mock/`; no DB/dashboard listing; worker pool no longer pauses on handoff unless `LI_HANDOFF_PAUSE_WORKERS=1`.
+- **Async swarm mode** — `LI_AUTO_START_ASYNC_SWARM=1`: research + implement + maintenance lane loops plus parallel per-agent worker pool (no supervisor); `npm run agents:async-swarm`, `/api/async-swarm/start|stop`.
+- **Benchmarks dispatch** — `src/benchmarks/dispatch-swarm-audit.ts`, `npm run swarm:dispatch-benchmarks`; optional `LI_BENCHMARKS_DISPATCH_ON_MAINTENANCE=1`.
+- **Handoffs API** — `/api/handoffs` includes `workflow_repo`; dashboard Repo column; fix `renderLiveActivity` typo.
+- **Goal → lic workflow** — `src/handoffs/goal-workflow.ts`; `workflowRepo` on `runAgent`; implement lane routes `goal_implementation` to **lic** with path allowlists; goal PR title/body; `fixtures/lic-workflow`; mock `useFixture`; implementation queue `repo: lic`; lic v1 docs `docs/ecosystem/game-engine-ux.md`, `cad-fundamentals.md`.
+- **Dashboard handoffs panel** — `/api/handoffs`, `/api/swarm/briefing`; overview scorecard + handoffs table; Refresh briefing via `maintenanceLaneTick`.
+- **Swarm recommendations** — `mergeSwarmRecommendations`, supervisor enrich tick, goal scaffold prompts, handoff hygiene (`src/briefing/swarm-recommendations.ts`, `src/handoffs/goal-scaffold-prompt.ts`).
+- **Production briefing enrich** — `npm run briefing:enrich`, `src/briefing/enrich-briefing-file.ts`, `src/handoffs/handoff-audit.ts`; benchmarks `agent-briefing.py` invokes enrich CLI; `benchmarks` workflow `swarm-audit-refresh.yml` for `repository_dispatch`.
+- **Auto-merge gate** — `src/merge/auto-merge-gate.ts` (`LI_AUTO_MERGE`, `LI_TRUSTED_MERGE_APPROVED`); wired into `preflight.ts` and `supervisor/loop.ts` for `pr_merger`.
+- **Ecosystem MCP** — `list_org_repos`, `search_repo_tree`, `describe_package` in `li-ecosystem-context-mcp.ts` + `ecosystem-briefing-tools.ts`.
+- **Research → implement handoffs** — `implementation-handoff.ts`, goal scaffolds under `config/goal-scaffolds/` for `game_engine_ux` / `cad_fundamentals`.
+- **Placement governance** — `placement-governance.ts` hard gates (roadmap, `trusted.lean`, `PKG-*`); `applyPlacementDecision` used by MCP + post-run.
+- **Run-all handoff phases** — `runHandoffPhasedSwarm` returns `phases[]`; e2e `run-all-handoff.e2e.ts`; `schemas/agent-handoff.v1.json`.
+- **Completion audit** — flags `trusted.lean` edits without `trusted-change-approved` in deliverable/trace.
+- **MCP** — `get_briefing_snapshot` on `li-ecosystem-context`.
+- **GHA swarm cron** — `.github/workflows/swarm-maintenance-cron.yml` (12h briefing/scorecard refresh, no LLM); `swarm-audit-cron.yml` (weekly handoff smoke + optional benchmarks dispatch).
+- **Dashboard lane API** — `/api/lanes`, start/stop research & implement loops, per-lane ticks; footer toggles in `web/app.js`.
+- **Briefing scorecards** — `swarm_scorecard`, `research_goals_status`, `provability_scorecard` via `src/briefing/swarm-scorecard.ts` + maintenance lane refresh.
+- **`li-ecosystem-context` MCP** — `record_placement_decision`, `list_pending_handoffs`, research session tools (`src/mcp/li-ecosystem-context-mcp.ts`).
+- **Handoff phased run-all** — `LI_SWARM_HANDOFF_PHASES` (default on) uses research → implement ticks instead of parallel spawn.
+- **Maintenance lane** — `npm run agents:maintenance-lane` refreshes briefing without LLM.
+- **Research + implement lanes** — `src/lanes/research-lane.ts`, `implement-lane.ts`; `npm run agents:research-lane` / `agents:implement-lane`; session-first scheduling; placement gate via `package_architect`.
+- **`config/research-goals.yaml`** + `src/research-goals/load-goals.ts` — goal priority, cadence, agent mapping.
+- **Post-run swarm effects** — `src/handoffs/post-run.ts` advances research sessions, creates cycle handoffs, parses architect placement JSON.
+- **Cross-process SDK lock** — `data/control-plane/sdk-session.lock` via `withGlobalSdkSessionLock()`.
+- **Swarm handoffs + research sessions** — Supabase migration `20260517150000_swarm_handoffs_sessions.sql`; disk fallback `data/handoffs/pending.jsonl`; `src/handoffs/handoff-store.ts`, `src/research-sessions/session-store.ts`.
+- **Agents** — `package_architect` (plan), `goal_researcher`, `proof_gap_researcher`, `stdlib_researcher`; prompts under `prompts/`; heap coordinator mapping in `src/heap/coordinators.ts`.
+- **Prompt wiring** — `config/swarm-mandate.md`, `src/preflight/swarm-context.ts`, `src/agents/sdk-mode.ts` (plan/debug prefixes); pending handoffs + session continuation in `buildUserMessage`.
+- **Implement git rhythm** — post-hook `openPr=false` for `code_implementer`/`bug_fixer` unless `LI_REPO_WORKFLOW_OPEN_PR=1` (`src/repo-workflow/post-hook.ts`).
 
 ### Fixed
 
-- **Repo-workflow push after `gh clone`** — `gitPushBranch()` uses explicit `GH_TOKEN` push URL; scrub clone `url.insteadof`; bypasses global gh config that forced `cursor[bot]` 403 (`src/repo-workflow/git.ts`, `pr.ts`, `workspace.ts`).
-
-### Fixed
-
-- **Cursor keys from `.env` override process env** — non-empty `CURSOR_API_KEY`, `CURSOR_SDK`, `CURSOR_MODEL`, etc. in `li-cursor-agents/.env` replace already-set values so a refreshed local key is not ignored when the shell still has stale Cloud-injected vars (`src/env.ts`).
-- Supervisor loop survives tick-level throws (logs error, continues interval).
-- Ops server logs `uncaughtException` / `unhandledRejection` without exiting.
-- `package.json` declares `pg` and `@modelcontextprotocol/sdk` (fixes fresh `npm ci` build).
 - Operational logs (`keep-agents.log`, supervisor subprocess) prefix ISO-8601 timestamps; `src/agent-log.ts`, `scripts/test-log-timestamps.mjs` regression.
 - Supabase persist `fetch failed`: retry transient REST errors, serialize state upserts, normalize `localhost` → `127.0.0.1`, wait for PostgREST in `ensure-supabase.sh`, `db:probe` checks REST not only Postgres (`src/db/supabase-retry.ts`, `rest-health.ts`, `persist.ts`).
 - Dashboard agent status: **Recommended** (briefing/heap) vs misleading **Queued**; cooldown wins over recommended; supervisor subprocess state mirrored to `data/control-plane/state.json` for parent reload when Supabase persist fails (`src/control-plane/state.ts`, `web/app.js`).

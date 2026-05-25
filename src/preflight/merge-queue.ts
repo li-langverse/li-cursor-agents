@@ -11,6 +11,8 @@ export interface MergeQueueRow {
   auto_merge_ok?: boolean;
   blocked_reason?: string;
   order_reason?: string;
+  files?: string[];
+  changed_files?: string[];
 }
 
 export interface RepoMergePlan {

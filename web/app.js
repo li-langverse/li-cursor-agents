@@ -14,8 +14,29 @@ const ui = {
   openDrilldowns: new Set(),
   /** @type {Set<string>} user explicitly collapsed (overrides defaults) */
   closedDrilldowns: new Set(),
+  statsRange: "1d",
+  statsCustomSince: "",
+  statsCustomUntil: "",
 
 };
+
+function statisticsQueryString({ refresh = false } = {}) {
+  const params = new URLSearchParams();
+  params.set("range", ui.statsRange);
+  if (ui.statsRange === "custom") {
+    if (ui.statsCustomSince) params.set("since", ui.statsCustomSince);
+    if (ui.statsCustomUntil) params.set("until", ui.statsCustomUntil);
+  }
+  if (refresh) params.set("refresh", "1");
+  return params.toString();
+}
+
+async function loadStatistics() {
+  if (!ui.data) ui.data = {};
+  const qs = statisticsQueryString({ refresh: true });
+  ui.data.statisticsPayload = await fetchJson(`/api/statistics?${qs}`).catch(() => ({ statistics: null }));
+  renderSwarmStatistics();
+}
 
 const VIEW_META = {
   overview: { title: "Overview", subtitle: "Swarm status at a glance" },
@@ -66,8 +87,9 @@ function formatTime(iso) {
 function statusLabel(status) {
   const labels = {
     running: "Running",
+    on_duty: "On duty",
     recommended: "Recommended",
-    queued: "Recommended", // legacy key
+    queued: "In queue",
     stopped: "Stopped",
     idle: "Idle",
     cooldown: "Cooldown",
@@ -134,7 +156,7 @@ function renderAgentBackendUi() {
     banner.className = "backend-banner ok";
     banner.hidden = false;
     banner.innerHTML =
-      "<strong>Cursor SDK active</strong> — Supervisor mode and Run all (parallel) use real agents (LLM, file edits, tools, web when required).";
+      "<strong>Cursor SDK active</strong> — click <strong>Start agents</strong> once; agents keep working in the background (no further clicks).";
   }
 }
 
@@ -143,6 +165,13 @@ function agentStatusMap(roster, report, runtime, statusPayload) {
   const activeRuns = runtime?.active_runs ?? [];
   const stopped = new Set(runtime?.stopped_agents ?? []);
   const currentSupervisor = runtime?.current_supervisor_agent ?? statusPayload?.state?.current_supervisor_agent;
+  const handoffRun = runtime?.handoff_run ?? statusPayload?.handoff_run;
+  const handoffPipeline = new Set(handoffRun?.pipeline_agents ?? []);
+  const swarmWorkers = new Set(
+    runtime?.worker_pool?.agents?.length
+      ? runtime.worker_pool.agents
+      : runtime?.worker_agent_ids ?? [],
+  );
   const rec = new Map((report?.recommended_agents ?? []).map((r) => [r.agent, r.reason]));
   const heapTasks = new Map(
     (report?.heap_plan?.flat_tasks ?? []).map((t) => [t.agent, { reason: t.reason, coord: t.coordinator }]),
@@ -161,7 +190,18 @@ function agentStatusMap(roster, report, runtime, statusPayload) {
     const activeRun = activeRuns.find((r) => r.agent_id === entry.id && r.status === "running");
     if (stopped.has(entry.id)) status = "stopped";
     else if (activeRun || currentSupervisor === entry.id) status = "running";
-    else {
+    else if (handoffRun?.in_progress && handoffPipeline.has(entry.id)) status = "running";
+    else if (handoffRun?.in_progress && swarmWorkers.has(entry.id)) status = "queued";
+    else if (runtime?.async_swarm_running) {
+      const last = recentByAgent.get(entry.id);
+      const finishedAt = last?.finished_at ? new Date(last.finished_at).getTime() : 0;
+      const onCooldown =
+        last?.status === "finished" && finishedAt && Date.now() - finishedAt < 1_800_000;
+      if (onCooldown) status = "cooldown";
+      else if (activeRuns.some((r) => r.agent_id === entry.id && r.status === "running")) status = "running";
+      else if (handoffRun?.in_progress && swarmWorkers.has(entry.id)) status = "queued";
+      else status = "on_duty";
+    } else {
       const last = recentByAgent.get(entry.id);
       const finishedAt = last?.finished_at ? new Date(last.finished_at).getTime() : 0;
       const onCooldown =
@@ -183,21 +223,29 @@ function agentStatusMap(roster, report, runtime, statusPayload) {
 }
 
 async function loadDashboard() {
-  const [report, status, roster, runsPayload, supervisorActivity, activityPayload, interventionsPayload, statisticsPayload] =
+  const [report, status, roster, runsPayload, supervisorActivity, activityPayload, interventionsPayload, statisticsPayload, handoffsPayload, swarmBriefingPayload, workQueuePayload] =
     await Promise.all([
       fetchJson("/api/report").catch(() => ({})),
-      fetchJson("/api/status"),
+      fetchJson("/api/status").catch((e) => {
+        console.warn("/api/status failed — agents list may be stale:", e.message);
+        return { runtime: {}, error: e.message };
+      }),
       fetchJson("/api/agents"),
       fetchJson("/api/runs").catch(() => ({ runs: [], active: [] })),
       fetchJson("/api/supervisor/activity").catch(() => ({ entries: [], loop_running: false })),
       fetchJson("/api/activity/recent?limit=25").catch(() => ({ items: [] })),
       fetchJson("/api/interventions").catch(() => ({ interventions: [] })),
-      fetchJson("/api/statistics").catch(() => ({ statistics: null })),
+      fetchJson(`/api/statistics?${statisticsQueryString()}`).catch(() => ({ statistics: null })),
+      fetchJson("/api/handoffs?limit=30").catch(() => ({ handoffs: [] })),
+      fetchJson("/api/swarm/briefing").catch(() => ({})),
+      fetchJson("/api/queue").catch(() => ({ queue: [] })),
     ]);
   const runtime = status?.runtime ?? roster?.runtime;
+  const lanes = status?.lanes ?? runtime?.lanes;
   ui.data = {
     report: { ...report, interventions: interventionsPayload.interventions ?? report.interventions },
     status,
+    lanes,
     roster,
     runtime,
     runsPayload,
@@ -205,8 +253,15 @@ async function loadDashboard() {
     activityPayload,
     interventionsPayload,
     statisticsPayload,
+    handoffsPayload,
+    swarmBriefingPayload,
+    workQueuePayload,
   };
   return ui.data;
+}
+
+function swarmRunning() {
+  return Boolean(ui.data?.runtime?.async_swarm_running);
 }
 
 function fmtNum(n) {
@@ -229,12 +284,13 @@ function renderSwarmStatistics() {
     }
     return;
   }
-  const runsNote = s.runs_scanned ? `${s.runs_scanned} runs scanned` : "";
+  const runsNote = s.runs_scanned != null ? `${s.runs_scanned} runs in range` : "";
+  const rangeNote = s.range_label ? `Window: ${s.range_label}` : "";
   const briefingNote = s.briefing_generated_at ? `Briefing ${s.briefing_generated_at}` : "";
-  const generatedNote = s.generated_at ? `Updated ${s.generated_at}` : "";
+  const generatedNote = s.generated_at ? `Updated ${formatTime(s.generated_at)}` : "";
   if (meta) {
     meta.textContent =
-      [runsNote, briefingNote, generatedNote].filter(Boolean).join(" · ") || "Swarm output metrics.";
+      [rangeNote, runsNote, briefingNote, generatedNote].filter(Boolean).join(" · ") || "Swarm output metrics.";
   }
   const items = [
     { label: "Actions taken", value: fmtNum(s.actions_taken), hint: "tool calls in traces", accent: true },
@@ -441,57 +497,165 @@ function renderSidebar() {
   const agentBackend = status?.agent_backend ?? rt.agent_backend ?? "cursor-sdk";
   const sup = report?.supervisor ?? {};
   const st = status?.state ?? {};
+  const swarmOn = Boolean(rt.async_swarm_running);
+  const swarmStarted = rt.async_swarm_started_at;
   const loopOn = Boolean(rt.supervisor_loop_running);
   const loopStarted = rt.supervisor_loop_started_at ?? st.supervisor_loop_started_at;
+  const qLen = ui.data?.workQueuePayload?.queue?.length ?? 0;
   $("#sidebar-stats").innerHTML = `
     <dl>
       <dt>Data store</dt><dd title="History in Supabase; live runs in this process">${esc(store)}</dd>
       <dt>Agent backend</dt><dd class="${agentBackend === "mock" ? "text-warn" : "text-ok"}">${esc(agentBackend)}</dd>
-      <dt>Supervisor</dt><dd class="${loopOn ? "text-ok" : ""}">${loopOn ? "● loop on" : "○ loop off"}</dd>
-      <dt>Loop since</dt><dd>${loopOn && loopStarted ? formatTime(loopStarted) : "—"}</dd>
+      <dt>Swarm</dt><dd class="${swarmOn ? "text-ok" : ""}">${swarmOn ? "● running" : "○ stopped"}</dd>
+      <dt>Since</dt><dd>${swarmOn && swarmStarted ? formatTime(swarmStarted) : "—"}</dd>
+      <dt>SDK slots</dt><dd>${rt.sdk_max_concurrent ?? "—"}</dd>
+      <dt>Queue</dt><dd>${qLen} pending</dd>
       <dt>Running now</dt><dd>${rt.active_run_count ?? 0}</dd>
-      <dt>Swarm</dt><dd>${roster?.total ?? "—"} agents</dd>
+      <dt>Agents</dt><dd>${roster?.total ?? "—"}</dd>
       <dt>Briefing</dt><dd title="${escAttr(report?.briefing_hash ?? "")}">${esc((report?.briefing_hash ?? "—").slice(0, 12))}</dd>
     </dl>`;
 
   const pill = $("#status-pill");
-  let label = sup.status ?? st.supervisor_status ?? "idle";
-  if (rt.current_supervisor_agent) label = `running ${rt.current_supervisor_agent}`;
-  else if (rt.supervisor_loop_running) label = "supervisor on";
+  let label = "idle";
+  if (swarmOn) label = "swarm on";
+  else if (rt.current_supervisor_agent) label = `running ${rt.current_supervisor_agent}`;
+  else if (loopOn) label = "supervisor on";
   else if ((rt.active_run_count ?? 0) > 0) label = "agents running";
   pill.textContent = label;
   pill.className = `pill ${label.includes("running") || label.includes("on") ? "running" : "idle"}`;
-  renderFooterControls(loopOn, rt.active_run_count ?? 0);
+
+  const swarmPill = $("#swarm-pill");
+  if (swarmPill) {
+    if (swarmOn) {
+      const duty = countAgentsByStatus("on_duty");
+      const sdk = rt.active_run_count ?? 0;
+      swarmPill.hidden = false;
+      swarmPill.textContent = sdk > 0 ? `swarm · ${sdk} in SDK` : `swarm · ${duty} on duty`;
+      swarmPill.className = "pill swarm-pill running";
+      swarmPill.title = `Continuous swarm since ${formatTime(swarmStarted)}`;
+    } else {
+      swarmPill.hidden = false;
+      swarmPill.textContent = "swarm off";
+      swarmPill.className = "pill swarm-pill idle";
+      swarmPill.title = "Click Start agents to run continuously";
+    }
+  }
+
+  renderFooterControls();
 }
 
-function renderFooterControls(loopOn, activeRunCount = 0) {
+function countAgentsByStatus(status) {
+  const { roster, report, runtime, status: statusPayload } = ui.data ?? {};
+  if (!roster) return 0;
+  const map = agentStatusMap(roster, report, runtime, statusPayload);
+  let n = 0;
+  for (const v of map.values()) if (v.status === status) n++;
+  return n;
+}
+
+function renderSwarmStatusUi() {
+  const { runtime, roster, report, status } = ui.data ?? {};
+  const banner = $("#swarm-status-banner");
+  const strip = $("#swarm-agents-strip");
+  const swarmOn = Boolean(runtime?.async_swarm_running);
+  const statusMap = roster ? agentStatusMap(roster, report, runtime, status) : new Map();
+
+  let onDuty = 0;
+  let running = 0;
+  let queued = 0;
+  const stripAgents = [];
+  for (const [id, info] of statusMap) {
+    if (info.status === "on_duty") onDuty++;
+    if (info.status === "running") {
+      running++;
+      stripAgents.push({ id, info, rank: 0 });
+    } else if (info.status === "queued") {
+      queued++;
+      stripAgents.push({ id, info, rank: 1 });
+    } else if (info.status === "on_duty") {
+      stripAgents.push({ id, info, rank: 2 });
+    }
+  }
+  stripAgents.sort((a, b) => a.rank - b.rank || a.id.localeCompare(b.id));
+
+  if (banner) {
+    if (swarmOn) {
+      const sdk = runtime?.active_run_count ?? running;
+      const lanes = runtime?.lanes ?? ui.data?.lanes ?? {};
+      banner.hidden = false;
+      banner.className = "swarm-status-banner active";
+      banner.innerHTML = `<span class="swarm-status-pulse" aria-hidden="true"></span><strong>Agents running</strong> — ${onDuty} on duty · ${running} in SDK now · ${queued} queued · research ${lanes.research_lane_running ? "on" : "off"} · implement ${lanes.implement_lane_running ? "on" : "off"}`;
+    } else {
+      banner.hidden = true;
+      banner.className = "swarm-status-banner hidden";
+      banner.innerHTML = "";
+    }
+  }
+
+  if (strip) {
+    if (swarmOn && stripAgents.length) {
+      strip.hidden = false;
+      strip.innerHTML = stripAgents
+        .slice(0, 24)
+        .map(
+          ({ id, info }) =>
+            `<button type="button" class="swarm-agent-chip ${escAttr(info.status)}" data-open-agent="${escAttr(id)}" title="${escAttr(info.reason ?? info.entry?.description ?? "")}"><span class="status-dot ${escAttr(info.status)}"></span><span class="mono">${esc(id)}</span></button>`,
+        )
+        .join("");
+    } else {
+      strip.hidden = true;
+      strip.innerHTML = "";
+    }
+  }
+}
+
+function renderFooterControls() {
+  const { runtime, status } = ui.data ?? {};
+  const swarmBtn = $("#mode-swarm");
   const sup = $("#mode-supervisor");
   const par = $("#mode-parallel");
+  const swarmOn = swarmRunning();
+  const loopOn = Boolean(runtime?.supervisor_loop_running);
+
+  if (swarmBtn) {
+    if (swarmOn) {
+      swarmBtn.textContent = "Stop agents";
+      swarmBtn.className = "btn danger sm active";
+      swarmBtn.title = "Stop continuous swarm (all lanes and worker loops)";
+    } else {
+      swarmBtn.textContent = "Start agents";
+      swarmBtn.className = "btn primary sm";
+      swarmBtn.title =
+        "Start continuous swarm: research + implement + maintenance + all agents (parallel SDK)";
+    }
+  }
   if (sup) {
     if (loopOn) {
       sup.textContent = "Stop supervisor";
       sup.className = "btn danger sm active";
     } else {
-      sup.textContent = "Supervisor mode";
-      sup.className = "btn primary sm";
+      sup.textContent = "Supervisor";
+      sup.className = "btn ghost sm hidden-advanced";
     }
   }
   if (par) {
-    par.disabled = loopOn;
-    par.title = loopOn
-      ? "Stop supervisor mode before running all agents in parallel"
-      : "Spawn every leaf agent in parallel (one process each)";
-    if (!loopOn && activeRunCount > 0) {
-      par.textContent = `Run all (parallel) · ${activeRunCount} running`;
-    } else {
-      par.textContent = "Run all (parallel)";
-    }
+    const handoff = runtime?.handoff_run ?? status?.runtime?.handoff_run;
+    const handoffOn = Boolean(handoff?.in_progress);
+    par.disabled = handoffOn || !swarmOn;
+    par.title = !swarmOn
+      ? "Start agents first"
+      : handoffOn
+        ? `Handoff in progress — ${handoff.current_agent ?? "starting"}`
+        : "One-shot research → placement → implement (optional)";
+    par.textContent = handoffOn ? "Handoff running…" : "Run handoff once";
+    par.className = handoffOn ? "btn ghost sm active" : "btn ghost sm";
   }
 }
 
 function renderSupervisorActivity() {
   const { supervisorActivity, runtime, status } = ui.data ?? {};
   const rt = runtime ?? {};
+  const swarmOn = swarmRunning();
   const loopOn = Boolean(rt.supervisor_loop_running ?? supervisorActivity?.loop_running);
   const badge = $("#supervisor-loop-badge");
   const meta = $("#supervisor-loop-meta");
@@ -499,22 +663,26 @@ function renderSupervisorActivity() {
   if (!feed) return;
 
   if (badge) {
-    badge.classList.toggle("hidden", !loopOn);
-    badge.textContent = loopOn ? "loop on" : "loop off";
+    badge.classList.toggle("hidden", !swarmOn && !loopOn);
+    badge.textContent = swarmOn ? "swarm on" : loopOn ? "supervisor" : "off";
   }
   if (meta) {
-    const started = rt.supervisor_loop_started_at ?? supervisorActivity?.started_at;
-    const lastTick = status?.state?.last_tick_at;
-    if (loopOn) {
-      meta.textContent = `Running since ${formatTime(started)} · last completed tick ${lastTick ? formatTime(lastTick) : "pending…"}`;
+    const started = rt.async_swarm_started_at ?? rt.supervisor_loop_started_at ?? supervisorActivity?.started_at;
+    const lanes = rt.lanes ?? ui.data?.lanes ?? {};
+    if (swarmOn) {
+      meta.textContent = `Agents running continuously since ${formatTime(started)} · research ${lanes.research_lane_running ? "on" : "off"} · implement ${lanes.implement_lane_running ? "on" : "off"} · maintenance ${lanes.maintenance_lane_running ? "on" : "off"}`;
+    } else if (loopOn) {
+      const lastTick = status?.state?.last_tick_at;
+      meta.textContent = `Supervisor since ${formatTime(started)} · last tick ${lastTick ? formatTime(lastTick) : "pending…"}`;
     } else {
-      meta.textContent = "Footer: Supervisor mode runs agents on a schedule; Run all (parallel) spawns every leaf agent once.";
+      meta.textContent =
+        "Click Start agents — no further interaction needed. Agents poll the work queue and handoffs until you stop.";
     }
   }
 
   const entries = supervisorActivity?.entries ?? [];
   if (!entries.length) {
-    feed.innerHTML = `<li class="empty">${loopOn ? "Waiting for first tick…" : "No supervisor events yet."}</li>`;
+    feed.innerHTML = `<li class="empty">${swarmOn || loopOn ? "Waiting for swarm events…" : "Start agents to begin."}</li>`;
     return;
   }
   feed.innerHTML = entries
@@ -530,12 +698,14 @@ function renderStatCards() {
   const statusMap = agentStatusMap(roster, report, runtime, status);
   let running = 0;
   let recommended = 0;
+  let queued = 0;
   let stopped = 0;
   let idle = 0;
   let cooldown = 0;
   for (const v of statusMap.values()) {
     if (v.status === "running") running++;
-    if (v.status === "recommended" || v.status === "queued") recommended++;
+    if (v.status === "queued") queued++;
+    if (v.status === "recommended") recommended++;
     if (v.status === "stopped") stopped++;
     if (v.status === "idle") idle++;
     if (v.status === "cooldown") cooldown++;
@@ -550,7 +720,7 @@ function renderStatCards() {
 
   $("#stat-cards").innerHTML = `
     <div class="stat-card accent"><div class="label">Running</div><div class="value">${running}</div></div>
-    <div class="stat-card" title="In briefing heap — supervisor runs a few per tick"><div class="label">Recommended</div><div class="value">${recommended}</div></div>
+    <div class="stat-card"><div class="label">Queued</div><div class="value">${queued}</div></div>
     <div class="stat-card"><div class="label">Stopped</div><div class="value">${stopped}</div></div>
     <div class="stat-card"><div class="label">Interventions</div><div class="value">${interventions}</div></div>
     <div class="stat-card"><div class="label">Run artifacts</div><div class="value">${runs}</div></div>`;
@@ -590,17 +760,30 @@ function renderLiveActivity() {
 }
 
 function renderQueue() {
-  const rec = ui.data.report?.recommended_agents ?? [];
   const el = $("#queue");
-  if (!rec.length) {
-    el.innerHTML = '<li class="empty">No recommended agents in briefing</li>';
+  const items = ui.data?.workQueuePayload?.queue ?? [];
+  if (!items.length) {
+    const rec = ui.data.report?.recommended_agents ?? [];
+    if (!rec.length) {
+      el.innerHTML = `<li class="empty">${swarmRunning() ? "Queue empty — agents will pick up new briefing tasks" : "Start agents to process the work queue"}</li>`;
+      return;
+    }
+    el.innerHTML = rec
+      .slice(0, 8)
+      .map(
+        (r) =>
+          `<li><button type="button" class="linkish" data-open-agent="${escAttr(r.agent)}"><strong>${esc(r.agent)}</strong></button> — ${esc(r.reason)}</li>`,
+      )
+      .join("");
     return;
   }
-  el.innerHTML = rec
-    .map(
-      (r) =>
-        `<li><button type="button" class="linkish" data-open-agent="${escAttr(r.agent)}"><strong>${esc(r.agent)}</strong></button> — ${esc(r.reason)}</li>`,
-    )
+  el.innerHTML = items
+    .slice(0, 12)
+    .map((item) => {
+      const agent = item.agent_id ?? "?";
+      const pri = item.priority != null ? ` [p${item.priority}]` : "";
+      return `<li><button type="button" class="linkish" data-open-agent="${escAttr(agent)}"><strong>${esc(agent)}</strong></button>${pri} <span class="muted">${esc(item.source)}</span> — ${esc(item.reason)}</li>`;
+    })
     .join("");
 }
 
@@ -1001,9 +1184,32 @@ async function postControl(path, button, { label } = {}) {
   if (button && label) button.textContent = `${label}…`;
   try {
     const body = await fetchJson(path, { method: "POST" });
-    const msg = body.message ?? (body.started ? "Supervisor loop started" : body.stopped ? "Supervisor stopped" : "OK");
-    showToast(msg, body.already_running ? "warn" : body.started === false && body.stopped === false ? "warn" : "ok");
-    ui.pollMs = body.runtime?.supervisor_loop_running ? 2000 : 4000;
+    const msg =
+      body.message ??
+      (body.handoff_phases
+        ? "Handoff phases complete — see Supervisor log"
+        : body.started
+          ? "Supervisor loop started"
+          : body.stopped
+            ? "Supervisor stopped"
+            : "OK");
+    const allSkipped =
+      body.handoff_phases?.phases?.length > 0 &&
+      body.handoff_phases.phases.every((p) => p.tick?.skipped);
+    const handoffStarted = body.accepted === true && body.handoff_run?.in_progress;
+    showToast(
+      handoffStarted
+        ? `${msg} — check Activity / Supervisor log`
+        : msg,
+      allSkipped ? "warn" : body.already_running ? "warn" : body.started === false && body.stopped === false ? "warn" : "ok",
+    );
+    ui.pollMs =
+      handoffStarted ||
+      body.runtime?.supervisor_loop_running ||
+      body.runtime?.async_swarm_running ||
+      body.handoff_run?.in_progress
+        ? 1500
+        : 4000;
     schedulePoll();
     await refresh();
   } catch (e) {
@@ -1055,12 +1261,31 @@ $("#refresh").addEventListener("click", refresh);
 $("#refresh-briefing").addEventListener("click", () =>
   postControl("/api/briefing/refresh", $("#refresh-briefing")),
 );
+$("#mode-swarm")?.addEventListener("click", async () => {
+  const btn = $("#mode-swarm");
+  if (swarmRunning()) {
+    await postControl("/api/async-swarm/stop", btn, { label: "Stopping" });
+    ui.pollMs = 4000;
+    schedulePoll();
+    return;
+  }
+  if (ui.data?.runtime?.supervisor_loop_running) {
+    await fetchJson("/api/supervisor/stop", { method: "POST" }).catch(() => {});
+  }
+  await postControl("/api/async-swarm/start", btn, { label: "Starting" });
+  ui.pollMs = 1500;
+  schedulePoll();
+});
+
 $("#mode-supervisor")?.addEventListener("click", async () => {
   const loopOn = ui.data?.runtime?.supervisor_loop_running;
   const btn = $("#mode-supervisor");
   if (loopOn) {
     await postControl("/api/supervisor/stop", btn, { label: "Stopping" });
     return;
+  }
+  if (swarmRunning()) {
+    await postControl("/api/async-swarm/stop", btn, { label: "Stopping swarm" });
   }
   try {
     await fetchJson("/api/swarm/stop-all", { method: "POST" });
@@ -1072,10 +1297,13 @@ $("#mode-supervisor")?.addEventListener("click", async () => {
 
 $("#mode-parallel")?.addEventListener("click", async () => {
   const btn = $("#mode-parallel");
-  if (ui.data?.runtime?.supervisor_loop_running) {
-    await fetchJson("/api/supervisor/stop", { method: "POST" });
+  if (!swarmRunning()) {
+    showToast("Start agents first", "warn");
+    return;
   }
-  await postControl("/api/swarm/run-all", btn, { label: "Spawning" });
+  ui.pollMs = 1500;
+  schedulePoll();
+  await postControl("/api/swarm/run-all", btn, { label: "Starting handoff" });
 });
 
 $("#backdrop").addEventListener("click", closeDrawers);

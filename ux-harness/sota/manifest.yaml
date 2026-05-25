@@ -1,0 +1,54 @@
+# SOTA reference library for UX testers — refresh quarterly via scripts/refresh-sota-refs.sh
+version: 1
+updated: "2026-05-19"
+categories:
+  docs:
+    - id: mkdocs-material
+      url: https://squidfunk.github.io/mkdocs-material/
+      note: Navigation, search, mobile TOC patterns
+    - id: diataxis
+      url: https://diataxis.fr/
+      note: Documentation structure (tutorial/how-to/reference/explanation)
+  web_gui:
+    - id: shadcn-ui
+      url: https://ui.shadcn.com/
+      note: Component density, dark mode, focus rings
+    - id: github-primer
+      url: https://primer.style/
+      note: Accessible color system
+  native_gui:
+    - id: godot-editor
+      url: https://docs.godotengine.org/
+      note: Game editor chrome and HUD clarity
+  tui:
+    - id: textual
+      url: https://textual.textualize.io/
+      note: Keyboard nav, help overlays
+    - id: bubbletea
+      url: https://github.com/charmbracelet/bubbletea
+      note: Minimal TUI flows
+  gen_tools:
+    - id: v0-patterns
+      url: https://v0.dev/
+      note: Generated layout density benchmarks
+  agentic_ai:
+    - id: cursor-agent
+      url: https://cursor.com/docs/agent/overview
+      note: Agent status, tool calls, diff review, human-in-the-loop
+    - id: linear-app
+      url: https://linear.app/
+      note: Command palette, keyboard-first density, fast panel transitions
+    - id: github-copilot-workspace
+      url: https://docs.github.com/en/copilot
+      note: Inline suggestions, context chips, error recovery patterns
+    - id: openai-codex-ui
+      url: https://openai.com/codex
+      note: Task-oriented agent UX, progress and cancellation affordances
+
+rubric_dimensions:
+  - nav_clarity
+  - task_efficiency
+  - empty_states
+  - error_handling
+  - cognitive_load
+default_threshold: 0.6

@@ -19,7 +19,9 @@ Org drift audit (feeds **agent_kit_maintainer**): `python3 ../benchmarks/scripts
 
 Platform agents (`agent_kit_maintainer`, `ci_maintainer`, `docs_maintainer`) use **isolated workspaces** under `data/workspaces/` — not your sibling checkout.
 
-Requires `GH_TOKEN` and `CURSOR_API_KEY` in **`../../.env`** (Cursor workspace parent, e.g. `Documents/Cursor/.env` beside `li-langverse/`).
+Stale clones are pruned automatically (default: **20** max per repo, **5** always kept, delete older than **7 days**). Manual: `npm run workspace:prune` (`--dry-run`, `--force` for dirty clones).
+
+Requires `GH_TOKEN` in `../.env.github` (see lic `scripts/with-github-env.sh`).
 
 ```bash
 npm run repo-workflow -- agent-kit-rollout --dry-run
@@ -38,6 +40,14 @@ npm run agents:keep
 ```
 
 Defaults (override in `.env`): `LI_USE_LOCAL_CI=1`, `LI_LOCAL_CI_SWEEP_LIMIT=2`, `LI_SUPERVISOR_MAX_TASKS=2`, **Supabase on** (`LI_STACK_SKIP_SUPABASE=0`; needs Docker).
+
+## Quick start (dashboard dev)
+
+```bash
+npm run setup
+cp .env.example .env          # add CURSOR_API_KEY
+npm run dev:all               # Supabase + API :9477 + Next.js UI :3000
+```
 
 ## Quick start (full local stack)
 
@@ -83,7 +93,6 @@ npm run list
 | `gap_explorer` | Ecosystem + HPC + Reddit/SOTA gaps | **yes** |
 | `implementation_gaps` | Plan vs code drift | yes |
 | `issue_planner` | Issues → implementation plans | no |
-| `issue_hygiene` | Duplicate/stale backlog triage + routing | no |
 | `pr_branch_opener` | Open PRs for branches with no pull request | no |
 | `pr_alignment` | PRs vs vision / roadmap; close superseded PRs | no |
 | `pr_reviewer` | Standards review before merge-approved | no |
@@ -119,7 +128,14 @@ See [docs/cloud-agent-secrets.md](docs/cloud-agent-secrets.md).
 
 ```bash
 npm run test:e2e              # CI-safe: mock backend, fixture briefing, dashboard API
-LI_E2E_SDK=1 npm run test:e2e:sdk   # real SDK (requires .env key)
+LI_E2E_SDK=1 npm run test:e2e:sdk   # real SDK smoke (orchestrator)
+LI_E2E_SDK=1 LI_E2E_SDK_ALL_LEAVES=1 npm run test:e2e:all-leaves-sdk   # every leaf agent + live onDelta stream
+npm run test:verify-all-agents-sdk-stream   # **required** gate: sequential, status=finished, 1 SDK slot
+npm run test:verify-all-agents-sdk-parallel # same gate, all leaves in parallel (default 4 concurrent slots)
+npm run compare:sdk-matrix-timing           # wall clock + per-agent table after both runs
+# Logs: logs/sdk-matrix/ (sequential) and logs/sdk-matrix-parallel/
+npm run test:playwright:mock        # browser: live stream UI (mocked API)
+LI_PLAYWRIGHT_USE_SUPABASE=1 npm run test:playwright:integration   # browser + local test DB
 ```
 
 Covers: heap caps → preflight → task queue → agent runs → report/interventions → anti-cycle → goal shift → **agent-matrix** (mock per leaf) → dashboard `/api/report` + `/api/heap`.
@@ -133,6 +149,9 @@ Covers: heap caps → preflight → task queue → agent runs → report/interve
 | `BENCHMARKS_ROOT` | Path to `li-langverse/benchmarks` for preflight |
 | `CURSOR_MODEL` | Default `default` (Cursor **Auto**); pin e.g. `gpt-5-mini` if needed |
 | `LI_E2E_SDK=1` | Run live SDK e2e tests |
+| `LI_E2E_SDK_ALL_LEAVES=1` | With `LI_E2E_SDK=1`, run **all leaf agents** (not default CI) |
+| `LI_E2E_SDK_STREAM_WAIT_MS` | Max wait per agent for live stream (default 240000) |
+| `LI_LIVE_TRACE_FLUSH_MS=0` | Immediate flush to dashboard/db-api (used in stream e2e) |
 
 ## CI policy
 
@@ -146,7 +165,7 @@ The root **orchestrator** never dispatches more than **10 leaf agents** at once.
 |-------------|-------------|
 | `coord_pull_requests` | pr_branch_opener, pr_alignment, pr_reviewer, pr_merger |
 | `coord_numerics` | numerics_researcher, autoresearch, bench_improver |
-| `coord_governance` | plan_verifier, implementation_gaps, issue_planner, issue_hygiene |
+| `coord_governance` | plan_verifier, implementation_gaps, issue_planner |
 | `coord_ecosystem` | gap_explorer, docs_maintainer |
 | `coord_platform` | ci_maintainer, agent_kit_maintainer |
 
@@ -163,12 +182,20 @@ npm run dashboard
 # → http://127.0.0.1:9477/
 ```
 
+**Async lanes (footer):**
+
+| Button | Action |
+|--------|--------|
+| **Research lane** | Goal-directed research (session-first); `npm run agents:research-lane` |
+| **Implement lane** | Handoff gate: `package_architect` → `code_implementer`; `npm run agents:implement-lane` |
+| **Run all (handoff)** | One tick each: research → implement (set `LI_SWARM_HANDOFF_PHASES=0` for legacy parallel spawn) |
+
 **Dashboard controls (footer):**
 
 | Button | Action |
 |--------|--------|
 | **Supervisor mode** | Continuous loop: preflight → up to 3 agents per tick (sequential). Click again to stop. |
-| **Run all (parallel)** | Stops supervisor if on, then spawns every leaf agent in its own process at once. |
+| **Run all (handoff)** | Phased handoffs (see above). |
 
 Each **leaf/root** card has **Start** / **Stop** / **Resume**. Stop kills a running process and excludes the agent until Resume.
 
@@ -191,30 +218,24 @@ npm run agents:keep   # dashboard + supervisor (cursor-sdk if .env has key)
 
 **No cycles:** skips agent dispatch when briefing hash unchanged; per-task cooldown; max 2 agents per tick.
 
-Env: `LI_SUPERVISOR_INTERVAL_MS`, `LI_SUPERVISOR_COOLDOWN_MS`, `LI_AGENT_DASHBOARD_PORT` (9477).
+### Swarm observer (self-healing)
 
-## Agent skills (canonical)
+Every supervisor tick runs a **programmatic observer** before dispatch:
 
-All registry `skills[]` resolve to **`li-cursor-agents/.cursor/skills/<id>/SKILL.md`**. The runner injects full skill bodies into the system prompt and records `skill_paths` on each run.
+| Signal | Auto-action |
+|--------|-------------|
+| Agent error streak (2+) | Retry with `observer:auto-retry` (per-agent budget, default 3) |
+| `agent_incomplete_runs` in briefing | Retry that agent |
+| Red benchmarks / dirty workspace / deliverable gaps | Dispatch `bug_fixer`, `workspace_sweeper`, or `implementation_gaps` |
+| High error rate or many failed agents | Schedule **`swarm_observer`** meta-agent (prompt audit) |
 
-Skills are **refreshed automatically**:
+Humans see **`swarm_degraded`** only when auto-heal is exhausted (e.g. missing API key, stuck supervisor). Dashboard: `GET /api/swarm/health`. Meta prompt: `prompts/swarm-observer.md`.
 
-| Mechanism | When |
-|-----------|------|
-| `npm install` | `postinstall` → `sync-agent-skills.sh` |
-| `npm run setup` | full `sync-ecosystem.sh` (pull + skills) |
-| `npm run agents:keep` | background `ecosystem-sync-loop.sh` (default every 1h) |
-| Supervisor tick | `maybe-sync-ecosystem.sh` if interval elapsed |
+Env: `LI_OBSERVER_MAX_RETRIES_PER_AGENT`, `LI_OBSERVER_MAX_REMEDIATIONS_PER_TICK`, `LI_OBSERVER_STALE_AGENT_MS`.
 
-```bash
-npm run install-gh          # GitHub CLI (~/.local/bin or apt)
-gh auth login               # or GH_TOKEN in ../../.env (Cursor workspace)
-npm run sync-ecosystem      # git pull all org repos + sync skills + prompts
-npm run sync-ecosystem:quick # skills/prompts only (no pull)
-npm run build && npm test   # includes skills-registry.test.ts
-```
+**Dashboard → Settings** edits all runtime knobs (supervisor, observer, SDK, local CI, lanes, …). Values persist to `data/control-plane/runtime-settings.json` and apply immediately to the running ops server (restart only for port / store).
 
-Env: `LI_ECOSYSTEM_SYNC_INTERVAL_SEC` (default 3600), `LI_ECOSYSTEM_AUTO_SYNC=0` to disable, `LI_LANGVERSE_ROOT` for sibling checkout root.
+Env fallbacks: `LI_SUPERVISOR_INTERVAL_MS`, `LI_AGENTS_COOLDOWN_MS`, `LI_AGENT_DASHBOARD_PORT` (9477).
 
 ## Link from benchmarks
 

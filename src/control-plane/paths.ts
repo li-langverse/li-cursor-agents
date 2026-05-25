@@ -28,6 +28,13 @@ export function runsDir(): string {
   return dir;
 }
 
+/** Ephemeral mock/CI artifacts — excluded from dashboard history and DB upserts. */
+export function mockRunsDir(): string {
+  const dir = join(runsDir(), "mock");
+  mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
 export function ensureControlPlaneDirs(): void {
   controlPlaneRoot();
   runsDir();

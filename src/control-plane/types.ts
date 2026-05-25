@@ -1,3 +1,4 @@
+import type { AgentRunInputRecord, AgentRunTrace } from "../agent-run-trace.js";
 import type { CoordinatorId } from "../heap/coordinators.js";
 import type { HeapPlan, OrgRoadmapContext } from "../heap/plan.js";
 import type { AgentId, AgentRunResult, PreflightBundle } from "../types.js";
@@ -15,7 +16,8 @@ export type InterventionKind =
   | "agent_error"
   | "agent_incomplete"
   | "implementation_gap"
-  | "heap_invalid";
+  | "heap_invalid"
+  | "swarm_degraded";
 
 export interface HumanIntervention {
   id: string;
@@ -46,7 +48,7 @@ export interface RecentTaskRecord {
   briefing_hash: string;
 }
 
-export type AgentRunLifecycle = "running" | "finished" | "error" | "cancelled" | "incomplete";
+export type AgentRunLifecycle = "running" | "finished" | "error" | "cancelled";
 
 export interface ActiveAgentRun {
   run_id: string;
@@ -55,6 +57,10 @@ export interface ActiveAgentRun {
   started_at: string;
   status: AgentRunLifecycle;
   reason?: string;
+  /** Live snapshot for dashboard (prompt + partial SDK trace). */
+  output_path?: string;
+  run_input?: AgentRunInputRecord;
+  run_trace?: AgentRunTrace;
 }
 
 export interface ControlPlaneState {
@@ -75,6 +81,10 @@ export interface ControlPlaneState {
   runs_total: number;
   last_tick_at: string;
   last_error?: string;
+  /** Swarm observer: auto-retry budgets and last scan (self-healing). */
+  observer?: import("../observer/types.js").ObserverState;
+  /** Slim summary from last supervisor tick (dashboard). */
+  swarm_health?: import("../observer/types.js").SwarmHealthReport;
 }
 
 export interface ControlPlaneReport {
@@ -100,6 +110,7 @@ export interface ControlPlaneReport {
     blockers: string[];
   }>;
   recent_runs: AgentRunResult[];
+  swarm_health?: import("../observer/types.js").SwarmHealthReport;
   supervisor: {
     status: ControlPlaneState["supervisor_status"];
     runs_total: number;

@@ -52,7 +52,12 @@ Map **external expectation** → **Li gap** (one paragraph each).
 
 ---
 
-## 3. File issues (max 5)
+## 3. Registry first, issues second
+
+Prefer **`lic/data/swarm-gap-registry/registry.yaml`** + `swarm-gap-apply-actions.py` when a goal-directed plan loop already covers the debt (`httpd`, `sim`, `swarm-observer`, research loops).
+
+- Emit `plan_debt` rows for open PH/plan checkboxes and scaffold-only packages.
+- File GitHub issues (max 5) only when **no** loop exists or human governance is required:
 
 ```bash
 python3 scripts/file-ecosystem-gap-issue.py --repo lic --title "..." \

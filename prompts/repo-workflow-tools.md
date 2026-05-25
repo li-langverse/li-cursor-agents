@@ -44,11 +44,14 @@ cd li-cursor-agents
 
 ## Guaranteed push (post-hook)
 
-For `docs_maintainer`, `ci_maintainer`, and numerics agents (`bench_improver`, `numerics_researcher`, `autoresearch`):
+For workflow agents (`code_implementer`, `bug_fixer`, `docs_maintainer`, `ci_maintainer`, numerics agents):
 
 1. The runner prepares an isolated workspace (`li-demo` for docs/CI by default, `lic` for numerics).
 2. Edit files in that clone during your run.
-3. After you finish, the **supervisor post-hook** runs `commit` → `push` → `gh pr create` if the workspace is dirty (requires `GH_TOKEN`).
+3. **Push before you stop** — commit and `git push -u origin <branch>` on the workflow branch.
+4. After you finish, the **supervisor post-hook** runs `commit` → `push` (including commits already on branch) → `gh pr create` when enabled (requires `GH_TOKEN`).
+
+`LI_REPO_WORKFLOW_BRANCH` + `LI_REPO_WORKFLOW_TRACK_REMOTE=1` check out `origin/<branch>` instead of a fresh `chore/agent-*` branch. Disable PR: `LI_REPO_WORKFLOW_OPEN_PR=0`.
 
 Skip push in tests: `LI_REPO_WORKFLOW_SKIP_PUSH=1`. Fixture tests: `LI_REPO_WORKFLOW_USE_FIXTURE=1` (local `fixtures/li-demo-workflow`).
 

@@ -1,146 +1,85 @@
 ---
 name: explore-li-ecosystem
 description: >-
-  Scan the Li org for gaps and pick the correct workflow repo before edits (lic, studio, ui,
-  sim, benchmarks). Use for ecosystem explorer discovery and goal-directed implementer runs.
+  Map Li org repos and pick the correct workflow clone before editing. Use for
+  goal-directed loops, code_implementer, bug_fixer, gap explorer, and any task
+  that might touch lic, studio, ui, sim, benchmarks, or control-plane repos.
 ---
 
-# Explore Li ecosystem
+# Explore Li ecosystem (repo placement)
 
-Use for **discovery** (what to build next), not for merging PRs or fixing CI reds.
+**Before any file edit**, decide which **GitHub repo** owns the change. Wrong-repo PRs are the main failure mode for goal-directed agents.
 
-## When to use
+## Mandatory checks (in order)
 
-- Weekly/biweekly **ecosystem explorer** automation
-- Before a major **stdlib** or **physics package** roadmap pass
-- When user asks: missing libraries, language improvements, Reddit/HPC comparisons
+1. **Explicit routing** — goal frontmatter `workflow_repo:`, handoff `work.target_repo`, briefing `implementation_queue[].repo`, or CLI `--workflow-repo` / `LI_REPO_WORKFLOW_REPO`. **Never override** these.
+2. **Issue / PR URL** — `github.com/li-langverse/<repo>/` → that repo.
+3. **Path signals** — table below (first strong match wins).
+4. **Agent default** — `code_implementer` / `bug_fixer` → `li-demo` only when nothing else matches.
 
-## Do not use for
+## Workflow repo routing table
 
-- Red benchmark fixes → `research-li-numerics` + lic codegen
-- CI/merge queue → `ecosystem-health`, `plan-merge-queue`, `merge-approved-pr`
+| Repo | Edit here when paths or topic include |
+|------|----------------------------------------|
+| **lic** | `std/`, `li-tests/`, `build/`, `runtime/`, `compiler/`, `trusted.lean`, `docs/superpowers/plans/`, `docs/verification/`, **httpd** (`li-tests/httpd/`, `li-tests/routing/`, `scripts/httpd-*`, `docs/ecosystem/httpd-*`), master-plan **PH-2*** / **PH-5***, numerics proofs in-tree |
+| **studio** | World Studio shell, `studio.toml`, game-dev UX plans, viewport/outliner, `PH-GD-*`, `PH-UX-*`, `world.li`, `docs/game-dev/world-studio-*` in **studio** repo (not lic) |
+| **studio.ai** | Agent-facing studio AI, `@cursor/sdk` studio integration |
+| **ui** | `li-ui` package, shared UI components shipped as org package |
+| **sim** | `li-sim`, simulation algorithms, PDE/ODE package code |
+| **render** | `li-render`, graphics pipeline package |
+| **lis** | Standalone httpd **package** mirror (when issue explicitly targets `lis`, not lic monorepo httpd plan) |
+| **lip** | Package registry, publish, `lip.toml` tooling |
+| **lit** | Test runner, `lit` CLI, coverage gates |
+| **benchmarks** | `agent-briefing.py`, explorer digests, catalog, swarm scorecards — **not** product code |
+| **li-cursor-agents** | Agent registry, lanes, dashboard, `prompts/`, `.cursor/skills/`, control-plane |
+| **roadmap** | Org vision, engineering standards, proposals — **human merge**; agents open PR only |
+| **li-demo** | Agent-kit rollout templates, CI snippets, docs_maintainer/ci_maintainer sandboxes |
 
----
+## Goal-directed loop (CLI)
 
-## 1. Local scan (required)
+Set **both** workflow repo and SDK cwd to the sibling clone:
 
 ```bash
-cd benchmarks
-LIC_ROOT=../lic python3 scripts/ecosystem-explorer.py \
-  --write-digest docs/ecosystem/explorer-digests/latest.md
-python3 scripts/ecosystem-audit.py   # optional: CI/bench posture
-cat data/latest/ecosystem-explorer.json
+# lic httpd / compiler work
+./scripts/goal-directed-loop.sh \
+  --goal-file ./goals/httpd-next.md \
+  --workflow-repo lic \
+  --cwd ../lic
+
+# studio UX wave
+./scripts/goal-directed-loop.sh \
+  --goal-file ./goals/studio-ux-wave-a.md \
+  --workflow-repo studio \
+  --cwd ../studio
 ```
 
-Read:
+Goal file frontmatter (auto-detected by loop + `run-agent`):
 
-- `missing_std_modules` — PH-IO blockers
-- `hpc_libraries` where `li_status` is `missing` or `partial`
-- `catalog.suggested_catalog_gaps`
-- `web_search_queries`
-
+```yaml
 ---
-
-## 2. External research (required in automation)
-
-Run **3–6** queries from `web_search_queries` using Cursor **web search** (not scripted scraping).
-
-| Channel | Focus |
-|---------|--------|
-| **Reddit** | `site:reddit.com r/HPC …`, r/ProgrammingLanguages language design |
-| **Web** | Kokkos/PETSc/Eigen/FFTW parity, new systems languages |
-| **GitHub** | LLVM parallel IR, upstream patterns |
-
-For each hit worth tracking:
-
-1. One-line **insight**
-2. **Li implication** (stdlib / compiler / catalog / package)
-3. **Priority** P0–P2 vs [vision-and-roadmap](https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/vision-and-roadmap.md)
-
+workflow_repo: lic
+cwd: ../lic
 ---
-
-## 3. HPC library rubric
-
-For each row in `hpc_libraries` with `li_status != "present"`:
-
-| Library | Ask |
-|---------|-----|
-| Eigen / BLAS | Dense LA, decompositions — does `horner_pure_li` / matmul tier prove codegen? |
-| Kokkos / OpenMP | Parallel loops — map to `std/execution` + LLVM lowering plan |
-| PETSc / hypre | PDE solvers — physics packages vs real solvers |
-| FFTW | FFT micro-bench missing? |
-| SUNDIALS | Stiff ODE — tier-2 integrator depth |
-
-Cross-check [catalog.toml](../../../catalog.toml) and lic `packages/li-std-physics-*`.
-
----
-
-## 4. File issues (no code until plan-approved)
-
-**Tooling missing in org:**
-
-```bash
-python3 scripts/file-ecosystem-gap-issue.py --repo lic --title "..." \
-  --what-tried "..." --expected "..." --blocked "..."
 ```
 
-**Feature / language / new bench:**
+Or one line in the goal body: `Workflow repo: studio`
 
-- Repo: usually `lic` or `benchmarks`
-- Labels: `feature` or `ecosystem-gap`, **`explorer-finding`**, `plan-needed`
-- Body: link digest `docs/ecosystem/explorer-digests/latest.md` or JSON snippet
-- Cite Reddit/web URLs
+## Isolated clone rules
 
----
+- Edits happen only under `data/workspaces/li-langverse/<repo>/<run>/repo` (runner prepares this).
+- **Do not** implement studio/ui/sim features inside **lic** unless the handoff or plan explicitly says lic hosts the scaffold (e.g. `game_engine_ux` v1 docs under `lic/docs/ecosystem/`).
+- Splitting work across repos requires **separate PRs** per repo — one goal → one primary repo per run.
 
-## 5. Deliverable
+## MCP / briefing helpers
 
-Post or commit:
+When unsure:
 
-1. **Executive summary** (≤10 bullets): gaps, opportunities, risks
-2. **Top 3 recommended issues** to open (titles + repos)
-3. **Deferred** items (nice-to-have, out of PH scope)
-
-Do **not** self-merge. Do **not** add Actions `cron:`.
-
----
-
-## Workflow repo routing (implementers)
-
-**Before any file edit**, choose the GitHub repo for the isolated clone (`LI_REPO_WORKFLOW_REPO` / `--workflow-repo`).
-
-| Priority | Source |
-|----------|--------|
-| 1 | Goal frontmatter `workflow_repo:` or line `Workflow repo: <name>` |
-| 2 | Briefing `implementation_queue[].repo` or issue/PR URL host repo |
-| 3 | Path/topic table below |
-| 4 | Agent default (`code_implementer` → `li-demo` only if no signal) |
-
-| Repo | Edit here when |
-|------|----------------|
-| **lic** | `std/`, `li-tests/`, compiler, httpd (`li-tests/httpd/`, `scripts/httpd-*`), master-plan PH-2* |
-| **studio** | World Studio UX, `PH-GD-*`, `PH-UX-*`, `world.li`, viewport/outliner |
-| **ui** | `li-ui` package, shared UI components |
-| **sim** | `li-sim`, simulation / numerics package code |
-| **render** | `li-render` |
-| **benchmarks** | `agent-briefing.py`, explorer digests, catalog only |
-| **li-cursor-agents** | Agent registry, dashboard, prompts, skills |
-| **lip** / **lit** | Package manager / test runner |
-| **li-demo** | Agent-kit templates, CI snippets |
-
-```bash
-./scripts/goal-directed-loop.sh --goal-file goal.md --workflow-repo lic --cwd ../lic
-```
-
-`run-agent` infers `workflow_repo` from `--goal-file` when `--workflow-repo` is omitted (`src/agents/resolve-workflow-repo.ts`).
-
-Do **not** land studio/ui/sim product code in **lic** unless the handoff or plan explicitly says lic hosts the scaffold.
-
----
+- `li-ecosystem-context`: `list_org_repos`, `search_repo_tree`, `describe_package`
+- Briefing: `implementation_queue`, `org_packages`, `ecosystem_explorer.repos`
+- `package_architect` + `record_placement_decision` for new cross-cutting features
 
 ## Related
 
-- [ecosystem-explorer.md](../../../docs/ecosystem/ecosystem-explorer.md)
-- `ecosystem-first` — catalog before one-offs
-- `research-li-numerics` — after a specific kernel is chosen
-- `repo-workflow-tools.md` — isolated clone + PR template
+- `repo-workflow-tools.md` — prepare / commit-pr CLI
+- `li-ecosystem-discipline` — gates, CVE, release notes across repos
+- `package-architect` — formal `package_placement` when scope is ambiguous

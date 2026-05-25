@@ -10,7 +10,6 @@ function extractSignals(briefing: unknown): Record<string, unknown> {
   if (!briefing || typeof briefing !== "object") return { empty: true };
   const b = briefing as Record<string, unknown>;
   return {
-    generated_at: b.generated_at,
     recommended_agents: b.recommended_agents,
     preflight_failed: failedPreflightKeys(b),
     pr_summary: prSummary(b),

@@ -2,17 +2,46 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   buildImplementationQueue,
-  buildImplementationQueueInstruction,
+  normalizeImplementationQueue,
 } from "./implementation-queue.js";
 
-test("buildImplementationQueue merges ci_bug and explorer", () => {
+test("normalizeImplementationQueue accepts legacy array", () => {
+  const q = normalizeImplementationQueue([
+    { kind: "ui_remediation", repo: "lic", reason: "fix contrast" },
+  ]);
+  assert.equal(q.work_queue.length, 1);
+  assert.ok(q.sources.includes("legacy_implementation_queue"));
+});
+
+test("buildImplementationQueue includes ui_remediation from briefing queue", () => {
   const q = buildImplementationQueue({
-    ci_bug_triage: {
-      work_queue: [{ kind: "local_ci", repo: "lic", number: 1, reason: "failed" }],
+    implementation_queue: {
+      work_queue: [
+        {
+          kind: "ux_remediation",
+          repo: "li-cursor-agents",
+          reason: "Add empty state on /agents",
+        },
+      ],
+      sources: ["ux_audit"],
     },
-    ecosystem_explorer: { missing_std_modules: ["std.foo"] },
   });
-  assert.ok(q.sources.includes("ci_bug_triage"));
-  assert.ok(q.work_queue.length >= 2);
-  assert.match(buildImplementationQueueInstruction(q), /lic/);
+  assert.ok(q.work_queue.some((w) => w.kind === "ux_remediation"));
+  assert.ok(q.sources.includes("ux_audit"));
+});
+
+test("buildImplementationQueue merges remediation_manifest queue items", () => {
+  const q = buildImplementationQueue({
+    remediation_manifest: {
+      implementation_queue: [
+        {
+          kind: "ui_remediation",
+          repo: "lic",
+          remediation_summary: "Fix MkDocs nav contrast",
+          title: "[ui-audit] nav",
+        },
+      ],
+    },
+  });
+  assert.ok(q.work_queue.some((w) => w.kind === "ui_remediation"));
 });

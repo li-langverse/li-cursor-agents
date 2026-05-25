@@ -5,6 +5,7 @@ import type { AgentRunResult } from "../types.js";
 import type { AgentKitRolloutRow } from "../repo-workflow/types.js";
 import { interventionsPath, reportPath, statePath } from "../control-plane/paths.js";
 import { dbEnabled, exportDiskCacheEnabled, useDiskStore, useSupabaseStore } from "./client.js";
+import { shouldPersistRunToHistory } from "../control-plane/run-history.js";
 import * as runsDb from "./runs.js";
 import * as cpDb from "./control-plane.js";
 
@@ -18,12 +19,15 @@ function requireSupabaseWrite(op: string): void {
 
 /** Persist agent run to Supabase; optional disk export when LI_EXPORT_DISK_CACHE=1. */
 export async function persistAgentRun(input: runsDb.PersistRunInput): Promise<void> {
-  requireSupabaseWrite("persistAgentRun");
+  if (!shouldPersistRunToHistory(input.run)) {
+    return;
+  }
   if (dbEnabled()) {
     await runsDb.upsertAgentRun(input);
   }
+  // Headless plan loops: do not fail the agent when store=supabase but env is unset.
 
-  if (exportDiskCacheEnabled() && input.run.outputPath) {
+  if (input.run.outputPath) {
     try {
       if (input.run.outputText) {
         writeFileSync(input.run.outputPath, input.run.outputText, "utf8");

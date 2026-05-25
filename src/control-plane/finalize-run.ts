@@ -5,7 +5,6 @@ import { runIdFromOutputPath } from "../db/persist.js";
 import type { AgentDefinition } from "../types.js";
 import type { AgentRunResult, PreflightBundle } from "../types.js";
 import { auditRunCompletion, type AgentRunCompletion } from "./run-completion.js";
-import { resolveRunAuditContext, type RunAuditContext } from "./run-audit-context.js";
 
 function readOutputText(result: AgentRunResult): string {
   if (result.outputText) return result.outputText;
@@ -35,13 +34,13 @@ export function finalizeAgentRun(
     definition?: AgentDefinition | null;
     preflight?: PreflightBundle;
     extraEvidence?: string[];
-    auditContext?: RunAuditContext;
   },
 ): AgentRunResult {
   const definition = options?.definition ?? getAgent(result.agentId);
   const rawText = readOutputText(result);
-  const bodyForAudit = deliverableBody(rawText) || rawText;
-  const auditContext = options?.auditContext ?? resolveRunAuditContext();
+  const bodyForAudit = process.env.LI_SDK_MATRIX_MODE?.trim()
+    ? rawText
+    : deliverableBody(rawText) || rawText;
 
   const completion: AgentRunCompletion = auditRunCompletion({
     agentId: result.agentId,
@@ -50,19 +49,14 @@ export function finalizeAgentRun(
     backend: result.backend,
     mock: result.backend === "mock",
     rolloutPrUrls: options?.rolloutPrUrls,
-    auditContext,
+    trace: result.trace,
   });
   if (options?.extraEvidence?.length) {
     completion.evidence = [...new Set([...completion.evidence, ...options.extraEvidence])];
   }
 
   let status = result.status;
-  if (auditContext.postHookPushFailed && result.backend !== "mock") {
-    status = "error";
-    if (!result.error) {
-      result.error = completion.gaps[0] ?? "Post-hook push failed";
-    }
-  } else if (status === "finished" && completion.premature) {
+  if (status === "finished" && completion.premature) {
     status = "incomplete";
   }
 
@@ -134,4 +128,33 @@ export function finalizeAgentRun(
   }
 
   return finalized;
+}
+
+/** Merge supervisor/metadata fields into the run JSON sidecar (mock + production). */
+export function writeRunSidecar(run: AgentRunResult): void {
+  if (!run.outputPath?.endsWith(".md")) return;
+  const jsonPath = run.outputPath.replace(/\.md$/, ".json");
+  try {
+    const prior = existsSync(jsonPath)
+      ? (JSON.parse(readFileSync(jsonPath, "utf8")) as Record<string, unknown>)
+      : {};
+    writeFileSync(
+      jsonPath,
+      JSON.stringify(
+        {
+          ...prior,
+          ...run,
+          reason: run.reason ?? prior.reason,
+          briefing_hash: run.briefing_hash ?? prior.briefing_hash,
+          fingerprint: run.fingerprint ?? prior.fingerprint,
+          coordinator: run.coordinator ?? prior.coordinator,
+        },
+        null,
+        2,
+      ) + "\n",
+      "utf8",
+    );
+  } catch {
+    writeFileSync(jsonPath, JSON.stringify(run, null, 2) + "\n", "utf8");
+  }
 }

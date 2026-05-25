@@ -1,6 +1,11 @@
 import { appendFileSync, existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { agentLog } from "../agent-log.js";
+import { dbEnabled } from "../db/client.js";
+import {
+  appendSupervisorActivityToDb,
+  listSupervisorActivityFromDb,
+} from "../db/supervisor-activity-db.js";
 import { controlPlaneRoot } from "./paths.js";
 
 export type SupervisorActivityLevel = "info" | "tick" | "warn" | "error";
@@ -61,9 +66,26 @@ export function pushSupervisorActivity(
   entries.push(row);
   if (entries.length > MAX_ENTRIES) entries.splice(0, entries.length - MAX_ENTRIES);
   appendActivityToDisk(row);
+  if (dbEnabled()) {
+    void appendSupervisorActivityToDb(row).catch(() => {
+      /* optional */
+    });
+  }
 
   const prefix = level === "error" ? "ERROR" : level === "warn" ? "WARN" : level === "tick" ? "tick" : "info";
   agentLog("supervisor", prefix, message, meta ? JSON.stringify(meta) : undefined);
+}
+
+export async function listSupervisorActivityAsync(limit = 40): Promise<SupervisorActivityEntry[]> {
+  if (dbEnabled()) {
+    try {
+      const fromDb = await listSupervisorActivityFromDb(limit);
+      if (fromDb.length) return fromDb;
+    } catch {
+      /* fallback */
+    }
+  }
+  return listSupervisorActivity(limit);
 }
 
 export function listSupervisorActivity(limit = 40): SupervisorActivityEntry[] {

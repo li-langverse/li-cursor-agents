@@ -1,0 +1,28 @@
+{
+  "work_queue": [
+    {
+      "kind": "ui_remediation",
+      "repo": "lic",
+      "surface": "docs",
+      "issue": 9000,
+      "title": "[ui-audit] UI regression on lic-docs",
+      "remediation_summary": "Fix MkDocs contrast / baseline",
+      "files_hint": ["mkdocs.yml"],
+      "acceptance": ["ui-audit lic-docs green"],
+      "agent_source": "docs_ui_tester"
+    },
+    {
+      "kind": "ux_remediation",
+      "repo": "li-cursor-agents",
+      "surface": "gui",
+      "issue": 9001,
+      "title": "[ux-audit] UX friction on agents-dashboard",
+      "remediation_summary": "Add empty state on /agents when no runs",
+      "files_hint": ["dashboard-ui/"],
+      "acceptance": ["ux-audit agents-dashboard green"],
+      "journeys": ["agents_list_empty"],
+      "agent_source": "gui_ux_tester"
+    }
+  ],
+  "sources": ["ux_audit_fixture"]
+}

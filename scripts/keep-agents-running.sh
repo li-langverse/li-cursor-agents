@@ -27,7 +27,10 @@ if [[ -f "$LI_GITHUB_ENV" ]]; then set -a; source "$LI_GITHUB_ENV"; set +a; fi
 export GH_TOKEN GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
 # Production stack uses Cursor SDK; tests set CURSOR_MOCK=1 explicitly.
 unset CURSOR_MOCK
-export LI_AUTO_START_SUPERVISOR=1
+export LI_AUTO_START_SUPERVISOR=0
+export LI_AUTO_START_ASYNC_SWARM=1
+export LI_SWARM_EXTERNAL=0
+export LI_SWARM_DETACHED=1
 
 _store="${LI_CONTROL_PLANE_STORE:-supabase}"
 [[ "${LI_STACK_SKIP_SUPABASE:-}" == "1" ]] && _store="disk"
@@ -44,13 +47,6 @@ if [[ -f "$ROOT/.env.supabase" ]]; then
   set +a
 fi
 
-# Optional: clone sibling li-local-ci when missing (supervisor local-ci sweep).
-if [[ "${LI_USE_LOCAL_CI:-1}" != "0" ]] && [[ "${LI_AUTO_CLONE_LOCAL_CI:-1}" != "0" ]]; then
-  if ! bash "$ROOT/scripts/ensure-li-local-ci.sh"; then
-    echo "WARN: li-local-ci unavailable (network, partial dir, or LI_AUTO_CLONE_LOCAL_CI=0 after edit). Local-ci sweep logs WARN until fixed or LI_USE_LOCAL_CI=0." >&2
-  fi
-fi
-
 if [[ "${LI_KEEP_AGENTS_RESTART:-}" != "0" ]]; then
   if lsof -ti ":${LI_AGENT_DASHBOARD_PORT}" >/dev/null 2>&1; then
     echo "Stopping existing dashboard on :${LI_AGENT_DASHBOARD_PORT}…"
@@ -58,41 +54,33 @@ if [[ "${LI_KEEP_AGENTS_RESTART:-}" != "0" ]]; then
     sleep 1
   fi
   pkill -f "dist/cli/supervisor.js" 2>/dev/null || true
+  pkill -f "dist/cli/async-swarm.js" 2>/dev/null || true
   pkill -f "dist/cli/serve-dashboard.js" 2>/dev/null || true
   sleep 1
 fi
 
 "$ROOT/scripts/ensure-native-modules.sh"
 npm run build >/dev/null 2>&1
-
-if [[ "${LI_ECOSYSTEM_SYNC_LOOP:-1}" != "0" ]]; then
-  if ! pgrep -f "ecosystem-sync-loop.sh" >/dev/null 2>&1; then
-    echo "==> ecosystem sync loop (interval ${LI_ECOSYSTEM_SYNC_INTERVAL_SEC:-3600}s)"
-    nohup bash "$ROOT/scripts/ecosystem-sync-loop.sh" >>"$ROOT/logs/ecosystem-sync.log" 2>&1 &
-    echo $! >"$ROOT/logs/ecosystem-sync.pid"
-  fi
-fi
-
-if [[ "${LI_ECOSYSTEM_SYNC_ON_START:-1}" != "0" ]]; then
-  bash "$ROOT/scripts/maybe-sync-ecosystem.sh" --quick 2>/dev/null || true
+if [[ "${LI_WORKSPACE_PRUNE:-always}" != "never" ]]; then
+  LI_WORKSPACE_PRUNE_INTERVAL_MS=0 "$NODE_BIN" "$ROOT/dist/cli/workspace-prune.js" 2>/dev/null | tail -3 || true
 fi
 
 PORT="$LI_AGENT_DASHBOARD_PORT"
 if curl -sf "http://127.0.0.1:${PORT}/api/status" >/dev/null 2>&1; then
   RT=$(curl -sf "http://127.0.0.1:${PORT}/api/runtime" || echo "{}")
-  if echo "$RT" | grep -q '"supervisor_loop_running":true'; then
-    echo "Supervisor loop already running on :${PORT}"
+  if echo "$RT" | grep -q '"async_swarm_running":true'; then
+    echo "Async swarm already running on :${PORT}"
     echo "Dashboard: http://127.0.0.1:${PORT}/"
     exit 0
   fi
-  echo "Dashboard up — starting supervisor loop via API"
-  curl -sf -X POST "http://127.0.0.1:${PORT}/api/supervisor/start" -H "Content-Type: application/json" -d '{}'
+  echo "Dashboard up — starting async swarm via API"
+  curl -sf -X POST "http://127.0.0.1:${PORT}/api/async-swarm/start" -H "Content-Type: application/json" -d '{}'
   echo ""
   echo "Dashboard: http://127.0.0.1:${PORT}/"
   exit 0
 fi
 
-echo "Starting dashboard + auto-supervisor (log: logs/keep-agents.log)"
+echo "Starting dashboard + async swarm (no supervisor; log: logs/keep-agents.log)"
 nohup env \
   BENCHMARKS_ROOT="$BENCHMARKS_ROOT" \
   LI_LOCAL_CI_ROOT="$LI_LOCAL_CI_ROOT" \
@@ -101,7 +89,9 @@ nohup env \
   LI_LOCAL_CI_PRUNE="$LI_LOCAL_CI_PRUNE" \
   LI_LOCAL_CI_SKIP_GH="$LI_LOCAL_CI_SKIP_GH" \
   LI_CURSOR_AGENTS_ROOT="$ROOT" \
-  LI_AUTO_START_SUPERVISOR=1 \
+  LI_AUTO_START_SUPERVISOR=0 \
+  LI_AUTO_START_ASYNC_SWARM=1 \
+  LI_SDK_MAX_CONCURRENT="${LI_SDK_MAX_CONCURRENT:-4}" \
   LI_SUPERVISOR_INTERVAL_MS="$LI_SUPERVISOR_INTERVAL_MS" \
   LI_AGENTS_COOLDOWN_MS="$LI_AGENTS_COOLDOWN_MS" \
   LI_SUPERVISOR_MAX_TASKS="$LI_SUPERVISOR_MAX_TASKS" \
@@ -109,7 +99,6 @@ nohup env \
   GH_TOKEN="${GH_TOKEN:-}" \
   GITHUB_TOKEN="${GITHUB_TOKEN:-}" \
   CURSOR_API_KEY="${CURSOR_API_KEY:-}" \
-  CURSOR_MODEL="${CURSOR_MODEL:-default}" \
   SUPABASE_URL="${SUPABASE_URL:-}" \
   SUPABASE_SERVICE_ROLE_KEY="${SUPABASE_SERVICE_ROLE_KEY:-}" \
   "$NODE_BIN" "$ROOT/dist/cli/serve-dashboard.js" --port "$PORT" \

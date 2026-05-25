@@ -1,5 +1,4 @@
-import { classifyGitRemoteError } from "./git-errors.js";
-import { findOpenPrForBranch, gitPushBranch, hasGitToken, gitStatusPorcelain, runCmd } from "./git.js";
+import { hasGitToken, gitStatusPorcelain, runCmd } from "./git.js";
 import type { CommitPushPrResult, RepoWorkflowOptions } from "./types.js";
 
 export function commitPushOpenPr(
@@ -14,6 +13,8 @@ export function commitPushOpenPr(
     prBody: string;
     dryRun?: boolean;
     skipPush?: boolean;
+    /** When false, commit (and push if enabled) but do not run `gh pr create`. */
+    openPr?: boolean;
     /** When true, assume `git add` already ran (e.g. workspace sweeper safe paths). */
     skipGitAdd?: boolean;
   },
@@ -36,6 +37,18 @@ export function commitPushOpenPr(
 
   const dirty = gitStatusPorcelain(cloneDir, dryRun);
   if (!dirty.trim()) {
+    if (!options.skipPush && !dryRun) {
+      const ahead = pushUnpublishedCommits(cloneDir, branch, dryRun, options.skipPush);
+      if (ahead.pushed) {
+        return {
+          ok: true,
+          committed: false,
+          pushed: true,
+          branch,
+          skip_reason: "pushed commits already on branch (clean working tree)",
+        };
+      }
+    }
     return {
       ok: true,
       skipped: true,
@@ -80,27 +93,24 @@ export function commitPushOpenPr(
     };
   }
 
-  const push = gitPushBranch(cloneDir, branch, options.org, options.repo, dryRun);
+  const push = runCmd("git", ["push", "-u", "origin", branch], cloneDir, dryRun);
   if (!push.ok) {
-    const c = classifyGitRemoteError(push.stderr, push.stdout);
     return {
       ok: false,
       committed: true,
       pushed: false,
       branch,
-      error: `[${c.code}] ${c.message} — ${c.hint}`,
+      error: push.stderr || "git push failed",
     };
   }
 
-  const afterPushPr = findOpenPrForBranch(options.org, options.repo, branch, dryRun);
-  if (afterPushPr) {
+  if (options.openPr === false) {
     return {
       ok: true,
       committed: true,
       pushed: true,
       branch,
-      pr_url: afterPushPr,
-      skip_reason: "reused_existing_open_pr",
+      skip_reason: "openPr=false (commit+push only)",
     };
   }
 
@@ -125,24 +135,12 @@ export function commitPushOpenPr(
   );
 
   if (!pr.ok) {
-    const c = classifyGitRemoteError(pr.stderr, pr.stdout);
-    const reused = findOpenPrForBranch(options.org, options.repo, branch, dryRun);
-    if (reused || c.code === "pr_already_exists") {
-      return {
-        ok: true,
-        committed: true,
-        pushed: true,
-        branch,
-        pr_url: reused,
-        skip_reason: "reused_existing_open_pr",
-      };
-    }
     return {
       ok: false,
       committed: true,
       pushed: true,
       branch,
-      error: `[${c.code}] ${c.message} — ${c.hint}`,
+      error: pr.stderr || "gh pr create failed",
     };
   }
 
@@ -155,6 +153,28 @@ export function commitPushOpenPr(
     branch,
     pr_url: url.trim(),
   };
+}
+
+/** Push when HEAD is ahead of origin (agent committed but did not push). */
+export function pushUnpublishedCommits(
+  cloneDir: string,
+  branch: string,
+  dryRun = false,
+  skipPush = false,
+): { pushed: boolean; error?: string } {
+  if (dryRun || skipPush || !hasGitToken()) return { pushed: false };
+  const upstream = runCmd("git", ["rev-parse", "--abbrev-ref", "@{upstream}"], cloneDir, false);
+  let ahead = runCmd(
+    "git",
+    ["rev-list", "--count", upstream.ok ? "@{upstream}..HEAD" : `origin/${branch}..HEAD`],
+    cloneDir,
+    false,
+  );
+  if (!ahead.ok || !ahead.stdout || ahead.stdout === "0") {
+    return { pushed: false };
+  }
+  const push = runCmd("git", ["push", "-u", "origin", branch], cloneDir, false);
+  return { pushed: push.ok, error: push.ok ? undefined : push.stderr || "git push failed" };
 }
 
 export function applyRepoWorkflowEnv(options: RepoWorkflowOptions): void {

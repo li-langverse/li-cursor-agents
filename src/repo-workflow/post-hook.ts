@@ -1,7 +1,7 @@
 import { appendFileSync } from "node:fs";
 import type { AgentDefinition } from "../types.js";
 import type { AgentRunResult } from "../types.js";
-import { commitPushOpenPr } from "./pr.js";
+import { commitPushOpenPr, pushUnpublishedCommits } from "./pr.js";
 import type { CommitPushPrResult } from "./types.js";
 import {
   defaultPrBody,
@@ -14,16 +14,23 @@ export interface PostHookPushResult extends CommitPushPrResult {
   repo: string;
 }
 
+const IMPLEMENT_RHYTHM_AGENTS = new Set(["code_implementer", "bug_fixer"]);
+
+/** Implement agents commit+push each run; open PR unless explicitly disabled. */
+export function shouldOpenPrAfterRun(agentId: string): boolean {
+  if (!IMPLEMENT_RHYTHM_AGENTS.has(agentId)) return true;
+  const v = process.env.LI_REPO_WORKFLOW_OPEN_PR?.trim().toLowerCase();
+  if (v === "0" || v === "false" || v === "off" || v === "no") return false;
+  return true;
+}
+
 export function formatPushDigest(push: PostHookPushResult): string {
   const lines = ["", "## Repo workflow push (post-hook)", ""];
   if (push.pr_url) lines.push(`- **PR:** ${push.pr_url}`);
   if (push.pushed) lines.push(`- **Pushed:** \`${push.branch}\` → origin`);
   if (push.committed && !push.pushed) lines.push(`- **Committed locally** (push skipped)`);
   if (push.skipped) lines.push(`- **Skipped:** ${push.skip_reason ?? "no changes"}`);
-  if (push.error) {
-    lines.push(`- **Error:** ${push.error}`);
-    lines.push(`- **Remediation:** Fix git auth (GH_TOKEN), reuse open PR, or set LI_REPO_WORKFLOW_SKIP_PUSH=1 for digest-only runs.`);
-  }
+  if (push.error) lines.push(`- **Error:** ${push.error}`);
   return lines.join("\n");
 }
 
@@ -49,6 +56,31 @@ export function commitPushOpenPrAfterAgentRun(
   }
 
   if (!workspaceHasChanges(session)) {
+    if (!skipPush) {
+      const ahead = pushUnpublishedCommits(session.cloneDir, session.branch, dryRun, skipPush);
+      if (ahead.pushed) {
+        return {
+          ok: true,
+          workspace: session.cloneDir,
+          repo: session.repo,
+          committed: false,
+          pushed: true,
+          branch: session.branch,
+          skip_reason: "pushed unpublished commits (clean working tree)",
+        };
+      }
+      if (ahead.error) {
+        return {
+          ok: false,
+          workspace: session.cloneDir,
+          repo: session.repo,
+          committed: false,
+          pushed: false,
+          branch: session.branch,
+          error: ahead.error,
+        };
+      }
+    }
     return {
       ok: true,
       skipped: true,
@@ -68,7 +100,7 @@ export function commitPushOpenPrAfterAgentRun(
     process.env.LI_REPO_WORKFLOW_PR_BODY?.trim() ??
     defaultPrBody(definition.id, result.reason);
 
-  const push = commitPushOpenPr(session.cloneDir, {
+  let push = commitPushOpenPr(session.cloneDir, {
     branch: session.branch,
     baseBranch: session.baseBranch,
     org: session.org,
@@ -78,7 +110,17 @@ export function commitPushOpenPrAfterAgentRun(
     prBody: body,
     dryRun,
     skipPush,
+    openPr: shouldOpenPrAfterRun(definition.id),
   });
+
+  if (!skipPush && !push.pushed) {
+    const extra = pushUnpublishedCommits(session.cloneDir, session.branch, dryRun, skipPush);
+    if (extra.pushed) {
+      push = { ...push, ok: true, pushed: true, skipped: false, skip_reason: undefined };
+    } else if (extra.error && !push.error) {
+      push = { ...push, error: extra.error };
+    }
+  }
 
   return {
     ...push,
