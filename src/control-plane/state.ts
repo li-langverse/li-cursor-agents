@@ -3,7 +3,7 @@ import { statePath } from "./paths.js";
 import { DEFAULT_STATE, type ControlPlaneState } from "./types.js";
 import { agentLog } from "../agent-log.js";
 import { loadControlPlaneStateHybrid, persistControlPlaneState } from "../db/persist.js";
-import { dbEnabled, useDiskStore, useSupabaseStore } from "../db/client.js";
+import { dbEnabled, useLidbStore, useSupabaseStore } from "../db/client.js";
 
 let memoryState: ControlPlaneState | null = null;
 
@@ -93,9 +93,9 @@ export function loadState(): ControlPlaneState {
   return { ...DEFAULT_STATE };
 }
 
-/** Mirror state for dashboard ↔ supervisor subprocess when primary store is Supabase. */
+/** Mirror state for dashboard ↔ supervisor subprocess when primary store is Supabase or lidb. */
 function mirrorStateForSupervisorIpc(state: ControlPlaneState): void {
-  if (!useSupabaseStore()) return;
+  if (!useSupabaseStore() && !useLidbStore()) return;
   try {
     writeFileSync(statePath(), JSON.stringify(state, null, 2) + "\n", "utf8");
   } catch (err) {

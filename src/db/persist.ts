@@ -4,23 +4,33 @@ import type { ControlPlaneReport, ControlPlaneState, HumanIntervention } from ".
 import type { AgentRunResult } from "../types.js";
 import type { AgentKitRolloutRow } from "../repo-workflow/types.js";
 import { interventionsPath, reportPath, statePath } from "../control-plane/paths.js";
-import { dbEnabled, exportDiskCacheEnabled, useDiskStore, useSupabaseStore } from "./client.js";
+import {
+  dbEnabled,
+  exportDiskCacheEnabled,
+  useDiskStore,
+  useLidbStore,
+  useSupabaseStore,
+} from "./client.js";
+import * as lidbDb from "./lidb-persist.js";
 import * as runsDb from "./runs.js";
 import * as cpDb from "./control-plane.js";
 
 export type { PersistRunInput } from "./runs.js";
 
-function requireSupabaseWrite(op: string): void {
+function requirePrimaryWrite(op: string): void {
   if (useSupabaseStore() && !dbEnabled()) {
     throw new Error(`[db] ${op}: LI_CONTROL_PLANE_STORE=supabase but Supabase is not configured`);
   }
 }
 
-/** Persist agent run to Supabase; optional disk export when LI_EXPORT_DISK_CACHE=1. */
+/** Persist agent run to primary store; disk mirror when store=disk|lidb or LI_EXPORT_DISK_CACHE=1. */
 export async function persistAgentRun(input: runsDb.PersistRunInput): Promise<void> {
-  requireSupabaseWrite("persistAgentRun");
+  requirePrimaryWrite("persistAgentRun");
   if (dbEnabled()) {
     await runsDb.upsertAgentRun(input);
+  }
+  if (useLidbStore()) {
+    await lidbDb.lidbPersistAgentRun(input);
   }
 
   if (exportDiskCacheEnabled() && input.run.outputPath) {
@@ -43,9 +53,12 @@ async function flushCoalescedState(): Promise<void> {
   while (coalescedState) {
     const snapshot = coalescedState;
     coalescedState = null;
-    requireSupabaseWrite("persistControlPlaneState");
+    requirePrimaryWrite("persistControlPlaneState");
     if (dbEnabled()) {
       await cpDb.saveControlPlaneStateToDb(snapshot);
+    }
+    if (useLidbStore()) {
+      await lidbDb.lidbPersistControlPlaneState(snapshot);
     }
     if (exportDiskCacheEnabled()) {
       snapshot.updated_at = new Date().toISOString();
@@ -62,9 +75,12 @@ export async function persistControlPlaneState(state: ControlPlaneState): Promis
 }
 
 export async function persistReport(report: ControlPlaneReport, interventions: HumanIntervention[]): Promise<void> {
-  requireSupabaseWrite("persistReport");
+  requirePrimaryWrite("persistReport");
   if (dbEnabled()) {
     await cpDb.saveReportToDb(report, interventions);
+  }
+  if (useLidbStore()) {
+    await lidbDb.lidbPersistReport(report, interventions);
   }
   if (exportDiskCacheEnabled()) {
     writeFileSync(reportPath(), JSON.stringify(report, null, 2) + "\n", "utf8");
@@ -80,7 +96,7 @@ export async function loadControlPlaneStateHybrid(): Promise<ControlPlaneState |
   if (useSupabaseStore() && dbEnabled()) {
     return cpDb.loadControlPlaneStateFromDb();
   }
-  if (useDiskStore() && existsSync(statePath())) {
+  if ((useDiskStore() || useLidbStore()) && existsSync(statePath())) {
     return JSON.parse(readFileSync(statePath(), "utf8")) as ControlPlaneState;
   }
   return null;
@@ -90,7 +106,7 @@ export async function loadLatestReportHybrid(): Promise<ControlPlaneReport | nul
   if (useSupabaseStore() && dbEnabled()) {
     return cpDb.loadLatestReportFromDb();
   }
-  if (useDiskStore() && existsSync(reportPath())) {
+  if ((useDiskStore() || useLidbStore()) && existsSync(reportPath())) {
     return JSON.parse(readFileSync(reportPath(), "utf8")) as ControlPlaneReport;
   }
   return null;
@@ -102,7 +118,7 @@ export async function loadInterventionsHybrid(): Promise<HumanIntervention[]> {
     if (fromDb.length) return fromDb;
     return [];
   }
-  if (useDiskStore() && existsSync(interventionsPath())) {
+  if ((useDiskStore() || useLidbStore()) && existsSync(interventionsPath())) {
     const raw = JSON.parse(readFileSync(interventionsPath(), "utf8")) as { interventions?: HumanIntervention[] };
     return raw.interventions ?? [];
   }
@@ -115,9 +131,12 @@ export async function persistLiveInterventions(params: {
   briefingGeneratedAt: string;
   generatedAt: string;
 }): Promise<void> {
-  requireSupabaseWrite("persistLiveInterventions");
+  requirePrimaryWrite("persistLiveInterventions");
   if (dbEnabled()) {
     await cpDb.saveLiveInterventionsToDb(params);
+  }
+  if (useLidbStore()) {
+    await lidbDb.lidbPersistLiveInterventions(params);
   }
   if (exportDiskCacheEnabled()) {
     writeFileSync(

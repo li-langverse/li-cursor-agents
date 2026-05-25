@@ -45,15 +45,16 @@ Legacy: `LI_STACK_SKIP_SUPABASE=1` → same as `disk`.
 | `src/e2e/lidb-control-plane.e2e.ts` | Skipped until `LI_CONTROL_PLANE_STORE=lidb` and `LI_E2E_LIDB=1`; `lidbE2eSkipReasons()` + partial live tests |
 | `src/db/read-query.ts` | Deprecated for agents — prefer liq MCP |
 | `src/mcp/mcp-config.ts` | `buildControlPlaneLiqMcpServers()` when store=lidb |
+| `src/db/lidb-persist.ts` | liorm persist stubs + disk-mirror dev (`LI_LIDB_MOCK=1`) |
 | `docs/plans/lidb-migration-control-plane.md` | Agent continuation (below) |
 
 Existing Supabase e2e remains: `src/e2e/control-plane-db.e2e.ts` (`LI_E2E_DB=1`).
 
 ## Migration checklist (implementation)
 
-- [ ] Extend `ControlPlaneStore` in `src/db/client.ts`: `"lidb"` alongside `supabase` \| `disk`
-- [ ] `assertStoreReady()` when `lidb`: require `lis db status` healthy or `LI_LIDB_URL`
-- [ ] `persist.ts`: liorm execute paths for `agent_runs`, handoffs, etc. (schema parity with `supabase/migrations/`)
+- [x] Extend `ControlPlaneStore` in `src/db/client.ts`: `"lidb"` alongside `supabase` \| `disk`
+- [x] `assertStoreReady()` when `lidb`: `LI_LIDB_URL` or `LI_LIDB_MOCK=1` (`lidbStoreReady()`)
+- [x] `persist.ts`: liorm stub hooks in `lidb-persist.ts` + disk mirror (real execute when engine wired)
 - [x] Stub MCP: `li-control-plane-liq` + `liq-query.ts` mock (PH-DB-2/10 harness)
 - [x] Stub e2e harness: `lidb-control-plane.e2e.ts` skip reasons + mock liq tests (`npm test` / `test:e2e:lidb`)
 - [ ] Backfill: extend `scripts/backfill-control-plane-db.mjs` for lidb import from disk cache
@@ -72,7 +73,7 @@ Existing Supabase e2e remains: `src/e2e/control-plane-db.e2e.ts` (`LI_E2E_DB=1`)
 1. **Read:** this file; `src/mcp/lidb-liq-mcp.ts`; `src/db/liq-query.ts`; `src/e2e/lidb-control-plane.e2e.ts`; `src/e2e/control-plane-db.e2e.ts`; `src/db/read-query.ts` (deprecated for agents); `../lidb/docs/liq-spec.md` when PH-DB-2 lands  
 2. **Run:** `npm run build && npm test` (disk store — includes `liq-query.test.ts`); optional lidb harness:  
    `LI_CONTROL_PLANE_STORE=lidb LI_E2E_LIDB=1 npm run build && LI_CONTROL_PLANE_STORE=lidb LI_E2E_LIDB=1 node --test dist/e2e/lidb-control-plane.e2e.js`  
-3. **Then:** extend `configuredStore()` / `persist.ts` for `lidb`; wire `runLiqQuery` to real liorm when `LI_LIDB_URL` is set; remove `test.todo` rows in `lidb-control-plane.e2e.ts` as gates pass  
+3. **Then:** wire `runLiqQuery` + `lidb-persist.ts` to real liorm when lidb engine accepts schema; backfill script; remove `test.todo` rows in `lidb-control-plane.e2e.ts` as gates pass  
 4. **Blocked on:** lidb engine + control-plane migrations accepting the same schema as `supabase/migrations/` — do not fake-pass persist e2e against Supabase URL  
 
 ## References
