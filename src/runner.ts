@@ -1,4 +1,4 @@
-import { writeFileSync, readFileSync } from "node:fs";
+import { writeFileSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { getAgent } from "./agents/registry.js";
 import { appendSkillsToSystemPrompt, resolveAgentSkillPaths } from "./agents/skills.js";
@@ -90,6 +90,7 @@ export async function runAgent(options: AgentRunOptions): Promise<AgentRunResult
   if (agentUsesGuaranteedPush(definition)) {
     workflowSession = beginRepoWorkflowSession({
       agentId: definition.id,
+      repo: options.workflowRepo,
       dryRun: options.dryRun,
       skipPush: mock || options.dryRun || process.env.LI_REPO_WORKFLOW_SKIP_PUSH === "1",
     });

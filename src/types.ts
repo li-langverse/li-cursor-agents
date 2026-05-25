@@ -74,6 +74,8 @@ export interface AgentRunOptions {
   apiKey?: string;
   modelId?: string;
   extraInstruction?: string;
+  /** Isolated clone target (li-langverse/<repo>); auto from goal file when omitted. */
+  workflowRepo?: string;
 }
 
 export type CompletionMode = "production" | "verify" | "digest_only";

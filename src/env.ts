@@ -119,6 +119,25 @@ export function loadSupabaseEnv(): void {
   }
 }
 
+/** Cursor workspace shared `.env` (sibling of repo checkouts). */
+export function resolveSharedEnvPath(): string | undefined {
+  const pkg = packageRoot();
+  const candidates = [
+    join(pkg, "..", "..", ".env"),
+    join(process.cwd(), "..", "..", ".env"),
+  ];
+  for (const path of candidates) {
+    if (existsSync(path)) return path;
+  }
+  return undefined;
+}
+
+export function loadSharedEnv(): void {
+  if (process.env.LI_SKIP_DOTENV === "1") return;
+  const path = resolveSharedEnvPath();
+  if (path) applyEnvFile(path);
+}
+
 export function loadRuntimeEnv(): void {
   loadSharedEnv();
   loadDotEnv();
