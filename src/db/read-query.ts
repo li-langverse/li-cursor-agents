@@ -1,3 +1,11 @@
+/**
+ * Read-only SQL against local control-plane Postgres (Supabase compose today).
+ *
+ * **Deprecated for agents:** prefer **liq** MCP (`li-control-plane-liq`,
+ * `src/mcp/lidb-liq-mcp.ts`, `src/db/liq-query.ts`) — catalog-bound `read <table> limit N`
+ * instead of raw SQL. This module stays for `LI_E2E_DB=1` / `li-control-plane-db` MCP
+ * until `LI_CONTROL_PLANE_STORE=lidb` is default; see `docs/plans/lidb-migration-control-plane.md`.
+ */
 import pg from "pg";
 import { CONTROL_PLANE_TABLES } from "./schema-catalog.js";
 

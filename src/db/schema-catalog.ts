@@ -59,7 +59,8 @@ export function schemaMarkdown(): string {
   }
   lines.push(
     "",
-    "Use read-only SQL (`SELECT` / `WITH` / `EXPLAIN`). Prefer MCP tools `list_control_plane_tables`, `describe_table`, `query_control_plane_db`.",
+    "Supabase: read-only SQL via `list_control_plane_tables`, `describe_table`, `query_control_plane_db`. " +
+      "lidb: prefer liq MCP (`schema_snapshot`, `query_control_plane_liq`, e.g. `read agent_runs limit 20`).",
   );
   return lines.join("\n");
 }
