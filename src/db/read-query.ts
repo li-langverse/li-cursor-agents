@@ -1,10 +1,10 @@
 /**
  * Read-only SQL against local control-plane Postgres (Supabase compose today).
  *
- * Future (PH-DB-10): agent exploration moves to **liq** — compiled Lang→IR→SQL with
- * catalog-bound identifiers — exposed via MCP (`li-control-plane-liq` or successor to
- * `li-control-plane-db`). This module remains for `LI_E2E_DB=1` / Supabase parity until
- * `LI_CONTROL_PLANE_STORE=lidb`; see `docs/plans/lidb-migration-control-plane.md`.
+ * **Deprecated for agents:** prefer **liq** MCP (`li-control-plane-liq`,
+ * `src/mcp/lidb-liq-mcp.ts`, `src/db/liq-query.ts`) — catalog-bound `read <table> limit N`
+ * instead of raw SQL. This module stays for `LI_E2E_DB=1` / `li-control-plane-db` MCP
+ * until `LI_CONTROL_PLANE_STORE=lidb` is default; see `docs/plans/lidb-migration-control-plane.md`.
  */
 import pg from "pg";
 import { CONTROL_PLANE_TABLES } from "./schema-catalog.js";

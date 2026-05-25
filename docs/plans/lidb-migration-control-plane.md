@@ -16,6 +16,16 @@ Replace Supabase-backed control-plane persistence and Postgres read MCP with:
 
 Disk store (`LI_CONTROL_PLANE_STORE=disk`) stays for CI and offline dev; lidb is the production-shaped path without Docker.
 
+## Store env (`LI_CONTROL_PLANE_STORE`)
+
+| Value | Persistence | Agent read path |
+|-------|-------------|-----------------|
+| `supabase` (default) | Supabase REST + optional disk mirror | `li-control-plane-db` MCP + `read-query.ts` SQL |
+| `disk` | JSON under `data/` | No DB MCP (disk cache only) |
+| `lidb` | **liorm** → embedded lidb (PH-DB-10) | `li-control-plane-liq` MCP + `liq-query.ts` |
+
+Legacy: `LI_STACK_SKIP_SUPABASE=1` → same as `disk`.
+
 ## Dependencies (sequenced)
 
 1. **PH-DB-1** — `lidb` scaffold: migrations, pg-subset, registry schema  
@@ -28,8 +38,11 @@ Disk store (`LI_CONTROL_PLANE_STORE=disk`) stays for CI and offline dev; lidb is
 
 | Path | Purpose |
 |------|---------|
-| `src/e2e/lidb-control-plane.e2e.ts` | Skipped until `LI_CONTROL_PLANE_STORE=lidb` and `LI_E2E_LIDB=1`; `test.todo` checklist for persist/read/security/MCP |
-| `src/db/read-query.ts` | Comment: Supabase SQL probe → future **liq** MCP |
+| `src/mcp/lidb-liq-mcp.ts` | MCP: `schema_snapshot`, `describe_table_liq`, `query_control_plane_liq` (mock via `liq-query.ts`) |
+| `src/db/liq-query.ts` | Mock `read <table> limit N` + catalog snapshot until lidb engine wired |
+| `src/e2e/lidb-control-plane.e2e.ts` | Skipped until `LI_CONTROL_PLANE_STORE=lidb` and `LI_E2E_LIDB=1`; `lidbE2eSkipReasons()` + partial live tests |
+| `src/db/read-query.ts` | Deprecated for agents — prefer liq MCP |
+| `src/mcp/mcp-config.ts` | `buildControlPlaneLiqMcpServers()` when store=lidb |
 | `docs/plans/lidb-migration-control-plane.md` | Agent continuation (below) |
 
 Existing Supabase e2e remains: `src/e2e/control-plane-db.e2e.ts` (`LI_E2E_DB=1`).
@@ -39,7 +52,7 @@ Existing Supabase e2e remains: `src/e2e/control-plane-db.e2e.ts` (`LI_E2E_DB=1`)
 - [ ] Extend `ControlPlaneStore` in `src/db/client.ts`: `"lidb"` alongside `supabase` \| `disk`
 - [ ] `assertStoreReady()` when `lidb`: require `lis db status` healthy or `LI_LIDB_URL`
 - [ ] `persist.ts`: liorm execute paths for `agent_runs`, handoffs, etc. (schema parity with `supabase/migrations/`)
-- [ ] Replace or alias MCP: `li-control-plane-liq` using `lidb/liq` catalog + allowlist (same tables as `schema-catalog.ts`)
+- [x] Stub MCP: `li-control-plane-liq` + `liq-query.ts` mock (PH-DB-2/10 harness)
 - [ ] Backfill: extend `scripts/backfill-control-plane-db.mjs` for lidb import from disk cache
 - [ ] Un-skip `lidb-control-plane.e2e.ts` todos; gate CI optional job `LI_E2E_LIDB=1`
 - [ ] Deprecation note in `.env.example` for Supabase-only vars when `lidb` is default in dev profiles
@@ -48,21 +61,21 @@ Existing Supabase e2e remains: `src/e2e/control-plane-db.e2e.ts` (`LI_E2E_DB=1`)
 
 - Read path: no raw mutating SQL from agents; liq compiles to parameterized plans (PH-DB-2 security tests)  
 - Table allowlist unchanged (`CONTROL_PLANE_TABLES`)  
-- MCP off by default in untrusted agents: keep `LI_CONTROL_PLANE_DB_MCP=0` / future `LI_CONTROL_PLANE_LIQ_MCP=0` pattern  
+- MCP off by default in untrusted agents: keep `LI_CONTROL_PLANE_DB_MCP=0` / `LI_CONTROL_PLANE_LIQ_MCP=0` pattern  
 - CVE-oriented regression names in `lidb/tests/security/` run in ecosystem CI before enabling lidb store by default
 
 ## Agent continuation
 
-1. Read: this file, `src/e2e/control-plane-db.e2e.ts`, `src/e2e/lidb-control-plane.e2e.ts`, `src/db/read-query.ts`, `src/mcp/control-plane-db-mcp.ts`, `../lidb/docs/liq-spec.md` (when PH-DB-2 PR lands)  
-2. Confirm WP1–WP3 merged or available locally: `lidb` repo, `lis db start`, `liq` AST smoke  
-3. Implement `configuredStore() === "lidb"` branch in `client.ts` + `persist.ts`; run `npm test` (disk mock unchanged)  
-4. Flesh out `lidb-control-plane.e2e.ts` todos; add `test:e2e:lidb` script mirroring `LI_E2E_DB` pattern  
-5. Open PR removing `test.todo` rows as each gate passes; update `CHANGELOG.md` [Unreleased]  
-6. Blocked on: lidb engine accepting control-plane migrations — do not fake-pass e2e against Supabase URL
+1. **Read:** this file; `src/mcp/lidb-liq-mcp.ts`; `src/db/liq-query.ts`; `src/e2e/lidb-control-plane.e2e.ts`; `src/e2e/control-plane-db.e2e.ts`; `src/db/read-query.ts` (deprecated for agents); `../lidb/docs/liq-spec.md` when PH-DB-2 lands  
+2. **Run:** `npm run build && npm test` (disk store — includes `liq-query.test.ts`); optional lidb harness:  
+   `LI_CONTROL_PLANE_STORE=lidb LI_E2E_LIDB=1 npm run build && LI_CONTROL_PLANE_STORE=lidb LI_E2E_LIDB=1 node --test dist/e2e/lidb-control-plane.e2e.js`  
+3. **Then:** extend `configuredStore()` / `persist.ts` for `lidb`; wire `runLiqQuery` to real liorm when `LI_LIDB_URL` is set; remove `test.todo` rows in `lidb-control-plane.e2e.ts` as gates pass  
+4. **Blocked on:** lidb engine + control-plane migrations accepting the same schema as `supabase/migrations/` — do not fake-pass persist e2e against Supabase URL  
 
 ## References
 
 - E2E (current): `LI_E2E_DB=1` + `control-plane-db.e2e.ts`  
 - E2E (future): `LI_CONTROL_PLANE_STORE=lidb` + `LI_E2E_LIDB=1` + `lidb-control-plane.e2e.ts`  
+- MCP: `LI_CONTROL_PLANE_LIQ_MCP=0` disables liq tools; `LI_CONTROL_PLANE_LIQ_MCP=1` forces liq MCP even before default store flip  
 - Skill: `.cursor/skills/explore-control-plane-db/SKILL.md` (update when liq MCP ships)  
 - Proposal track: `../roadmap/proposals/lidb-li-data-platform.md` (PH-DB-0, when present)

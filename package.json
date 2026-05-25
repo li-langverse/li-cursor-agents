@@ -34,6 +34,7 @@
     "test:e2e": "npm run build && CURSOR_MOCK=1 node --test dist/e2e/heap.e2e.js dist/e2e/swarm-handoff.e2e.js dist/e2e/agent-matrix.e2e.js",
     "test:e2e:demo": "npm run build && LI_CONTROL_PLANE_STORE=disk CURSOR_MOCK=1 node --test dist/e2e/repo-workflow-push.e2e.js dist/e2e/code-implementer-push.e2e.js",
     "test:e2e:sdk": "npm run build && env -u CURSOR_MOCK LI_E2E_SDK=1 node --test dist/e2e/sdk-live.e2e.js",
+    "test:e2e:lidb": "npm run build && LI_CONTROL_PLANE_STORE=lidb LI_E2E_LIDB=1 node --test dist/e2e/lidb-control-plane.e2e.js",
     "smoke:li-demo:live": "npm run build && env -u CURSOR_MOCK -u LI_REPO_WORKFLOW_USE_FIXTURE -u LI_REPO_WORKFLOW_SKIP_PUSH node scripts/live-li-demo-smoke.mjs",
     "verify:agents:live": "npm run build && env -u CURSOR_MOCK LI_REPO_WORKFLOW_SKIP_PUSH=1 LI_REPO_WORKFLOW_USE_FIXTURE=1 node scripts/verify-all-agents-live.mjs",
     "ci": "npm run build && CURSOR_MOCK=1 npm test && node dist/cli/run-agent.js --agent orchestrator --mock --dry-run && node dist/cli/supervisor.js --once --mock",
