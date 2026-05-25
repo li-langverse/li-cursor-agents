@@ -557,6 +557,15 @@ export const SETTINGS_SCHEMA: SettingDefinition[] = [
     restartRequired: true,
   },
   {
+    key: "LI_AGENT_DASHBOARD_HOST",
+    label: "Ops API bind host",
+    description: "Listen address (127.0.0.1 loopback default; 0.0.0.0 for LAN).",
+    category: "paths",
+    type: "string",
+    defaultValue: "127.0.0.1",
+    restartRequired: true,
+  },
+  {
     key: "LI_DASHBOARD_UI_PORT",
     label: "Next.js UI port",
     description: "Port for dashboard-ui dev server.",
