@@ -38,6 +38,7 @@ const ROLE_CONTENT: Partial<Record<AgentId, RegExp[]>> = {
   proof_gap_researcher: [/proof|provability|trusted|G-/i],
   stdlib_researcher: [/std|li-std|ecosystem/i],
   swarm_observer: [/swarm|handoff|self-healing|meta-agent/i],
+  ecosystem_grader: [/ecosystem.quality|quality.report|scorecard|grade/i],
   docs_ui_tester: [/ui-audit|remediation|contrast|baseline|axe/i],
   docs_ux_tester: [/ux-audit|SOTA|journey|friction|rubric/i],
   gui_ui_tester: [/ui-audit|remediation|pixel|dashboard/i],

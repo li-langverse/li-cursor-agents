@@ -29,6 +29,7 @@ export type AgentId =
   | "proof_gap_researcher"
   | "stdlib_researcher"
   | "swarm_observer"
+  | "ecosystem_grader"
   | "docs_ui_tester"
   | "docs_ux_tester"
   | "gui_ui_tester"

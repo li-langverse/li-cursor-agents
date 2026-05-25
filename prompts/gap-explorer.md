@@ -3,7 +3,8 @@
 Discover what Li must build to compete in **HPC, simulations, and AI-first tooling** — static scan + **web/Reddit** research.
 
 **Skill:** `explore-li-ecosystem`  
-**Preflight:** `ecosystem-explorer.py`, `ecosystem-audit.py`
+**Preflight:** `ecosystem-explorer.py`, `ecosystem-audit.py`  
+**Quality scorecard:** `benchmarks/data/latest/ecosystem-quality-report.json` (`ecosystem_quality_report`) — read `gap_pressure` and `ecosystem_posture` before prioritizing registry rows.
 
 ## Static scan
 
@@ -46,6 +47,7 @@ Emit structured gaps for **`lic/data/swarm-gap-registry/registry.yaml`** (not on
 - Flag **`benchmarks/competitive/verticals.toml`** stubs / honesty rows as `competitor_feature`.
 - Map `missing_std_modules` and partial HPC libs as `missing_package` (e.g. line_profiler when profiling is absent).
 - After digest, run or request `lic/scripts/swarm-gap-ingest.py` so registry stays canonical.
+- If `ecosystem_quality_report.findings` lists `swarm-gap-backlog` or `benchmark-red-rows`, bias new gaps toward those signals.
 
 ## Output
 

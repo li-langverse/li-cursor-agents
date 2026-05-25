@@ -38,6 +38,7 @@ import { runSwarmGapIngestTick } from "../observer/gap-registry-ingest.js";
 import { loadObserverState, saveObserverState } from "../observer/state.js";
 import { scanSwarmHealth } from "../observer/swarm-health.js";
 import {
+  applyInfrastructureRemediations,
   mergeRemediationTasks,
   recordRemediationOutcome,
   remediationsToTasks,
@@ -125,6 +126,11 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
       observerState,
       recentRuns: recentForObserver,
     });
+    void applyInfrastructureRemediations(swarmHealth.remediations).catch((err) => {
+      console.warn(
+        `observer: infra remediation failed: ${err instanceof Error ? err.message : err}`,
+      );
+    });
     const remediationTasks = remediationsToTasks(swarmHealth.remediations, briefingHash);
     tasks = mergeRemediationTasks(tasks, remediationTasks, options.maxTasksPerTick);
     state.swarm_health = swarmHealth;
@@ -151,7 +157,8 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
   if (tasks.length === 0 && options.force) {
     const stopped = new Set(state.stopped_agents ?? []);
     for (const def of AGENT_REGISTRY) {
-      if (def.id === "orchestrator" || def.id === "swarm_observer") continue;
+      if (def.id === "orchestrator" || def.id === "swarm_observer" || def.id === "ecosystem_grader")
+        continue;
       if (stopped.has(def.id)) continue;
       tasks.push({
         fingerprint: taskFingerprint(def.id, "supervisor force dispatch"),

@@ -300,6 +300,18 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     cursorSdkMode: "plan",
   },
   {
+    id: "ecosystem_grader",
+    name: "Ecosystem grader",
+    description:
+      "Scores swarm/ecosystem quality from briefing, goal-directed snapshot, and run samples; recommends meta fixes.",
+    category: "platform",
+    promptFile: "ecosystem-grader.md",
+    skills: ["explore-control-plane-db"],
+    needsWeb: false,
+    preflightKeys: ["briefing"],
+    cursorSdkMode: "plan",
+  },
+  {
     id: "docs_ui_tester",
     name: "Docs UI tester",
     description: "Visual audit for MkDocs/docs: screenshots, axe, baselines; files ui_remediation issues.",

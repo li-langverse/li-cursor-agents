@@ -74,6 +74,7 @@ export const COORDINATOR_REGISTRY: CoordinatorDefinition[] = [
       "org_repo_onboarder",
       "workspace_sweeper",
       "swarm_observer",
+      "ecosystem_grader",
     ],
     priority: 50,
     promptFile: "coord-platform.md",

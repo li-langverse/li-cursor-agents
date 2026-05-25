@@ -19,11 +19,12 @@ You are invoked when the swarm is **degraded** or on a scheduled meta audit.
 
 ## Your audit checklist
 
-1. Read `data/control-plane/latest-report.json` — `swarm_health`, `interventions`, `recent_runs`.
-2. Read `data/control-plane/state.json` — `observer.retry_counts`, `stopped_agents`.
-3. Compare `recommended_agents` vs `recent_runs` — goal orientation drift?
-4. Sample `data/runs/*.json` for agents with `status: error` — classify root cause (SDK, preflight stale, prompt gap, repo conflict).
-5. Check supervisor activity log patterns (stuck tick, zero executions, cooldown over-blocking).
+1. Read **`benchmarks/data/latest/ecosystem-quality-report.json`** (`ecosystem_quality_report`) — `overall_score`, `grade`, `dimensions`, `findings`, `unattended_safe`. Regenerate with `python3 scripts/ecosystem-quality-grade.py` in **benchmarks** when stale.
+2. Read `data/control-plane/latest-report.json` — `swarm_health`, `interventions`, `recent_runs`.
+3. Read `data/control-plane/state.json` — `observer.retry_counts`, `stopped_agents`.
+4. Compare `recommended_agents` vs `recent_runs` — goal orientation drift?
+5. Sample `data/runs/*.json` for agents with `status: error` — classify root cause (SDK, preflight stale, prompt gap, repo conflict).
+6. Check supervisor activity log patterns (stuck tick, zero executions, cooldown over-blocking).
 
 ## Deliverables (required sections)
 
