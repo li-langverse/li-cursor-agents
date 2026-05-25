@@ -2,82 +2,112 @@
 
 The Li async swarm replaces nine independent `lic` systemd plan loops with one control plane in **li-cursor-agents**. Goals live in YAML; backlogs and gate scripts stay in **lic** as data only.
 
-## System diagram
+## Conceptual view
+
+**One sentence:** You declare *what* should improve (goals); the swarm decides *who* runs next and *when*, within a fixed budget of parallel AI sessions; the repo only moves forward when automated gates say it is safe.
+
+Think of four layers, bottom to top:
+
+| Layer | Question it answers | You touch it… |
+|-------|---------------------|---------------|
+| **Codebase** | What changed? | Via PRs the agents open |
+| **Agents** | Who does the work? | Rarely — registry + prompts |
+| **Swarm** | Who runs next, how many at once? | Start/stop dashboard |
+| **Goals** | What are we trying to achieve? | YAML + backlogs in `lic` |
+
+The loop is continuous: **read signals → pick highest-value goal → run agent → verify with gates → ship or retry → update briefing → repeat.**
+
+```
+                    ┌─────────────────────────────────────┐
+                    │  NORTH STAR                         │
+                    │  benchmarks · quality report · gaps │
+                    └──────────────────┬──────────────────┘
+                                       │ informs
+                    ┌──────────────────▼──────────────────┐
+                    │  GOALS                              │
+                    │  "improve httpd" · "research MD"    │
+                    │  research-goals + implement-goals   │
+                    └──────────────────┬──────────────────┘
+                                       │ schedules
+                    ┌──────────────────▼──────────────────┐
+                    │  SWARM                              │
+                    │  research · implement · audit lanes │
+                    │  ≤4 parallel SDK sessions         │
+                    └──────────────────┬──────────────────┘
+                                       │ produces
+                    ┌──────────────────▼──────────────────┐
+                    │  CODEBASE                           │
+                    │  commits · PRs · passing gates      │
+                    └──────────────────┬──────────────────┘
+                                       │
+                                       └────── feedback ──────┘
+```
+
+**Infographic (brand colors, screenshot-ready):** open [swarm-infographic.html](./swarm-infographic.html) in a browser — 1200×675 artboard, optional **Export PNG** (html2canvas). Shows the six-step loop, lane pills, SDK slot budget, and old (9× lic loops) vs new (one swarm) contrast.
+
+**Old model (retired):** nine separate bash loops in `lic`, each fighting for the same SDK slots.
+
+**New model:** one swarm reads the same goals and backlogs; `lic` is where plans and gate scripts live, not where processes run.
+
+---
+
+## Technical diagram (Mermaid)
+
+For implementers who need node-level detail:
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {
-  'darkMode': true,
-  'background': '#0B0F14',
-  'primaryColor': '#1A2332',
-  'primaryTextColor': '#E8EDF4',
-  'primaryBorderColor': '#5B9FD4',
-  'secondaryColor': '#121820',
-  'secondaryTextColor': '#94A3B8',
-  'secondaryBorderColor': '#3D5568',
-  'tertiaryColor': '#243044',
-  'lineColor': '#5B9FD4',
-  'textColor': '#E8EDF4',
-  'mainBkg': '#0B0F14',
-  'nodeBorder': '#5B9FD4',
-  'clusterBkg': '#121820',
-  'titleColor': '#E8EDF4',
-  'edgeLabelBackground': '#1A2332'
-}}}%%
+%%{init: {"theme": "base", "themeVariables": {"primaryColor": "#1A2332", "primaryTextColor": "#E8EDF4", "primaryBorderColor": "#5B9FD4", "lineColor": "#5B9FD4", "secondaryColor": "#121820", "tertiaryColor": "#243044", "background": "#0B0F14", "mainBkg": "#0B0F14", "clusterBkg": "#121820", "titleColor": "#E8EDF4"}}}%%
 flowchart TB
-  subgraph control [Control plane - agents systemd]
-    DASH[Dashboard :9477]
-    ASYNC[Async swarm runtime]
-    SLOT[SDK slot pool max 4]
-    WD[Watchdog + swarm-health.json]
+  subgraph controlPlane ["Control plane · agents systemd"]
+    DASH["Dashboard port 9477"]
+    ASYNC["Async swarm runtime"]
+    SLOT["SDK slot pool · max 4"]
+    WD["Watchdog · swarm-health.json"]
     DASH --> ASYNC --> SLOT
     WD --> ASYNC
   end
 
-  subgraph goals [Goal registry - li-cursor-agents/config]
-    RG[research-goals.yaml]
-    IG[implement-goals.yaml]
-    SC[goal-scaffolds/*.md]
+  subgraph goalRegistry ["Goal registry · config"]
+    RG["research-goals.yaml"]
+    IG["implement-goals.yaml"]
+    SC["goal-scaffolds"]
     RG --> SC
     IG --> SC
   end
 
-  subgraph lanes [Continuous lanes]
-    RL[Research lane]
-    IL[Implement lane]
-    ML[Maintenance - briefing scorecards]
-    WP[Worker pool - meta agents]
+  subgraph lanePool ["Continuous lanes"]
+    RL["Research lane"]
+    IL["Implement lane"]
+    ML["Maintenance · briefing"]
+    WP["Worker pool"]
   end
 
-  subgraph data [Data in lic/benchmarks - no systemd loops]
-    BL[backlog.md todos]
-    GT[gates.sh]
-    BR[branches / worktrees]
+  subgraph licData ["lic data only · no plan loops"]
+    BL["backlog todos"]
+    GT["gates.sh"]
+    BR["branches"]
   end
 
-  subgraph outcomes [Outcomes]
-    HK[Handoffs queue]
-    PR[Commits + PRs]
-    REP[ecosystem-quality-report.json]
+  subgraph outcomePool ["Outcomes"]
+    HK["Handoffs queue"]
+    PR["Commits and PRs"]
+    REP["quality-report.json"]
   end
 
   ASYNC --> RL
   ASYNC --> IL
   ASYNC --> ML
   ASYNC --> WP
-  goals --> RL
-  goals --> IL
-  data --> goals
+  SC --> RL
+  SC --> IL
+  BL --> SC
+  GT --> SC
   RL --> HK
   RL --> PR
   IL --> HK
   IL --> PR
   ML --> REP
-  WP --> goals
-
-  classDef accent fill:#1A2332,stroke:#5B9FD4,color:#E8EDF4
-  classDef dataNode fill:#121820,stroke:#3D5568,color:#94A3B8
-  class DASH,ASYNC,RL,IL accent
-  class BL,GT,BR dataNode
+  WP --> SC
 ```
 
 Palette: `#0B0F14` background, `#5B9FD4` accent, `#E8EDF4` text, `#94A3B8` muted.
@@ -98,7 +128,17 @@ source ~/Documents/Cursor/.env   # CURSOR_API_KEY, GH_TOKEN
 
 This installs user systemd for the dashboard (`:9477`, `LI_AUTO_START_ASYNC_SWARM=1`) plus optional async-swarm and watchdog. Stop autostart: `touch data/control-plane/DISABLE_AUTOSTART`.
 
-Foreground dev: `npm run agents:async-swarm` or `./scripts/keep-agents-running.sh`.
+**LAN access (other machines on your network):** by default the ops-server binds to loopback (`127.0.0.1`). To expose the dashboard API and static UI on the LAN:
+
+```bash
+# One-shot install with LAN bind
+./scripts/install-agents-swarm-systemd.sh --lan
+systemctl --user restart li-agents-dashboard.service
+```
+
+Or set `LI_AGENT_DASHBOARD_HOST=0.0.0.0` in `~/Documents/Cursor/.env` (or project `.env`) before install/restart. Open from another host: `http://<this-machine-ip>:9477/` (`hostname -I` for the IP). If `ufw` is active: `sudo ufw allow 9477/tcp` (or your `LI_AGENT_DASHBOARD_PORT`). Binding `0.0.0.0` exposes the control plane to anyone who can reach the port — use only on trusted networks.
+
+Foreground dev: `npm run agents:async-swarm` or `./scripts/keep-agents-running.sh` (honors `LI_AGENT_DASHBOARD_HOST` from env).
 
 Retiring old units (data preserved): in `lic`, `./scripts/retire-goal-plan-loops.sh` (see `--apply` in script help).
 

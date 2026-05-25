@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Li goal-directed agent swarm</title>
+  <style>
+    :root {
+      --bg: #0B0F14;
+      --surface: #1A2332;
+      --surface-2: #243044;
+      --accent: #5B9FD4;
+      --accent-dim: #3d6f9a;
+      --text: #E8EDF4;
+      --muted: #94A3B8;
+      --border: #3D5568;
+      --success: #6ee7a8;
+      --warn: #f0a070;
+      --old: #6b4a4a;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #06080c;
+      color: var(--text);
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px 48px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .toolbar {
+      width: min(1200px, 100%);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .toolbar button {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+    }
+
+    .toolbar button:hover {
+      border-color: var(--accent);
+      background: var(--surface-2);
+    }
+
+    .toolbar button.primary {
+      background: var(--accent-dim);
+      border-color: var(--accent);
+    }
+
+    /* 1200×675 ≈ 16:9 screenshot-friendly */
+    #artboard {
+      width: min(1200px, 100%);
+      aspect-ratio: 1200 / 675;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(91, 159, 212, 0.12), transparent),
+        var(--bg);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+      overflow: hidden;
+      position: relative;
+    }
+
+    #artboard::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(61, 85, 104, 0.15) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(61, 85, 104, 0.15) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    .inner {
+      width: 1200px;
+      height: 675px;
+      transform-origin: top left;
+      position: absolute;
+      top: 0;
+      left: 0;
+      padding: 36px 40px 32px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 0;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
+
+    .header p {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--accent);
+      border: 1px solid var(--accent-dim);
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 10px;
+      background: rgba(91, 159, 212, 0.08);
+    }
+
+    /* Main flow */
+    .flow {
+      display: grid;
+      grid-template-columns: 1fr 48px;
+      grid-template-rows: repeat(5, 1fr);
+      gap: 0 0;
+      align-items: stretch;
+      min-height: 0;
+      position: relative;
+    }
+
+    .steps {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 6px;
+      padding-right: 8px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      gap: 14px;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 16px;
+      min-height: 0;
+      flex: 1;
+    }
+
+    .step.highlight {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, var(--surface-2) 0%, var(--surface) 100%);
+      box-shadow: 0 0 24px rgba(91, 159, 212, 0.12);
+    }
+
+    .step-num {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      border: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      flex-shrink: 0;
+    }
+
+    .step-body h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 2px;
+    }
+
+    .step-body p {
+      font-size: 13px;
+      color: var(--text);
+      line-height: 1.35;
+    }
+
+    .step-body .detail {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .lanes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .lane-pill {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(91, 159, 212, 0.15);
+      color: var(--accent);
+      border: 1px solid var(--accent-dim);
+    }
+
+    .lane-pill.maint {
+      background: rgba(148, 163, 184, 0.12);
+      color: var(--muted);
+      border-color: var(--border);
+    }
+
+    .slots {
+      display: inline-flex;
+      gap: 4px;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    .slot-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+    }
+
+    .slot-dot.empty {
+      background: transparent;
+      border: 1px solid var(--border);
+      box-shadow: none;
+    }
+
+    /* Arrow column + feedback SVG */
+    .arrows-col {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .arrows-col svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Compare row */
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .compare-card {
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .compare-card.old {
+      background: rgba(107, 74, 74, 0.2);
+      border: 1px solid rgba(240, 160, 112, 0.35);
+    }
+
+    .compare-card.old h4 {
+      color: var(--warn);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+
+    .compare-card.new {
+      background: rgba(91, 159, 212, 0.1);
+      border: 1px solid var(--accent-dim);
+    }
+
+    .compare-card.new h4 {
+      color: var(--success);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+
+    .compare-card p { color: var(--muted); }
+    .compare-card strong { color: var(--text); }
+
+    .loops-visual {
+      display: flex;
+      gap: 4px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+
+    .loop-chip {
+      font-size: 9px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(240, 160, 112, 0.15);
+      color: var(--warn);
+      border: 1px solid rgba(240, 160, 112, 0.3);
+    }
+
+    .footer-note {
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 10px;
+      opacity: 0.85;
+    }
+
+    .hint {
+      width: min(1200px, 100%);
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 14px;
+    }
+
+    @media (max-width: 1240px) {
+      #artboard {
+        aspect-ratio: 1200 / 675;
+        height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <button type="button" id="btn-open" title="Open in default browser">Open file</button>
+    <button type="button" class="primary" id="btn-png">Export PNG (1200×675)</button>
+  </div>
+
+  <div id="artboard">
+    <div class="inner" id="capture-target">
+      <header class="header">
+        <span class="badge">li-cursor-agents</span>
+        <h1>Goal-directed agent swarm</h1>
+        <p>Declare what to improve · orchestrate who runs · ship only when gates pass</p>
+      </header>
+
+      <div class="flow">
+        <div class="steps">
+          <article class="step">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h3>Signals</h3>
+              <p>North-star context for prioritization</p>
+              <p class="detail">Briefing · benchmarks · quality grade · gap analysis</p>
+            </div>
+          </article>
+
+          <article class="step">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h3>Goals YAML</h3>
+              <p>What should improve next</p>
+              <p class="detail">research-goals.yaml + implement-goals.yaml · scaffolds in lic data</p>
+            </div>
+          </article>
+
+          <article class="step highlight">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h3>Swarm orchestrator</h3>
+              <p>One async control plane
+                <span class="slots" aria-label="4 SDK slots">
+                  <span class="slot-dot"></span><span class="slot-dot"></span>
+                  <span class="slot-dot"></span><span class="slot-dot"></span>
+                </span>
+              </p>
+              <div class="lanes">
+                <span class="lane-pill">Research</span>
+                <span class="lane-pill">Implement</span>
+                <span class="lane-pill maint">Maintenance</span>
+                <span class="lane-pill">Workers</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="step">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <h3>Agents</h3>
+              <p>Goal-scoped Cursor SDK runs</p>
+              <p class="detail">Researchers · implementers · auditors — not ad-hoc chat sessions</p>
+            </div>
+          </article>
+
+          <article class="step">
+            <div class="step-num">5</div>
+            <div class="step-body">
+              <h3>Codebase</h3>
+              <p>PRs and commits land <strong style="color:var(--success)">only when gates pass</strong></p>
+              <p class="detail">lic gates.sh · handoffs · branches — data stays in lic, processes in agents</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="arrows-col" aria-hidden="true">
+          <svg viewBox="0 0 48 520" preserveAspectRatio="none">
+            <defs>
+              <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 Z" fill="#5B9FD4"/>
+              </marker>
+            </defs>
+            <line x1="24" y1="40" x2="24" y2="95" stroke="#5B9FD4" stroke-width="2" marker-end="url(#arrow)"/>
+            <line x1="24" y1="145" x2="24" y2="200" stroke="#5B9FD4" stroke-width="2" marker-end="url(#arrow)"/>
+            <line x1="24" y1="250" x2="24" y2="305" stroke="#5B9FD4" stroke-width="2" marker-end="url(#arrow)"/>
+            <line x1="24" y1="355" x2="24" y2="410" stroke="#5B9FD4" stroke-width="2" marker-end="url(#arrow)"/>
+            <line x1="24" y1="460" x2="24" y2="500" stroke="#5B9FD4" stroke-width="2" marker-end="url(#arrow)"/>
+            <!-- feedback loop -->
+            <path d="M 42 480 C 80 480, 90 60, 42 30" fill="none" stroke="#94A3B8" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrow)"/>
+            <text x="44" y="260" fill="#94A3B8" font-size="9" font-family="system-ui" transform="rotate(90 44 260)">feedback</text>
+          </svg>
+        </div>
+      </div>
+
+      <div class="compare">
+        <div class="compare-card old">
+          <h4>Old · retired</h4>
+          <p><strong>9 independent lic bash plan loops</strong> — each fighting for the same SDK slots, no shared scheduler.</p>
+          <div class="loops-visual">
+            <span class="loop-chip">httpd</span><span class="loop-chip">sim-algo</span><span class="loop-chip">md</span>
+            <span class="loop-chip">+6 more</span>
+          </div>
+        </div>
+        <div class="compare-card new">
+          <h4>New · goal-directed</h4>
+          <p><strong>One swarm</strong> in li-cursor-agents reads the same goals &amp; backlogs; lic holds plans and gates only.</p>
+          <p style="margin-top:6px;color:var(--accent)">Read signals → pick goal → run agent → verify → ship → repeat</p>
+        </div>
+      </div>
+
+      <p class="footer-note">Continuous loop · dashboard :9477 · max 4 concurrent SDK sessions</p>
+    </div>
+  </div>
+
+  <p class="hint">Artboard 1200×675 px · ideal for X / LinkedIn screenshots · scale-to-fit on smaller screens</p>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
+  <script>
+    (function scaleArtboard() {
+      const board = document.getElementById('artboard');
+      const inner = board.querySelector('.inner');
+      function apply() {
+        const w = board.clientWidth;
+        const scale = w / 1200;
+        inner.style.transform = 'scale(' + scale + ')';
+        board.style.height = (675 * scale) + 'px';
+      }
+      apply();
+      window.addEventListener('resize', apply);
+    })();
+
+    document.getElementById('btn-png').addEventListener('click', async function () {
+      const target = document.getElementById('capture-target');
+      const btn = this;
+      btn.disabled = true;
+      btn.textContent = 'Rendering…';
+      try {
+        const canvas = await html2canvas(target, {
+          backgroundColor: '#0B0F14',
+          scale: 2,
+          width: 1200,
+          height: 675,
+          windowWidth: 1200,
+          windowHeight: 675,
+          useCORS: true,
+          logging: false,
+        });
+        const link = document.createElement('a');
+        link.download = 'li-goal-directed-swarm.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      } catch (e) {
+        alert('Export failed: ' + (e && e.message ? e.message : e));
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Export PNG (1200×675)';
+      }
+    });
+
+    document.getElementById('btn-open').addEventListener('click', function () {
+      window.open(location.href, '_blank');
+    });
+  </script>
+</body>
+</html>
