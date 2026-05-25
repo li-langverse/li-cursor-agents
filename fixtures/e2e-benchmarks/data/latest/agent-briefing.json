@@ -2,36 +2,6 @@
   "generated_at": "2026-05-19T12:00:00Z",
   "recommended_agents": [
     {
-      "agent": "gui_ui_tester",
-      "reason": "ui-audit: 2 failing target(s) — GUI surfaces",
-      "source": "ui_audit"
-    },
-    {
-      "agent": "tui_ui_tester",
-      "reason": "ui-audit: 2 failing target(s) — TUI surfaces",
-      "source": "ui_audit"
-    },
-    {
-      "agent": "docs_ux_tester",
-      "reason": "ux-audit: rubric or journey below threshold",
-      "source": "ux_audit"
-    },
-    {
-      "agent": "tui_ux_tester",
-      "reason": "ux-audit: rubric or journey below threshold",
-      "source": "ux_audit"
-    },
-    {
-      "agent": "code_implementer",
-      "reason": "swarm: 1 handoff(s) ready to implement",
-      "source": "swarm_scorecard"
-    },
-    {
-      "agent": "proof_gap_researcher",
-      "reason": "swarm: research goal provability_holes eligible (priority 9)",
-      "source": "research_goals_status"
-    },
-    {
       "agent": "docs_ui_tester",
       "reason": "e2e: ui-audit docs failures"
     },
@@ -124,7 +94,7 @@
         ],
         "axe_violations": [],
         "pixel_diff": {
-          "max_ratio": 0,
+          "max_ratio": 0.0,
           "threshold": 0.04
         },
         "contrast_failures": [],
@@ -143,7 +113,7 @@
         ],
         "axe_violations": [],
         "pixel_diff": {
-          "max_ratio": 0,
+          "max_ratio": 0.0,
           "threshold": 0.04
         },
         "contrast_failures": [],
@@ -162,7 +132,7 @@
         ],
         "axe_violations": [],
         "pixel_diff": {
-          "max_ratio": 0,
+          "max_ratio": 0.0,
           "threshold": 0.04
         },
         "contrast_failures": [],
@@ -462,104 +432,5 @@
     "layers": [],
     "flat_tasks": [],
     "validation_errors": []
-  },
-  "swarm_scorecard": {
-    "pending_handoffs": 1,
-    "pending_placement": 0,
-    "ready_to_implement": 1,
-    "by_domain": {},
-    "active_research_session": "goal_researcher:ai_ecosystem (cycle 1)",
-    "research_lane_enabled": true,
-    "implement_lane_enabled": true,
-    "last_research_tick_at": "2026-05-19T19:57:15.058Z",
-    "last_implement_tick_at": "2026-05-19T08:54:29.180Z"
-  },
-  "research_goals_status": [
-    {
-      "goal_id": "numerics_sota",
-      "title": "Numerics / HPC benchmark SOTA",
-      "agent": "numerics_researcher",
-      "priority": 7,
-      "last_run_at": "2026-05-19T08:54:44.638Z",
-      "eligible": true
-    },
-    {
-      "goal_id": "simulation_techniques",
-      "title": "Simulation methods and reference architectures",
-      "agent": "goal_researcher",
-      "priority": 6,
-      "last_run_at": "2026-05-19T08:54:44.685Z",
-      "eligible": true
-    },
-    {
-      "goal_id": "game_engine_ux",
-      "title": "Easy game engine + AI integration patterns",
-      "agent": "goal_researcher",
-      "priority": 5,
-      "eligible": true
-    },
-    {
-      "goal_id": "cad_fundamentals",
-      "title": "CAD/geometry — kernels, packages, and Li std gaps",
-      "agent": "goal_researcher",
-      "priority": 5,
-      "eligible": true
-    },
-    {
-      "goal_id": "ai_ecosystem",
-      "title": "AI-first tooling on Li (training, inference, agents)",
-      "agent": "goal_researcher",
-      "priority": 6,
-      "eligible": true
-    },
-    {
-      "goal_id": "web_platform",
-      "title": "Web stack, HTTP, WASM, secure deploy story",
-      "agent": "goal_researcher",
-      "priority": 5,
-      "eligible": true
-    },
-    {
-      "goal_id": "ecosystem_gaps",
-      "title": "Org-wide std/packages + ecosystem signals",
-      "agent": "gap_explorer",
-      "priority": 4,
-      "last_run_at": "2026-05-19T19:57:15.057Z",
-      "eligible": true
-    },
-    {
-      "goal_id": "stdlib_ecosystem",
-      "title": "Deep std + li-std-* audit; packages to build vs improve",
-      "agent": "stdlib_researcher",
-      "priority": 8,
-      "eligible": true
-    },
-    {
-      "goal_id": "ui_ux_quality",
-      "title": "Internal UI/UX vs SOTA (docs, GUI, TUI)",
-      "agent": "gui_ux_tester",
-      "priority": 5,
-      "eligible": true
-    },
-    {
-      "goal_id": "provability_holes",
-      "title": "Proof holes — compiler, contracts, trusted axioms",
-      "agent": "proof_gap_researcher",
-      "priority": 9,
-      "eligible": true
-    }
-  ],
-  "provability_scorecard": {
-    "open_plan_findings": 0,
-    "last_digest_hint": "lic/docs/verification/research-digests/",
-    "provability_goal_priority": 9,
-    "trigger_goal_id": "provability_holes"
-  },
-  "handoff_audit": {
-    "open_handoffs": 1,
-    "missing_north_star_fit": [],
-    "invalid_north_star_fit": []
-  },
-  "swarm_enriched_at": "2026-05-22T14:06:52.691Z",
-  "swarm_recommendations_merged_at": "2026-05-22T14:06:52.691Z"
+  }
 }

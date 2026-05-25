@@ -46,6 +46,11 @@ else
   echo "==> Supabase skipped (LI_STACK_SKIP_SUPABASE=1)"
 fi
 
+if [[ "${LI_ECOSYSTEM_SYNC_ON_START:-1}" != "0" ]]; then
+  echo "==> ecosystem sync (skills + optional pull)"
+  bash "$ROOT/scripts/maybe-sync-ecosystem.sh" || bash "$ROOT/scripts/sync-ecosystem.sh" --quick || true
+fi
+
 # --- Node ---
 echo "==> npm install (if needed) + build"
 if [[ ! -d node_modules ]]; then

@@ -10,7 +10,6 @@ You turn **new feature issues** into vision-aligned plans. You **do not** implem
 
 ## Read first
 
-0. [ecosystem-first.md](../../docs/ecosystem/ecosystem-first.md) + [tooling-catalog.md](../../docs/ecosystem/tooling-catalog.md)
 1. [vision-and-roadmap.md](https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/vision-and-roadmap.md)
 2. [engineering-standards.md](https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/engineering-standards.md)
 3. [lic master plan](https://github.com/li-langverse/lic/blob/main/docs/superpowers/plans/2026-05-14-li-master-plan.md) — PH tracker
@@ -26,7 +25,7 @@ python3 scripts/issue-feature-triage.py
 cat data/latest/issue-feature-triage.json
 ```
 
-If `gh` is unavailable: use the GitHub MCP/UI for open issues labeled `feature`, `enhancement`, `plan-needed`, or **`ecosystem-gap`** in **this** repo.
+If `gh` is unavailable: use the GitHub MCP/UI for open issues labeled `feature`, `enhancement`, or `plan-needed` in **this** repo.
 
 ---
 
@@ -43,14 +42,6 @@ For each issue in `needs_plan` + top 2 `candidates` for **this** repo:
 | E | Post issue comment with plan summary + links |
 | F | Open **draft PR** adding `docs/superpowers/plans/…` or package doc — **one issue per PR** |
 | G | Request label `plan-approved` from human; add `plan-needed` removal |
-
-### Issues labeled `ecosystem-gap`
-
-These are **catalog / tooling** gaps (see `file-ecosystem-gap-issue.py`). Plan must:
-
-- Name the catalog entry to add or fix (in **benchmarks** `tooling-catalog.md` + **roadmap** agent-kit if shared)
-- Avoid duplicating one-off scripts in product repos
-- Exit gate: catalog updated + script/skill/workflow merged + gap label removed
 
 **Language/compiler features** → plan lives in **lic**, even if issue is on another repo.
 
@@ -94,7 +85,6 @@ Use sibling file when automation is repo-scoped: `.cursor/automations/repos/<rep
 
 ## Blocked
 
-- Do not **force-push** branches — add commits or rebase + normal push ([git-workflow.md](../../docs/ecosystem/git-workflow.md))
 - Do not self-merge governance or roadmap PRs
 - Do not add Actions `schedule:` cron
 - Do not store secrets in plan files

@@ -96,6 +96,11 @@ export function defaultOpsPort(): number {
   return Number(process.env.LI_AGENTS_OPS_PORT ?? process.env.LI_AGENT_DASHBOARD_PORT ?? 9477);
 }
 
+/** Bind address for ops-server (default loopback). Set LI_AGENT_DASHBOARD_HOST=0.0.0.0 for LAN. */
+export function defaultOpsHost(): string {
+  return process.env.LI_AGENT_DASHBOARD_HOST ?? "127.0.0.1";
+}
+
 let statisticsCache: { at: number; stats: SwarmStatistics; key: string } | null = null;
 let reportCache: { at: number; body: unknown } | null = null;
 let interventionsCache: { at: number; body: unknown } | null = null;

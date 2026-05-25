@@ -74,6 +74,46 @@ test("scanInterventions flags numerics deliverable gaps", () => {
   assert.ok(items.some((i) => i.kind === "implementation_gap" && i.title.includes("lic#99")));
 });
 
+test("scanInterventions links red benchmarks to bench drill-down", () => {
+  const items = scanInterventions(
+    {
+      benchmark_dashboard_base: "https://li-langverse.github.io/benchmarks",
+      ecosystem_audit: {
+        benchmarks: {
+          red: [{ id: "horner_pure_li", ratio_vs_cpp: 88.8 }],
+          deep_links: [
+            {
+              id: "horner_pure_li",
+              url: "https://li-langverse.github.io/benchmarks/bench/horner_pure_li/",
+            },
+          ],
+        },
+      },
+      recommended_agents: [],
+    },
+    {},
+  );
+  const red = items.find((i) => i.kind === "ci_red");
+  assert.ok(red);
+  assert.ok(
+    red!.links.some((u) => u.includes("/bench/horner_pure_li/")),
+    `expected bench deep link, got ${red!.links.join(", ")}`,
+  );
+  assert.ok(!red!.links.includes("https://li-langverse.github.io/benchmarks/"));
+});
+
+test("scanInterventions builds bench link from first red id when deep_links absent", () => {
+  const items = scanInterventions(
+    {
+      ecosystem_audit: { benchmarks: { red: [{ id: "matmul_blocked" }] } },
+      recommended_agents: [],
+    },
+    {},
+  );
+  const red = items.find((i) => i.kind === "ci_red");
+  assert.equal(red?.links[0], "https://li-langverse.github.io/benchmarks/bench/matmul_blocked/");
+});
+
 test("org_agent_kit_audit exit 1 with drift is not a human preflight failure", () => {
   const items = scanInterventions(
     {
