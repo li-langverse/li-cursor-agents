@@ -40,19 +40,41 @@ If you previously used **xrdp** instead of GNOME’s built-in RDP, keep that sta
 3. **RDP**
    - Windows: Remote Desktop / `mstsc` → `192.168.10.31`
    - Ubuntu: Remmina, GNOME Connections, or `xfreerdp /v:192.168.10.32`
-4. **SSH / Cursor**: `ssh julian@192.168.10.31` or Remote-SSH in Cursor.
+4. **SSH shell**: `ssh julian@192.168.10.31` or `ssh julian@192.168.10.32`
+5. **Cursor Remote-SSH** (full IDE on remote) — see below
+
+## Cursor Remote-SSH (terminals + Agent on remote machine)
+
+Use extension **`anysphere.remote-ssh`** only (not Microsoft `ms-vscode-remote.remote-ssh`).
+
+| Connect to | Host alias (example) | Prep on that machine |
+|------------|----------------------|----------------------|
+| Ubuntu `.32` | `li-ubuntu` | `scripts/linux/prepare-cursor-remote-ssh.sh` |
+| Windows `.31` | `li-windows` | `scripts/windows/enable-cursor-remote-ssh-server.ps1` (Admin) |
+
+**Client (laptop / other PC):**
+
+1. Copy `scripts/ssh/ssh-config.example` → `~/.ssh/config` (edit user/IP if needed).
+2. `Ctrl+Shift+P` → **Remote-SSH: Connect to Host…** → `li-ubuntu` or `li-windows`.
+3. **File → Open Folder** on the remote path (e.g. `/home/julian/.../li` or `C:/Users/julian/Documents/Programming/li`).
+4. Integrated terminal runs **on the remote** after `cursor-server` installs (first connect takes ~1 min).
+
+**If terminal is blank / Agent stuck on Remote-SSH:**
+
+- Output panel → **Remote - SSH** — check for `Failed to install Cursor Server` or `PTY`.
+- On the **remote**: `rm -rf ~/.cursor-server` then reconnect.
+- **Settings → Agents → Legacy Terminal Tool** → ON → **Terminal: Kill All Terminals** → reload window.
+- Ubuntu: confirm `AllowTcpForwarding yes` in `/etc/ssh/sshd_config` (prep script does this).
+
+**CLI open (optional):**
+
+```bash
+cursor --folder-uri "vscode-remote://ssh-remote+li-ubuntu/home/julian/projects/li"
+```
 
 ## Optional: SSH config (laptop)
 
-```sshconfig
-Host win-dev
-    HostName 192.168.10.31
-    User julian
-
-Host ubuntu-dev
-    HostName 192.168.10.32
-    User julian
-```
+See `scripts/ssh/ssh-config.example` for `li-ubuntu` / `li-windows` host blocks.
 
 ## Troubleshooting
 

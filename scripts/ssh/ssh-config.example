@@ -1,0 +1,12 @@
+# Copy to ~/.ssh/config (Windows: C:\Users\<you>\.ssh\config)
+# Then: Cursor -> Remote-SSH: Connect to Host -> pick a Host below
+
+Host li-ubuntu
+    HostName 192.168.10.32
+    User julian
+    Port 22
+
+Host li-windows
+    HostName 192.168.10.31
+    User julian
+    Port 22
