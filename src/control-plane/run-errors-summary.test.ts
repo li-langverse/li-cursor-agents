@@ -39,6 +39,8 @@ test("summarizeRunErrors groups by category and agent with example run ids", () 
   ]);
 
   assert.equal(summary.total_errors, 4);
+  assert.equal(summary.stale_reconcile_count, 3);
+  assert.equal(summary.real_error_count, 1);
   assert.equal(summary.unique_categories, 2);
 
   const stale = summary.categories.find((c) => c.category === "stale_running_reconciled");

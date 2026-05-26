@@ -17,6 +17,8 @@ MOCK_UNHEALTHY="${LI_MOCK_UNHEALTHY:-0}"
 TS_UTC="$(date -u +%Y-%m-%dT%H-%M)"
 REPORT_FILE="$REPORT_DIR/${TS_UTC}.md"
 LATEST_LINK="$REPORT_DIR/latest.md"
+RENDER_PY="$ROOT/scripts/lib/swarm-health-report-render.py"
+CONTROL_PLANE="${LI_CONTROL_PLANE_DIR:-$ROOT/data/control-plane}"
 
 if [[ -f "$ENV_FILE" ]]; then
   # shellcheck disable=SC1090
@@ -52,11 +54,23 @@ curl_api() {
         return 0
         ;;
       /api/research/runs*)
-        printf '%s' '{"runs":[{"run_id":"dry-run-1","agent_id":"researcher-hpc","vertical":"hpc","vertical_label":"HPC","goal_id":"g1","goal_title":"Dry goal","status":"completed","started_at":"2026-05-26T10:00:00.000Z","finished_at":"2026-05-26T10:05:00.000Z","summary":"Dry-run research summary."}]}' >"$out"
+        printf '%s' '{"runs":[{"run_id":"dry-run-1","agent_id":"goal_researcher","vertical":"hpc","vertical_label":"HPC","goal_id":"g1","goal_title":"Dry goal","status":"finished","started_at":"2026-05-26T10:00:00.000Z","finished_at":"2026-05-26T10:05:00.000Z","summary":"Dry-run research summary."},{"run_id":"dry-run-2","agent_id":"numerics_researcher","vertical":null,"goal_id":null,"goal_title":null,"status":"error","error_category":"stale_running_reconciled","started_at":"2026-05-26T09:00:00.000Z","finished_at":"2026-05-26T09:01:00.000Z","summary":"Error: stale_running_reconciled"}]}' >"$out"
         return 0
         ;;
       /api/errors/summary*)
-        printf '%s' '{"preset":"1d","label":"last 24 hours","total_errors":0,"categories":[],"reporting_only":true}' >"$out"
+        printf '%s' '{"preset":"1d","label":"last 24 hours","total_errors":4,"stale_reconcile_count":3,"real_error_count":1,"unique_categories":2,"categories":[{"category":"stale_running_reconciled","error_key":"stale_running_reconciled","count":3,"by_agent":[],"sample_run_id":"a-1","latest_at":"2026-05-26T09:00:00.000Z"},{"category":"sdk_slot_timeout","error_key":"sdk_slot_timeout","count":1,"by_agent":[],"sample_run_id":"c-1","latest_at":"2026-05-26T08:00:00.000Z"}],"reporting_only":true}' >"$out"
+        return 0
+        ;;
+      /api/runs*)
+        printf '%s' '{"runs":[{"run_id":"dry-meta-1","agent_id":"swarm_observer","status":"finished","started_at":"2026-05-26T08:00:00.000Z","finished_at":"2026-05-26T08:10:00.000Z"},{"run_id":"dry-research-1","agent_id":"goal_researcher","status":"finished","started_at":"2026-05-26T10:00:00.000Z","finished_at":"2026-05-26T10:05:00.000Z"}],"active":[]}' >"$out"
+        return 0
+        ;;
+      /api/handoffs*)
+        printf '%s' '{"handoffs":[{"handoff_id":"dry-h1","status":"pending"}],"count":1,"store":"disk"}' >"$out"
+        return 0
+        ;;
+      /api/interventions)
+        printf '%s' '{"interventions":[],"briefing_generated_at":"2026-05-26T08:00:00.000Z"}' >"$out"
         return 0
         ;;
     esac
@@ -65,35 +79,6 @@ curl_api() {
     return 1
   fi
   curl -sf --max-time 15 "${BASE_URL}${path}" -o "$out"
-}
-
-json_get() {
-  local file="$1"
-  shift
-  python3 - "$file" "$@" <<'PY'
-import json, sys
-path = sys.argv[1]
-keys = sys.argv[2:]
-try:
-    with open(path, encoding="utf-8") as f:
-        data = json.load(f)
-except Exception:
-    print("")
-    sys.exit(0)
-cur = data
-for k in keys:
-    if isinstance(cur, dict):
-        cur = cur.get(k)
-    else:
-        cur = None
-        break
-if cur is None:
-    print("")
-elif isinstance(cur, bool):
-    print("true" if cur else "false")
-else:
-    print(cur)
-PY
 }
 
 researchers_long_pgrep() {
@@ -106,28 +91,59 @@ researchers_long_pgrep() {
   echo "${n:-0}"
 }
 
+find_previous_report() {
+  local prev=""
+  prev="$(find "$REPORT_DIR" -maxdepth 1 -type f -name '20*.md' 2>/dev/null | sort | tail -n 1)"
+  if [[ -n "$prev" && "$(basename "$prev")" == "$(basename "$REPORT_FILE")" ]]; then
+    prev="$(find "$REPORT_DIR" -maxdepth 1 -type f -name '20*.md' 2>/dev/null | sort | tail -n 2 | head -n 1)"
+  fi
+  echo "$prev"
+}
+
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
+
+PREV_REPORT="$(find_previous_report)"
 
 DASH_STATUS="$(systemctl_user_active li-agents-dashboard.service)"
 ASYNC_STATUS="$(systemctl_user_active li-agents-async-swarm.service)"
 
-RUNTIME_OK=0
 RUNTIME_FILE="$TMP/runtime.json"
+RESEARCH_FILE="$TMP/research.json"
+ERRORS_FILE="$TMP/errors.json"
+RUNS_FILE="$TMP/runs.json"
+HANDOFFS_FILE="$TMP/handoffs.json"
+INTERVENTIONS_FILE="$TMP/interventions.json"
+CONTEXT_FILE="$TMP/context.json"
+
+RUNTIME_OK=0
 if curl_api "/api/runtime" "$RUNTIME_FILE"; then
   RUNTIME_OK=1
 fi
 
-RESEARCH_FILE="$TMP/research.json"
 RESEARCH_OK=0
 if curl_api "/api/research/runs?limit=10" "$RESEARCH_FILE"; then
   RESEARCH_OK=1
 fi
 
-ERRORS_FILE="$TMP/errors.json"
 ERRORS_OK=0
 if curl_api "/api/errors/summary?range=1d" "$ERRORS_FILE"; then
   ERRORS_OK=1
+fi
+
+RUNS_OK=0
+if curl_api "/api/runs" "$RUNS_FILE"; then
+  RUNS_OK=1
+fi
+
+HANDOFFS_OK=0
+if curl_api "/api/handoffs?limit=30" "$HANDOFFS_FILE"; then
+  HANDOFFS_OK=1
+fi
+
+INTERVENTIONS_OK=0
+if curl_api "/api/interventions" "$INTERVENTIONS_FILE"; then
+  INTERVENTIONS_OK=1
 fi
 
 LONG_PGREP="$(researchers_long_pgrep)"
@@ -139,117 +155,50 @@ fi
 if [[ "$RUNTIME_OK" != "1" ]]; then
   EXIT_CODE=1
 else
-  ASYNC_RUNNING="$(json_get "$RUNTIME_FILE" async_swarm_running)"
+  ASYNC_RUNNING="$(python3 - "$RUNTIME_FILE" <<'PY'
+import json, sys
+with open(sys.argv[1], encoding="utf-8") as f:
+    d = json.load(f)
+v = d.get("async_swarm_running")
+print("true" if v is True or v == "true" else "false")
+PY
+)"
   if [[ "$ASYNC_RUNNING" != "true" ]]; then
     EXIT_CODE=1
   fi
 fi
 
-{
-  echo "# Swarm health report"
-  echo ""
-  echo "- **Generated (UTC):** $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  echo "- **Host:** $(hostname 2>/dev/null || echo unknown)"
-  echo "- **Repo:** \`$ROOT\`"
-  echo "- **Dashboard:** ${BASE_URL}"
-  echo "- **Overall:** $([[ "$EXIT_CODE" -eq 0 ]] && echo "OK" || echo "**UNHEALTHY**")"
-  if [[ "$DRY_RUN" == "1" ]]; then
-    echo "- **Mode:** dry-run (mocked probes)"
-  fi
-  echo ""
-  echo "## systemd (user)"
-  echo ""
-  echo "| Unit | State |"
-  echo "|------|-------|"
-  echo "| \`li-agents-dashboard.service\` | ${DASH_STATUS} |"
-  echo "| \`li-agents-async-swarm.service\` | ${ASYNC_STATUS} |"
-  echo ""
-  echo "## Runtime API"
-  echo ""
-  if [[ "$RUNTIME_OK" != "1" ]]; then
-    echo "Dashboard **unreachable** (\`GET /api/runtime\`)."
-  else
-    STORE="$(json_get "$RUNTIME_FILE" store)"
-    DB="$(json_get "$RUNTIME_FILE" db_enabled)"
-    ASYNC="$(json_get "$RUNTIME_FILE" async_swarm_running)"
-    IN_SDK="$(json_get "$RUNTIME_FILE" active_run_count)"
-    SLOTS="$(json_get "$RUNTIME_FILE" sdk_slots_in_use)"
-    SDK_MAX="$(json_get "$RUNTIME_FILE" sdk_max_concurrent)"
-    REGISTERED="$(json_get "$RUNTIME_FILE" active_runs_registered)"
-    echo "| Field | Value |"
-    echo "|-------|-------|"
-    echo "| store | ${STORE:-—} |"
-    echo "| db_enabled | ${DB:-—} |"
-    echo "| async_swarm_running | ${ASYNC:-—} |"
-    echo "| active_run_count (in SDK) | ${IN_SDK:-—} |"
-    echo "| sdk_slots_in_use | ${SLOTS:-—} |"
-    echo "| sdk_max_concurrent | ${SDK_MAX:-—} |"
-    echo "| active_runs_registered | ${REGISTERED:-—} |"
-  fi
-  echo ""
-  echo "## Research runs (last 10)"
-  echo ""
-  if [[ "$RESEARCH_OK" != "1" ]]; then
-    echo "_Could not fetch \`GET /api/research/runs?limit=10\`._"
-  else
-    python3 - "$RESEARCH_FILE" <<'PY'
-import json, sys
-path = sys.argv[1]
-with open(path, encoding="utf-8") as f:
-    data = json.load(f)
-runs = data.get("runs") or []
-if not runs:
-    print("_No recent research runs._")
-    sys.exit(0)
-print("| status | vertical | goal | agent | summary |")
-print("|--------|----------|------|-------|---------|")
-for r in runs[:10]:
-    def esc(s):
-        return (s or "—").replace("|", "\\|").replace("\n", " ")[:120]
-    print(
-        f"| {esc(r.get('status'))} | {esc(r.get('vertical') or r.get('vertical_label'))} "
-        f"| {esc(r.get('goal_title') or r.get('goal_id'))} | {esc(r.get('agent_id'))} "
-        f"| {esc(r.get('summary'))} |"
-    )
+PREV_JSON="null"
+if [[ -n "$PREV_REPORT" ]]; then
+  PREV_JSON="$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$PREV_REPORT")"
+fi
+
+python3 - "$CONTEXT_FILE" <<PY
+import json, os, sys
+ctx = {
+    "root": ${ROOT@Q},
+    "base_url": ${BASE_URL@Q},
+    "generated_utc": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+    "hostname": "$(hostname 2>/dev/null || echo unknown)",
+    "exit_code": $EXIT_CODE,
+    "dash_status": ${DASH_STATUS@Q},
+    "async_status": ${ASYNC_STATUS@Q},
+    "dry_run": $([[ "$DRY_RUN" == "1" ]] && echo True || echo False),
+    "long_pgrep": int(${LONG_PGREP:-0}),
+    "prev_report_file": json.loads(${PREV_JSON@Q}),
+    "runtime_file": ${RUNTIME_FILE@Q} if $RUNTIME_OK else None,
+    "research_file": ${RESEARCH_FILE@Q} if $RESEARCH_OK else None,
+    "errors_file": ${ERRORS_FILE@Q} if $ERRORS_OK else None,
+    "runs_file": ${RUNS_FILE@Q} if $RUNS_OK else None,
+    "handoffs_file": ${HANDOFFS_FILE@Q} if $HANDOFFS_OK else None,
+    "interventions_file": ${INTERVENTIONS_FILE@Q} if $INTERVENTIONS_OK else None,
+    "interventions_path": os.path.join(${CONTROL_PLANE@Q}, "interventions.json"),
+}
+with open(sys.argv[1], "w", encoding="utf-8") as f:
+    json.dump(ctx, f)
 PY
-  fi
-  echo ""
-  echo "## Errors (1d, deduped)"
-  echo ""
-  if [[ "$ERRORS_OK" != "1" ]]; then
-    echo "_Could not fetch \`GET /api/errors/summary?range=1d\`._"
-  else
-    python3 - "$ERRORS_FILE" <<'PY'
-import json, sys
-path = sys.argv[1]
-with open(path, encoding="utf-8") as f:
-    data = json.load(f)
-label = data.get("label") or data.get("preset") or "1d"
-total = data.get("total_errors")
-if total is None:
-    cats = data.get("categories") or []
-    total = sum(int(c.get("count") or 0) for c in cats)
-print(f"Window: **{label}** — **{total}** error(s) in grouped summary.")
-cats = (data.get("categories") or [])[:8]
-if not cats:
-    print("\n_No categories in window._")
-else:
-    print("\n| category | count | sample agents |")
-    print("|----------|-------|---------------|")
-    for c in cats:
-        agents = ", ".join((c.get("agents") or [])[:3])
-        print(f"| {c.get('category','?')} | {c.get('count',0)} | {agents or '—'} |")
-PY
-  fi
-  echo ""
-  echo "## Optional: legacy researchers loop"
-  echo ""
-  echo "- \`run-researchers-long\` processes: **${LONG_PGREP}** (prefer \`li-agents-async-swarm\` + research lane)"
-  echo ""
-  echo "---"
-  echo ""
-  echo "Regenerate: \`$ROOT/scripts/swarm-health-report.sh\`"
-} >"$REPORT_FILE"
+
+python3 "$RENDER_PY" "$CONTEXT_FILE" >"$REPORT_FILE"
 
 ln -sfn "$(basename "$REPORT_FILE")" "$LATEST_LINK"
 

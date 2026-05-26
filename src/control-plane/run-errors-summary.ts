@@ -28,8 +28,27 @@ export interface RunErrorsSummary {
   range_until?: string;
   /** Raw error rows in range (no dedupe). */
   total_errors: number;
+  /** Rows categorized as restart bookkeeping (`stale_running_reconciled`). */
+  stale_reconcile_count: number;
+  /** Rows with any other error category — actionable failures. */
+  real_error_count: number;
   unique_categories: number;
   categories: RunErrorCategory[];
+}
+
+const STALE_RECONCILE_CATEGORY = "stale_running_reconciled";
+
+export function splitStaleReconcileCounts(categories: RunErrorCategory[]): {
+  stale_reconcile_count: number;
+  real_error_count: number;
+} {
+  let stale_reconcile_count = 0;
+  let real_error_count = 0;
+  for (const c of categories) {
+    if (c.category === STALE_RECONCILE_CATEGORY) stale_reconcile_count += c.count;
+    else real_error_count += c.count;
+  }
+  return { stale_reconcile_count, real_error_count };
 }
 
 function errorCategory(row: AgentRunHistoryRow): string {
@@ -107,12 +126,16 @@ export function summarizeRunErrors(
     }))
     .sort((a, b) => b.count - a.count || b.latest_at.localeCompare(a.latest_at));
 
+  const { stale_reconcile_count, real_error_count } = splitStaleReconcileCounts(categories);
+
   return {
     generated_at: new Date().toISOString(),
     range_preset: timeRange?.preset,
     range_since: timeRange?.since?.toISOString() ?? null,
     range_until: timeRange?.until.toISOString(),
     total_errors: errors.length,
+    stale_reconcile_count,
+    real_error_count,
     unique_categories: categories.length,
     categories,
   };
