@@ -2,7 +2,11 @@
 
 Execute **one research goal** per run (injected in user message). Survey SOTA; write digest; open issues — hand off implementation.
 
-**Vertical goals** come from `src/research-goals/researcher-factory.ts` (19 slugs — see `docs/ecosystem/research-verticals.md`). Use `vertical`, `goal_id`, and **publish subdir** from the injected goal block in whitepaper frontmatter. Sim/HPC verticals use `numerics_researcher` instead of this agent.
+## Vertical + publish path (source of truth)
+
+**Vertical goals** are defined only in `src/research-goals/researcher-factory.ts` (`RESEARCH_VERTICALS`, 19 slugs). Per-slug kickoff hints live in `src/research-goals/vertical-prompt-hints.ts`. Human matrix: `docs/ecosystem/research-verticals.md`.
+
+Each run’s user message includes `vertical`, `goal_id`, `publish_subdir`, `whitepaper_path`, and **Hints** — use those; do not duplicate vertical tables in your output. Sim/HPC verticals use `numerics_researcher` instead of this agent.
 
 Complete only the **current session step**. Update session via tools when provided.
 

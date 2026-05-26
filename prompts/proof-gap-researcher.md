@@ -2,6 +2,8 @@
 
 Hunt soundness holes: `lic/docs/verification/provability-gaps.md`, `trusted.lean`, contract tiers, codegen↔Lean drift.
 
+**Goal:** `provability_holes` (auxiliary — no vertical slug). Factory metadata and publish paths: `src/research-goals/researcher-factory.ts`, `config/research-goals.yaml`. When the injected run includes `publish_subdir`, follow **publish-research-whitepaper** into **research-findings** like vertical researchers.
+
 ## Digest sections
 
 1. Compiler / semantics gaps

@@ -2,8 +2,17 @@
 
 Research **existing** algorithms — Numerical Recipes, reference libs (PETSc, Eigen, BLIS), papers, journals — for red/near-limit benchmarks.
 
-**Skill:** `research-li-numerics`  
+**Skills:** `research-li-numerics`, `publish-research-whitepaper`  
 **Dashboard:** https://li-langverse.github.io/benchmarks/
+
+## Vertical + publish path (source of truth)
+
+Do **not** maintain a parallel vertical matrix in this prompt. Each run receives an injected block from `researcher-factory.ts` (`RESEARCH_VERTICALS`, 19 slugs) with:
+
+- `vertical`, `goal_id`, `publish_subdir`, `whitepaper_path`, `publish_repo`
+- Per-slug kickoff hints from `src/research-goals/vertical-prompt-hints.ts`
+
+Sim/HPC slugs route here via `NUMERICS_VERTICAL_SLUGS` (numerics, physics, md, chemistry, simulation_science, scientific_distributed_computing). Follow **that** vertical’s hints for incumbents, worktrees, and grading. Matrix reference: `docs/ecosystem/research-verticals.md`.
 
 ## Target
 
@@ -18,26 +27,6 @@ cd benchmarks
 1. **2–4 Learned from** references with URLs.
 2. Map to Li PH-5b / PH-7e / **G-math** / **G-par**.
 3. Propose implementation path in **lic** (contracts + bench evidence).
-
-## Physics vertical (`physics_sim` goal)
-
-- **Incumbents:** FEniCS, deal.II, OpenFOAM recipes; reference PDE/FEM texts.
-- **Li packages:** `li-physics-*`, numerics bench rows for continuum/PDE stubs.
-- **Deliverable:** whitepaper under `physics_sim/` + `docs/numerics/studies/` with validity-locked axes before perf.
-
-## MD vertical (plan loop `sim-md-research`)
-
-- **Incumbents:** LAMMPS, GROMACS, OpenMM — neighbor lists, integrators, cutoffs, PME.
-- **Li packages:** `li-sim-scientific`, `li-physics-particles`; tier-2 `md_lennard_jones`.
-- **Grading:** `lic/docs/ecosystem/sim-algo-research-grading.md` — **validity locked** before perf/memory claims.
-- **Deliverable:** `docs/numerics/studies/YYYY-MM-DD-<todo>.md` with size-scaling table (≥3 N or timestep sizes) and grade matrix.
-
-## Chemistry / QM vertical (plan loop `sim-chem-research`)
-
-- **Incumbents:** Gaussian, ORCA, Psi4, PySCF — minimal SCF workflows, basis sets.
-- **Registry:** QM algo ids 401–432; vertical `qm_dft` in `benchmarks/competitive/verticals.toml`.
-- **Honesty:** stub/oracle status must match composable reality (`import_chem_dft_smoke` when present).
-- **Deliverable:** same study format; document basis-size cost/accuracy tradeoffs.
 
 ## Tradeoffs (every study)
 
@@ -72,29 +61,31 @@ Numerics PRs are **blocked** by `agent-pr-deliverable-gate.py` and `pr-merge-gat
 
 ## Whitepaper deliverable (required)
 
-**Skill:** `publish-research-whitepaper`
+Each run **must** write or update a whitepaper in **research-findings** using the injected factory block (`publish_repo` / `publish_subdir` — synced via `npm run research-goals:sync`):
 
-Each run **must** write or update a whitepaper under `research-findings`. Use **publish subdir** from the injected factory goal block (`researcher-factory.ts` → `2026-05/<goal_id>/`):
+`whitepapers/<publish_subdir>/<slug>/README.md` + `artifacts.json` + `snippets/`
 
-`whitepapers/<publish_subdir>/<slug>/` — `README.md` (YAML frontmatter), `artifacts.json`, `snippets/`
+```yaml
+---
+goal_id: <from injected goal block>
+agent: numerics_researcher
+run_id: <cursor run id>
+generated_at: <ISO-8601 UTC>
+domains: [<from goal>]
+validity_grade: study-only | verified | draft
+title: "<short title>"
+status: active
+links: []
+---
+```
 
-| Frontmatter field | Value |
-|-------------------|-------|
-| `goal_id` | From session / `research-goals.yaml` (e.g. `md_sim_algorithms`) |
-| `agent` | `numerics_researcher` |
-| `run_id` | Cursor run id |
-| `generated_at` | ISO-8601 UTC |
-| `domains` | From goal |
-| `validity_grade` | `study-only` until bench/test ids cited; then `verified` |
-| `status` | `active` \| `superseded` \| `draft` |
-
-Rebuild catalog: `./scripts/publish-research-whitepaper.sh` in **li-cursor-agents**.
+Rebuild catalog: `cd li-cursor-agents && ./scripts/publish-research-whitepaper.sh`
 
 Legacy `docs/numerics/studies/` notes remain valid **deep dives** — link them from the whitepaper `links` frontmatter.
 
 ## Deliver
 
-- Whitepaper in **research-findings** (see above)
+- Whitepaper in **research-findings** (path from injected `whitepaper_path`)
 - Issue labeled `numerics-research` with evidence pack
 - Optional lic PR only when proof path is clear — coordinate with **bench_improver**
 
