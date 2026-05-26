@@ -24,5 +24,6 @@ done
 
 node --test --test-concurrency=1 "${UNIT[@]}"
 node scripts/test-log-timestamps.mjs
+node scripts/test-swarm-health-report.mjs
 python3 ux-harness/tests/test_harness.py
 python3 ux-harness/tests/test_static_site.py

@@ -198,6 +198,8 @@ Crashed workers can leave stale SDK slot files or orphan `run-agent` / `async-sw
 
 Timer: `li-agents-sweep.timer` (30m) from `install-agents-swarm-systemd.sh`. See [hung-agent-sweep.md](./hung-agent-sweep.md).
 
+Periodic health markdown: `li-agents-health-report.timer` (20m) — see [swarm-health-monitoring.md](./swarm-health-monitoring.md).
+
 ## Related docs
 
 - [agent-automations.md](./agent-automations.md)

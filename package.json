@@ -62,6 +62,8 @@
     "test:worker-swarm": "npm run build && CURSOR_MOCK=1 LI_CONTROL_PLANE_STORE=disk node --test dist/e2e/worker-swarm.e2e.js",
     "test:dashboard-ui": "node scripts/check-dashboard-no-motion.mjs && npm --prefix dashboard-ui run build",
     "test:dev-stack-ready": "node --test scripts/dev-stack-ready-lib.test.mjs",
+    "health:report": "bash scripts/swarm-health-report.sh",
+    "test:health-report": "node scripts/test-swarm-health-report.mjs",
     "smoke:dashboard": "node scripts/smoke-dashboard-api.mjs",
     "verify:dashboard": "npm run build && node scripts/verify-dashboard-live.mjs",
     "db:ensure": "bash scripts/ensure-supabase.sh",

@@ -31,10 +31,12 @@ SERVICE_PATH="$NODE_DIR${NPM_DIR:+:$NPM_DIR}:/usr/local/bin:/usr/bin:/bin"
 INSTALL_WATCHDOG=1
 INSTALL_ASYNC=1
 INSTALL_SWEEP=1
+INSTALL_HEALTH_REPORT=1
 for arg in "$@"; do
   case "$arg" in
     --no-watchdog) INSTALL_WATCHDOG=0 ;;
     --no-sweep) INSTALL_SWEEP=0 ;;
+    --no-health-report) INSTALL_HEALTH_REPORT=0 ;;
     --dashboard-only) INSTALL_ASYNC=0 ;;
     --lan) DASHBOARD_HOST="0.0.0.0" ;;
   esac
@@ -45,7 +47,7 @@ if [[ "$INSTALL_ASYNC" == "1" ]]; then
   DASHBOARD_AUTO_SWARM=0
   DASHBOARD_EXTERNAL_SWARM=1
 fi
-chmod +x "$ROOT"/scripts/lib/agents-swarm-systemd-wrapper.sh "$ROOT"/scripts/agents-*.sh "$ROOT"/scripts/sweep-hung-agents.sh
+chmod +x "$ROOT"/scripts/lib/agents-swarm-systemd-wrapper.sh "$ROOT"/scripts/agents-*.sh "$ROOT"/scripts/sweep-hung-agents.sh "$ROOT"/scripts/swarm-health-report.sh
 mkdir -p "$DATA_DIR" "$LOG_DIR" "$SERVICE_DIR"
 command -v loginctl >/dev/null && loginctl enable-linger "$(whoami)" 2>/dev/null || true
 cat >"$SERVICE_DIR/li-agents-dashboard.service" <<EOF
@@ -132,6 +134,10 @@ systemctl --user enable --now li-agents-dashboard.service
 [[ "$INSTALL_ASYNC" == "1" ]] && systemctl --user enable li-agents-async-swarm.service
 [[ "$INSTALL_WATCHDOG" == "1" ]] && systemctl --user enable --now li-agents-swarm-watchdog.timer
 [[ "$INSTALL_SWEEP" == "1" ]] && systemctl --user enable --now li-agents-sweep.timer
+if [[ "$INSTALL_HEALTH_REPORT" == "1" ]]; then
+  LI_HEALTH_REPORT_INTERVAL="${LI_HEALTH_REPORT_INTERVAL:-20min}" \
+    "$ROOT/scripts/install-health-report-timer.sh"
+fi
 if [[ "$DASHBOARD_HOST" == "0.0.0.0" ]]; then
   LAN_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
   echo "OK dashboard LAN http://${LAN_IP:-<host-ip>}:${PORT}/ (bind 0.0.0.0:${PORT}) — firewall: ufw allow ${PORT}/tcp"

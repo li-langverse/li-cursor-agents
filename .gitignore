@@ -13,4 +13,5 @@ dashboard-ui/.playwright/
 dashboard-ui/playwright-report/
 dashboard-ui/test-results/
 *.log
+logs/swarm-health-reports/
 .DS_Store
