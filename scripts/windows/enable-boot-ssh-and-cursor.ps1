@@ -37,9 +37,23 @@ if (-not $SkipSsh) {
     }
     Set-Service -Name sshd -StartupType Automatic
     Start-Service sshd
-    if (-not (Get-NetFirewallRule -Name "OpenSSH-Server-In-TCP" -ErrorAction SilentlyContinue)) {
-        New-NetFirewallRule -Name OpenSSH-Server-In-TCP -DisplayName "OpenSSH Server (sshd)" `
-            -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22 | Out-Null
+    $fwRule = "OpenSSH-Server-In-TCP"
+    if (-not (Get-NetFirewallRule -Name $fwRule -ErrorAction SilentlyContinue)) {
+        New-NetFirewallRule -Name $fwRule -DisplayName "OpenSSH Server (sshd)" `
+            -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22 `
+            -Profile Domain, Private, Public | Out-Null
+    } else {
+        Set-NetFirewallRule -Name $fwRule -Profile Domain, Private, Public -Enabled True
+    }
+    $gwAlias = (Get-NetIPConfiguration | Where-Object { $_.IPv4DefaultGateway } | Select-Object -First 1).InterfaceAlias
+    if ($gwAlias) {
+        Set-NetConnectionProfile -InterfaceAlias $gwAlias -NetworkCategory Private -ErrorAction SilentlyContinue
+    }
+    $cfg = "$env:ProgramData\ssh\sshd_config"
+    if ((Test-Path $cfg) -and -not (Select-String -Path $cfg -Pattern '(?m)^PasswordAuthentication\s+yes' -Quiet)) {
+        (Get-Content $cfg -Raw) -replace '(?m)^#PasswordAuthentication\s+yes', 'PasswordAuthentication yes' |
+            Set-Content -Path $cfg -NoNewline
+        Restart-Service sshd
     }
     Get-Service sshd | Format-Table Name, Status, StartType -AutoSize
 }
