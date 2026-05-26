@@ -1,5 +1,10 @@
-import { northStarFitForGoal, type ResearchGoal } from "./load-goals.js";
-import { DEFAULT_PUBLISH_REPO, getVerticalSpec, whitepaperPathForGoal } from "./researcher-factory.js";
+import { northStarFitForGoal, loadResearchGoals, type ResearchGoal } from "./load-goals.js";
+import {
+  DEFAULT_PUBLISH_REPO,
+  getVerticalSpec,
+  publishSubdirForGoalId,
+  whitepaperPathForGoal,
+} from "./researcher-factory.js";
 import { buildVerticalKickoffBlock, verticalKickoffHints } from "./vertical-prompt-hints.js";
 import type { ResearchSession } from "../research-sessions/types.js";
 
@@ -13,9 +18,15 @@ export interface ResearchFactoryContext {
   prompt_hints: string[];
 }
 
+export function findResearchGoalById(goalId: string): ResearchGoal | undefined {
+  return loadResearchGoals().find((g) => g.id === goalId);
+}
+
 export function resolveResearchFactoryContext(goal: ResearchGoal): ResearchFactoryContext {
   const spec = goal.vertical ? getVerticalSpec(goal.vertical) : undefined;
-  const publishSubdir = spec?.publishSubdir;
+  const publishSubdir =
+    spec?.publishSubdir ??
+    (goal.publish_repo || goal.whitepaper_root ? publishSubdirForGoalId(goal.id) : undefined);
   const whitepaperPath = whitepaperPathForGoal(goal.id);
   const promptHints = spec?.promptHints ?? (goal.vertical ? verticalKickoffHints(goal.vertical) : []);
   return {
@@ -26,6 +37,15 @@ export function resolveResearchFactoryContext(goal: ResearchGoal): ResearchFacto
     publish_repo: goal.publish_repo ?? DEFAULT_PUBLISH_REPO,
     prompt_hints: [...promptHints],
   };
+}
+
+/** Factory metadata for an in-progress research session (goal_researcher lane). */
+export function resolveResearchFactoryContextForSession(
+  session: ResearchSession,
+): ResearchFactoryContext | undefined {
+  if (!session.goal_id) return undefined;
+  const goal = findResearchGoalById(session.goal_id);
+  return goal ? resolveResearchFactoryContext(goal) : undefined;
 }
 
 /** User-message appendix for research lane and run-agent goal-directed runs. */

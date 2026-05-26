@@ -17,7 +17,9 @@ import {
 import { buildResearchSessionContinuationBlock } from "../research-sessions/session-store.js";
 import {
   buildResearchGoalKickoffExtra,
+  findResearchGoalById,
   resolveResearchFactoryContext,
+  resolveResearchFactoryContextForSession,
   type ResearchFactoryContext,
 } from "../research-goals/research-goal-context.js";
 import { isHandoffRunInProgress } from "./handoff-run-coordinator.js";
@@ -59,12 +61,15 @@ export async function pickResearchWorkForAgent(
   if (agentUsesResearchSession(agentId)) {
     const session = await loadResearchSession(agentId);
     if (session?.status === "in_progress") {
-      return buildResearchWorkTarget(
-        agentId,
-        undefined,
-        session,
-        buildResearchSessionContinuationBlock(session),
-      );
+      const goal = session.goal_id ? findResearchGoalById(session.goal_id) : undefined;
+      const factoryContext = resolveResearchFactoryContextForSession(session);
+      const extra = goal
+        ? [
+            buildResearchGoalKickoffExtra(goal, session),
+            buildResearchSessionContinuationBlock(session, factoryContext?.publish_subdir),
+          ].join("\n")
+        : buildResearchSessionContinuationBlock(session, factoryContext?.publish_subdir);
+      return buildResearchWorkTarget(agentId, goal, session, extra, factoryContext);
     }
   }
 
@@ -83,26 +88,32 @@ export async function pickResearchWorkForAgent(
   }
 
   const session = await ensureSessionForGoal(agentId, goal);
+  const factoryContext = resolveResearchFactoryContext(goal);
   return buildResearchWorkTarget(
     agentId,
     goal,
     session,
-    [buildGoalKickoffBlock(goal, session), buildResearchSessionContinuationBlock(session)].join(
-      "\n",
-    ),
-    resolveResearchFactoryContext(goal),
+    [
+      buildGoalKickoffBlock(goal, session),
+      buildResearchSessionContinuationBlock(session, factoryContext.publish_subdir),
+    ].join("\n"),
+    factoryContext,
   );
 }
 
 export async function pickResearchLaneTarget(): Promise<ResearchWorkTarget | null> {
   const resumed = await findAnyInProgressSession();
   if (resumed) {
-    return buildResearchWorkTarget(
-      resumed.agent_id as AgentId,
-      undefined,
-      resumed,
-      buildResearchSessionContinuationBlock(resumed),
-    );
+    const agentId = resumed.agent_id as AgentId;
+    const goal = resumed.goal_id ? findResearchGoalById(resumed.goal_id) : undefined;
+    const factoryContext = resolveResearchFactoryContextForSession(resumed);
+    const extra = goal
+      ? [
+          buildResearchGoalKickoffExtra(goal, resumed),
+          buildResearchSessionContinuationBlock(resumed, factoryContext?.publish_subdir),
+        ].join("\n")
+      : buildResearchSessionContinuationBlock(resumed, factoryContext?.publish_subdir);
+    return buildResearchWorkTarget(agentId, goal, resumed, extra, factoryContext);
   }
 
   const state = loadLaneState();

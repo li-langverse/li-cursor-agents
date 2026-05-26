@@ -179,7 +179,10 @@ export async function advanceResearchSession(
   return updated;
 }
 
-export function buildResearchSessionContinuationBlock(session: ResearchSession): string {
+export function buildResearchSessionContinuationBlock(
+  session: ResearchSession,
+  publishSubdir?: string,
+): string {
   const lines = [
     "## Continue session (do not restart)",
     "",
@@ -187,6 +190,15 @@ export function buildResearchSessionContinuationBlock(session: ResearchSession):
     "**Do not repeat completed steps.** Read artifact files on disk before new exploration.",
     "",
   ];
+  if (session.goal_id) {
+    lines.push(`- **Goal id:** \`${session.goal_id}\``);
+    if (publishSubdir) {
+      lines.push(
+        `- **Whitepaper publish:** \`whitepapers/${publishSubdir}/<slug>/\` (skill \`publish-research-whitepaper\`)`,
+      );
+    }
+    lines.push("");
+  }
   if (session.completed_steps.length) {
     lines.push("### Completed steps");
     for (const s of session.completed_steps.slice(-8)) {

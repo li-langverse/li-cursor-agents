@@ -50,7 +50,8 @@ function agentForVertical(slug: string, override?: AgentId): AgentId {
   return NUMERICS_VERTICAL_SLUGS.has(slug) ? "numerics_researcher" : "goal_researcher";
 }
 
-function publishSubdir(goalId: string): string {
+/** Month-prefixed whitepaper subdir under `research-findings/whitepapers/`. */
+export function publishSubdirForGoalId(goalId: string): string {
   return `${WHITEPAPER_MONTH_PREFIX}/${goalId}`;
 }
 
@@ -70,7 +71,7 @@ function verticalRow(
     agentId: agentForVertical(slug, opts.agentId),
     cadenceHours: opts.cadenceHours ?? 24,
     priority: opts.priority ?? 6,
-    publishSubdir: publishSubdir(goalId),
+    publishSubdir: publishSubdirForGoalId(goalId),
     session,
     promptHints: opts.promptHints ?? verticalKickoffHints(slug),
     enabled: true,
@@ -369,7 +370,7 @@ export function getVerticalSpec(slug: string): ResearchVerticalSpec | undefined 
 }
 
 export function whitepaperPathForGoal(goalId: string): string {
-  return `${DEFAULT_WHITEPAPER_ROOT}/${publishSubdir(goalId)}/`;
+  return `${DEFAULT_WHITEPAPER_ROOT}/${publishSubdirForGoalId(goalId)}/`;
 }
 
 /** Runtime goal list: factory verticals + auxiliary goals. */

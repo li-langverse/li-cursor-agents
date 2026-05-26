@@ -1,5 +1,5 @@
 import { loadResearchGoals, resolveGoalAgent } from "../research-goals/load-goals.js";
-import { getVerticalSpec, whitepaperPathForGoal } from "../research-goals/researcher-factory.js";
+import { getVerticalSpec, publishSubdirForGoalId } from "../research-goals/researcher-factory.js";
 import { loadImplementGoals } from "../implement-goals/load-goals.js";
 import { loadLaneState } from "../lanes/lane-state.js";
 
@@ -49,7 +49,8 @@ export function listActiveGoals(): ActiveGoalsSnapshot {
       last_run_at: last,
       eligible: eligible(last, cadenceH, now),
       vertical: g.vertical,
-      publish_subdir: spec?.publishSubdir ?? (g.publish_repo ? whitepaperPathForGoal(g.id) : undefined),
+      publish_subdir:
+        spec?.publishSubdir ?? (g.publish_repo || g.whitepaper_root ? publishSubdirForGoalId(g.id) : undefined),
     };
   });
   const implement = loadImplementGoals().map((g) => {

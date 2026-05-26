@@ -9,11 +9,14 @@ import {
 } from "./session-store.js";
 import type { ResearchFocus, ResearchSession } from "./types.js";
 
-const SESSION_AGENTS = new Set<AgentId>([
+/** Agents that use multi-cycle research sessions (not per-vertical registry entries). */
+export const RESEARCH_SESSION_AGENT_IDS = [
   "goal_researcher",
   "proof_gap_researcher",
   "stdlib_researcher",
-]);
+] as const satisfies readonly AgentId[];
+
+const SESSION_AGENTS = new Set<AgentId>(RESEARCH_SESSION_AGENT_IDS);
 
 export function agentUsesResearchSession(agentId: AgentId): boolean {
   return SESSION_AGENTS.has(agentId);

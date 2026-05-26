@@ -5,16 +5,15 @@ import {
   loadResearchSession,
 } from "../research-sessions/session-store.js";
 import { buildSwarmMandateBlock } from "../swarm/mandate.js";
+import { RESEARCH_SESSION_AGENT_IDS } from "../research-sessions/session-lifecycle.js";
 import { buildResearchDeliverableBlock } from "./research-deliverables.js";
 import {
   buildImplementationQueue,
   buildImplementationQueueInstruction,
 } from "./implementation-queue.js";
 
-const RESEARCH_SESSION_AGENTS = new Set([
-  "goal_researcher",
-  "proof_gap_researcher",
-  "stdlib_researcher",
+const RESEARCH_SESSION_AGENTS = new Set<string>([
+  ...RESEARCH_SESSION_AGENT_IDS,
   "numerics_researcher",
 ]);
 

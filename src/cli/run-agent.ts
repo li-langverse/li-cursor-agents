@@ -7,8 +7,13 @@ import {
   resolveWorkflowRepoFromGoalFile,
   resolveWorkflowRepoFromText,
 } from "../agents/resolve-workflow-repo.js";
+import { loadLaneState } from "../lanes/lane-state.js";
+import { pickNextGoalForAgent, loadResearchGoals } from "../research-goals/load-goals.js";
+import { resolveResearchFactoryContext } from "../research-goals/research-goal-context.js";
 import { agentBackendLabel, runAgent, shouldUseMock } from "../runner.js";
 import type { AgentId } from "../types.js";
+
+const FACTORY_RUN_INPUT_AGENTS = new Set<AgentId>(["numerics_researcher", "goal_researcher"]);
 
 function resolveGoalInstruction(
   inline?: string,
@@ -122,6 +127,16 @@ async function main() {
     }
   }
 
+  let researchContext;
+  if (FACTORY_RUN_INPUT_AGENTS.has(args.agent)) {
+    const goal = pickNextGoalForAgent(
+      args.agent,
+      loadResearchGoals(),
+      loadLaneState().goal_last_run_at,
+    );
+    if (goal) researchContext = resolveResearchFactoryContext(goal);
+  }
+
   const result = await runAgent({
     agentId: args.agent,
     cwd: args.cwd,
@@ -130,6 +145,7 @@ async function main() {
     dryRun: args.dryRun,
     workflowRepo: args.workflowRepo,
     extraInstruction: args.extraInstruction,
+    researchContext,
   });
 
   console.log(JSON.stringify(result, null, 2));
