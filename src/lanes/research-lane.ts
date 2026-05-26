@@ -1,4 +1,8 @@
-import { isSdkSlotLockError } from "../backends/sdk-session-lock.js";
+import { isSdkSlotLockError, sdkSlotLikelyAvailable } from "../backends/sdk-session-lock.js";
+import {
+  buildPlanBacklogInstruction,
+  pickNextPlanBacklogTodo,
+} from "./plan-backlog-work.js";
 import { agentsPackageRoot, runAgent, shouldUseMock } from "../runner.js";
 import { resolveBenchmarksRoot, runPreflight } from "../preflight.js";
 import {
@@ -73,6 +77,19 @@ export async function pickResearchWorkForAgent(
     }
   }
 
+  const planTodo = pickNextPlanBacklogTodo(agentId);
+  if (planTodo) {
+    const planGoal = loadResearchGoals().find((g) => resolveGoalAgent(g) === agentId);
+    const extra = buildPlanBacklogInstruction(agentId, planTodo);
+    return buildResearchWorkTarget(
+      agentId,
+      planGoal,
+      undefined,
+      planGoal ? [buildResearchGoalKickoffExtra(planGoal), extra].join("\n") : extra,
+      planGoal ? resolveResearchFactoryContext(planGoal) : undefined,
+    );
+  }
+
   const state = loadLaneState();
   const goal = pickNextGoalForAgent(agentId, loadResearchGoals(), state.goal_last_run_at);
   if (!goal) return null;
@@ -143,6 +160,13 @@ export async function researchAgentWorkerCycle(
   }
   if (isHandoffRunInProgress()) {
     return { skipped: true, skip_reason: "handoff run-all in progress", agentId };
+  }
+  if (!sdkSlotLikelyAvailable()) {
+    return {
+      skipped: true,
+      skip_reason: "sdk session slots busy (waiting for slot)",
+      agentId,
+    };
   }
 
   const target = await pickResearchWorkForAgent(agentId);

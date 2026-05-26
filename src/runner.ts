@@ -18,6 +18,10 @@ import {
   refreshAgentKitAudit,
 } from "./preflight/agent-kit-sync.js";
 import { buildSwarmPromptBlocks } from "./preflight/swarm-context.js";
+import {
+  runImplementerPostRunGate,
+  runImplementerPreflightGate,
+} from "./preflight/implementer-preflight-gate.js";
 import { buildSkillsPromptAppendix } from "./agents/load-skills.js";
 import { buildUserMessage, runPreflight, resolveBenchmarksRoot } from "./preflight.js";
 import { resolveCursorSdkMode, sdkModeSystemPrefix } from "./agents/sdk-mode.js";
@@ -150,7 +154,43 @@ async function runAgentBody(
 ): Promise<AgentRunResult> {
   const packageRoot = agentsPackageRoot();
   const benchmarksRoot = resolveBenchmarksRoot(options.benchmarksRoot);
+  const mock = shouldUseMock(options.mock);
   const preflight = runPreflight(benchmarksRoot, true);
+
+  if (!mock && !options.dryRun) {
+    const gatePreflight = runImplementerPreflightGate(definition.id, options.extraInstruction);
+    if (!gatePreflight.ok && !gatePreflight.skipped) {
+      const outputPath = runOutputPath(
+        definition.id,
+        options.runId ?? allocateRunId(definition.id),
+        mock,
+      );
+      const errText = `Implementer preflight gate failed: ${gatePreflight.detail}`;
+      return finalizeAgentRun(
+        {
+          agentId: definition.id,
+          backend: agentBackendLabel(mock),
+          status: "error",
+          durationMs: 0,
+          outputPath,
+          outputText: errText,
+          error: errText,
+          runInput: buildRunInput({
+            agentId: definition.id,
+            backend: mock ? "mock" : "cursor-sdk",
+            systemPrompt: "",
+            userMessage: errText,
+            cwd: options.cwd || packageRoot,
+            benchmarksRoot,
+            dryRun: options.dryRun,
+            mock,
+          }),
+        },
+        { definition, preflight },
+      );
+    }
+  }
+
   let systemPrompt = loadPrompt(packageRoot, definition.promptFile);
   const skillsAppendix = buildSkillsPromptAppendix(definition.skills, packageRoot);
   if (skillsAppendix) {
@@ -160,7 +200,6 @@ async function runAgentBody(
     systemPrompt += `\n\n---\n\n${loadPrompt(packageRoot, "repo-workflow-tools.md")}`;
   }
   let workCwd = options.cwd || packageRoot;
-  const mock = shouldUseMock(options.mock);
   let workflowSession: RepoWorkflowSession | undefined;
 
   if (agentUsesGuaranteedPush(definition)) {
@@ -401,6 +440,22 @@ async function runAgentBody(
     if (push.pr_url) rolloutPrUrls = [push.pr_url];
     if (push.committed) extraEvidence.push("post_hook_committed");
     if (push.pushed) extraEvidence.push("post_hook_pushed");
+  }
+
+  if (!mock && !options.dryRun && result.status === "finished") {
+    const postGate = runImplementerPostRunGate(definition.id, extra);
+    if (!postGate.ok && !postGate.skipped) {
+      const gateErr = `Implementer post-run gates failed: ${postGate.detail}`;
+      result = {
+        ...result,
+        status: "error",
+        error: gateErr,
+        outputText: [result.outputText, "", gateErr].filter(Boolean).join("\n"),
+      };
+      extraEvidence.push("implementer_gate_failed");
+    } else if (!postGate.skipped) {
+      extraEvidence.push("implementer_gate_passed");
+    }
   }
 
   const finalized = finalizeAgentRun(

@@ -5,6 +5,7 @@ import {
   loadResearchSession,
 } from "../research-sessions/session-store.js";
 import { buildSwarmMandateBlock } from "../swarm/mandate.js";
+import { buildCommitPushDeliverableBlock } from "./commit-push-contract.js";
 import { RESEARCH_SESSION_AGENT_IDS } from "../research-sessions/session-lifecycle.js";
 import { buildResearchDeliverableBlock } from "./research-deliverables.js";
 import {
@@ -47,6 +48,13 @@ export async function buildSwarmPromptBlocks(
 
   if (IMPLEMENTATION_QUEUE_AGENTS.has(definitionId)) {
     parts.push(buildImplementationQueueInstruction(buildImplementationQueue(briefing)));
+  }
+
+  if (
+    IMPLEMENTATION_QUEUE_AGENTS.has(definitionId) ||
+    definitionId === "package_architect"
+  ) {
+    parts.push(buildCommitPushDeliverableBlock(definitionId));
   }
 
   return parts.join("\n");

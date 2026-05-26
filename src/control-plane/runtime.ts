@@ -19,6 +19,7 @@ import {
   sdkSessionInProcessActive,
   sdkSlotsInUse,
 } from "../backends/sdk-session-lock.js";
+import { sdkSlotPolicySnapshot } from "../backends/sdk-slot-policy.js";
 import { swarmWorkersPaused } from "../swarm/swarm-worker-pause.js";
 import { upsertLiveAgentRunStart } from "../db/live-stream-persist.js";
 import {
@@ -180,6 +181,7 @@ export function runtimeSnapshot(state: ControlPlaneState) {
     sdk_slots_in_use: sdkSlotsInUse(),
     sdk_sessions_active: sdkSessionInProcessActive(),
     workers_paused: swarmWorkersPaused(),
+    sdk_slot_policy: sdkSlotPolicySnapshot(),
   };
 }
 
