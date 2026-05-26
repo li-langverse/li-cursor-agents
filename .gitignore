@@ -4,6 +4,7 @@ ux-harness/artifacts/
 ux-harness/**/__pycache__/
 data/runs/
 data/workspaces/
+data/workspaces-test/
 # e2e temp runs use LI_RUNS_DIR outside repo
 data/supervisor/
 data/control-plane/
