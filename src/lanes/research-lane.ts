@@ -174,6 +174,10 @@ export async function researchAgentWorkerCycle(
     return { skipped: true, skip_reason: "no eligible goal or session for agent", agentId };
   }
 
+  const tickState = loadLaneState();
+  tickState.last_research_tick_at = new Date().toISOString();
+  saveLaneState(tickState);
+
   const benchmarksRoot = resolveBenchmarksRoot(options?.benchmarksRoot);
   const packageRoot = agentsPackageRoot();
   const mock = options?.mock ?? shouldUseMock(false);
@@ -203,10 +207,6 @@ export async function researchAgentWorkerCycle(
     recordGoalRun(loadLaneState(), target.goal.id);
   }
 
-  const next = loadLaneState();
-  next.last_research_tick_at = new Date().toISOString();
-  saveLaneState(next);
-
   return {
     skipped: false,
     agentId: target.agentId,
@@ -235,6 +235,10 @@ export async function researchLaneTick(options?: {
     return { skipped: true, skip_reason: "no eligible research goal or session" };
   }
 
+  const tickState = loadLaneState();
+  tickState.last_research_tick_at = new Date().toISOString();
+  saveLaneState(tickState);
+
   const benchmarksRoot = resolveBenchmarksRoot(options?.benchmarksRoot);
   const packageRoot = agentsPackageRoot();
   const mock = options?.mock ?? shouldUseMock(false);
@@ -251,10 +255,6 @@ export async function researchLaneTick(options?: {
   if (target.goal?.id) {
     recordGoalRun(loadLaneState(), target.goal.id);
   }
-
-  const next = loadLaneState();
-  next.last_research_tick_at = new Date().toISOString();
-  saveLaneState(next);
 
   return {
     skipped: false,

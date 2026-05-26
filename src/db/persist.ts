@@ -8,11 +8,11 @@ import {
   dbEnabled,
   exportDiskCacheEnabled,
   lidbReady,
-  lidbUrlConfigured,
   useDiskBackedStore,
   useLidbStore,
   useSupabaseStore,
 } from "./client.js";
+import { lidbPersistAvailable, persistControlPlaneStateLidb, upsertAgentRunLidb } from "./lidb-persist.js";
 import { shouldPersistRunToHistory } from "../control-plane/run-history.js";
 import * as runsDb from "./runs.js";
 import * as cpDb from "./control-plane.js";
@@ -31,11 +31,6 @@ function requireLidbWrite(op: string): void {
   }
 }
 
-/** PH-DB-10: liorm persist for control-plane tables (blocked on lidb engine). */
-async function persistControlPlaneStateLidb(_state: ControlPlaneState): Promise<void> {
-  if (!lidbUrlConfigured()) return;
-  // Real liorm plans land when lidb accepts supabase/migrations schema parity.
-}
 
 /** Persist agent run to Supabase; optional disk export when LI_EXPORT_DISK_CACHE=1. */
 export async function persistAgentRun(input: runsDb.PersistRunInput): Promise<void> {
@@ -44,6 +39,8 @@ export async function persistAgentRun(input: runsDb.PersistRunInput): Promise<vo
   }
   if (dbEnabled()) {
     await runsDb.upsertAgentRun(input);
+  } else if (useLidbStore() && (await lidbPersistAvailable())) {
+    await upsertAgentRunLidb(input);
   }
   // Headless plan loops: do not fail the agent when store=supabase but env is unset.
 
@@ -72,7 +69,7 @@ async function flushCoalescedState(): Promise<void> {
     if (dbEnabled()) {
       await cpDb.saveControlPlaneStateToDb(snapshot);
     }
-    if (useLidbStore()) {
+    if (useLidbStore() && (await lidbPersistAvailable())) {
       await persistControlPlaneStateLidb(snapshot);
     }
     if (exportDiskCacheEnabled()) {

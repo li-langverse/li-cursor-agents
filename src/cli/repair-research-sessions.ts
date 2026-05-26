@@ -1,25 +1,18 @@
 #!/usr/bin/env node
 /**
- * Repair stuck research session JSON on disk (WP-AGT-02).
- * Usage: node dist/cli/repair-research-sessions.js [--apply]
+ * Repair stuck research session JSON on disk and mirror to Supabase when enabled.
+ * Usage: node dist/cli/repair-research-sessions.js [--apply] [--sync-db]
  */
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { agentsPackageRoot } from "../package-root.js";
+import { dbEnabled, getSupabase } from "../db/client.js";
+import { saveResearchSession } from "../research-sessions/session-store.js";
+import {
+  isZombieInProgressSession,
+  RESEARCH_SESSION_AGENT_IDS,
+} from "../research-sessions/session-lifecycle.js";
 import type { ResearchSession } from "../research-sessions/types.js";
-
-/** Keep in sync with `research-sessions/session-lifecycle.ts` (avoid importing runner graph). */
-const RESEARCH_SESSION_AGENT_IDS = [
-  "numerics_researcher",
-  "goal_researcher",
-  "proof_gap_researcher",
-  "stdlib_researcher",
-] as const;
-
-function isZombieInProgressSession(session: ResearchSession): boolean {
-  if (session.status !== "in_progress" || session.queue.length > 0) return false;
-  return session.current_focus != null;
-}
 
 const sessionsDir =
   process.env.LI_RESEARCH_SESSIONS_DIR?.trim() ||
@@ -36,7 +29,7 @@ function saveDisk(session: ResearchSession): void {
   writeFileSync(path, `${JSON.stringify(session, null, 2)}\n`, "utf8");
 }
 
-function repair(session: ResearchSession): ResearchSession | null {
+function repairZombieOnDisk(session: ResearchSession): ResearchSession | null {
   if (!isZombieInProgressSession(session)) return null;
   return {
     ...session,
@@ -46,19 +39,58 @@ function repair(session: ResearchSession): ResearchSession | null {
   };
 }
 
-function main(): void {
+async function retireInProgressDbSessions(agentId: string): Promise<number> {
+  const now = new Date().toISOString();
+  const { data, error } = await getSupabase()
+    .from("research_sessions")
+    .update({
+      status: "cycle_complete",
+      current_focus: null,
+      updated_at: now,
+    })
+    .eq("agent_id", agentId)
+    .eq("status", "in_progress")
+    .select("session_id");
+  if (error) throw new Error(`retireInProgressDbSessions(${agentId}): ${error.message}`);
+  return data?.length ?? 0;
+}
+
+async function main(): Promise<void> {
   const apply = process.argv.includes("--apply");
+  const syncDb = process.argv.includes("--sync-db") || (apply && dbEnabled());
   const actions: string[] = [];
 
   for (const agentId of RESEARCH_SESSION_AGENT_IDS) {
-    const session = loadDisk(agentId);
-    if (!session) continue;
-    const repaired = repair(session);
+    let session = loadDisk(agentId);
+    if (!session) {
+      actions.push(`${agentId}: no disk file`);
+      continue;
+    }
+
+    const repaired = repairZombieOnDisk(session);
     if (repaired) {
-      actions.push(`${agentId}: zombie → cycle_complete`);
-      if (apply) saveDisk(repaired);
+      actions.push(`${agentId}: zombie → cycle_complete (disk)`);
+      session = repaired;
+      if (apply) saveDisk(session);
     } else {
-      actions.push(`${agentId}: ${session.status} goal=${session.goal_id ?? "—"}`);
+      actions.push(`${agentId}: ${session.status} goal=${session.goal_id ?? "—"} (disk)`);
+    }
+
+    if (syncDb && session) {
+      if (!apply) {
+        actions.push(`${agentId}: would sync disk → supabase`);
+        continue;
+      }
+      const retired = await retireInProgressDbSessions(agentId);
+      const forDb: ResearchSession = {
+        ...session,
+        last_run_id: null,
+        last_run_status: null,
+      };
+      await saveResearchSession(forDb);
+      actions.push(
+        `${agentId}: synced to supabase (retired ${retired} stale in_progress row(s))`,
+      );
     }
   }
 
@@ -74,7 +106,15 @@ function main(): void {
   if (!apply) {
     // eslint-disable-next-line no-console
     console.log("Re-run with --apply to write fixes.");
+    if (dbEnabled() && !syncDb) {
+      // eslint-disable-next-line no-console
+      console.log("With supabase store, use --apply (includes --sync-db) to mirror disk into DB.");
+    }
   }
 }
 
-main();
+main().catch((err) => {
+  // eslint-disable-next-line no-console
+  console.error(err instanceof Error ? err.message : String(err));
+  process.exit(1);
+});
