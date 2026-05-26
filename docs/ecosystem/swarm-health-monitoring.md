@@ -25,6 +25,14 @@ Otherwise the script exits **1** (timer still runs; check `journalctl`).
 
 Sections: systemd units, runtime store/slots/SDK counts, last 10 research runs (with summaries), 1d error summary (`range=1d`), optional `run-researchers-long` pgrep count.
 
+### Interpreting `stale_running_reconciled`
+
+After a dashboard or async-swarm **restart** (SIGTERM, `systemctl restart`, workspace sweep `try-restart`), boot reconcile marks orphaned `agent_runs` rows as `error` with category **`stale_running_reconciled`**. That is **bookkeeping**, not agent task failure.
+
+- Health report **Overall: OK** can still show the Researchers table full of `stale_running_reconciled` until new successful runs appear.
+- `GET /api/errors/summary?range=1d` may show **100+** errors with only **one** real SDK failure — compare `categories[].count` and read [recent-error-learnings.md](./recent-error-learnings.md).
+- Trend reports need **multiple** snapshots under `logs/swarm-health-reports/`; a single file cannot show OK vs FAIL over time.
+
 ## systemd timer (recommended)
 
 Install (standalone):
