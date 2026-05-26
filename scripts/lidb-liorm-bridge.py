@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """
-PH-DB-10: Node ↔ lidb liorm/liq bridge (subprocess).
+PH-DB-10 / WP-J: Node ↔ lidb liorm/liq bridge (subprocess).
+
+Protocol version: 1 (semver bump required for breaking stdout JSON shape).
 
 Commands (JSON on stdout):
-  probe              → {"ok": bool, "engine": bool}
+  probe              → {"ok": bool, "engine": bool, "protocol_version": 1}
   read_liq <liq>     → {"ok": true, "rows": [...], "row_count": N}
   exec_sql <sql> <params_json>
   upsert_agent_run <payload_json>
@@ -16,6 +18,8 @@ import os
 import sys
 from pathlib import Path
 from typing import Any
+
+BRIDGE_PROTOCOL_VERSION = 1
 
 
 def _repo_root() -> Path:
@@ -53,7 +57,11 @@ def _apply_data_dir() -> None:
 def cmd_probe() -> dict[str, Any]:
     from liorm.embed_engine import probe_engine_ready
 
-    return {"ok": True, "engine": probe_engine_ready()}
+    return {
+        "ok": True,
+        "engine": probe_engine_ready(),
+        "protocol_version": BRIDGE_PROTOCOL_VERSION,
+    }
 
 
 def cmd_read_liq(liq: str) -> dict[str, Any]:
@@ -87,20 +95,86 @@ def cmd_upsert_agent_run(payload_json: str) -> dict[str, Any]:
     agent_id = str(row.get("agent_id") or "unknown")
     status = str(row.get("status") or "finished")
     started_at = str(row.get("started_at") or "")
+    finished_at = str(row.get("finished_at") or "")
+    backend = row.get("backend")
+    briefing_hash = row.get("briefing_hash")
+    reason = row.get("reason")
+    fingerprint = row.get("fingerprint")
+    coordinator = row.get("coordinator")
+    duration_ms = row.get("duration_ms")
+    output_md = row.get("output_md")
 
     from liorm.embed_engine import execute_sql
 
-    # Native embed: DELETE not supported yet — upsert via id replace (read-then-skip if present).
     existing = execute_sql(
         "SELECT id FROM agent_runs WHERE id = ? OR run_id = ? LIMIT 1",
         [run_id, run_id],
     )
-    if not existing:
+    if existing:
+        sets: list[str] = ["status = ?"]
+        params: list[Any] = [status]
+        if finished_at:
+            sets.extend(["finished_at = ?", "completed_at = ?"])
+            params.extend([finished_at, finished_at])
+        if backend is not None:
+            sets.append("backend = ?")
+            params.append(str(backend))
+        if briefing_hash is not None:
+            sets.append("briefing_hash = ?")
+            params.append(str(briefing_hash))
+        if reason is not None:
+            sets.append("reason = ?")
+            params.append(str(reason))
+        if fingerprint is not None:
+            sets.append("fingerprint = ?")
+            params.append(str(fingerprint))
+        if coordinator is not None:
+            sets.append("coordinator = ?")
+            params.append(str(coordinator))
+        if duration_ms is not None:
+            sets.append("duration_ms = ?")
+            params.append(str(duration_ms))
+        if output_md is not None:
+            sets.append("output_md = ?")
+            params.append(str(output_md)[:8000])
+        params.append(run_id)
         execute_sql(
-            "INSERT INTO agent_runs (id, run_id, agent_id, status, started_at) VALUES (?, ?, ?, ?, ?)",
-            [run_id, run_id, agent_id, status, started_at],
+            f"UPDATE agent_runs SET {', '.join(sets)} WHERE id = ?",
+            params,
         )
-    return {"ok": True, "run_id": run_id}
+    else:
+        cols = ["id", "run_id", "agent_id", "status", "started_at"]
+        vals: list[Any] = [run_id, run_id, agent_id, status, started_at]
+        if finished_at:
+            cols.extend(["finished_at", "completed_at"])
+            vals.extend([finished_at, finished_at])
+        if backend is not None:
+            cols.append("backend")
+            vals.append(str(backend))
+        if briefing_hash is not None:
+            cols.append("briefing_hash")
+            vals.append(str(briefing_hash))
+        if reason is not None:
+            cols.append("reason")
+            vals.append(str(reason))
+        if fingerprint is not None:
+            cols.append("fingerprint")
+            vals.append(str(fingerprint))
+        if coordinator is not None:
+            cols.append("coordinator")
+            vals.append(str(coordinator))
+        if duration_ms is not None:
+            cols.append("duration_ms")
+            vals.append(str(duration_ms))
+        if output_md is not None:
+            cols.append("output_md")
+            vals.append(str(output_md)[:8000])
+        placeholders = ", ".join("?" for _ in cols)
+        execute_sql(
+            f"INSERT INTO agent_runs ({', '.join(cols)}) VALUES ({placeholders})",
+            vals,
+        )
+    return {"ok": True, "run_id": run_id, "protocol_version": BRIDGE_PROTOCOL_VERSION}
 
 
 def cmd_upsert_control_plane_state(payload_json: str) -> dict[str, Any]:
@@ -112,15 +186,11 @@ def cmd_upsert_control_plane_state(payload_json: str) -> dict[str, Any]:
     payload = json_mod.dumps(state)
     updated_at = state.get("updated_at") or ""
     execute_sql("DELETE FROM control_plane_state WHERE id = ?", [1])
-    try:
-        execute_sql(
-            "INSERT INTO control_plane_state (id, payload, updated_at) VALUES (?, ?, ?)",
-            [1, payload, updated_at],
-        )
-    except RuntimeError:
-        # Table may be absent until control-plane migration lands on native catalog.
-        return {"ok": False, "error": "control_plane_state table not available in lidb catalog"}
-    return {"ok": True}
+    execute_sql(
+        "INSERT INTO control_plane_state (id, payload, updated_at) VALUES (?, ?, ?)",
+        [1, payload, updated_at],
+    )
+    return {"ok": True, "protocol_version": BRIDGE_PROTOCOL_VERSION}
 
 
 def main() -> int:

@@ -26,7 +26,13 @@ export async function upsertAgentRunLidb(input: PersistRunInput): Promise<void> 
       started_at: startedAt,
       finished_at: new Date().toISOString(),
       status: run.status,
+      backend: run.backend,
       briefing_hash: run.briefing_hash ?? null,
+      reason: run.reason ?? null,
+      fingerprint: run.fingerprint ?? null,
+      coordinator: run.coordinator ?? null,
+      duration_ms: run.durationMs ?? null,
+      output_md: run.outputText?.slice(0, 8000) ?? null,
     }),
   );
   if (!result.ok) {

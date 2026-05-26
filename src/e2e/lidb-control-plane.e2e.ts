@@ -18,7 +18,8 @@ import {
 } from "../db/client.js";
 import { runLiqQuery, schemaSnapshot } from "../db/liq-query.js";
 import { probeLidbEngine, runLidbBridge, clearLidbProbeCache } from "../db/lidb-liorm.js";
-import { upsertAgentRunLidb } from "../db/lidb-persist.js";
+import { DEFAULT_STATE } from "../control-plane/types.js";
+import { upsertAgentRunLidb, persistControlPlaneStateLidb } from "../db/lidb-persist.js";
 import {
   buildControlPlaneLiqMcpServers,
   CONTROL_PLANE_LIQ_MCP_ID,
@@ -119,6 +120,16 @@ engineSuite("lidb control-plane engine e2e", () => {
     assert.ok(read.rows?.some((row) => row.run_id === runId || row.id === runId));
   });
 
-  test.todo("persist handoffs — blocked: agent_handoffs not in lidb CATALOG_ALLOWLIST yet");
-  test.todo("persist control_plane_reports — blocked: native catalog migration parity (DB-R0-4)");
+  test("persist control_plane_state via liorm bridge", async () => {
+    delete process.env.LI_LIDB_MOCK;
+    process.env.LI_LIDB_URL = process.env.LI_LIDB_URL ?? "lidb://embedded";
+    clearLidbProbeCache();
+    await persistControlPlaneStateLidb({ ...DEFAULT_STATE, runs_total: 1 });
+    const read = await runLidbBridge("exec_sql", "SELECT id, payload FROM control_plane_state WHERE id = ?", "[1]");
+    assert.equal(read.ok, true);
+    assert.ok(read.rows?.some((row) => row.id === 1 || row.id === "1"));
+  });
+
+  test.todo("persist handoffs — blocked: agent_handoffs not in liorm CATALOG_ALLOWLIST (DB-R0-4 G2)");
+  test.todo("persist control_plane_reports — blocked: control_plane_reports table not in native embed bootstrap");
 });
