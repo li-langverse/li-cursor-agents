@@ -34,6 +34,7 @@ import { runtimeSnapshotFromDbEnriched, laneSnapshotFromDb } from "./runtime-rea
 import { listSettingsViewsForRead, SETTING_CATEGORIES } from "./settings-read.js";
 import { loadQueuePayloadForRead } from "./queue-read.js";
 import { getAgentDetailFromDb } from "./agent-detail-read.js";
+import { getResearchRunDetail, listResearchRuns } from "../control-plane/research-runs-api.js";
 import type { AgentId } from "../types.js";
 
 let envReady = false;
@@ -194,6 +195,19 @@ async function handleGet(pathname: string, url: URL): Promise<Response | null> {
   if (pathname === "/api/runs") {
     const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") ?? 80)));
     return jsonBody({ runs: await listRunsMerged(limit), store });
+  }
+
+  if (pathname === "/api/research/runs") {
+    const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit") ?? 50)));
+    return jsonBody(await listResearchRuns(limit));
+  }
+
+  const researchRunDetailMatch = pathname.match(/^\/api\/research\/runs\/([^/]+)$/);
+  if (researchRunDetailMatch) {
+    const runId = decodeURIComponent(researchRunDetailMatch[1]!);
+    const detail = await getResearchRunDetail(runId);
+    if (!detail) return jsonBody({ error: "research run not found" }, 404);
+    return jsonBody({ ...detail, store });
   }
 
   const runEventsMatch = pathname.match(/^\/api\/runs\/([^/]+)\/events$/);

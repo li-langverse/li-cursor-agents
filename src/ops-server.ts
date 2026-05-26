@@ -50,6 +50,7 @@ import { loadObserverState } from "./observer/state.js";
 import { scanSwarmHealth } from "./observer/swarm-health.js";
 import { buildSwarmStatistics } from "./control-plane/swarm-statistics.js";
 import { buildRunErrorsSummary } from "./control-plane/run-errors-summary.js";
+import { getResearchRunDetail, listResearchRuns } from "./control-plane/research-runs-api.js";
 import { defaultStatsRunLimit, parseStatsTimeRange } from "./control-plane/stats-time-range.js";
 import { agentLog } from "./agent-log.js";
 import {
@@ -637,6 +638,24 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       active: listActiveRuns(),
       store,
     });
+    return;
+  }
+
+  if (url.pathname === "/api/research/runs" && req.method === "GET") {
+    const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit") ?? 50)));
+    json(res, 200, await listResearchRuns(limit));
+    return;
+  }
+
+  const researchRunDetailMatch = url.pathname.match(/^\/api\/research\/runs\/([^/]+)$/);
+  if (researchRunDetailMatch && req.method === "GET") {
+    const runId = decodeURIComponent(researchRunDetailMatch[1]!);
+    const detail = await getResearchRunDetail(runId);
+    if (!detail) {
+      json(res, 404, { error: "research run not found" });
+      return;
+    }
+    json(res, 200, { ...detail, store });
     return;
   }
 

@@ -15,6 +15,7 @@
         </div>
         <nav class="nav" id="nav">
           <button type="button" class="nav-item active" data-view="overview">Overview</button>
+          <button type="button" class="nav-item" data-view="researchers">Researchers</button>
           <button type="button" class="nav-item" data-view="activity">Activity</button>
           <button type="button" class="nav-item" data-view="agents">Agents</button>
           <button type="button" class="nav-item" data-view="heap">Heap plan</button>
@@ -115,6 +116,40 @@
                   </thead>
                   <tbody id="runs-table-body"></tbody>
                 </table>
+              </div>
+            </div>
+          </section>
+
+          <section id="view-researchers" class="view" aria-label="Researchers" hidden>
+            <p class="hint">
+              Goal-directed research runs (numerics, vertical goals, gap explorer, autoresearch, proof/stdlib).
+              Click a row for timeline, output snippet, and research-findings paths.
+            </p>
+            <div class="split-panels researchers-layout">
+              <div class="panel researchers-list-panel">
+                <h2>Recent research runs</h2>
+                <div class="table-wrap">
+                  <table class="data-table" id="research-runs-table">
+                    <thead>
+                      <tr>
+                        <th>Vertical</th>
+                        <th>Agent</th>
+                        <th>Status</th>
+                        <th>When</th>
+                        <th>Summary</th>
+                      </tr>
+                    </thead>
+                    <tbody id="research-runs-table-body"></tbody>
+                  </table>
+                </div>
+                <p id="research-runs-empty" class="empty hidden">No research runs recorded yet.</p>
+              </div>
+              <div class="panel researchers-detail-panel" id="research-detail-panel" hidden>
+                <div class="panel-head-row">
+                  <h2 id="research-detail-title">Run detail</h2>
+                  <button type="button" class="btn ghost sm" id="research-detail-close" title="Close detail">×</button>
+                </div>
+                <div id="research-detail-body" class="research-detail-body"></div>
               </div>
             </div>
           </section>

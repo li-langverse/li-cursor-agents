@@ -7,6 +7,7 @@ const ui = {
   agentSearch: "",
   selectedAgentId: null,
   selectedRunId: null,
+  selectedResearchRunId: null,
   data: null,
   pollMs: 4000,
   toastTimer: null,
@@ -40,6 +41,10 @@ async function loadStatistics() {
 
 const VIEW_META = {
   overview: { title: "Overview", subtitle: "Swarm status at a glance" },
+  researchers: {
+    title: "Researchers",
+    subtitle: "Research lane runs — summaries and drill-down",
+  },
   activity: {
     title: "Activity",
     subtitle: "Recent runs — prompts, outputs, and actions taken",
@@ -227,7 +232,7 @@ function agentStatusMap(roster, report, runtime, statusPayload) {
 }
 
 async function loadDashboard() {
-  const [report, status, roster, runsPayload, supervisorActivity, activityPayload, interventionsPayload, statisticsPayload, errorsSummaryPayload, handoffsPayload, swarmBriefingPayload, workQueuePayload] =
+  const [report, status, roster, runsPayload, supervisorActivity, activityPayload, interventionsPayload, statisticsPayload, errorsSummaryPayload, handoffsPayload, swarmBriefingPayload, workQueuePayload, researchRunsPayload] =
     await Promise.all([
       fetchJson("/api/report").catch(() => ({})),
       fetchJson("/api/status").catch((e) => {
@@ -244,6 +249,7 @@ async function loadDashboard() {
       fetchJson("/api/handoffs?limit=30").catch(() => ({ handoffs: [] })),
       fetchJson("/api/swarm/briefing").catch(() => ({})),
       fetchJson("/api/queue").catch(() => ({ queue: [] })),
+      fetchJson("/api/research/runs?limit=50").catch(() => ({ runs: [] })),
     ]);
   const runtime = status?.runtime ?? roster?.runtime;
   const lanes = status?.lanes ?? runtime?.lanes;
@@ -262,8 +268,123 @@ async function loadDashboard() {
     handoffsPayload,
     swarmBriefingPayload,
     workQueuePayload,
+    researchRunsPayload,
   };
   return ui.data;
+}
+
+function truncateText(text, max = 140) {
+  const s = String(text ?? "").replace(/\s+/g, " ").trim();
+  if (!s) return "—";
+  return s.length > max ? `${s.slice(0, max - 1)}…` : s;
+}
+
+function renderResearchersTable() {
+  const tbody = $("#research-runs-table-body");
+  const empty = $("#research-runs-empty");
+  if (!tbody) return;
+  const runs = ui.data?.researchRunsPayload?.runs ?? [];
+  if (!runs.length) {
+    tbody.innerHTML = "";
+    empty?.classList.remove("hidden");
+    return;
+  }
+  empty?.classList.add("hidden");
+  tbody.innerHTML = runs
+    .map((r) => {
+      const selected = r.run_id === ui.selectedResearchRunId;
+      const vertical = r.vertical_label || r.vertical || r.goal_title || "—";
+      const errBadge =
+        r.status === "error" && r.error_category
+          ? ` <span class="badge warn sm" title="${escAttr(r.error ?? "")}">${esc(r.error_category)}</span>`
+          : "";
+      return `<tr class="research-run-row ${selected ? "selected" : ""}" data-research-run="${escAttr(r.run_id)}">
+        <td>${esc(vertical)}</td>
+        <td class="mono">${esc(r.agent_id)}</td>
+        <td><span class="status-pill sm ${escAttr(r.status)}">${esc(statusLabel(r.status))}</span>${errBadge}</td>
+        <td class="time">${formatTime(r.started_at)}</td>
+        <td class="preview">${esc(truncateText(r.summary, 160))}</td>
+      </tr>`;
+    })
+    .join("");
+}
+
+async function openResearchDetail(runId) {
+  ui.selectedResearchRunId = runId;
+  renderResearchersTable();
+  const panel = $("#research-detail-panel");
+  const body = $("#research-detail-body");
+  const title = $("#research-detail-title");
+  if (!panel || !body) return;
+  panel.hidden = false;
+  body.innerHTML = '<p class="empty">Loading…</p>';
+  try {
+    const d = await fetchJson(`/api/research/runs/${encodeURIComponent(runId)}`);
+    if (title) {
+      title.textContent = d.goal_title || d.goal_id || d.run_id;
+    }
+    const errBlock =
+      d.status === "error"
+        ? `<p><span class="badge warn">${esc(d.error_category || "error")}</span> ${esc(d.error ?? "")}</p>`
+        : "";
+    const goalBlock = d.goal
+      ? `<dl class="meta compact">
+          <dt>Goal</dt><dd><code>${esc(d.goal.id)}</code> — ${esc(d.goal.title)}</dd>
+          ${d.goal.vertical ? `<dt>Vertical</dt><dd>${esc(d.goal.vertical)}</dd>` : ""}
+          ${d.goal.publish_subdir ? `<dt>Publish</dt><dd class="mono">${esc(d.goal.publish_subdir)}</dd>` : ""}
+        </dl>`
+      : "";
+    const paths = [];
+    if (d.output_path) paths.push(`<li>Run output: <code class="mono">${esc(d.output_path)}</code></li>`);
+    if (d.research_findings_path) {
+      paths.push(
+        `<li>Research findings: <code class="mono">${esc(d.research_findings_repo)}/${esc(d.research_findings_path)}</code></li>`,
+      );
+    }
+    if (d.whitepaper_path) {
+      paths.push(`<li>Whitepaper root: <code class="mono">${esc(d.whitepaper_path)}</code></li>`);
+    }
+    const events = (d.events ?? []).slice(-40);
+    const timeline = events.length
+      ? `<ul class="activity-feed compact">${events
+          .map((ev) => {
+            const p = ev.payload && typeof ev.payload === "object" ? ev.payload : {};
+            const preview =
+              p.type ||
+              p.kind ||
+              ev.event_type ||
+              (typeof p.text === "string" ? p.text.slice(0, 80) : JSON.stringify(p).slice(0, 80));
+            return `<li><span class="mono">${esc(ev.event_type)}</span> #${ev.seq} — ${esc(String(preview))}</li>`;
+          })
+          .join("")}</ul>`
+      : '<p class="hint">No persisted events for this run.</p>';
+    body.innerHTML = `
+      <p class="sub"><code>${esc(d.agent_id)}</code> · ${esc(statusLabel(d.status))} · ${formatTime(d.started_at)}</p>
+      ${errBlock}
+      <p class="research-summary-lead">${esc(d.summary)}</p>
+      ${goalBlock}
+      <section class="trace-section"><h4>Paths</h4><ul class="simple-list">${paths.join("") || "<li>—</li>"}</ul></section>
+      <section class="trace-section"><h4>Event timeline</h4>${timeline}</section>
+      ${
+        d.markdown_snippet
+          ? `<section class="trace-section"><h4>Output snippet</h4><pre class="trace-pre">${esc(d.markdown_snippet)}</pre></section>`
+          : d.trace_preview
+            ? `<section class="trace-section"><h4>Trace preview</h4><pre class="trace-pre">${esc(d.trace_preview)}</pre></section>`
+            : ""
+      }
+      <footer class="action-card-foot">
+        <button type="button" class="btn ghost sm" data-open-run="${escAttr(d.run_id)}">Full trace →</button>
+      </footer>`;
+  } catch (e) {
+    body.innerHTML = `<p class="empty">${esc(e.message)}</p>`;
+  }
+}
+
+function closeResearchDetail() {
+  ui.selectedResearchRunId = null;
+  const panel = $("#research-detail-panel");
+  if (panel) panel.hidden = true;
+  renderResearchersTable();
 }
 
 function swarmRunning() {
@@ -1040,7 +1161,12 @@ function renderHeap() {
     .join("");
 }
 
-function setView(name) {
+function viewFromHash() {
+  const v = (location.hash || "").replace(/^#/, "");
+  return v && VIEW_META[v] ? v : "overview";
+}
+
+function setView(name, { updateHash = true } = {}) {
   ui.view = name;
   const meta = VIEW_META[name] ?? VIEW_META.overview;
   $("#view-title").textContent = meta.title;
@@ -1051,6 +1177,14 @@ function setView(name) {
     v.hidden = !on;
     v.classList.toggle("active", on);
   });
+  if (updateHash) {
+    const hash = name === "overview" ? "" : name;
+    const current = (location.hash || "").replace(/^#/, "");
+    if (current !== hash) {
+      location.hash = hash;
+    }
+  }
+  if (name === "researchers") renderResearchersTable();
 }
 
 async function openAgentDrawer(agentId) {
@@ -1254,6 +1388,7 @@ async function refresh() {
     renderAgentsTable();
     renderInterventions();
     renderHeap();
+    renderResearchersTable();
     $("#updated").textContent = new Date().toLocaleTimeString();
     if (ui.selectedAgentId) {
       try {
@@ -1348,6 +1483,8 @@ $("#agent-search").addEventListener("input", (ev) => {
 });
 
 $("#goto-activity")?.addEventListener("click", () => setView("activity"));
+$("#research-detail-close")?.addEventListener("click", closeResearchDetail);
+window.addEventListener("hashchange", () => setView(viewFromHash(), { updateHash: false }));
 $("#refresh").addEventListener("click", refresh);
 $("#refresh-briefing").addEventListener("click", () =>
   postControl("/api/briefing/refresh", $("#refresh-briefing")),
@@ -1430,6 +1567,12 @@ document.body.addEventListener("click", async (ev) => {
     await openAgentDrawer(openAgent.dataset.openAgent);
     return;
   }
+  const researchRow = ev.target.closest("[data-research-run]");
+  if (researchRow) {
+    ev.preventDefault();
+    await openResearchDetail(researchRow.dataset.researchRun);
+    return;
+  }
   const openRun = ev.target.closest("[data-open-run]");
   if (openRun) {
     ev.preventDefault();
@@ -1463,6 +1606,6 @@ function schedulePoll() {
   pollHandle = setInterval(refresh, ui.pollMs);
 }
 
-setView("overview");
+setView(viewFromHash(), { updateHash: false });
 refresh();
 schedulePoll();

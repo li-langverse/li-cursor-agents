@@ -19,6 +19,17 @@ The ops dashboard (`:9477`) and Next.js read API share the same Supabase tables 
 - Each running row includes **`recent_events`** (last 5) and **`last_event`** (latest payload preview) when run-event persist is enabled.
 - **`store`**, **`db_enabled`**, **`control_plane_store`**: must read `supabase` when the stack is up; `disk` is a boot-time fallback only.
 
+## Researchers API
+
+Read-only endpoints for goal-directed research agents (`numerics_researcher`, `goal_researcher`, `gap_explorer`, `autoresearch`, `proof_gap_researcher`, `stdlib_researcher`).
+
+| Route | Purpose |
+| --- | --- |
+| `GET /api/research/runs?limit=50` | Recent research runs with `vertical`, `goal_id`, `status`, timestamps, and a **summary** (derived at read time from trace, output markdown, or error category). |
+| `GET /api/research/runs/:run_id` | Drill-down: `events`, `trace_preview`, `markdown_snippet`, `output_path`, `publish_subdir`, `whitepaper_path`, factory goal metadata. |
+
+Summaries are not stored in `agent_runs` yet; the ops dashboard **Researchers** tab (`http://<host>:9477/#researchers`) uses these routes. Static assets are cache-busted via git SHA in `index.html` (`app.js?v=…`).
+
 ## Events API (`GET /api/runs/:run_id/events`)
 
 - Reads `agent_run_events` (Supabase) or `data/runs/events/<run_id>.jsonl` (disk).

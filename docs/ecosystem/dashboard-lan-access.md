@@ -3,6 +3,7 @@
 ## Verified working URL (this host)
 
 - **Dashboard UI:** http://192.168.10.32:9477/
+- **Researchers tab:** http://192.168.10.32:9477/#researchers (`GET /api/research/runs`)
 - **Health check:** `curl -sf --max-time 5 http://192.168.10.32:9477/api/health` → HTTP 200
 
 ### Root cause when the browser shows “site can’t be reached” or curls hang
