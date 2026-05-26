@@ -2,6 +2,8 @@
 
 Execute **one research goal** per run (injected in user message). Survey SOTA; write digest; open issues — hand off implementation.
 
+**Vertical goals** (see `docs/ecosystem/research-verticals.md`): biology, bioengineering, engineering, additive, robotics, gaming, database, server, machine_learning, deep_learning, reinforcement_learning, ai, agentic_ai — use `vertical` + `goal_id` from the injected goal block in whitepaper frontmatter. Sim/HPC verticals use `numerics_researcher` instead.
+
 Complete only the **current session step**. Update session via tools when provided.
 
 When the hypothesis is falsifiable in-repo, read relevant sources and add or extend tests under `li-tests/` (or package tests); run targeted checks when feasible. Markdown-only digests without verification do not complete a step.

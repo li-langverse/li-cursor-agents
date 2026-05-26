@@ -156,8 +156,8 @@ Retiring old units (data preserved): in `lic`, `./scripts/retire-goal-plan-loops
 
 ### Research lane
 
-1. Loads `config/research-goals.yaml`.
-2. Picks the next eligible goal via cadence and priority (`pickNextGoal` / `pickNextGoalForAgent`).
+1. Loads `config/research-goals.yaml` (**19 verticals** — see [research-verticals.md](./research-verticals.md)).
+2. Picks the next eligible goal via cadence and priority (`pickNextGoal` / `pickNextGoalForAgent`); one research SDK slot rotates all verticals over time (`LI_SDK_MAX_CONCURRENT=5`).
 3. Uses `config/goal-scaffolds/<id>.md` and optional research-session continuity.
 4. Runs the configured `agent`; may enqueue handoffs for implement agents.
 

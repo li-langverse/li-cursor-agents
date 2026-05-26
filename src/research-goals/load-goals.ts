@@ -6,6 +6,8 @@ import type { AgentId } from "../types.js";
 export interface ResearchGoal {
   id: string;
   title: string;
+  /** User-facing vertical slug (numerics, physics, md, …). See docs/ecosystem/research-verticals.md */
+  vertical?: string;
   domains: string[];
   agent?: AgentId;
   priority?: number;
@@ -44,6 +46,7 @@ export function loadResearchGoals(): ResearchGoal[] {
     }
     if (!current) continue;
     if (trimmed.startsWith("title:")) current.title = trimmed.slice(6).trim();
+    else if (trimmed.startsWith("vertical:")) current.vertical = trimmed.slice(9).trim();
     else if (trimmed.startsWith("agent:")) current.agent = trimmed.slice(6).trim() as AgentId;
     else if (trimmed.startsWith("priority:")) current.priority = Number(trimmed.slice(9).trim());
     else if (trimmed.startsWith("cadence_hours:")) current.cadence_hours = Number(trimmed.slice(14).trim());

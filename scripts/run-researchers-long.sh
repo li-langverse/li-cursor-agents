@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 # Run numerics/ecosystem researchers on a loop for several hours (real Cursor SDK).
 #
+# Prefer async swarm + research lane for all verticals in config/research-goals.yaml
+# (researchLaneAgentIds picks agents from every enabled goal). This script rotates a
+# small LI_RESEARCH_AGENTS list only — it does not enumerate biology/robotics/etc.
+#
 #   LI_RESEARCH_DURATION_SEC=7200   # default 2h
 #   LI_RESEARCH_PAUSE_SEC=120         # pause between agent runs (default 2m)
-#   LI_RESEARCH_AGENTS="gap_explorer,numerics_researcher,autoresearch"
+#   LI_RESEARCH_AGENTS="gap_explorer,numerics_researcher,autoresearch,goal_researcher"
 #
 # Logs: logs/researchers-long.log
 set -euo pipefail

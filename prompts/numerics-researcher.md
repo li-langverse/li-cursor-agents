@@ -19,6 +19,12 @@ cd benchmarks
 2. Map to Li PH-5b / PH-7e / **G-math** / **G-par**.
 3. Propose implementation path in **lic** (contracts + bench evidence).
 
+## Physics vertical (`physics_sim` goal)
+
+- **Incumbents:** FEniCS, deal.II, OpenFOAM recipes; reference PDE/FEM texts.
+- **Li packages:** `li-physics-*`, numerics bench rows for continuum/PDE stubs.
+- **Deliverable:** whitepaper under `physics_sim/` + `docs/numerics/studies/` with validity-locked axes before perf.
+
 ## MD vertical (plan loop `sim-md-research`)
 
 - **Incumbents:** LAMMPS, GROMACS, OpenMM — neighbor lists, integrators, cutoffs, PME.
