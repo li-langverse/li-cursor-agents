@@ -612,7 +612,10 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     return;
   }
 
-  if (url.pathname === "/api/runs/errors-summary" && req.method === "GET") {
+  if (
+    (url.pathname === "/api/errors/summary" || url.pathname === "/api/runs/errors-summary") &&
+    req.method === "GET"
+  ) {
     try {
       const timeRange = parseStatsTimeRange(url.searchParams);
       const limit = Math.min(
@@ -620,7 +623,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
         Math.max(50, Number(url.searchParams.get("runs") ?? defaultStatsRunLimit(timeRange.preset))),
       );
       const summary = await buildRunErrorsSummary(limit, timeRange);
-      json(res, 200, { ...summary, store });
+      json(res, 200, { ...summary, store, reporting_only: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       json(res, 500, { error: message, store });

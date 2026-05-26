@@ -228,7 +228,7 @@ async function handleGet(pathname: string, url: URL): Promise<Response | null> {
     }
   }
 
-  if (pathname === "/api/runs/errors-summary") {
+  if (pathname === "/api/errors/summary" || pathname === "/api/runs/errors-summary") {
     try {
       const timeRange = parseStatsTimeRange(url.searchParams);
       const limit = Math.min(
@@ -236,7 +236,7 @@ async function handleGet(pathname: string, url: URL): Promise<Response | null> {
         Math.max(50, Number(url.searchParams.get("runs") ?? defaultStatsRunLimit(timeRange.preset))),
       );
       const summary = await buildRunErrorsSummary(limit, timeRange);
-      return jsonBody({ ...summary, store });
+      return jsonBody({ ...summary, store, reporting_only: true });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       return jsonBody({ error: message, store }, 500);

@@ -2,10 +2,21 @@ import { listRunsGlobalInRange } from "../db/runs.js";
 import type { AgentRunHistoryRow } from "../db/runs.js";
 import type { ParsedStatsTimeRange } from "./stats-time-range.js";
 
+const MAX_EXAMPLE_RUN_IDS = 5;
+
+export interface RunErrorByAgent {
+  agent_id: string;
+  count: number;
+  example_run_ids: string[];
+  latest_at: string;
+}
+
 export interface RunErrorCategory {
+  /** Normalized error category (same as error_key for now). */
+  category: string;
   error_key: string;
   count: number;
-  agents: string[];
+  by_agent: RunErrorByAgent[];
   sample_run_id: string;
   latest_at: string;
 }
@@ -15,56 +26,84 @@ export interface RunErrorsSummary {
   range_preset?: string;
   range_since?: string | null;
   range_until?: string;
+  /** Raw error rows in range (no dedupe). */
   total_errors: number;
   unique_categories: number;
   categories: RunErrorCategory[];
 }
 
-function errorKey(row: AgentRunHistoryRow): string {
+function errorCategory(row: AgentRunHistoryRow): string {
   const err = (row.error ?? "").trim() || "(no error message)";
   if (err === "stale_running_reconciled") return "stale_running_reconciled";
+  if (err.includes("sdk-session.lock")) return "sdk_slot_timeout";
   return err.slice(0, 200);
 }
 
-/** Group error-status runs for dashboard summary (dedupes identical error strings). */
+/** Reporting-only: group error rows by category and agent (no DB writes). */
 export function summarizeRunErrors(
   rows: AgentRunHistoryRow[],
   timeRange?: ParsedStatsTimeRange,
 ): RunErrorsSummary {
   const errors = rows.filter((r) => r.status === "error");
-  const byKey = new Map<
+  const byCategory = new Map<
     string,
-    { count: number; agents: Set<string>; sample_run_id: string; latest_at: string }
+    {
+      count: number;
+      sample_run_id: string;
+      latest_at: string;
+      byAgent: Map<
+        string,
+        { count: number; example_run_ids: string[]; latest_at: string }
+      >;
+    }
   >();
 
   for (const row of errors) {
-    const key = errorKey(row);
+    const category = errorCategory(row);
     const at = row.finished_at ?? row.started_at;
-    let bucket = byKey.get(key);
-    if (!bucket) {
-      bucket = {
+    let cat = byCategory.get(category);
+    if (!cat) {
+      cat = {
         count: 0,
-        agents: new Set(),
         sample_run_id: row.run_id,
         latest_at: at,
+        byAgent: new Map(),
       };
-      byKey.set(key, bucket);
+      byCategory.set(category, cat);
     }
-    bucket.count++;
-    bucket.agents.add(row.agent_id);
-    if (at >= bucket.latest_at) {
-      bucket.latest_at = at;
-      bucket.sample_run_id = row.run_id;
+    cat.count++;
+    if (at >= cat.latest_at) {
+      cat.latest_at = at;
+      cat.sample_run_id = row.run_id;
     }
+
+    let agent = cat.byAgent.get(row.agent_id);
+    if (!agent) {
+      agent = { count: 0, example_run_ids: [], latest_at: at };
+      cat.byAgent.set(row.agent_id, agent);
+    }
+    agent.count++;
+    if (agent.example_run_ids.length < MAX_EXAMPLE_RUN_IDS) {
+      agent.example_run_ids.push(row.run_id);
+    }
+    if (at >= agent.latest_at) agent.latest_at = at;
   }
 
-  const categories: RunErrorCategory[] = [...byKey.entries()]
-    .map(([error_key, b]) => ({
+  const categories: RunErrorCategory[] = [...byCategory.entries()]
+    .map(([error_key, c]) => ({
+      category: error_key,
       error_key,
-      count: b.count,
-      agents: [...b.agents].sort(),
-      sample_run_id: b.sample_run_id,
-      latest_at: b.latest_at,
+      count: c.count,
+      by_agent: [...c.byAgent.entries()]
+        .map(([agent_id, a]) => ({
+          agent_id,
+          count: a.count,
+          example_run_ids: a.example_run_ids,
+          latest_at: a.latest_at,
+        }))
+        .sort((x, y) => y.count - x.count || x.agent_id.localeCompare(y.agent_id)),
+      sample_run_id: c.sample_run_id,
+      latest_at: c.latest_at,
     }))
     .sort((a, b) => b.count - a.count || b.latest_at.localeCompare(a.latest_at));
 
@@ -90,29 +129,4 @@ export async function buildRunErrorsSummary(
     light: true,
   });
   return summarizeRunErrors(rows, timeRange);
-}
-
-const STALE_RECONCILE_ERROR = "stale_running_reconciled";
-
-/** Collapse noisy duplicate error rows in run history / activity lists. */
-export function dedupeRunCatalogForDisplay<
-  T extends { run_id: string; agent_id: string; status: string; error?: string | null; started_at: string },
->(runs: T[]): T[] {
-  const out: T[] = [];
-  const staleByAgent = new Map<string, T>();
-
-  for (const run of runs) {
-    const err = (run.error ?? "").trim();
-    if (run.status === "error" && err === STALE_RECONCILE_ERROR) {
-      const prev = staleByAgent.get(run.agent_id);
-      if (!prev || run.started_at > prev.started_at) {
-        staleByAgent.set(run.agent_id, run);
-      }
-      continue;
-    }
-    out.push(run);
-  }
-  out.push(...staleByAgent.values());
-  out.sort((a, b) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime());
-  return out;
 }

@@ -240,7 +240,7 @@ async function loadDashboard() {
       fetchJson("/api/activity/recent?limit=25").catch(() => ({ items: [] })),
       fetchJson("/api/interventions").catch(() => ({ interventions: [] })),
       fetchJson(`/api/statistics?${statisticsQueryString()}`).catch(() => ({ statistics: null })),
-      fetchJson(`/api/runs/errors-summary?${statisticsQueryString()}`).catch(() => null),
+      fetchJson(`/api/errors/summary?${statisticsQueryString()}`).catch(() => null),
       fetchJson("/api/handoffs?limit=30").catch(() => ({ handoffs: [] })),
       fetchJson("/api/swarm/briefing").catch(() => ({})),
       fetchJson("/api/queue").catch(() => ({ queue: [] })),
@@ -474,14 +474,16 @@ function renderErrorsSummary() {
   panel.hidden = false;
   const rows = (summary.categories ?? [])
     .slice(0, 8)
-    .map(
-      (c) =>
-        `<tr><td class="mono">${esc(c.error_key)}</td><td>${c.count}</td><td>${c.agents.length} agents</td></tr>`,
+    .flatMap((c) =>
+      (c.by_agent ?? []).slice(0, 6).map(
+        (a) =>
+          `<tr><td class="mono">${esc(c.category ?? c.error_key)}</td><td class="mono">${esc(a.agent_id)}</td><td>${a.count}</td><td class="mono preview">${esc((a.example_run_ids ?? []).slice(0, 3).join(", "))}</td></tr>`,
+      ),
     )
     .join("");
-  panel.innerHTML = `<h3>Errors (${summary.total_errors} runs · ${summary.unique_categories} kinds)</h3>
-    <p class="hint">Grouped by message; stale reconcile deduped in history. <a href="../docs/ecosystem/learn-from-errors.md" target="_blank" rel="noopener">Learn from errors</a></p>
-    <table class="data-table"><thead><tr><th>Error</th><th>Count</th><th>Scope</th></tr></thead><tbody>${rows}</tbody></table>`;
+  panel.innerHTML = `<h3>Error summary (deduped for display)</h3>
+    <p class="hint">${summary.total_errors} error rows in range · ${summary.unique_categories} categories — reporting only; all rows remain in DB. <a href="../docs/ecosystem/recent-error-learnings.md" target="_blank" rel="noopener">Recent learnings</a></p>
+    <table class="data-table"><thead><tr><th>Category</th><th>Agent</th><th>Count</th><th>Example run_ids</th></tr></thead><tbody>${rows || '<tr><td colspan="4" class="empty">No categories</td></tr>'}</tbody></table>`;
 }
 
 function renderActivityFeed() {

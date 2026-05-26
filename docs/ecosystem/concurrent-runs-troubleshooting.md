@@ -27,7 +27,7 @@ Before 2026-05-26, `active_run_count` used `max(merged running rows, sdk_session
 
 1. Confirm slots: `curl -s :9477/api/runtime | jq '{active_run_count, active_runs_registered, sdk_slots_in_use, sdk_max_concurrent, active_runs: (.active_runs|length)}'`
 2. Restart cleanly: `systemctl --user restart li-agents-async-swarm li-agents-dashboard`
-3. Reconcile: stale rows flip to `error` automatically; see `GET /api/runs/errors-summary`
+3. Reconcile: stale rows flip to `error` automatically; see `GET /api/errors/summary` or `./scripts/report-swarm-errors.sh`
 4. Prevent dashboard staying down after SIGTERM: reinstall units (`Restart=always` on dashboard) via `scripts/install-agents-swarm-systemd.sh`
 
 See also [sdk-slot-policy.md](./sdk-slot-policy.md), [dashboard-db-contract.md](./dashboard-db-contract.md), [hung-agent-sweep.md](./hung-agent-sweep.md).

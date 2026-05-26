@@ -24,7 +24,6 @@ import {
 import type { ParsedStatsTimeRange } from "./stats-time-range.js";
 import type { AgentRunInputRecord, AgentRunTrace } from "../agent-run-trace.js";
 import { filterProductionRuns, isMockCatalogEntry } from "./run-history.js";
-import { dedupeRunCatalogForDisplay } from "./run-errors-summary.js";
 import { listToActivityItems, type ActivityListItem } from "./activity-summary.js";
 import { deriveLiveStreamPreviewFromActive } from "./live-stream-preview.js";
 import type { AgentId } from "../types.js";
@@ -191,12 +190,9 @@ export async function listRunsMergedInRange(
       limit,
       light: options.forStatistics,
     });
-    const catalog = filterProductionRuns(fromDb.map(historyRowToCatalog));
-    return dedupeRunCatalogForDisplay(catalog);
+    return filterProductionRuns(fromDb.map(historyRowToCatalog));
   }
-  return dedupeRunCatalogForDisplay(
-    listRunsFromDiskInRange({ since: options.since, until: options.until, limit }),
-  );
+  return listRunsFromDiskInRange({ since: options.since, until: options.until, limit });
 }
 
 function catalogMdPathForRunId(runId: string): string {
