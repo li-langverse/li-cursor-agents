@@ -1,0 +1,79 @@
+# WP-G: optional lidb engine e2e — workflow_dispatch only (GHA quota).
+# Mock e2e (no engine): npm run test:e2e:lidb locally or add a dispatch input below.
+name: PH-DB lidb engine e2e
+
+on:
+  workflow_dispatch:
+    inputs:
+      lidb_ref:
+        description: lidb git ref to checkout
+        required: false
+        default: main
+      run_mock_e2e:
+        description: Also run mock lidb e2e (LI_LIDB_MOCK=1)
+        type: boolean
+        default: true
+      continue_on_engine_fail:
+        description: continue-on-error for engine e2e until fully green
+        type: boolean
+        default: true
+
+jobs:
+  lidb-mock-e2e:
+    if: inputs.run_mock_e2e
+    runs-on: ubuntu-24.04
+    env:
+      CURSOR_MOCK: "1"
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Mock lidb control-plane e2e
+        run: |
+          npm ci
+          npm run test:e2e:lidb
+
+  lidb-engine-e2e:
+    runs-on: ubuntu-24.04
+    continue-on-error: ${{ inputs.continue_on_engine_fail }}
+    env:
+      CURSOR_MOCK: "1"
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: li-langverse/lidb
+          path: lidb
+          ref: ${{ inputs.lidb_ref }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install cmake
+        run: sudo apt-get update && sudo apt-get install -y cmake
+
+      - name: Build lidb embed (smoke)
+        working-directory: lidb
+        run: |
+          chmod +x scripts/*.sh
+          bash scripts/smoke.sh
+
+      - name: Engine e2e (test:e2e:lidb-engine)
+        env:
+          LI_LIDB_REPO: ${{ github.workspace }}/lidb
+        run: |
+          npm ci
+          npm run test:e2e:lidb-engine

@@ -1,7 +1,8 @@
 name: CI
 
 # GHA minutes: prefer local CI — ../li-local-ci/bin/li-local-ci run li-cursor-agents
-# Cloud CI: manual dispatch only (or add pull_request back when quota allows).
+# Cloud CI: push main + workflow_dispatch only (no PR matrix — quota).
+# PH-DB lidb e2e: .github/workflows/ph-db-lidb-engine.yml (dispatch only; LI_LIDB_REPO checkout).
 on:
   workflow_dispatch:
   push:
