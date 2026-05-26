@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
 import type { AgentId } from "../types.js";
+import { buildResearchGoalsFromFactory } from "./researcher-factory.js";
 
 export interface ResearchGoal {
   id: string;
@@ -28,12 +29,8 @@ export interface ResearchGoalsFile {
   goals: ResearchGoal[];
 }
 
-export function loadResearchGoals(): ResearchGoal[] {
-  const path =
-    process.env.LI_RESEARCH_GOALS_PATH?.trim() ||
-    join(agentsPackageRoot(), "config", "research-goals.yaml");
-  if (!existsSync(path)) return [];
-  const raw = readFileSync(path, "utf8");
+/** Parse committed YAML (used for LI_RESEARCH_GOALS_PATH overrides and sync diff). */
+export function parseResearchGoalsYaml(raw: string): ResearchGoal[] {
   const goals: ResearchGoal[] = [];
   let current: Partial<ResearchGoal> | null = null;
 
@@ -75,6 +72,14 @@ export function loadResearchGoals(): ResearchGoal[] {
   }
   if (current?.id) goals.push(current as ResearchGoal);
   return goals.filter((g) => g.enabled !== false);
+}
+
+export function loadResearchGoals(): ResearchGoal[] {
+  const overridePath = process.env.LI_RESEARCH_GOALS_PATH?.trim();
+  if (overridePath && existsSync(overridePath)) {
+    return parseResearchGoalsYaml(readFileSync(overridePath, "utf8"));
+  }
+  return buildResearchGoalsFromFactory();
 }
 
 export function resolveGoalAgent(goal: ResearchGoal): AgentId {

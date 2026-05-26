@@ -1,6 +1,20 @@
 # Research verticals matrix
 
-**19 user-facing verticals** are registered in `config/research-goals.yaml` with a `vertical:` slug. Goal-directed research runs through the **async swarm research lane** (`researchLaneAgentIds()`), not per-vertical systemd `sim-*` loops.
+**19 user-facing verticals** are defined in **`src/research-goals/researcher-factory.ts`** (runtime source of truth) and exported to `config/research-goals.yaml` via `npm run research-goals:sync`. Goal-directed research runs through the **async swarm research lane** (`researchLaneAgentIds()`), not per-vertical systemd `sim-*` loops.
+
+### Tuning a vertical (factory)
+
+Edit `RESEARCH_VERTICALS` in `researcher-factory.ts` (agent routing uses `NUMERICS_VERTICAL_SLUGS`), then `npm run research-goals:sync` and commit the YAML artifact. Example:
+
+```typescript
+verticalRow("my_topic", "my_topic_sota", "My topic — SOTA and Li gaps", ["ecosystem"], {
+  priority: 6,
+  cadenceHours: 24,
+  session: true,
+}),
+```
+
+Kickoff hints: `src/research-goals/vertical-prompt-hints.ts`. Dashboard `/api/goals` exposes `vertical` and `publish_subdir` per row.
 
 **SDK cap:** `LI_SDK_MAX_CONCURRENT=5` (see [sdk-slot-policy.md](./sdk-slot-policy.md)). The research lane holds **one** slot; `pickNextGoal` / `pickNextGoalForAgent` rotates all enabled goals by **priority** and **cadence_hours** over time. Do not spawn 19 parallel researchers.
 
@@ -34,9 +48,7 @@ Paths are relative to the **research-findings** repo unless prefixed with `resea
 2. **Per-agent workers** (`pickNextGoalForAgent`): `numerics_researcher` competes across physics/md/chem/simulation/HPC goals; `goal_researcher` across biology…agentic goals.
 3. **Agent union** (`src/lanes/lane-agent-ids.ts`): every enabled goal’s `agent` is included in `researchLaneAgentIds()`.
 4. **Scaffolds**: `config/goal-scaffolds/<goal_id>.md`.
-5. **Legacy script** `scripts/run-researchers-long.sh`: rotates `LI_RESEARCH_AGENTS` only — prefer `npm run agents:async-swarm` + enabled research lane.
-
-Default long-run agents (optional): `gap_explorer,numerics_researcher,autoresearch,goal_researcher`.
+5. **Legacy script** `scripts/run-researchers-long.sh`: default agent list from `researchLongRunAgentIds()` (factory) — prefer `npm run agents:async-swarm` + enabled research lane.
 
 ## Non-vertical goals (same lane, different role)
 
@@ -62,7 +74,10 @@ Default long-run agents (optional): `gap_explorer,numerics_researcher,autoresear
 
 ## Related
 
-- `config/research-goals.yaml`
+- `src/research-goals/researcher-factory.ts` — tune verticals
+- `docs/ecosystem/researcher-factory-plan.md` — WP plan
+- `config/research-goals.yaml` — generated export (`npm run research-goals:sync`)
 - `config/implement-goals.yaml`
+- **research-findings index:** after new verticals ship, sync whitepaper index in the research-findings repo (out of band; not automated here)
 - [swarm-architecture.md](./swarm-architecture.md)
 - [sdk-slot-policy.md](./sdk-slot-policy.md)

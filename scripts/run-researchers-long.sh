@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Run numerics/ecosystem researchers on a loop for several hours (real Cursor SDK).
 #
-# Prefer async swarm + research lane for all verticals in config/research-goals.yaml
-# (researchLaneAgentIds picks agents from every enabled goal). This script rotates a
-# small LI_RESEARCH_AGENTS list only — it does not enumerate biology/robotics/etc.
+# Prefer async swarm + research lane (researcher-factory.ts → loadResearchGoals).
+# researchLaneAgentIds() uses the same factory verticals as config/research-goals.yaml.
+# Default LI_RESEARCH_AGENTS comes from researchLongRunAgentIds() when unset.
 #
 #   LI_RESEARCH_DURATION_SEC=7200   # default 2h
-#   LI_RESEARCH_PAUSE_SEC=120         # pause between agent runs (default 2m)
-#   LI_RESEARCH_AGENTS="gap_explorer,numerics_researcher,autoresearch,goal_researcher"
+#   LI_RESEARCH_PAUSE_SEC=120       # pause between agent runs (default 2m)
+#   LI_RESEARCH_AGENTS=             # optional override (comma-separated)
 #
 # Logs: logs/researchers-long.log
 set -euo pipefail
@@ -33,7 +33,6 @@ DURATION="${LI_RESEARCH_DURATION_SEC:-7200}"
 PAUSE="${LI_RESEARCH_PAUSE_SEC:-120}"
 LOG="$ROOT/logs/researchers-long.log"
 END=$((SECONDS + DURATION))
-IFS=',' read -r -a AGENTS <<< "${LI_RESEARCH_AGENTS:-gap_explorer,numerics_researcher,autoresearch}"
 
 log() {
   echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) [researchers] $*" | tee -a "$LOG"
@@ -45,7 +44,16 @@ if [[ -z "${CURSOR_API_KEY:-}${CURSOR_SDK_KEY:-}${CURSOR_SDK:-}" ]]; then
 fi
 
 npm run build -s >>"$LOG" 2>&1
-log "start node=$("$NODE_BIN" -v) duration=${DURATION}s pause=${PAUSE}s agents=${LI_RESEARCH_AGENTS:-gap_explorer,numerics_researcher,autoresearch} benchmarks=${BENCHMARKS_ROOT}"
+
+DEFAULT_AGENTS="$("$NODE_BIN" -e "
+import { researchLongRunAgentIds } from './dist/research-goals/researcher-factory.js';
+console.log(researchLongRunAgentIds().join(','));
+" 2>/dev/null || echo "gap_explorer,numerics_researcher,autoresearch,goal_researcher")"
+LI_RESEARCH_AGENTS="${LI_RESEARCH_AGENTS:-$DEFAULT_AGENTS}"
+export LI_RESEARCH_AGENTS
+IFS=',' read -r -a AGENTS <<< "$LI_RESEARCH_AGENTS"
+
+log "start node=$("$NODE_BIN" -v) duration=${DURATION}s pause=${PAUSE}s agents=${LI_RESEARCH_AGENTS} benchmarks=${BENCHMARKS_ROOT}"
 
 EXTRA='Produce Executive summary, Deliverable/findings with evidence paths, and Deferred. Cite real preflight/briefing data. For numerics: include li-tests/, benchmarks/, or docs/numerics/ references when proposing changes.'
 

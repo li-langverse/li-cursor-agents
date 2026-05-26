@@ -7,7 +7,7 @@ import {
   resolveGoalAgent,
 } from "./load-goals.js";
 
-test("loadResearchGoals reads committed yaml", () => {
+test("loadResearchGoals reads factory goals", () => {
   const goals = loadResearchGoals();
   assert.ok(goals.length >= 5);
   const proof = goals.find((g) => g.id === "provability_holes");

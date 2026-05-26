@@ -1,4 +1,5 @@
-# Goal-directed research missions — see plan §1
+# Goal-directed research missions — generated from researcher-factory.ts
+# Regenerate: npm run research-goals:sync
 # Whitepapers: publish_repo + whitepaper_root (defaults below) → ../research-findings
 defaults:
   publish_repo: research-findings
@@ -17,8 +18,6 @@ goals:
     publish_repo: research-findings
     whitepaper_root: ../research-findings/whitepapers
     ph_ids: [PH-5b, PH-7e]
-
-  # Swarm goal md_sim (retired li-sim-md-research-plan-loop)
   - id: md_sim_algorithms
     title: MD algorithms — SOTA survey and Li gap analysis
     vertical: md
@@ -31,9 +30,7 @@ goals:
     allow_implementation: true
     publish_repo: research-findings
     whitepaper_root: ../research-findings/whitepapers
-    handoff_to: [code_implementer, issue_planner]
-
-  # Swarm goal chem_sim (retired li-sim-chem-research-plan-loop)
+    handoff_to: [package_architect, code_implementer, issue_planner]
   - id: chem_sim_algorithms
     title: Chemistry / QM algorithms — SOTA survey and Li gap analysis
     vertical: chemistry
@@ -46,8 +43,7 @@ goals:
     allow_implementation: true
     publish_repo: research-findings
     whitepaper_root: ../research-findings/whitepapers
-    handoff_to: [code_implementer, issue_planner]
-
+    handoff_to: [package_architect, code_implementer, issue_planner]
   - id: physics_sim
     title: Computational physics — PDE/FEM/continuum SOTA and Li gaps
     vertical: physics
@@ -60,8 +56,7 @@ goals:
     allow_implementation: true
     publish_repo: research-findings
     whitepaper_root: ../research-findings/whitepapers
-    handoff_to: [code_implementer, issue_planner]
-
+    handoff_to: [package_architect, code_implementer, issue_planner]
   - id: biology_systems
     title: Biology / bioinformatics — models, pipelines, Li package gaps
     vertical: biology
@@ -74,7 +69,6 @@ goals:
     publish_repo: research-findings
     whitepaper_root: ../research-findings/whitepapers
     handoff_to: [package_architect, code_implementer, issue_planner]
-
   - id: bioengineering_systems
     title: Bioengineering — tissue/bioprocess modeling and Li std gaps
     vertical: bioengineering
@@ -87,7 +81,6 @@ goals:
     publish_repo: research-findings
     whitepaper_root: ../research-findings/whitepapers
     handoff_to: [package_architect, code_implementer, issue_planner]
-
   - id: engineering_mechanical
     title: Mechanical / structural engineering — FEA, multiphysics, Li gaps
     vertical: engineering
@@ -100,7 +93,6 @@ goals:
     publish_repo: research-findings
     whitepaper_root: ../research-findings/whitepapers
     handoff_to: [package_architect, code_implementer, issue_planner]
-
   - id: additive_manufacturing
     title: Additive manufacturing — slicing, lattice, process sim SOTA
     vertical: additive
@@ -113,7 +105,6 @@ goals:
     publish_repo: research-findings
     whitepaper_root: ../research-findings/whitepapers
     handoff_to: [package_architect, code_implementer, issue_planner]
-
   - id: robotics_systems
     title: Robotics — motion planning, control, perception on Li
     vertical: robotics
@@ -127,7 +118,6 @@ goals:
     publish_repo: research-findings
     whitepaper_root: ../research-findings/whitepapers
     handoff_to: [package_architect, code_implementer, issue_planner]
-
   - id: database_platform
     title: Database / storage — query engines, embedded DB, Li data layer
     vertical: database
@@ -140,7 +130,6 @@ goals:
     publish_repo: research-findings
     whitepaper_root: ../research-findings/whitepapers
     handoff_to: [package_architect, issue_planner]
-
   - id: server_platform
     title: Server / deploy — httpd, services, observability, secure ops
     vertical: server
@@ -153,7 +142,6 @@ goals:
     publish_repo: research-findings
     whitepaper_root: ../research-findings/whitepapers
     handoff_to: [package_architect, issue_planner]
-
   - id: simulation_techniques
     title: Simulation science — methods, coupling, reference architectures
     vertical: simulation_science
@@ -167,7 +155,6 @@ goals:
     publish_repo: research-findings
     whitepaper_root: ../research-findings/whitepapers
     handoff_to: [package_architect, code_implementer, issue_planner]
-
   - id: scientific_distributed_computing
     title: Scientific & distributed computing — MPI, partitions, cloud HPC on Li
     vertical: scientific_distributed_computing
@@ -180,7 +167,6 @@ goals:
     publish_repo: research-findings
     whitepaper_root: ../research-findings/whitepapers
     handoff_to: [package_architect, code_implementer, issue_planner]
-
   - id: ml_systems
     title: Machine learning — frameworks, training pipelines, Li package gaps
     vertical: machine_learning
@@ -193,7 +179,6 @@ goals:
     publish_repo: research-findings
     whitepaper_root: ../research-findings/whitepapers
     handoff_to: [package_architect, issue_planner]
-
   - id: deep_learning_systems
     title: Deep learning — architectures, inference, accelerators on Li
     vertical: deep_learning
@@ -203,10 +188,10 @@ goals:
     cadence_hours: 24
     enabled: true
     uses_research_session: true
+    allow_implementation: true
     publish_repo: research-findings
     whitepaper_root: ../research-findings/whitepapers
     handoff_to: [package_architect, code_implementer, issue_planner]
-
   - id: rl_systems
     title: Reinforcement learning — envs, policies, sim-to-real on Li
     vertical: reinforcement_learning
@@ -219,7 +204,6 @@ goals:
     publish_repo: research-findings
     whitepaper_root: ../research-findings/whitepapers
     handoff_to: [package_architect, issue_planner]
-
   - id: ai_ecosystem
     title: AI-first tooling on Li (training, inference, agents)
     vertical: ai
@@ -232,7 +216,6 @@ goals:
     publish_repo: research-findings
     whitepaper_root: ../research-findings/whitepapers
     handoff_to: [package_architect, issue_planner]
-
   - id: agentic_ai_systems
     title: Agentic AI — tool use, multi-agent orchestration, safety on Li
     vertical: agentic_ai
@@ -245,7 +228,6 @@ goals:
     publish_repo: research-findings
     whitepaper_root: ../research-findings/whitepapers
     handoff_to: [package_architect, issue_planner, swarm_observer]
-
   - id: game_engine_ux
     title: Easy game engine + AI integration patterns
     vertical: gaming
@@ -253,24 +235,22 @@ goals:
     agent: goal_researcher
     priority: 5
     cadence_hours: 48
-    allow_implementation: true
     enabled: true
     uses_research_session: true
+    allow_implementation: true
     publish_repo: research-findings
     whitepaper_root: ../research-findings/whitepapers
     handoff_to: [package_architect, code_implementer, issue_planner]
-
   - id: cad_fundamentals
     title: CAD/geometry — kernels, packages, and Li std gaps
     domains: [ecosystem, scientific_computing]
     agent: goal_researcher
     priority: 5
     cadence_hours: 48
-    allow_implementation: true
     enabled: true
     uses_research_session: true
+    allow_implementation: true
     handoff_to: [package_architect, code_implementer, issue_planner]
-
   - id: web_platform
     title: Web stack, HTTP, WASM, secure deploy story
     domains: [web]
@@ -280,7 +260,6 @@ goals:
     enabled: true
     uses_research_session: true
     handoff_to: [package_architect, issue_planner]
-
   - id: ecosystem_gaps
     title: Org-wide std/packages + ecosystem signals
     domains: [ecosystem, hpc, web]
@@ -289,7 +268,6 @@ goals:
     cadence_hours: 24
     enabled: true
     handoff_to: [package_architect, issue_planner]
-
   - id: stdlib_ecosystem
     title: Deep std + li-std-* audit; packages to build vs improve
     domains: [ecosystem, scientific_computing, hpc]
@@ -299,17 +277,15 @@ goals:
     enabled: true
     uses_research_session: true
     handoff_to: [package_architect, code_implementer]
-
   - id: ui_ux_quality
     title: Internal UI/UX vs SOTA (docs, GUI, TUI)
     domains: [ecosystem, web]
     agent: gui_ux_tester
     priority: 5
     cadence_hours: 48
-    allow_implementation: false
     enabled: true
+    allow_implementation: false
     handoff_to: [code_implementer, docs_maintainer, issue_planner]
-
   - id: provability_holes
     title: Proof holes — compiler, contracts, trusted axioms
     domains: [ecosystem]
@@ -318,10 +294,8 @@ goals:
     cadence_hours: 12
     enabled: true
     uses_research_session: true
-    ph_ids: [PH-2e, PH-2f]
     handoff_to: [package_architect, code_implementer, issue_planner]
-
-  # Swarm goal (retired li-swarm-observer-plan-loop — use async swarm, not new systemd loops)
+    ph_ids: [PH-2e, PH-2f]
   - id: swarm_coverage
     title: Swarm gap orchestration — registry, backlog apply, handoffs
     domains: [ecosystem, ai]
@@ -330,8 +304,6 @@ goals:
     cadence_hours: 6
     enabled: true
     handoff_to: [gap_explorer, plan_verifier, issue_planner]
-
-  # Swarm goal (retired li-security-research-plan-loop)
   - id: offensive_security
     title: Offensive security — fuzz, tier5 exploits, CWE feed
     domains: [ecosystem, web]

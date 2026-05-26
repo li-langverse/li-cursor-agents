@@ -33,6 +33,7 @@
     "agents:implement-lane": "npm run build && node dist/cli/implement-lane.js",
     "agents:maintenance-lane": "npm run build && node dist/cli/maintenance-lane.js",
     "agents:async-swarm": "npm run build && node dist/cli/async-swarm.js start",
+    "research-goals:sync": "npm run build && node dist/cli/sync-research-goals-from-factory.js",
     "agents:sweep-hung": "npm run build && node dist/cli/sweep-hung-agents.js",
     "briefing:enrich": "npm run build && LI_CONTROL_PLANE_STORE=disk node dist/cli/enrich-briefing.js",
     "swarm:dispatch-benchmarks": "npm run build && node dist/cli/dispatch-benchmarks-audit.js",
