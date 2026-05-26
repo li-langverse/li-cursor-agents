@@ -47,6 +47,24 @@ if [[ -f "$ROOT/.env.supabase" ]]; then
   set +a
 fi
 
+_systemd_owns_stack() {
+  [[ "${LI_CONTROL_PLANE_SYSTEMD:-}" == "1" || "${LI_CONTROL_PLANE_SYSTEMD:-}" == "true" ]] && return 0
+  if command -v systemctl >/dev/null 2>&1; then
+    local st
+    st="$(systemctl --user is-active li-agents-dashboard.service 2>/dev/null || true)"
+    [[ "$st" == "active" || "$st" == "activating" ]] && return 0
+  fi
+  return 1
+}
+
+if _systemd_owns_stack; then
+  echo "==> systemd manages control plane — try-restart units (no lsof/pkill)"
+  systemctl --user try-restart li-agents-dashboard.service 2>/dev/null || true
+  systemctl --user try-restart li-agents-async-swarm.service 2>/dev/null || true
+  echo "Dashboard: http://127.0.0.1:${LI_AGENT_DASHBOARD_PORT:-9477}/"
+  exit 0
+fi
+
 if [[ "${LI_KEEP_AGENTS_RESTART:-}" != "0" ]]; then
   if lsof -ti ":${LI_AGENT_DASHBOARD_PORT}" >/dev/null 2>&1; then
     echo "Stopping existing dashboard on :${LI_AGENT_DASHBOARD_PORT}…"

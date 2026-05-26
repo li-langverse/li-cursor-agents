@@ -123,6 +123,7 @@ test("runtimeSnapshotFromDb merges DB-only running rows into active_runs but not
   assert.equal(snap.active_runs_registered, 0);
   assert.equal(snap.active_runs.length, 1);
   assert.equal(snap.active_runs[0]!.run_id, "stale-db-only");
+  assert.equal(snap.active_run_count, 0);
   assert.equal(snap.store, "disk");
   assert.equal(snap.db_enabled, false);
 });

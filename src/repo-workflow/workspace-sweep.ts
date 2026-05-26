@@ -187,7 +187,7 @@ export async function runWorkspaceDirtySweep(
   const anyPushed = sweeps.some((s) => s.push.pushed);
   let restart: WorkspaceSweepReport["restart"];
   if ((options.restart ?? true) && anyPushed) {
-    restart = restartControlPlaneStack({ dryRun: options.dryRun });
+    restart = await restartControlPlaneStack({ dryRun: options.dryRun });
   }
 
   return {

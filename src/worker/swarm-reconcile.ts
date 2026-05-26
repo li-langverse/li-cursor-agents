@@ -24,6 +24,16 @@ function envAutoStartSwarm(): boolean {
   );
 }
 
+/** Pure decision: resume async swarm worker loops after process restart. */
+export function shouldResumeAsyncSwarmAfterRestart(input: {
+  swarmActiveOnHost: boolean;
+  envAutoStart: boolean;
+  workerAsyncSwarmRunning: boolean;
+}): boolean {
+  if (input.swarmActiveOnHost) return false;
+  return input.envAutoStart || input.workerAsyncSwarmRunning;
+}
+
 /**
  * After worker restart, in-memory swarm is off but Supabase worker_status may still say on.
  * Resume workers when DB says swarm was running, or when LI_AUTO_START_ASYNC_SWARM=1.
@@ -69,11 +79,11 @@ export async function reconcileSwarmAfterStartup(): Promise<void> {
     await markDetachedSwarmStopped("reconcile: detached pid not running");
   }
 
-  let shouldStart = envAutoStartSwarm();
-  if (!shouldStart && dbEnabled()) {
+  let workerAsyncSwarmRunning = false;
+  if (dbEnabled()) {
     const worker = await loadWorkerStatusFromDb();
-    if (worker?.async_swarm_running) {
-      shouldStart = true;
+    workerAsyncSwarmRunning = Boolean(worker?.async_swarm_running);
+    if (workerAsyncSwarmRunning && !envAutoStartSwarm()) {
       workerConsole(
         "reconcile",
         "info",
@@ -86,6 +96,12 @@ export async function reconcileSwarmAfterStartup(): Promise<void> {
       );
     }
   }
+
+  const shouldStart = shouldResumeAsyncSwarmAfterRestart({
+    swarmActiveOnHost: swarmActiveOnThisHost(),
+    envAutoStart: envAutoStartSwarm(),
+    workerAsyncSwarmRunning,
+  });
 
   const deferMs = Number(process.env.LI_SWARM_RECONCILE_DEFER_MS ?? 0);
   workerConsole(
