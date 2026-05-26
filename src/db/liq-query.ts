@@ -72,8 +72,9 @@ export async function runLiqQuery(liq: string): Promise<LiqQueryResult> {
   const parsed = parseReadLiq(liq);
   if (!parsed.ok) return { ok: false, error: parsed.error, liq };
 
-  const engine = process.env.LI_LIDB_URL?.trim() || process.env.LI_LIDB_MOCK?.trim();
-  if (!engine) {
+  const url = process.env.LI_LIDB_URL?.trim();
+  const mockHarness = process.env.LI_LIDB_MOCK === "1" || !url;
+  if (mockHarness) {
     const rows = mockRowsForTable(parsed.table, parsed.limit);
     return {
       ok: true,
@@ -88,7 +89,7 @@ export async function runLiqQuery(liq: string): Promise<LiqQueryResult> {
 
   return {
     ok: false,
-    error: "lidb liq engine stub: set LI_LIDB_MOCK=1 for mock rows until PH-DB-10 persist lands",
+    error: "lidb liq engine not wired — set LI_LIDB_MOCK=1 for harness rows until liorm lands",
     liq,
     table: parsed.table,
   };

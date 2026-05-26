@@ -9,9 +9,10 @@ export type McpServerConfig = {
   cwd?: string;
 };
 import { agentsPackageRoot } from "../runner.js";
-import { dbEnabled } from "../db/client.js";
+import { configuredStore, dbEnabled, useLidbStore } from "../db/client.js";
 
 export const CONTROL_PLANE_DB_MCP_ID = "li-control-plane-db";
+export const CONTROL_PLANE_LIQ_MCP_ID = "li-control-plane-liq";
 export const ECOSYSTEM_CONTEXT_MCP_ID = "li-ecosystem-context";
 
 export function controlPlaneDbMcpEntryPath(): string {
@@ -26,6 +27,15 @@ export function controlPlaneDbMcpEntryPath(): string {
 export function ecosystemContextMcpEntryPath(): string {
   const root = agentsPackageRoot();
   const built = join(root, "dist", "mcp", "li-ecosystem-context-mcp.js");
+  if (!existsSync(built)) {
+    throw new Error(`Missing ${built} — run npm run build`);
+  }
+  return built;
+}
+
+export function controlPlaneLiqMcpEntryPath(): string {
+  const root = agentsPackageRoot();
+  const built = join(root, "dist", "mcp", "lidb-liq-mcp.js");
   if (!existsSync(built)) {
     throw new Error(`Missing ${built} — run npm run build`);
   }
@@ -97,4 +107,62 @@ export function buildControlPlaneDbMcpServers(): Record<string, McpServerConfig>
   };
 
   return servers;
+}
+
+function buildEcosystemContextForLiq(root: string): McpServerConfig {
+  return {
+    type: "stdio",
+    command: process.execPath,
+    args: [ecosystemContextMcpEntryPath()],
+    cwd: root,
+    env: {
+      LI_CURSOR_AGENTS_ROOT: root,
+      LI_CONTROL_PLANE_STORE: process.env.LI_CONTROL_PLANE_STORE ?? "lidb",
+      LI_LIDB_MOCK: process.env.LI_LIDB_MOCK ?? "",
+      LI_LIDB_URL: process.env.LI_LIDB_URL ?? "",
+    },
+  };
+}
+
+/** MCP server config when store=lidb (liq read path; PH-DB-10). */
+export function buildControlPlaneLiqMcpServers(): Record<string, McpServerConfig> | undefined {
+  const root = agentsPackageRoot();
+  const servers: Record<string, McpServerConfig> = {};
+
+  if (process.env.LI_ECOSYSTEM_CONTEXT_MCP !== "0") {
+    servers[ECOSYSTEM_CONTEXT_MCP_ID] = buildEcosystemContextForLiq(root);
+  }
+
+  if (process.env.LI_CONTROL_PLANE_LIQ_MCP === "0") {
+    return Object.keys(servers).length ? servers : undefined;
+  }
+  const force = process.env.LI_CONTROL_PLANE_LIQ_MCP === "1";
+  if (!force && !useLidbStore()) {
+    return Object.keys(servers).length ? servers : undefined;
+  }
+
+  const env: Record<string, string> = {
+    LI_CURSOR_AGENTS_ROOT: root,
+    LI_CONTROL_PLANE_STORE: process.env.LI_CONTROL_PLANE_STORE ?? "lidb",
+  };
+  for (const key of ["LI_LIDB_URL", "LI_LIDB_MOCK", "LI_DATA_DIR", "LI_DB_QUERY_MAX_ROWS"]) {
+    const v = process.env[key];
+    if (v) env[key] = v;
+  }
+
+  servers[CONTROL_PLANE_LIQ_MCP_ID] = {
+    type: "stdio",
+    command: process.execPath,
+    args: [controlPlaneLiqMcpEntryPath()],
+    cwd: root,
+    env,
+  };
+
+  return servers;
+}
+
+/** Pick Postgres MCP (supabase) or liq MCP (lidb) for Cursor SDK agents. */
+export function buildControlPlaneMcpServers(): Record<string, McpServerConfig> | undefined {
+  if (configuredStore() === "lidb") return buildControlPlaneLiqMcpServers();
+  return buildControlPlaneDbMcpServers();
 }

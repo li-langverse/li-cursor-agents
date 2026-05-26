@@ -507,7 +507,7 @@ export const SETTINGS_SCHEMA: SettingDefinition[] = [
     category: "store",
     type: "enum",
     defaultValue: "supabase",
-    enumValues: ["supabase", "disk"],
+    enumValues: ["supabase", "disk", "lidb"],
     restartRequired: true,
   },
   {

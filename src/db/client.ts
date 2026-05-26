@@ -6,16 +6,16 @@ let client: SupabaseClient | null = null;
 let testClientOverride: SupabaseClient | null = null;
 
 /** Control-plane persistence backend. Default: supabase. */
-export type ControlPlaneStore = "supabase" | "disk";
+export type ControlPlaneStore = "supabase" | "disk" | "lidb";
 
 /**
  * Which database backs the control plane.
- * - `LI_CONTROL_PLANE_STORE=supabase|disk` (default supabase)
+ * - `LI_CONTROL_PLANE_STORE=supabase|disk|lidb` (default supabase)
  * - Legacy: `LI_STACK_SKIP_SUPABASE=1` → disk
  */
 export function configuredStore(): ControlPlaneStore {
   const raw = process.env.LI_CONTROL_PLANE_STORE?.trim().toLowerCase();
-  if (raw === "disk" || raw === "supabase") return raw;
+  if (raw === "disk" || raw === "supabase" || raw === "lidb") return raw;
   if (process.env.LI_STACK_SKIP_SUPABASE === "1") return "disk";
   return "supabase";
 }
@@ -26,6 +26,38 @@ export function useSupabaseStore(): boolean {
 
 export function useDiskStore(): boolean {
   return configuredStore() === "disk";
+}
+
+export function useLidbStore(): boolean {
+  return configuredStore() === "lidb";
+}
+
+/** Disk JSON mirror and lidb stub persist (until liorm is wired). */
+export function useDiskBackedStore(): boolean {
+  return useDiskStore() || useLidbStore();
+}
+
+/** Lidb engine URL configured (real engine when PH-DB-10 lands). */
+export function lidbUrlConfigured(): boolean {
+  return Boolean(process.env.LI_LIDB_URL?.trim());
+}
+
+/** True when liorm should handle writes (not mock/disk stub). */
+export function lidbEnginePersistEnabled(): boolean {
+  return useLidbStore() && lidbUrlConfigured() && !lidbMockEnabled();
+}
+
+/** Harness / offline: mock liq rows without embedded lidb. */
+export function lidbMockEnabled(): boolean {
+  return process.env.LI_LIDB_MOCK === "1";
+}
+
+/** lidb store is usable: engine URL, mock harness, or LI_DATA_DIR disk stub. */
+export function lidbReady(): boolean {
+  if (!useLidbStore()) return false;
+  if (lidbUrlConfigured() || lidbMockEnabled()) return true;
+  const dataDir = process.env.LI_DATA_DIR?.trim();
+  return Boolean(dataDir);
 }
 
 /** Supabase client is usable (store is supabase and URL + key are set). */
@@ -39,6 +71,13 @@ export function dataStoreLabel(): ControlPlaneStore {
 
 /** Fail fast at dashboard/stack start when store=supabase but env is missing. */
 export function assertStoreReady(): void {
+  if (useLidbStore()) {
+    if (lidbReady()) return;
+    throw new Error(
+      "LI_CONTROL_PLANE_STORE=lidb but lidb is not ready. " +
+        "Set LI_LIDB_URL (lis db start), LI_LIDB_MOCK=1 for harness, or LI_DATA_DIR for disk-backed stub.",
+    );
+  }
   if (!useSupabaseStore()) return;
   if (dbEnabled()) return;
   throw new Error(
@@ -116,8 +155,8 @@ export function getSupabase(): SupabaseClient {
   return client;
 }
 
-/** Mirror JSON under data/ when using Supabase; always on when store=disk. */
+/** Mirror JSON under data/ when using Supabase; always on when store=disk or lidb stub. */
 export function exportDiskCacheEnabled(): boolean {
-  if (useDiskStore()) return true;
+  if (useDiskBackedStore()) return true;
   return process.env.LI_EXPORT_DISK_CACHE === "1";
 }

@@ -5,7 +5,12 @@ export {
   dbEnabled,
   exportDiskCacheEnabled,
   getSupabase,
+  lidbMockEnabled,
+  lidbReady,
+  lidbUrlConfigured,
+  useDiskBackedStore,
   useDiskStore,
+  useLidbStore,
   useSupabaseStore,
   type ControlPlaneStore,
 } from "./client.js";
