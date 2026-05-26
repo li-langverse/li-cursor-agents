@@ -47,7 +47,7 @@ if [[ "$INSTALL_ASYNC" == "1" ]]; then
   DASHBOARD_AUTO_SWARM=0
   DASHBOARD_EXTERNAL_SWARM=1
 fi
-chmod +x "$ROOT"/scripts/lib/agents-swarm-systemd-wrapper.sh "$ROOT"/scripts/agents-*.sh "$ROOT"/scripts/sweep-hung-agents.sh "$ROOT"/scripts/swarm-health-report.sh
+chmod +x "$ROOT"/scripts/lib/agents-swarm-systemd-wrapper.sh "$ROOT"/scripts/agents-*.sh "$ROOT"/scripts/sweep-hung-agents.sh "$ROOT"/scripts/swarm-health-report.sh "$ROOT"/scripts/swarm-env-preflight.sh
 mkdir -p "$DATA_DIR" "$LOG_DIR" "$SERVICE_DIR"
 command -v loginctl >/dev/null && loginctl enable-linger "$(whoami)" 2>/dev/null || true
 cat >"$SERVICE_DIR/li-agents-dashboard.service" <<EOF
@@ -93,7 +93,8 @@ if [[ "$INSTALL_WATCHDOG" == "1" ]]; then
 [Service]
 Type=oneshot
 WorkingDirectory=$ROOT
-Environment=HOME=$HOME LI_CURSOR_ENV_FILE=$ENV_FILE LI_CURSOR_AGENTS_ROOT=$ROOT
+Environment=HOME=$HOME PATH=$SERVICE_PATH LI_CURSOR_ENV_FILE=$ENV_FILE LI_CURSOR_AGENTS_ROOT=$ROOT
+Environment=NODE_BIN=$NODE_BIN LI_CONTROL_PLANE_STORE=$STORE
 ExecStart=$ROOT/scripts/agents-swarm-watchdog-systemd.sh
 EOF
   cat >"$SERVICE_DIR/li-agents-swarm-watchdog.timer" <<EOF

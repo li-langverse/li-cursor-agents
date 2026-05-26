@@ -8,22 +8,17 @@ mkdir -p logs
 
 # shellcheck source=env.defaults.sh
 source "$ROOT/scripts/env.defaults.sh"
+# shellcheck source=lib/li-stack-env.sh
+source "$ROOT/scripts/lib/li-stack-env.sh"
 
-# One Node for dashboard + supervisor (process.execPath). Prefer Homebrew over Cursor's bundled node.
-if [[ -n "${NODE_BIN:-}" && -x "${NODE_BIN}" ]]; then
-  :
-elif [[ -x "/opt/homebrew/bin/node" ]]; then
-  export NODE_BIN="/opt/homebrew/bin/node"
-elif [[ -x "/opt/homebrew/opt/node@22/bin/node" ]]; then
-  export NODE_BIN="/opt/homebrew/opt/node@22/bin/node"
-else
-  export NODE_BIN="$(command -v node)"
-fi
-export PATH="$(dirname "$NODE_BIN"):${PATH}"
+NODE_BIN="$(li_resolve_preferred_node_bin)"
+export NODE_BIN PATH="$(dirname "$NODE_BIN"):${PATH}"
 echo "==> Using NODE_BIN=$NODE_BIN ($("$NODE_BIN" -v))"
+ENV_FILE="${LI_CURSOR_ENV_FILE:-$HOME/Documents/Cursor/.env}"
 if [[ -f "$ROOT/.env" ]]; then set -a; source "$ROOT/.env"; set +a; fi
 li_resolve_env_paths "$ROOT"
-if [[ -f "$LI_GITHUB_ENV" ]]; then set -a; source "$LI_GITHUB_ENV"; set +a; fi
+if [[ -f "$ENV_FILE" ]]; then set -a; source "$ENV_FILE"; set +a; fi
+elif [[ -f "$LI_GITHUB_ENV" ]]; then set -a; source "$LI_GITHUB_ENV"; set +a; fi
 export GH_TOKEN GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
 # Production stack uses Cursor SDK; tests set CURSOR_MOCK=1 explicitly.
 unset CURSOR_MOCK

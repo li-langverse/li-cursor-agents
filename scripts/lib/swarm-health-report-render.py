@@ -440,6 +440,16 @@ def main() -> int:
     print(f"| `li-agents-async-swarm.service` | {async_svc} |")
     print()
 
+    env_file = ctx.get("env_file") or "—"
+    gh_present = ctx.get("gh_token_present") or "unknown"
+    print("## GitHub credentials")
+    print()
+    print("| Field | Value |")
+    print("|-------|-------|")
+    print(f"| env_file | `{env_file}` |")
+    print(f"| GH_TOKEN present | {gh_present} |")
+    print()
+
     print("## Runtime API")
     print()
     if not runtime_ok:

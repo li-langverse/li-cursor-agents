@@ -5,6 +5,10 @@ set -euo pipefail
 ROOT="${LI_CURSOR_AGENTS_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 
 _resolve_shared_env() {
+  if [[ -n "${LI_CURSOR_ENV_FILE:-}" && -f "${LI_CURSOR_ENV_FILE}" ]]; then
+    echo "${LI_CURSOR_ENV_FILE}"
+    return 0
+  fi
   if [[ -n "${LI_SHARED_ENV:-}" && -f "${LI_SHARED_ENV}" ]]; then
     echo "${LI_SHARED_ENV}"
     return 0

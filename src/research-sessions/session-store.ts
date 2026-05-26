@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { agentsPackageRoot } from "../runner.js";
+import { agentsPackageRoot } from "../package-root.js";
 import { dbEnabled, getSupabase } from "../db/client.js";
 import { withSupabaseRetry } from "../db/supabase-retry.js";
 

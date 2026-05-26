@@ -6,11 +6,20 @@
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { agentsPackageRoot } from "../package-root.js";
-import {
-  isZombieInProgressSession,
-  RESEARCH_SESSION_AGENT_IDS,
-} from "../research-sessions/session-lifecycle.js";
 import type { ResearchSession } from "../research-sessions/types.js";
+
+/** Keep in sync with `research-sessions/session-lifecycle.ts` (avoid importing runner graph). */
+const RESEARCH_SESSION_AGENT_IDS = [
+  "numerics_researcher",
+  "goal_researcher",
+  "proof_gap_researcher",
+  "stdlib_researcher",
+] as const;
+
+function isZombieInProgressSession(session: ResearchSession): boolean {
+  if (session.status !== "in_progress" || session.queue.length > 0) return false;
+  return session.current_focus != null;
+}
 
 const sessionsDir =
   process.env.LI_RESEARCH_SESSIONS_DIR?.trim() ||

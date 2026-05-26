@@ -25,6 +25,11 @@ if [[ -f "$ENV_FILE" ]]; then
   # shellcheck disable=SC1090
   set -a && source "$ENV_FILE" && set +a
 fi
+export GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
+GH_TOKEN_PRESENT="no"
+if [[ -n "${GH_TOKEN:-}" || -n "${GITHUB_TOKEN:-}" ]]; then
+  GH_TOKEN_PRESENT="yes"
+fi
 
 mkdir -p "$REPORT_DIR"
 
@@ -197,6 +202,8 @@ ctx = {
     "handoffs_file": ${HANDOFFS_FILE@Q} if $HANDOFFS_OK else None,
     "interventions_file": ${INTERVENTIONS_FILE@Q} if $INTERVENTIONS_OK else None,
     "interventions_path": os.path.join(${CONTROL_PLANE@Q}, "interventions.json"),
+    "env_file": ${ENV_FILE@Q},
+    "gh_token_present": ${GH_TOKEN_PRESENT@Q},
 }
 with open(sys.argv[1], "w", encoding="utf-8") as f:
     json.dump(ctx, f)
