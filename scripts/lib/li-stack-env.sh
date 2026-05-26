@@ -26,6 +26,8 @@ li_resolve_preferred_node_bin() {
   local candidates=(
     "$explicit"
     "${HOME}/.local/node/bin/node"
+    "/opt/homebrew/opt/node@24/bin/node"
+    "/usr/local/opt/node@24/bin/node"
     "/opt/homebrew/bin/node"
     "/opt/homebrew/opt/node@22/bin/node"
     "/usr/local/bin/node"

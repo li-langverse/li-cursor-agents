@@ -1,7 +1,9 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { resolveSupabaseRealtimeOptions } from "./supabase-realtime-transport.js";
 import { normalizeSupabaseApiUrl } from "./supabase-url.js";
 
 let client: SupabaseClient | null = null;
+let testClientOverride: SupabaseClient | null = null;
 
 /** Control-plane persistence backend. Default: supabase. */
 export type ControlPlaneStore = "supabase" | "disk";
@@ -89,7 +91,17 @@ export function resetSupabaseClient(): void {
   client = null;
 }
 
+/** In-memory Supabase mock for unit tests (`LI_TEST_MODE=1` only). */
+export function setSupabaseClientForTest(mock: SupabaseClient | null): void {
+  if (process.env.LI_TEST_MODE !== "1") {
+    throw new Error("setSupabaseClientForTest requires LI_TEST_MODE=1");
+  }
+  testClientOverride = mock;
+  client = null;
+}
+
 export function getSupabase(): SupabaseClient {
+  if (testClientOverride) return testClientOverride;
   assertStoreReady();
   if (!dbEnabled()) {
     throw new Error("Supabase not configured (set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY)");
@@ -98,6 +110,7 @@ export function getSupabase(): SupabaseClient {
     const url = normalizeSupabaseApiUrl(resolveSupabaseUrl()!);
     client = createClient(url, resolveSupabaseKey()!, {
       auth: { persistSession: false, autoRefreshToken: false },
+      ...resolveSupabaseRealtimeOptions(),
     });
   }
   return client;

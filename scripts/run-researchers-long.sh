@@ -13,6 +13,10 @@ mkdir -p logs
 
 # shellcheck source=env.defaults.sh
 source "$ROOT/scripts/env.defaults.sh"
+# shellcheck source=lib/li-stack-env.sh
+source "$ROOT/scripts/lib/li-stack-env.sh"
+NODE_BIN="$(li_resolve_preferred_node_bin)"
+export NODE_BIN PATH="$(dirname "$NODE_BIN"):${PATH}"
 ENV_FILE="${LI_CURSOR_ENV_FILE:-$HOME/Documents/Cursor/.env}"
 if [[ -f "$ENV_FILE" ]]; then set -a && source "$ENV_FILE" && set +a; fi
 if [[ -f "$ROOT/.env" ]]; then set -a && source "$ROOT/.env" && set +a; fi
@@ -37,7 +41,7 @@ if [[ -z "${CURSOR_API_KEY:-}${CURSOR_SDK_KEY:-}${CURSOR_SDK:-}" ]]; then
 fi
 
 npm run build -s >>"$LOG" 2>&1
-log "start duration=${DURATION}s pause=${PAUSE}s agents=${LI_RESEARCH_AGENTS:-gap_explorer,numerics_researcher,autoresearch} benchmarks=${BENCHMARKS_ROOT}"
+log "start node=$("$NODE_BIN" -v) duration=${DURATION}s pause=${PAUSE}s agents=${LI_RESEARCH_AGENTS:-gap_explorer,numerics_researcher,autoresearch} benchmarks=${BENCHMARKS_ROOT}"
 
 EXTRA='Produce Executive summary, Deliverable/findings with evidence paths, and Deferred. Cite real preflight/briefing data. For numerics: include li-tests/, benchmarks/, or docs/numerics/ references when proposing changes.'
 
@@ -51,7 +55,7 @@ while [[ $SECONDS -lt $END ]]; do
   LI_AGENT_VERIFY_MODE=0 \
   LI_REPO_WORKFLOW_SKIP_PUSH=0 \
   LI_AGENT_EXTRA_INSTRUCTION="$EXTRA" \
-    node dist/cli/run-agent.js \
+    "$NODE_BIN" dist/cli/run-agent.js \
       --agent "$agent" \
       --benchmarks "${BENCHMARKS_ROOT}" \
       >>"$LOG" 2>&1

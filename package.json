@@ -85,10 +85,12 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@supabase/supabase-js": "^2.49.0",
     "@types/pg": "^8.20.0",
-    "pg": "^8.21.0"
+    "pg": "^8.21.0",
+    "ws": "^8.21.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "@types/ws": "^8.18.1",
     "typescript": "^5.7.0"
   }
 }
