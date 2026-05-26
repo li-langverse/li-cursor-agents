@@ -9,6 +9,7 @@
  * see `src/mcp/lidb-liq-mcp.ts` and `docs/plans/lidb-migration-control-plane.md`.
  */
 import { CONTROL_PLANE_TABLES, schemaMarkdown } from "./schema-catalog.js";
+import { runLidbBridge, shouldUseLidbEngine } from "./lidb-liorm.js";
 
 export type LiqQueryResult = {
   ok: boolean;
@@ -24,13 +25,13 @@ export type LiqQueryResult = {
 export type SchemaSnapshot = ReturnType<typeof schemaSnapshot>;
 
 /** Catalog snapshot for MCP `schema_snapshot` (same tables as Supabase migrations). */
-export function schemaSnapshot(): {
-  store: "mock-lidb";
+export function schemaSnapshot(engineConnected = false): {
+  store: "mock-lidb" | "lidb";
   tables: typeof CONTROL_PLANE_TABLES;
   markdown: string;
 } {
   return {
-    store: "mock-lidb",
+    store: engineConnected ? "lidb" : "mock-lidb",
     tables: CONTROL_PLANE_TABLES,
     markdown: schemaMarkdown(),
   };
@@ -67,31 +68,43 @@ function mockRowsForTable(table: string, limit: number): Record<string, unknown>
   return [row].slice(0, limit);
 }
 
-/** Run liq read query (mock until lidb URL / liorm client is available). */
+/** Run liq read query — real liorm when engine probes ok; else mock harness. */
 export async function runLiqQuery(liq: string): Promise<LiqQueryResult> {
   const parsed = parseReadLiq(liq);
   if (!parsed.ok) return { ok: false, error: parsed.error, liq };
 
-  const url = process.env.LI_LIDB_URL?.trim();
-  const mockHarness = process.env.LI_LIDB_MOCK === "1" || !url;
-  if (mockHarness) {
-    const rows = mockRowsForTable(parsed.table, parsed.limit);
+  const useEngine = await shouldUseLidbEngine();
+  if (useEngine) {
+    const bridge = await runLidbBridge("read_liq", liq);
+    if (bridge.ok && bridge.rows) {
+      const rows = bridge.rows.slice(0, parsed.limit);
+      return {
+        ok: true,
+        mock: false,
+        liq,
+        table: parsed.table,
+        rows,
+        row_count: rows.length,
+        truncated: bridge.rows.length > parsed.limit,
+      };
+    }
     return {
-      ok: true,
-      mock: true,
+      ok: false,
+      error: bridge.error ?? "lidb liorm read failed",
       liq,
       table: parsed.table,
-      rows,
-      row_count: rows.length,
-      truncated: false,
     };
   }
 
+  const rows = mockRowsForTable(parsed.table, parsed.limit);
   return {
-    ok: false,
-    error: "lidb liq engine not wired — set LI_LIDB_MOCK=1 for harness rows until liorm lands",
+    ok: true,
+    mock: true,
     liq,
     table: parsed.table,
+    rows,
+    row_count: rows.length,
+    truncated: false,
   };
 }
 

@@ -1,7 +1,11 @@
 /**
- * E2E: lidb control-plane harness (mock liq + disk-backed persist stub).
- * Run: LI_CONTROL_PLANE_STORE=lidb LI_E2E_LIDB=1 LI_LIDB_MOCK=1 npm run test:e2e:lidb
+ * E2E: lidb control-plane harness (mock liq + optional real liorm).
+ * Mock: LI_CONTROL_PLANE_STORE=lidb LI_E2E_LIDB=1 LI_LIDB_MOCK=1 npm run test:e2e:lidb
+ * Engine: LI_E2E_LIDB_ENGINE=1 LI_LIDB_REPO=../lidb npm run test:e2e:lidb-engine
  */
+import { mkdirSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -13,6 +17,8 @@ import {
   useLidbStore,
 } from "../db/client.js";
 import { runLiqQuery, schemaSnapshot } from "../db/liq-query.js";
+import { probeLidbEngine, runLidbBridge, clearLidbProbeCache } from "../db/lidb-liorm.js";
+import { upsertAgentRunLidb } from "../db/lidb-persist.js";
 import {
   buildControlPlaneLiqMcpServers,
   CONTROL_PLANE_LIQ_MCP_ID,
@@ -31,6 +37,7 @@ export function lidbE2eSkipReasons(): string[] {
 
 const e2eLidb = process.env.LI_E2E_LIDB === "1" && useLidbStore();
 const suite = e2eLidb ? describe : describe.skip;
+const engineSuite = process.env.LI_E2E_LIDB_ENGINE === "1" ? describe : describe.skip;
 
 suite("lidb control-plane e2e", () => {
   test("lidbE2eSkipReasons empty when suite runs", () => {
@@ -47,6 +54,7 @@ suite("lidb control-plane e2e", () => {
 
   test("runLiqQuery read agent_runs returns mock row", async () => {
     process.env.LI_LIDB_MOCK = "1";
+    clearLidbProbeCache();
     const r = await runLiqQuery("read agent_runs limit 5");
     assert.equal(r.ok, true);
     assert.equal(r.mock, true);
@@ -64,7 +72,53 @@ suite("lidb control-plane e2e", () => {
     assert.ok(mcp?.[CONTROL_PLANE_LIQ_MCP_ID]);
     assert.equal(mcp![CONTROL_PLANE_LIQ_MCP_ID].type ?? "stdio", "stdio");
   });
+});
 
-  test.todo("persist agent_runs via liorm when lidb engine accepts control-plane schema");
-  test.todo("runLiqQuery against LI_LIDB_URL without LI_LIDB_MOCK when PH-DB-2 compiler lands");
+engineSuite("lidb control-plane engine e2e", () => {
+  const e2eDataDir = join(tmpdir(), "li-cursor-agents-lidb-e2e");
+  mkdirSync(e2eDataDir, { recursive: true });
+  process.env.LI_DATA_DIR = e2eDataDir;
+  process.env.LIDB_DATA_DIR = e2eDataDir;
+
+  test("probeLidbEngine when lidb_embed available", async () => {
+    delete process.env.LI_LIDB_MOCK;
+    clearLidbProbeCache();
+    const ok = await probeLidbEngine();
+    if (!ok) {
+      assert.fail("lidb_embed probe failed — set LI_LIDB_REPO to sibling lidb and build lidb_embed");
+    }
+    assert.equal(ok, true);
+  });
+
+  test("runLiqQuery read agent_runs via liorm without mock", async () => {
+    delete process.env.LI_LIDB_MOCK;
+    process.env.LI_LIDB_URL = process.env.LI_LIDB_URL ?? "lidb://embedded";
+    clearLidbProbeCache();
+    const r = await runLiqQuery("read agent_runs limit 5");
+    assert.equal(r.ok, true);
+    assert.equal(r.mock, false);
+  });
+
+  test("persist agent_runs via liorm bridge", async () => {
+    delete process.env.LI_LIDB_MOCK;
+    process.env.LI_LIDB_URL = process.env.LI_LIDB_URL ?? "lidb://embedded";
+    clearLidbProbeCache();
+    const runId = `e2e-wp-e-${Date.now()}`;
+    await upsertAgentRunLidb({
+      run: {
+        agentId: "e2e",
+        backend: "mock",
+        status: "finished",
+        outputPath: `/tmp/${runId}.md`,
+        outputText: "wp-e persist probe",
+        durationMs: 1,
+      },
+    });
+    const read = await runLidbBridge("read_liq", `read agent_runs limit 50`);
+    assert.equal(read.ok, true);
+    assert.ok(read.rows?.some((row) => row.run_id === runId || row.id === runId));
+  });
+
+  test.todo("persist handoffs — blocked: agent_handoffs not in lidb CATALOG_ALLOWLIST yet");
+  test.todo("persist control_plane_reports — blocked: native catalog migration parity (DB-R0-4)");
 });

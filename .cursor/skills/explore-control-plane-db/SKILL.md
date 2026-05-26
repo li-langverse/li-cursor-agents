@@ -15,13 +15,25 @@ description: >-
 - Debug supervisor: `control_plane_state`, latest `control_plane_reports`
 - Audit interventions or repo workflow rollouts
 
-## Tools (MCP `li-control-plane-db`)
+## Tools
+
+### Supabase store (`LI_CONTROL_PLANE_STORE=supabase`) — MCP `li-control-plane-db`
 
 | Tool | Purpose |
 |------|---------|
 | `list_control_plane_tables` | Tables + key columns |
 | `describe_table` | `information_schema` columns for one table |
 | `query_control_plane_db` | Run read-only SQL (max 200 rows) |
+
+### lidb store (`LI_CONTROL_PLANE_STORE=lidb`) — MCP `li-control-plane-liq`
+
+| Tool | Purpose |
+|------|---------|
+| `schema_snapshot` | Catalog tables (same names as Supabase migrations) |
+| `describe_table_liq` | Allowlisted columns for one table |
+| `query_control_plane_liq` | `read <table> limit N` via liorm (e.g. `read agent_runs limit 20`) |
+
+Enable: `LI_CONTROL_PLANE_LIQ_MCP=1`. Harness mock rows: `LI_LIDB_MOCK=1`. Real engine: `LI_LIDB_URL` or `LI_DATA_DIR` + built `lidb_embed`.
 
 ## Rules
 

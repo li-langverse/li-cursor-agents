@@ -42,9 +42,10 @@ export function lidbUrlConfigured(): boolean {
   return Boolean(process.env.LI_LIDB_URL?.trim());
 }
 
-/** True when liorm should handle writes (not mock/disk stub). */
+/** True when store=lidb and mock harness is off (probe may still fail at runtime). */
 export function lidbEnginePersistEnabled(): boolean {
-  return useLidbStore() && lidbUrlConfigured() && !lidbMockEnabled();
+  if (!useLidbStore() || lidbMockEnabled()) return false;
+  return Boolean(lidbUrlConfigured() || process.env.LI_DATA_DIR?.trim() || process.env.LIDB_DATA_DIR?.trim());
 }
 
 /** Harness / offline: mock liq rows without embedded lidb. */

@@ -47,6 +47,7 @@
     "test:db-api": "npm run build && CURSOR_MOCK=1 LI_CONTROL_PLANE_STORE=disk node --test dist/e2e/db-api.e2e.js",
     "test:live-stream-db": "npm run build && CURSOR_MOCK=1 LI_E2E_USE_SUPABASE=1 node --test dist/e2e/agent-live-stream-supabase.e2e.js",
     "test:e2e:lidb": "npm run build && CURSOR_MOCK=1 LI_CONTROL_PLANE_STORE=lidb LI_E2E_LIDB=1 LI_LIDB_MOCK=1 node --test dist/e2e/lidb-control-plane.e2e.js",
+    "test:e2e:lidb-engine": "npm run build && CURSOR_MOCK=1 LI_CONTROL_PLANE_STORE=lidb LI_E2E_LIDB=1 LI_E2E_LIDB_ENGINE=1 LI_LIDB_REPO=${LI_LIDB_REPO:-../lidb} node --test dist/e2e/lidb-control-plane.e2e.js",
     "test:playwright": "npm run build && cd dashboard-ui && npm install && npm run test:e2e",
     "test:playwright:mock": "npm run build && cd dashboard-ui && npm install && npm run test:e2e:mock",
     "test:playwright:integration": "npm run build && cd dashboard-ui && npm install && LI_PLAYWRIGHT_USE_SUPABASE=1 npm run test:e2e:integration",

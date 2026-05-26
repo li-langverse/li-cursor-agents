@@ -51,12 +51,13 @@ Existing Supabase e2e remains: `src/e2e/control-plane-db.e2e.ts` (`LI_E2E_DB=1`)
 
 - [x] Extend `ControlPlaneStore` in `src/db/client.ts`: `"lidb"` alongside `supabase` \| `disk`
 - [x] `assertStoreReady()` when `lidb`: require `LI_LIDB_URL`, `LI_LIDB_MOCK=1`, or `LI_DATA_DIR` (`lis db status` when engine lands)
-- [x] `persist.ts`: disk-backed stub + `persistControlPlaneStateLidb` no-op until liorm (schema parity with `supabase/migrations/` still TODO)
+- [x] `persist.ts`: liorm bridge for `agent_runs` + `control_plane_state` when engine probes ok ([schema-parity-control-plane-db-r0-4.md](./schema-parity-control-plane-db-r0-4.md))
 - [x] Stub MCP: `li-control-plane-liq` + `liq-query.ts` mock (PH-DB-2/10 harness)
 - [x] `buildControlPlaneLiqMcpServers()` + `buildControlPlaneMcpServers()` in `mcp-config.ts`; SDK uses store-aware MCP
 - [x] `lidb-control-plane.e2e.ts` + `npm run test:e2e:lidb` (partial tests; `test.todo` for liorm persist / real engine)
-- [ ] Backfill: extend `scripts/backfill-control-plane-db.mjs` for lidb import from disk cache
-- [ ] Un-skip `lidb-control-plane.e2e.ts` todos; gate CI optional job `LI_E2E_LIDB=1`
+- [x] Backfill: `scripts/backfill-control-plane-db.mjs --store=lidb` (runs + state; reports blocked on catalog)
+- [x] E2E: mock suite `npm run test:e2e:lidb`; engine suite `npm run test:e2e:lidb-engine` (optional CI `LI_E2E_LIDB_ENGINE=1`)
+- [ ] CI optional job `LI_E2E_LIDB=1` / `LI_E2E_LIDB_ENGINE=1` on runners with `lidb_embed`
 - [x] Deprecation note in `.env.example` for Supabase-only vars when `lidb` is default in dev profiles
 
 ## Security gates (must not regress)
