@@ -2,6 +2,10 @@ import { existsSync, readFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { loadRuntimeSettings } from "./config/runtime-settings.js";
+import {
+  applySupabaseFailoverAtBoot,
+  startSupabaseFailoverProbeLoop,
+} from "./db/supabase-failover.js";
 
 function applyEnvFile(path: string): void {
   if (!existsSync(path)) return;
@@ -117,6 +121,10 @@ export function loadSupabaseEnv(): void {
 export function loadRuntimeEnv(): void {
   loadDotEnv();
   loadSupabaseEnv();
+  if (process.env.LI_SUPABASE_FAILOVER === "1") {
+    applySupabaseFailoverAtBoot();
+    startSupabaseFailoverProbeLoop();
+  }
   loadGithubEnv();
   const localCi = resolveLocalCiRoot();
   if (localCi) process.env.LI_LOCAL_CI_ROOT = localCi;
@@ -156,4 +164,13 @@ export function resolveCursorModelId(): string {
 export function resolveCursorSdkFallbackModelId(): string {
   loadRuntimeEnv();
   return process.env.CURSOR_SDK_FALLBACK_MODEL?.trim() || "default";
+}
+
+/** Operator hint for where GH_TOKEN / CURSOR_API_KEY are loaded from. */
+export function resolveCursorEnvFileHint(): string {
+  const explicit = process.env.LI_CURSOR_ENV_FILE?.trim();
+  if (explicit) return explicit;
+  const homeCursor = join(process.env.HOME ?? "", "Documents", "Cursor", ".env");
+  if (homeCursor.length > 12 && existsSync(homeCursor)) return homeCursor;
+  return join(packageRoot(), ".env");
 }

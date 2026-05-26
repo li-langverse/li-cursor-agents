@@ -12,17 +12,22 @@ cd "$_ensure_root"
 # shellcheck source=lib/li-stack-env.sh
 source "$_ensure_root/scripts/lib/li-stack-env.sh"
 li_source_env_supabase "$_ensure_root" || true
-if li_supabase_rest_ready; then
-  _log() { [[ "${LI_SUPABASE_ENSURE_QUIET:-}" != "1" ]] && echo "$@"; }
-  _log "==> Supabase: REST already reachable at ${SUPABASE_URL}"
-  exit 0
-fi
 
 _log() {
   if [[ "${LI_SUPABASE_ENSURE_QUIET:-}" != "1" ]]; then
     echo "$@"
   fi
 }
+
+if li_supabase_failover_enabled; then
+  if li_apply_supabase_failover "$_ensure_root"; then
+    _log "==> Supabase: failover active endpoint=${LI_SUPABASE_ACTIVE_ENDPOINT:-?} url=${SUPABASE_URL:-?}"
+    exit 0
+  fi
+elif li_supabase_rest_ready; then
+  _log "==> Supabase: REST already reachable at ${SUPABASE_URL}"
+  exit 0
+fi
 
 if [[ "${LI_STACK_SKIP_SUPABASE:-}" == "1" ]]; then
   exit 0
@@ -139,3 +144,11 @@ if [[ "$_sessions_code" != "200" ]]; then
   exit 1
 fi
 _log "==> Supabase: research_sessions.hypotheses OK"
+
+if li_supabase_failover_enabled; then
+  if ! li_apply_supabase_failover "$_ensure_root"; then
+    _log "==> Supabase: primary up; standby not probed (run ensure-supabase-standby if needed)"
+  elif [[ "${LI_SUPABASE_ACTIVE_ENDPOINT:-}" == "standby" ]]; then
+    _log "==> Supabase: failover selected standby after ensure"
+  fi
+fi

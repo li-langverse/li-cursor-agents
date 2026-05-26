@@ -38,7 +38,15 @@ _force_disk_store() {
 }
 
 if [[ "$_store" == "supabase" ]]; then
-  if ! li_supabase_rest_ready; then
+  if li_supabase_failover_enabled; then
+    if ! li_apply_supabase_failover "$ROOT"; then
+      if ! "$ROOT/scripts/ensure-supabase.sh"; then
+        _force_disk_store "Supabase failover + ensure failed (Docker down?)"
+      elif ! li_apply_supabase_failover "$ROOT"; then
+        _force_disk_store "Supabase failover: primary and standby unreachable"
+      fi
+    fi
+  elif ! li_supabase_rest_ready; then
     if ! "$ROOT/scripts/ensure-supabase.sh"; then
       _force_disk_store "Supabase ensure failed (Docker down?)"
     else
@@ -54,6 +62,7 @@ if [[ "$_store" == "supabase" ]]; then
   fi
 fi
 export GH_TOKEN GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
+"$ROOT/scripts/swarm-env-preflight.sh"
 NODE_BIN="$(li_resolve_preferred_node_bin)"
 NPM_DIR=""
 if command -v npm >/dev/null 2>&1; then

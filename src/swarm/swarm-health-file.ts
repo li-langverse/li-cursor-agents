@@ -14,6 +14,9 @@ export interface SwarmInfrastructureHealth {
   };
   plan_loops: Array<{ unit: string; active_state: SystemdActiveState }>;
   plan_loops_healthy: boolean;
+  /** Present when LI_SUPABASE_FAILOVER=1 — never includes secret values. */
+  store?: "supabase" | "disk";
+  supabase_endpoint?: "primary" | "standby" | "none";
 }
 
 export function swarmHealthJsonPath(): string {

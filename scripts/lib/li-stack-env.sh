@@ -28,6 +28,8 @@ li_resolve_preferred_node_bin() {
     "${HOME}/.local/node/bin/node"
     "/opt/homebrew/opt/node@24/bin/node"
     "/usr/local/opt/node@24/bin/node"
+    "/usr/bin/node24"
+    "/usr/local/bin/node24"
     "/opt/homebrew/bin/node"
     "/opt/homebrew/opt/node@22/bin/node"
     "/usr/local/bin/node"
@@ -74,4 +76,52 @@ li_docker() {
     return $?
   fi
   docker "$@"
+}
+
+li_supabase_failover_enabled() {
+  [[ "${LI_SUPABASE_FAILOVER:-}" == "1" ]]
+}
+
+# Apply probe stdout (SUPABASE_* + LI_SUPABASE_ACTIVE_ENDPOINT) into the shell env.
+li_apply_supabase_probe_lines() {
+  local line key val
+  while IFS= read -r line; do
+    [[ -z "$line" ]] && continue
+    key="${line%%=*}"
+    val="${line#*=}"
+    case "$key" in
+      SUPABASE_URL|SUPABASE_ANON_KEY|SUPABASE_SERVICE_ROLE_KEY|SUPABASE_DB_URL|LI_SUPABASE_ACTIVE_ENDPOINT)
+        export "${key}=${val}"
+        ;;
+    esac
+  done
+}
+
+# Probe primary → standby; optionally start standby when primary is down.
+li_apply_supabase_failover() {
+  local root="$1"
+  local probe_out rc=1
+  if ! li_supabase_failover_enabled; then
+    return 1
+  fi
+  probe_out="$(
+    LI_SUPABASE_PROBE_QUIET=1 LI_SUPABASE_ENSURE_QUIET=1 \
+      "$root/scripts/supabase-health-probe.sh" 2>/dev/null || true
+  )"
+  if [[ -n "$probe_out" ]]; then
+    li_apply_supabase_probe_lines <<<"$probe_out"
+    return 0
+  fi
+  if [[ -x "$root/scripts/ensure-supabase-standby.sh" ]]; then
+    LI_SUPABASE_ENSURE_QUIET=1 "$root/scripts/ensure-supabase-standby.sh" 2>/dev/null || true
+  fi
+  probe_out="$(
+    LI_SUPABASE_PROBE_QUIET=1 LI_SUPABASE_ENSURE_QUIET=1 \
+      "$root/scripts/supabase-health-probe.sh" 2>/dev/null || true
+  )"
+  if [[ -n "$probe_out" ]]; then
+    li_apply_supabase_probe_lines <<<"$probe_out"
+    return 0
+  fi
+  return 1
 }

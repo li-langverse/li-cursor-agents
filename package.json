@@ -69,6 +69,8 @@
     "smoke:dashboard": "node scripts/smoke-dashboard-api.mjs",
     "verify:dashboard": "npm run build && node scripts/verify-dashboard-live.mjs",
     "db:ensure": "bash scripts/ensure-supabase.sh",
+    "db:failover-probe": "bash scripts/supabase-health-probe.sh",
+    "db:standby-ensure": "bash scripts/ensure-supabase-standby.sh",
     "db:backfill": "node scripts/backfill-control-plane-db.mjs",
     "test:agent-matrix": "npm run build && CURSOR_MOCK=1 LI_CONTROL_PLANE_STORE=disk node --test dist/e2e/agent-matrix.e2e.js",
     "test:e2e:slow": "npm run build && CURSOR_MOCK=1 LI_CONTROL_PLANE_STORE=disk node --test dist/e2e/agent-matrix.e2e.js dist/e2e/agent-parallel-pool.e2e.js dist/e2e/agent-activity-pipeline.e2e.js dist/lanes/research-lane.test.js",

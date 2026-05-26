@@ -520,6 +520,16 @@ export const SETTINGS_SCHEMA: SettingDefinition[] = [
     restartRequired: true,
   },
   {
+    key: "LI_SUPABASE_FAILOVER",
+    label: "Supabase Docker failover",
+    description:
+      "Probe primary (54321) then standby worktree (54421); log endpoint in swarm-health.json.",
+    category: "store",
+    type: "boolean",
+    defaultValue: "0",
+    restartRequired: true,
+  },
+  {
     key: "LI_EXPORT_DISK_CACHE",
     label: "Export disk cache",
     description: "Mirror Supabase state to data/ JSON when using supabase store.",

@@ -134,6 +134,8 @@ npm run db:ensure                # Docker + Supabase CLI; writes .env.supabase
 
 - **Verify:** `curl -sf http://127.0.0.1:9477/api/runtime | jq '{store, db_enabled, control_plane_store}'` — expect `store: "supabase"`, `db_enabled: true`.
 - **Disk-only (CI/tests):** `LI_CONTROL_PLANE_STORE=disk` or legacy `LI_STACK_SKIP_SUPABASE=1`.
+- **Dual Supabase Docker failover (WP-INF-02):** set `LI_SUPABASE_FAILOVER=1` before `npm run db:ensure` and systemd install. Primary stack stays on ports **54321/54322** (`.env.supabase`); standby is a git worktree at `../li-cursor-agents-standby` on **54421/54422** (`.env.supabase.standby`). `scripts/supabase-health-probe.sh` curls primary REST first, then standby; swarm units source the winning endpoint without logging keys. Runtime re-probe defaults to **60s** (`LI_SUPABASE_FAILOVER_PROBE_MS`) so a killed primary container is detected within ~90s. `data/control-plane/swarm-health.json` includes `store: supabase` and `supabase_endpoint: primary|standby` when failover is on. If both endpoints fail, boot falls back to `LI_CONTROL_PLANE_STORE=disk` (same as single-stack Docker-down behavior). Without `LI_SUPABASE_FAILOVER`, behavior is unchanged.
+- **Manual failover test (Docker required):** `npm run db:ensure && LI_SUPABASE_FAILOVER=1 npm run db:standby-ensure`, then `npm run db:failover-probe` (prints env lines; check stderr for `primary OK`). Stop primary DB container (`docker stop supabase_db_li-cursor-agents`), wait ≤90s or re-run probe — expect `standby OK`. Restore primary and probe again.
 - **Migrate disk → Supabase** (optional, does not wipe DB): after `npm run db:ensure`, `set -a && source .env.supabase && set +a && node scripts/backfill-control-plane-db.mjs` imports `data/control-plane/state.json`, `latest-report.json`, and `data/runs/*.md`.
 
 This installs user systemd for the dashboard (`:9477`, `LI_AUTO_START_ASYNC_SWARM=0` when async-swarm is installed) plus `li-agents-async-swarm` and watchdog. Units set `LI_CONTROL_PLANE_STORE=supabase` unless overridden at install time. Only the async-swarm unit runs the swarm process; the dashboard serves API/UI. Stop autostart: `touch data/control-plane/DISABLE_AUTOSTART`.
@@ -185,7 +187,7 @@ Read-only board: `GET /api/goals` (YAML only, no DB).
 
 ## SDK slots
 
-Research (1) + implement (1) + worker pool (6) = default `LI_SDK_MAX_CONCURRENT=8`. Details: [sdk-slot-policy.md](./sdk-slot-policy.md).
+Research (1) + implement (1) + worker pool (competes for remaining slots) = default `LI_SDK_MAX_CONCURRENT=5`. Details: [sdk-slot-policy.md](./sdk-slot-policy.md).
 
 ## Hung-agent sweep
 

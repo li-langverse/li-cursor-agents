@@ -23,18 +23,27 @@ import {
   dbEnabled,
   type ControlPlaneStore,
 } from "../db/client.js";
+import {
+  activeSupabaseEndpoint,
+  supabaseFailoverEnabled,
+  type SupabaseFailoverEndpoint,
+} from "../db/supabase-failover.js";
 
 /** Store/db fields for `/api/runtime` (matches `/api/status` runtime block). */
 export function runtimeStoreFields(): {
   store: ControlPlaneStore;
   db_enabled: boolean;
   control_plane_store: ControlPlaneStore;
+  supabase_endpoint?: SupabaseFailoverEndpoint;
 } {
   const store = dataStoreLabel();
   return {
     store,
     db_enabled: dbEnabled(),
     control_plane_store: configuredStore(),
+    ...(supabaseFailoverEnabled()
+      ? { supabase_endpoint: activeSupabaseEndpoint() }
+      : {}),
   };
 }
 
