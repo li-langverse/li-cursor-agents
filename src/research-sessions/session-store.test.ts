@@ -1,6 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildResearchSessionContinuationBlock } from "./session-store.js";
+import { mkdirSync, rmSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
+import {
+  advanceResearchSession,
+  buildResearchSessionContinuationBlock,
+  saveResearchSession,
+} from "./session-store.js";
 import type { ResearchSession } from "./types.js";
 
 test("buildResearchSessionContinuationBlock lists focus and completed steps", () => {
@@ -33,4 +40,39 @@ test("buildResearchSessionContinuationBlock lists focus and completed steps", ()
   assert.ok(block.includes("G-42"));
   assert.ok(block.includes("falsified"));
   assert.ok(block.includes("HYPOTHESIS:"));
+});
+
+test("advanceResearchSession clears focus and completes cycle when dequeuing last queue item", async () => {
+  const dir = join(tmpdir(), `li-research-sessions-${Date.now()}`);
+  mkdirSync(dir, { recursive: true });
+  const prev = process.env.LI_RESEARCH_SESSIONS_DIR;
+  process.env.LI_RESEARCH_SESSIONS_DIR = dir;
+  try {
+    const session: ResearchSession = {
+      session_id: "sess-final",
+      agent_id: "proof_gap_researcher",
+      goal_id: "provability_holes",
+      cycle: 1,
+      status: "in_progress",
+      current_focus: { kind: "synthesize_step", target: "proof-gap digest" },
+      queue: [],
+      hypotheses: [],
+      completed_steps: [],
+      connections: [],
+      deferred_findings: [],
+      created_at: "2026-05-17T00:00:00Z",
+      updated_at: "2026-05-17T00:00:00Z",
+    };
+    await saveResearchSession(session);
+    const updated = await advanceResearchSession("proof_gap_researcher", {
+      completed_step: { id: "synthesize_step-1", summary: "done" },
+      dequeue: true,
+    });
+    assert.equal(updated?.status, "cycle_complete");
+    assert.equal(updated?.current_focus, null);
+  } finally {
+    if (prev === undefined) delete process.env.LI_RESEARCH_SESSIONS_DIR;
+    else process.env.LI_RESEARCH_SESSIONS_DIR = prev;
+    rmSync(dir, { recursive: true, force: true });
+  }
 });

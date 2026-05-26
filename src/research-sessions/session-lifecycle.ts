@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { northStarFitForGoal, type ResearchGoal } from "../research-goals/load-goals.js";
+import { buildResearchGoalKickoffExtra } from "../research-goals/research-goal-context.js";
+import type { ResearchGoal } from "../research-goals/load-goals.js";
 import type { AgentId } from "../types.js";
 import {
   advanceResearchSession,
@@ -8,11 +9,15 @@ import {
 } from "./session-store.js";
 import type { ResearchFocus, ResearchSession } from "./types.js";
 
-const SESSION_AGENTS = new Set<AgentId>([
+/** Agents that use multi-cycle research sessions (factory verticals + aux goals). */
+export const RESEARCH_SESSION_AGENT_IDS = [
+  "numerics_researcher",
   "goal_researcher",
   "proof_gap_researcher",
   "stdlib_researcher",
-]);
+] as const satisfies readonly AgentId[];
+
+const SESSION_AGENTS = new Set<AgentId>(RESEARCH_SESSION_AGENT_IDS);
 
 export function agentUsesResearchSession(agentId: AgentId): boolean {
   return SESSION_AGENTS.has(agentId);
@@ -47,10 +52,37 @@ export function defaultFocusQueueForGoal(goal: ResearchGoal): ResearchFocus[] {
   }
 }
 
+/** Session stuck in_progress with an empty queue but a stale current_focus (pre-fix dequeue bug). */
+export function isZombieInProgressSession(session: ResearchSession): boolean {
+  if (session.status !== "in_progress" || session.queue.length > 0) return false;
+  return session.current_focus != null;
+}
+
+/** Clear stale focus so cycle_complete can apply and the lane can rotate goals. */
+export async function repairZombieResearchSession(
+  agentId: AgentId,
+): Promise<ResearchSession | null> {
+  const session = await loadResearchSession(agentId);
+  if (!session || !isZombieInProgressSession(session)) return session;
+  const repaired: ResearchSession = {
+    ...session,
+    current_focus: null,
+    status: "cycle_complete",
+    updated_at: nowIso(),
+  };
+  await saveResearchSession(repaired);
+  return repaired;
+}
+
 export async function findAnyInProgressSession(): Promise<ResearchSession | null> {
   for (const agentId of SESSION_AGENTS) {
-    const s = await loadResearchSession(agentId);
-    if (s) return s;
+    let s = await loadResearchSession(agentId);
+    if (!s) continue;
+    if (isZombieInProgressSession(s)) {
+      s = await repairZombieResearchSession(agentId);
+      if (s?.status === "cycle_complete") continue;
+    }
+    if (s?.status === "in_progress") return s;
   }
   return null;
 }
@@ -87,17 +119,7 @@ export async function ensureSessionForGoal(
 }
 
 export function buildGoalKickoffBlock(goal: ResearchGoal, session: ResearchSession): string {
-  return [
-    "## Research goal (this run)",
-    "",
-    `- **Goal id:** \`${goal.id}\``,
-    `- **Title:** ${goal.title}`,
-    `- **Session:** \`${session.session_id}\` cycle ${session.cycle}`,
-    `- **north_star_fit:** ${northStarFitForGoal(goal)}`,
-    "",
-    "Complete **only** the current focus step; checkpoint artifacts on disk.",
-    "",
-  ].join("\n");
+  return buildResearchGoalKickoffExtra(goal, session);
 }
 
 export async function completeResearchRunStep(

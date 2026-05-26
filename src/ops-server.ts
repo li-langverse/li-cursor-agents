@@ -1,5 +1,6 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { readFileSync, existsSync } from "node:fs";
+import { execSync } from "node:child_process";
 import { join, extname } from "node:path";
 import { dashboardRosterSummary } from "./agents/dashboard-roster.js";
 import { canonicalAgentId } from "./agents/registry.js";
@@ -16,6 +17,7 @@ import {
   stopAllActiveRuns,
   stopSupervisorLoop,
 } from "./control-plane/runtime.js";
+import { runtimeForApi } from "./control-plane/runtime-for-api.js";
 import { startAsyncSwarm, stopAsyncSwarm } from "./async-swarm/async-swarm-runtime.js";
 import {
   handoffRunStatus,
@@ -40,12 +42,15 @@ import {
   listRunsMerged,
 } from "./control-plane/runs-catalog.js";
 import { readFileSafe } from "./control-plane/safe-file-read.js";
+import { getRunEvents } from "./db/runs.js";
 import { listActiveRuns } from "./control-plane/runtime.js";
 import { listSupervisorActivityAsync } from "./control-plane/supervisor-activity.js";
 import { loadRecentRunSummariesAsync } from "./control-plane/build-report.js";
 import { loadObserverState } from "./observer/state.js";
 import { scanSwarmHealth } from "./observer/swarm-health.js";
 import { buildSwarmStatistics } from "./control-plane/swarm-statistics.js";
+import { buildRunErrorsSummary } from "./control-plane/run-errors-summary.js";
+import { getResearchRunDetail, listResearchRuns } from "./control-plane/research-runs-api.js";
 import { defaultStatsRunLimit, parseStatsTimeRange } from "./control-plane/stats-time-range.js";
 import { agentLog } from "./agent-log.js";
 import {
@@ -194,9 +199,11 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
 
   installOpsProcessGuards(server);
 
-  server.listen(port, "127.0.0.1", () => {
+  const host = defaultOpsHost();
+  server.listen(port, host, () => {
     const addr = server.address();
     const p = typeof addr === "object" && addr ? addr.port : port;
+    const bindHost = typeof addr === "object" && addr ? addr.address : host;
     const backend = agentBackendLabel();
     const keyOk = Boolean(resolveCursorApiKey());
     void import("./backends/sdk-session-lock.js").then((m) => {
@@ -206,7 +213,7 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
       }
     });
     startOpsBackgroundServices(currentApiState);
-    agentLog("dashboard", "info", `Agent dashboard: http://127.0.0.1:${p}/`);
+    agentLog("dashboard", "info", `Agent dashboard: http://${bindHost}:${p}/`);
     agentLog(
       "dashboard",
       "info",
@@ -263,7 +270,7 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
 
   const state = currentApiState();
   const store = dataStoreLabel();
-  const runtime = runtimeSnapshot(state);
+  const runtime = await runtimeForApi(state);
 
   // Fast paths — avoid loadLiveReportAsync on every poll (blocks dashboard).
   if (url.pathname === "/api/status" || url.pathname === "/api/state") {
@@ -363,6 +370,9 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     const backend = agentBackendLabel();
     json(res, 200, {
       ...runtime,
+      store,
+      db_enabled: dbEnabled(),
+      control_plane_store: configuredStore(),
       agent_backend: backend,
       sdk_ready: backend === "cursor-sdk" && Boolean(resolveCursorApiKey()),
     });
@@ -603,12 +613,58 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
     return;
   }
 
+  if (
+    (url.pathname === "/api/errors/summary" || url.pathname === "/api/runs/errors-summary") &&
+    req.method === "GET"
+  ) {
+    try {
+      const timeRange = parseStatsTimeRange(url.searchParams);
+      const limit = Math.min(
+        50_000,
+        Math.max(50, Number(url.searchParams.get("runs") ?? defaultStatsRunLimit(timeRange.preset))),
+      );
+      const summary = await buildRunErrorsSummary(limit, timeRange);
+      json(res, 200, { ...summary, store, reporting_only: true });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      json(res, 500, { error: message, store });
+    }
+    return;
+  }
+
   if (url.pathname === "/api/runs" && req.method === "GET") {
     json(res, 200, {
       runs: await listRunsMerged(60),
       active: listActiveRuns(),
       store,
     });
+    return;
+  }
+
+  if (url.pathname === "/api/research/runs" && req.method === "GET") {
+    const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit") ?? 50)));
+    json(res, 200, await listResearchRuns(limit));
+    return;
+  }
+
+  const researchRunDetailMatch = url.pathname.match(/^\/api\/research\/runs\/([^/]+)$/);
+  if (researchRunDetailMatch && req.method === "GET") {
+    const runId = decodeURIComponent(researchRunDetailMatch[1]!);
+    const detail = await getResearchRunDetail(runId);
+    if (!detail) {
+      json(res, 404, { error: "research run not found" });
+      return;
+    }
+    json(res, 200, { ...detail, store });
+    return;
+  }
+
+  const runEventsMatch = url.pathname.match(/^\/api\/runs\/([^/]+)\/events$/);
+  if (runEventsMatch && req.method === "GET") {
+    const runId = decodeURIComponent(runEventsMatch[1]!);
+    const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") ?? 80)));
+    const events = await getRunEvents(runId, limit);
+    json(res, 200, { run_id: runId, events, store });
     return;
   }
 
@@ -840,6 +896,16 @@ function resolveAgentId(raw: string): AgentId | undefined {
   return canonicalAgentId(decodeURIComponent(raw));
 }
 
+function dashboardAssetVersion(): string {
+  const fromEnv = process.env.LI_BUILD_SHA?.trim();
+  if (fromEnv) return fromEnv.slice(0, 12);
+  try {
+    return execSync("git rev-parse --short HEAD", { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+  } catch {
+    return "dev";
+  }
+}
+
 function serveStatic(pathname: string, webRoot: string, res: ServerResponse): void {
   const file = pathname === "/" ? "/index.html" : pathname;
   if (file.includes("..")) {
@@ -851,8 +917,19 @@ function serveStatic(pathname: string, webRoot: string, res: ServerResponse): vo
     json(res, 404, { error: "not found" });
     return;
   }
+  let body = readFileSync(full);
+  if (file === "/index.html") {
+    const v = dashboardAssetVersion();
+    body = Buffer.from(
+      body
+        .toString("utf8")
+        .replace('src="/app.js"', `src="/app.js?v=${v}"`)
+        .replace('href="/style.css"', `href="/style.css?v=${v}"`),
+      "utf8",
+    );
+  }
   res.writeHead(200, { "Content-Type": MIME[extname(full)] ?? "text/plain", "Cache-Control": "no-store" });
-  res.end(readFileSync(full));
+  res.end(body);
 }
 
 async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown>> {

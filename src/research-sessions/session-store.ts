@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { agentsPackageRoot } from "../runner.js";
+import { agentsPackageRoot } from "../package-root.js";
 import { dbEnabled, getSupabase } from "../db/client.js";
 import { withSupabaseRetry } from "../db/supabase-retry.js";
 
@@ -159,7 +159,9 @@ export async function advanceResearchSession(
   if (patch.deferred_finding) deferred_findings.push(patch.deferred_finding);
 
   let current_focus = patch.next_focus !== undefined ? patch.next_focus : session.current_focus;
-  if (patch.dequeue && queue.length) current_focus = queue[0] ?? null;
+  if (patch.dequeue) {
+    current_focus = queue.length ? (queue[0] ?? null) : (patch.next_focus !== undefined ? patch.next_focus : null);
+  }
 
   const hypotheses = patch.hypotheses ?? session.hypotheses ?? [];
 
@@ -179,7 +181,10 @@ export async function advanceResearchSession(
   return updated;
 }
 
-export function buildResearchSessionContinuationBlock(session: ResearchSession): string {
+export function buildResearchSessionContinuationBlock(
+  session: ResearchSession,
+  publishSubdir?: string,
+): string {
   const lines = [
     "## Continue session (do not restart)",
     "",
@@ -187,6 +192,15 @@ export function buildResearchSessionContinuationBlock(session: ResearchSession):
     "**Do not repeat completed steps.** Read artifact files on disk before new exploration.",
     "",
   ];
+  if (session.goal_id) {
+    lines.push(`- **Goal id:** \`${session.goal_id}\``);
+    if (publishSubdir) {
+      lines.push(
+        `- **Whitepaper publish:** \`whitepapers/${publishSubdir}/<slug>/\` (skill \`publish-research-whitepaper\`)`,
+      );
+    }
+    lines.push("");
+  }
   if (session.completed_steps.length) {
     lines.push("### Completed steps");
     for (const s of session.completed_steps.slice(-8)) {

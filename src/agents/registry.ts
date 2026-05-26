@@ -1,3 +1,4 @@
+import { researchLaneAgentsFromFactory } from "../research-goals/researcher-factory.js";
 import type { AgentDefinition, AgentId, LegacyAgentId } from "../types.js";
 
 /** Legacy briefing / fixture ids → canonical registry ids. */
@@ -88,7 +89,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     description: "Audits org repos against lic CVE/CWE catalog and security tests.",
     category: "security",
     promptFile: "security-auditor.md",
-    skills: ["li-ecosystem-discipline", "security-offensive-research"],
+    skills: ["li-ecosystem-discipline", "security-offensive-research", "publish-research-whitepaper"],
     needsWeb: true,
     preflightKeys: ["security_cwe_audit", "cwe_feed_delta", "briefing"],
     repoWorkflow: true,
@@ -151,7 +152,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     description: "Existing algorithms: Numerical Recipes, PETSc/Eigen, papers, journals.",
     category: "numerics",
     promptFile: "numerics-researcher.md",
-    skills: ["research-li-numerics"],
+    skills: ["research-li-numerics", "publish-research-whitepaper"],
     needsWeb: true,
     preflightKeys: ["ecosystem_audit", "explorer", "briefing"],
     guaranteedPush: true,
@@ -260,7 +261,7 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     description: "Domain goal-directed research (simulation, game, AI, web, CAD).",
     category: "ecosystem",
     promptFile: "goal-researcher.md",
-    skills: ["explore-li-ecosystem"],
+    skills: ["explore-li-ecosystem", "publish-research-whitepaper"],
     needsWeb: true,
     preflightKeys: ["briefing"],
     cursorSdkMode: "agent",
@@ -404,6 +405,15 @@ export function getAgent(id: string): AgentDefinition | undefined {
   const canonical = canonicalAgentId(id);
   if (!canonical) return undefined;
   return AGENT_REGISTRY.find((a) => a.id === canonical);
+}
+
+/** Factory-mapped research agents missing from AGENT_REGISTRY (empty = OK). */
+export function missingResearchFactoryAgents(): AgentId[] {
+  const missing: AgentId[] = [];
+  for (const id of researchLaneAgentsFromFactory()) {
+    if (!getAgent(id)) missing.push(id);
+  }
+  return missing;
 }
 
 export function allAgentIds(): Set<string> {

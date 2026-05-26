@@ -36,3 +36,4 @@ Default sandbox: **`li-demo`** only when no stronger signal. **httpd / compiler 
 ## Deliverable
 
 - PR URL(s), files changed, test commands run
+- When `GH_TOKEN` is set: branch pushed, PR opened, gates cited in `## Agent deliverable` (see swarm prompt block)

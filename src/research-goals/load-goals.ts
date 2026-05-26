@@ -2,10 +2,13 @@ import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
 import type { AgentId } from "../types.js";
+import { buildResearchGoalsFromFactory } from "./researcher-factory.js";
 
 export interface ResearchGoal {
   id: string;
   title: string;
+  /** User-facing vertical slug (numerics, physics, md, …). See docs/ecosystem/research-verticals.md */
+  vertical?: string;
   domains: string[];
   agent?: AgentId;
   priority?: number;
@@ -16,18 +19,18 @@ export interface ResearchGoal {
   handoff_to?: string[];
   ph_ids?: string[];
   needs_web?: boolean;
+  /** GitHub repo name under li-langverse (e.g. research-findings). */
+  publish_repo?: string;
+  /** Repo-relative path to whitepapers root. */
+  whitepaper_root?: string;
 }
 
 export interface ResearchGoalsFile {
   goals: ResearchGoal[];
 }
 
-export function loadResearchGoals(): ResearchGoal[] {
-  const path =
-    process.env.LI_RESEARCH_GOALS_PATH?.trim() ||
-    join(agentsPackageRoot(), "config", "research-goals.yaml");
-  if (!existsSync(path)) return [];
-  const raw = readFileSync(path, "utf8");
+/** Parse committed YAML (used for LI_RESEARCH_GOALS_PATH overrides and sync diff). */
+export function parseResearchGoalsYaml(raw: string): ResearchGoal[] {
   const goals: ResearchGoal[] = [];
   let current: Partial<ResearchGoal> | null = null;
 
@@ -40,6 +43,7 @@ export function loadResearchGoals(): ResearchGoal[] {
     }
     if (!current) continue;
     if (trimmed.startsWith("title:")) current.title = trimmed.slice(6).trim();
+    else if (trimmed.startsWith("vertical:")) current.vertical = trimmed.slice(9).trim();
     else if (trimmed.startsWith("agent:")) current.agent = trimmed.slice(6).trim() as AgentId;
     else if (trimmed.startsWith("priority:")) current.priority = Number(trimmed.slice(9).trim());
     else if (trimmed.startsWith("cadence_hours:")) current.cadence_hours = Number(trimmed.slice(14).trim());
@@ -61,10 +65,21 @@ export function loadResearchGoals(): ResearchGoal[] {
     } else if (trimmed.startsWith("ph_ids:")) {
       const m = trimmed.match(/\[(.*)\]/);
       current.ph_ids = m ? m[1]!.split(",").map((s) => s.trim().replace(/['"]/g, "")) : [];
-    }
+    } else if (trimmed.startsWith("publish_repo:"))
+      current.publish_repo = trimmed.slice(13).trim();
+    else if (trimmed.startsWith("whitepaper_root:"))
+      current.whitepaper_root = trimmed.slice(16).trim();
   }
   if (current?.id) goals.push(current as ResearchGoal);
   return goals.filter((g) => g.enabled !== false);
+}
+
+export function loadResearchGoals(): ResearchGoal[] {
+  const overridePath = process.env.LI_RESEARCH_GOALS_PATH?.trim();
+  if (overridePath && existsSync(overridePath)) {
+    return parseResearchGoalsYaml(readFileSync(overridePath, "utf8"));
+  }
+  return buildResearchGoalsFromFactory();
 }
 
 export function resolveGoalAgent(goal: ResearchGoal): AgentId {

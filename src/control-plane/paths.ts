@@ -21,6 +21,10 @@ export function interventionsPath(): string {
   return join(controlPlaneRoot(), "interventions.json");
 }
 
+export function workerStatusPath(): string {
+  return join(controlPlaneRoot(), "worker-status.json");
+}
+
 export function runsDir(): string {
   const env = process.env.LI_RUNS_DIR;
   const dir = env ?? join(agentsPackageRoot(), "data", "runs");

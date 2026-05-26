@@ -2,6 +2,7 @@ export interface RuntimePayload {
   async_swarm_running?: boolean;
   async_swarm_started_at?: string;
   active_run_count?: number;
+  active_runs_registered?: number;
   active_runs?: Array<{
     agent_id: string;
     run_id: string;
@@ -16,6 +17,12 @@ export interface RuntimePayload {
       tool_call_count?: number;
       steps?: Array<{ type: string; message?: Record<string, unknown> }>;
     };
+    recent_events?: Array<{
+      seq: number;
+      event_type: string;
+      payload?: { ts?: string; message?: string; tool_name?: string; path?: string };
+    }>;
+    last_event?: { ts?: string; message?: string; tool_name?: string; path?: string };
   }>;
   store?: string;
   agent_backend?: string;

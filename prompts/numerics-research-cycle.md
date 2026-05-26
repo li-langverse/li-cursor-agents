@@ -4,10 +4,12 @@
 
 Run a **structured numerics research pass** on red/near-limit **physics** or **micro** rows, or on an open issue labeled `numerics-research` / `novel-algorithm`.
 
-**Skills:** `research-li-numerics`, `numerics-autoresearch` (if proposing new methods)  
+**Skills:** `research-li-numerics`, `numerics-autoresearch` (if proposing new methods), `publish-research-whitepaper`  
 **Methodology:** `docs/numerics/research-methodology.md`  
 **Dashboard:** https://li-langverse.github.io/benchmarks/  
 **Preflight:** `./scripts/agent-preflight.sh` or `ecosystem-audit.py` + `benchmark-failures-report.sh`
+
+**Vertical routing:** If tied to a factory goal, use the injected block from `researcher-factory.ts` + `vertical-prompt-hints.ts` (`publish_subdir` → **research-findings**). See `docs/ecosystem/research-verticals.md` — do not invent parallel vertical tables.
 
 **Do not** add Actions `cron:`. **Do not** weaken catalog thresholds. **Do not** self-merge.
 
@@ -82,6 +84,8 @@ Write `docs/numerics/studies/YYYY-MM-DD-<slug>.md` with:
 python3 scripts/numerics-evidence-checklist.py --study docs/numerics/studies/YYYY-MM-DD-slug.md [--novel ...]
 ```
 
+When a factory `goal_id` applies, also publish or update the **research-findings** whitepaper at `whitepapers/<publish_subdir>/` and run `./scripts/publish-research-whitepaper.sh`.
+
 ---
 
 ## 6. Deliverable
@@ -93,7 +97,7 @@ Open **lic** PR (implementation) + link study in PR body. If catalog row changes
 1. **Mode:** SOTA survey only | Autoresearch  
 2. **Target bench ids** + dashboard status  
 3. **Verdict:** improvement on which axes; any regression risk  
-4. **Study + algorithm note paths**  
+4. **Study + algorithm note paths** (+ whitepaper path if factory goal)  
 5. **Download links** to top plots/animations  
 6. **Follow-up:** human math review needed? (yes for `--novel`)
 

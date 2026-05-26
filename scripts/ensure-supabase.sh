@@ -9,6 +9,9 @@ set -euo pipefail
 
 _ensure_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$_ensure_root"
+# shellcheck source=lib/li-stack-env.sh
+source "$_ensure_root/scripts/lib/li-stack-env.sh"
+li_source_env_supabase "$_ensure_root" || true
 
 _log() {
   if [[ "${LI_SUPABASE_ENSURE_QUIET:-}" != "1" ]]; then
@@ -16,38 +19,63 @@ _log() {
   fi
 }
 
+if li_supabase_failover_enabled; then
+  if li_apply_supabase_failover "$_ensure_root"; then
+    _log "==> Supabase: failover active endpoint=${LI_SUPABASE_ACTIVE_ENDPOINT:-?} url=${SUPABASE_URL:-?}"
+    exit 0
+  fi
+elif li_supabase_rest_ready; then
+  _log "==> Supabase: REST already reachable at ${SUPABASE_URL}"
+  exit 0
+fi
+
 if [[ "${LI_STACK_SKIP_SUPABASE:-}" == "1" ]]; then
   exit 0
 fi
 
-if ! command -v supabase >/dev/null 2>&1 || [[ ! -f supabase/config.toml ]]; then
-  echo "WARN: supabase CLI or supabase/config.toml missing — disk cache only" >&2
+if [[ ! -f supabase/config.toml ]]; then
+  echo "WARN: supabase/config.toml missing — disk cache only" >&2
   exit 0
 fi
 
-if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
+_supabase_cmd() {
+  if command -v supabase >/dev/null 2>&1; then
+    supabase "$@"
+  elif command -v npx >/dev/null 2>&1; then
+    npx --yes supabase "$@"
+  else
+    return 127
+  fi
+}
+
+if ! command -v supabase >/dev/null 2>&1 && ! command -v npx >/dev/null 2>&1; then
+  echo "WARN: supabase CLI not found (install or use npx) — disk cache only" >&2
+  exit 0
+fi
+
+if ! li_docker_ok; then
   echo "WARN: Docker not running — Supabase skipped (disk cache only)" >&2
   exit 0
 fi
 
 _log "==> Supabase: start"
-if ! supabase start; then
+if ! _supabase_cmd start; then
   echo "WARN: supabase start failed" >&2
   exit 1
 fi
 
 if [[ "${LI_SUPABASE_DB_RESET:-}" == "1" ]]; then
   _log "==> Supabase: db reset (LI_SUPABASE_DB_RESET=1)"
-  supabase db reset
+  _supabase_cmd db reset
 else
   _log "==> Supabase: apply local migrations (migration up)"
-  if ! supabase migration up; then
+  if ! _supabase_cmd migration up; then
     echo "ERROR: supabase migration up failed — try: LI_SUPABASE_DB_RESET=1 npm run db:ensure" >&2
     exit 1
   fi
 fi
 
-API_URL="$(supabase status -o json 2>/dev/null | node -e "
+API_URL="$(_supabase_cmd status -o json 2>/dev/null | node -e "
 let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{
   try { console.log(JSON.parse(d).API_URL || 'http://127.0.0.1:54321'); }
   catch { console.log('http://127.0.0.1:54321'); }
@@ -58,8 +86,8 @@ let d=''; process.stdin.on('data',c=>d+=c); process.stdin.on('end',()=>{
 _project="$(basename "$_ensure_root")"
 _db_container="supabase_db_${_project}"
 _jwt_secret=""
-if docker inspect "$_db_container" >/dev/null 2>&1; then
-  _jwt_secret="$(docker exec "$_db_container" printenv JWT_SECRET 2>/dev/null || true)"
+if li_docker inspect "$_db_container" >/dev/null 2>&1; then
+  _jwt_secret="$(li_docker exec "$_db_container" printenv JWT_SECRET 2>/dev/null || true)"
 fi
 
 _out="$(
@@ -116,3 +144,11 @@ if [[ "$_sessions_code" != "200" ]]; then
   exit 1
 fi
 _log "==> Supabase: research_sessions.hypotheses OK"
+
+if li_supabase_failover_enabled; then
+  if ! li_apply_supabase_failover "$_ensure_root"; then
+    _log "==> Supabase: primary up; standby not probed (run ensure-supabase-standby if needed)"
+  elif [[ "${LI_SUPABASE_ACTIVE_ENDPOINT:-}" == "standby" ]]; then
+    _log "==> Supabase: failover selected standby after ensure"
+  fi
+fi

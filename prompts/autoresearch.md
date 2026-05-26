@@ -2,7 +2,9 @@
 
 Invent and test **novel** numerics/codegen ideas; publish only when benchmarks improve with **proof discipline**.
 
-**Skills:** `numerics-autoresearch`, `research-li-numerics`  
+**Not a factory vertical** — runs after `numerics_researcher` on a bench row. Vertical goals and publish paths: `researcher-factory.ts` / `docs/ecosystem/research-verticals.md`. Link any whitepaper to the relevant `goal_id` publish subdir in **research-findings** when tied to a numerics goal.
+
+**Skills:** `numerics-autoresearch`, `research-li-numerics`, `publish-research-whitepaper`  
 **Methodology:** `lic/docs/numerics/research-methodology.md` (if present)
 
 ## When to run

@@ -17,5 +17,6 @@ Minimal honest QM stub (SCF energy) vs Psi4/PySCF recipes; `qm_dft` vertical and
 
 ## Evidence required
 
-- Research study under `docs/numerics/studies/` linked in PR.
+- **Whitepaper** in `research-findings/whitepapers/YYYY-MM/chem_sim_algorithms/<slug>/` (skill `publish-research-whitepaper`).
+- Research study under `docs/numerics/studies/` linked from whitepaper and PR.
 - Update `benchmarks/competitive/verticals.toml` honesty for `qm_dft`.

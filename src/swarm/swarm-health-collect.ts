@@ -5,6 +5,7 @@ import {
   planLoopsHealthy,
   type SwarmInfrastructureHealth,
 } from "./swarm-health-file.js";
+import { supabaseFailoverHealthFields } from "../db/supabase-failover.js";
 import { probePlanLoopUnits, systemctlUserIsActive } from "./systemd-probe.js";
 
 const DASHBOARD_UNIT = "li-agents-dashboard.service";
@@ -16,6 +17,7 @@ export async function collectSwarmInfrastructureHealth(): Promise<SwarmInfrastru
     systemctlUserIsActive(ASYNC_SWARM_UNIT).catch(() => "unknown" as const),
     probePlanLoopUnits(),
   ]);
+  const failover = supabaseFailoverHealthFields();
   return {
     written_at: new Date().toISOString(),
     disable_autostart: isDisableAutostartSet(),
@@ -27,5 +29,8 @@ export async function collectSwarmInfrastructureHealth(): Promise<SwarmInfrastru
     },
     plan_loops,
     plan_loops_healthy: planLoopsHealthy(plan_loops),
+    ...(process.env.LI_SUPABASE_FAILOVER === "1"
+      ? { store: failover.store, supabase_endpoint: failover.supabase_endpoint }
+      : {}),
   };
 }

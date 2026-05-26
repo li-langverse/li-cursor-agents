@@ -10,6 +10,7 @@ import {
   flushLiveTraceToDb,
   upsertLiveAgentRunStart,
 } from "../db/live-stream-persist.js";
+import { flushRunEvents, recordSdkStep, recordSdkUpdate } from "../db/run-events.js";
 import { slimTraceForList } from "./activity-summary.js";
 import { patchActiveRun } from "./runtime.js";
 
@@ -118,10 +119,12 @@ export function createLiveTraceCollector(
   return {
     onStep: ({ step }) => {
       inner.onStep({ step });
+      recordSdkStep(runId, step);
       maybeFlush(flushIntervalMs === 0);
     },
     onDelta: ({ update }) => {
       inner.onDelta({ update });
+      recordSdkUpdate(runId, update);
       if (update.type === "text-delta" && "text" in update) {
         assistantChunks.push(String((update as { text: string }).text));
       }
@@ -137,6 +140,7 @@ export function createLiveTraceCollector(
         runInput,
         agentId: runInput?.agent_id,
       });
+      void flushRunEvents(runId);
       return trace;
     },
   };

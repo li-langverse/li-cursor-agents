@@ -1,36 +1,95 @@
-import { computeInSdkCount } from "../control-plane/active-run-metrics.js";
+import {
+  computeInSdkCount,
+  countRegisteredRunningRuns,
+} from "../control-plane/active-run-metrics.js";
+import { enrichActiveRunsWithRecentEvents } from "../control-plane/enrich-active-runs.js";
+import { mergeActiveRunsForDisplay } from "../control-plane/merge-active-runs.js";
 import { sdkMaxConcurrent, sdkSlotsInUse } from "../backends/sdk-session-lock.js";
 import { swarmWorkersPaused } from "../swarm/swarm-worker-pause.js";
 import type { ControlPlaneState } from "../control-plane/types.js";
+import type { ActiveAgentRun } from "../control-plane/types.js";
 import type { WorkerStatusRow } from "../db/worker-status.js";
 import { defaultWorkerStatus } from "../db/worker-status.js";
+import type { AgentRunHistoryRow } from "../db/runs.js";
 import type { LaneStateFile } from "../lanes/lane-state.js";
 import { implementLaneIntervalMs } from "../lanes/implement-lane.js";
 import { researchLaneIntervalMs } from "../lanes/research-lane.js";
 import { maintenanceLaneIntervalMs } from "../lanes/maintenance-lane.js";
 import { researchLaneAgentIds } from "../lanes/lane-agent-ids.js";
 import { defaultProactiveAgentIds } from "../control-plane/proactive-agent-work.js";
+import {
+  configuredStore,
+  dataStoreLabel,
+  dbEnabled,
+  type ControlPlaneStore,
+} from "../db/client.js";
+import {
+  activeSupabaseEndpoint,
+  supabaseFailoverEnabled,
+  type SupabaseFailoverEndpoint,
+} from "../db/supabase-failover.js";
+
+/** Store/db fields for `/api/runtime` (matches `/api/status` runtime block). */
+export function runtimeStoreFields(): {
+  store: ControlPlaneStore;
+  db_enabled: boolean;
+  control_plane_store: ControlPlaneStore;
+  supabase_endpoint?: SupabaseFailoverEndpoint;
+} {
+  const store = dataStoreLabel();
+  return {
+    store,
+    db_enabled: dbEnabled(),
+    control_plane_store: configuredStore(),
+    ...(supabaseFailoverEnabled()
+      ? { supabase_endpoint: activeSupabaseEndpoint() }
+      : {}),
+  };
+}
 
 export function runtimeSnapshotFromDb(
   state: ControlPlaneState,
   worker: WorkerStatusRow | null,
+  dbRunning: AgentRunHistoryRow[] = [],
 ) {
   const w = worker ?? defaultWorkerStatus();
   const loopRunning = w.supervisor_loop_running || Boolean(state.supervisor_loop_running);
+  const activeRuns: ActiveAgentRun[] = mergeActiveRunsForDisplay(w.active_runs, dbRunning);
+  const sdkMax = w.sdk_max_concurrent ?? sdkMaxConcurrent();
   return {
     supervisor_loop_running: loopRunning,
     supervisor_loop_started_at: loopRunning ? (state.supervisor_loop_started_at ?? null) : null,
     stopped_agents: state.stopped_agents ?? [],
     current_supervisor_agent: state.current_supervisor_agent ?? null,
-    active_runs: w.active_runs,
-    active_run_count: computeInSdkCount(w.active_runs, w.sdk_sessions_active),
+    active_runs: activeRuns,
+    active_runs_registered: countRegisteredRunningRuns(w.active_runs),
+    active_run_count: computeInSdkCount(sdkSlotsInUse(), w.sdk_sessions_active, sdkMax),
     async_swarm_running: w.async_swarm_running,
     handoff_run: w.handoff_run,
     sdk_max_concurrent: w.sdk_max_concurrent ?? sdkMaxConcurrent(),
     sdk_slots_in_use: sdkSlotsInUse(),
     sdk_sessions_active: w.sdk_sessions_active ?? 0,
     workers_paused: swarmWorkersPaused(),
-    store: undefined as string | undefined,
+    ...runtimeStoreFields(),
+  };
+}
+
+/** Same as runtimeSnapshotFromDb but embeds recent_events on active runs for live activity. */
+export async function runtimeSnapshotFromDbEnriched(
+  state: ControlPlaneState,
+  worker: WorkerStatusRow | null,
+  dbRunning: AgentRunHistoryRow[] = [],
+) {
+  const snap = runtimeSnapshotFromDb(state, worker, dbRunning);
+  const enriched = await enrichActiveRunsWithRecentEvents(snap.active_runs);
+  return {
+    ...snap,
+    active_runs: enriched,
+    active_run_count: computeInSdkCount(
+      sdkSlotsInUse(),
+      snap.sdk_sessions_active,
+      snap.sdk_max_concurrent ?? sdkMaxConcurrent(),
+    ),
   };
 }
 

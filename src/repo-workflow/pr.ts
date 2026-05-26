@@ -1,3 +1,4 @@
+import { resolveCursorEnvFileHint } from "../env.js";
 import { hasGitToken, gitStatusPorcelain, runCmd } from "./git.js";
 import type { CommitPushPrResult, RepoWorkflowOptions } from "./types.js";
 
@@ -31,7 +32,7 @@ export function commitPushOpenPr(
       committed: false,
       pushed: false,
       branch,
-      error: "set GH_TOKEN in .env.github",
+      error: `set GH_TOKEN in ${resolveCursorEnvFileHint()} (or LI_CURSOR_ENV_FILE)`,
     };
   }
 

@@ -1,4 +1,5 @@
 import { loadResearchGoals, resolveGoalAgent } from "../research-goals/load-goals.js";
+import { getVerticalSpec, publishSubdirForGoalId } from "../research-goals/researcher-factory.js";
 import { loadImplementGoals } from "../implement-goals/load-goals.js";
 import { loadLaneState } from "../lanes/lane-state.js";
 
@@ -13,6 +14,9 @@ export interface ActiveGoalRow {
   eligible: boolean;
   workflow_repo?: string;
   backlog_path?: string;
+  /** User vertical slug when goal comes from researcher factory. */
+  vertical?: string;
+  publish_subdir?: string;
 }
 
 export interface ActiveGoalsSnapshot {
@@ -34,6 +38,7 @@ export function listActiveGoals(): ActiveGoalsSnapshot {
   const research = loadResearchGoals().map((g) => {
     const last = lane.goal_last_run_at[g.id];
     const cadenceH = g.cadence_hours ?? 24;
+    const spec = g.vertical ? getVerticalSpec(g.vertical) : undefined;
     return {
       id: g.id,
       title: g.title,
@@ -43,6 +48,9 @@ export function listActiveGoals(): ActiveGoalsSnapshot {
       cadence_hours: cadenceH,
       last_run_at: last,
       eligible: eligible(last, cadenceH, now),
+      vertical: g.vertical,
+      publish_subdir:
+        spec?.publishSubdir ?? (g.publish_repo || g.whitepaper_root ? publishSubdirForGoalId(g.id) : undefined),
     };
   });
   const implement = loadImplementGoals().map((g) => {

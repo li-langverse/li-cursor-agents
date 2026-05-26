@@ -35,6 +35,7 @@ export interface RunCatalogEntry {
   agent_id: string;
   started_at: string;
   status: string;
+  error?: string | null;
   backend?: string;
   md_path: string;
   json_path?: string;
@@ -71,6 +72,7 @@ function historyRowToCatalog(row: AgentRunHistoryRow): RunCatalogEntry {
     agent_id: row.agent_id,
     started_at: row.started_at,
     status: row.status,
+    error: row.error ?? undefined,
     backend: row.backend ?? undefined,
     md_path: md,
     json_path: md.replace(/\.md$/, ".json"),
@@ -252,7 +254,7 @@ async function listLiveRunCatalogEntries(): Promise<RunCatalogEntry[]> {
     for (const r of worker?.active_runs ?? []) {
       if (r.status === "running") byId.set(r.run_id, r);
     }
-    for (const row of await listRunningAgentRuns(30)) {
+    for (const row of await listRunningAgentRuns(30, { light: true })) {
       if (byId.has(row.run_id)) continue;
       byId.set(row.run_id, {
         run_id: row.run_id,

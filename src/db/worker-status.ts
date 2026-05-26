@@ -1,4 +1,6 @@
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import type { ActiveAgentRun } from "../control-plane/types.js";
+import { workerStatusPath } from "../control-plane/paths.js";
 import { dbEnabled, getSupabase } from "./client.js";
 import { withSupabaseRetry } from "./supabase-retry.js";
 
@@ -34,8 +36,59 @@ const DEFAULT_WORKER_STATUS: WorkerStatusRow = {
   updated_at: new Date(0).toISOString(),
 };
 
+export function loadWorkerStatusFromDisk(): WorkerStatusRow | null {
+  const path = workerStatusPath();
+  if (!existsSync(path)) return null;
+  try {
+    const raw = JSON.parse(readFileSync(path, "utf8")) as Partial<WorkerStatusRow>;
+    return {
+      ...DEFAULT_WORKER_STATUS,
+      ...raw,
+      supervisor_loop_running: Boolean(raw.supervisor_loop_running),
+      async_swarm_running: Boolean(raw.async_swarm_running),
+      research_lane_running: Boolean(raw.research_lane_running),
+      implement_lane_running: Boolean(raw.implement_lane_running),
+      maintenance_lane_running: Boolean(raw.maintenance_lane_running),
+      sdk_ready: Boolean(raw.sdk_ready),
+      active_runs: (raw.active_runs as ActiveAgentRun[]) ?? [],
+      handoff_run: (raw.handoff_run as Record<string, unknown> | null) ?? null,
+      updated_at: String(raw.updated_at ?? new Date().toISOString()),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function saveWorkerStatusToDisk(row: Partial<WorkerStatusRow>): void {
+  const path = workerStatusPath();
+  const prev = loadWorkerStatusFromDisk() ?? defaultWorkerStatus();
+  writeFileSync(
+    path,
+    JSON.stringify({ ...prev, ...row, updated_at: new Date().toISOString() }, null, 2) + "\n",
+    "utf8",
+  );
+}
+
+const PEER_DB_TIMEOUT_MS = Number(process.env.LI_SUPABASE_PEER_TIMEOUT_MS ?? 3_000);
+
+/** Supabase when configured; otherwise JSON under data/control-plane/. */
+export async function loadWorkerStatusPeer(): Promise<WorkerStatusRow | null> {
+  if (!dbEnabled()) return loadWorkerStatusFromDisk();
+  try {
+    const row = await Promise.race([
+      loadWorkerStatusFromDb(),
+      new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error("loadWorkerStatusPeer timeout")), PEER_DB_TIMEOUT_MS);
+      }),
+    ]);
+    return row;
+  } catch {
+    return loadWorkerStatusFromDisk();
+  }
+}
+
 export async function loadWorkerStatusFromDb(): Promise<WorkerStatusRow | null> {
-  if (!dbEnabled()) return null;
+  if (!dbEnabled()) return loadWorkerStatusFromDisk();
 
   return withSupabaseRetry("loadWorkerStatus", async () => {
     const { data, error } = await getSupabase()
@@ -66,6 +119,8 @@ export async function loadWorkerStatusFromDb(): Promise<WorkerStatusRow | null> 
 }
 
 export async function saveWorkerStatusToDb(row: Partial<WorkerStatusRow>): Promise<void> {
+  // Always mirror for split dashboard (disk) + async-swarm (supabase) systemd layout.
+  saveWorkerStatusToDisk(row);
   if (!dbEnabled()) return;
 
   await withSupabaseRetry("saveWorkerStatus", async () => {

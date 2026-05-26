@@ -8,22 +8,17 @@ mkdir -p logs
 
 # shellcheck source=env.defaults.sh
 source "$ROOT/scripts/env.defaults.sh"
+# shellcheck source=lib/li-stack-env.sh
+source "$ROOT/scripts/lib/li-stack-env.sh"
 
-# One Node for dashboard + supervisor (process.execPath). Prefer Homebrew over Cursor's bundled node.
-if [[ -n "${NODE_BIN:-}" && -x "${NODE_BIN}" ]]; then
-  :
-elif [[ -x "/opt/homebrew/bin/node" ]]; then
-  export NODE_BIN="/opt/homebrew/bin/node"
-elif [[ -x "/opt/homebrew/opt/node@22/bin/node" ]]; then
-  export NODE_BIN="/opt/homebrew/opt/node@22/bin/node"
-else
-  export NODE_BIN="$(command -v node)"
-fi
-export PATH="$(dirname "$NODE_BIN"):${PATH}"
+NODE_BIN="$(li_resolve_preferred_node_bin)"
+export NODE_BIN PATH="$(dirname "$NODE_BIN"):${PATH}"
 echo "==> Using NODE_BIN=$NODE_BIN ($("$NODE_BIN" -v))"
+ENV_FILE="${LI_CURSOR_ENV_FILE:-$HOME/Documents/Cursor/.env}"
 if [[ -f "$ROOT/.env" ]]; then set -a; source "$ROOT/.env"; set +a; fi
 li_resolve_env_paths "$ROOT"
-if [[ -f "$LI_GITHUB_ENV" ]]; then set -a; source "$LI_GITHUB_ENV"; set +a; fi
+if [[ -f "$ENV_FILE" ]]; then set -a; source "$ENV_FILE"; set +a; fi
+elif [[ -f "$LI_GITHUB_ENV" ]]; then set -a; source "$LI_GITHUB_ENV"; set +a; fi
 export GH_TOKEN GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
 # Production stack uses Cursor SDK; tests set CURSOR_MOCK=1 explicitly.
 unset CURSOR_MOCK
@@ -45,6 +40,24 @@ if [[ -f "$ROOT/.env.supabase" ]]; then
   # shellcheck source=/dev/null
   source "$ROOT/.env.supabase"
   set +a
+fi
+
+_systemd_owns_stack() {
+  [[ "${LI_CONTROL_PLANE_SYSTEMD:-}" == "1" || "${LI_CONTROL_PLANE_SYSTEMD:-}" == "true" ]] && return 0
+  if command -v systemctl >/dev/null 2>&1; then
+    local st
+    st="$(systemctl --user is-active li-agents-dashboard.service 2>/dev/null || true)"
+    [[ "$st" == "active" || "$st" == "activating" ]] && return 0
+  fi
+  return 1
+}
+
+if _systemd_owns_stack; then
+  echo "==> systemd manages control plane — try-restart units (no lsof/pkill)"
+  systemctl --user try-restart li-agents-dashboard.service 2>/dev/null || true
+  systemctl --user try-restart li-agents-async-swarm.service 2>/dev/null || true
+  echo "Dashboard: http://127.0.0.1:${LI_AGENT_DASHBOARD_PORT:-9477}/"
+  exit 0
 fi
 
 if [[ "${LI_KEEP_AGENTS_RESTART:-}" != "0" ]]; then

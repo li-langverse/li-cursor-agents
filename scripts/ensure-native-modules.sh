@@ -4,24 +4,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-# Must match keep-agents-running.sh / serve-dashboard (supervisor uses process.execPath).
-resolve_node_bin() {
-  if [[ -n "${NODE_BIN:-}" && -x "${NODE_BIN}" ]]; then
-    echo "$NODE_BIN"
-    return
-  fi
-  if [[ -x "/opt/homebrew/bin/node" ]]; then
-    echo "/opt/homebrew/bin/node"
-    return
-  fi
-  if [[ -x "/opt/homebrew/opt/node@22/bin/node" ]]; then
-    echo "/opt/homebrew/opt/node@22/bin/node"
-    return
-  fi
-  command -v node
-}
-
-NODE_BIN="$(resolve_node_bin)"
+# shellcheck source=lib/li-stack-env.sh
+source "$ROOT/scripts/lib/li-stack-env.sh"
+NODE_BIN="$(li_resolve_preferred_node_bin)"
 export NODE_BIN
 export PATH="$(dirname "$NODE_BIN"):${PATH}"
 

@@ -32,7 +32,7 @@ The loop is continuous: **read signals → pick highest-value goal → run agent
                     ┌──────────────────▼──────────────────┐
                     │  SWARM                              │
                     │  research · implement · audit lanes │
-                    │  ≤4 parallel SDK sessions         │
+                    │  ≤8 parallel SDK sessions         │
                     └──────────────────┬──────────────────┘
                                        │ produces
                     ┌──────────────────▼──────────────────┐
@@ -43,7 +43,7 @@ The loop is continuous: **read signals → pick highest-value goal → run agent
                                        └────── feedback ──────┘
 ```
 
-**X infographic (brand colors):** [swarm-infographic.html](./swarm-infographic.html) — 1200×675 artboard (16:9), **Download PNG for X** via html2canvas, optional 1600×900. Flow: Signals → Goals → Swarm (4 slots) → Agents → Codebase + feedback; **9 lic loops → 1 swarm**.
+**X infographic (brand colors):** [swarm-infographic.html](./swarm-infographic.html) — 1200×675 artboard (16:9), **Download PNG for X** via html2canvas, optional 1600×900. Flow: Signals → Goals → Swarm (8 slots) → Agents → Codebase + feedback; **9 lic loops → 1 swarm**.
 
 **Old model (retired):** nine separate bash loops in `lic`, each fighting for the same SDK slots.
 
@@ -58,11 +58,14 @@ For implementers who need node-level detail:
 ```mermaid
 %%{init: {"theme": "base", "themeVariables": {"primaryColor": "#1A2332", "primaryTextColor": "#E8EDF4", "primaryBorderColor": "#5B9FD4", "lineColor": "#5B9FD4", "secondaryColor": "#121820", "tertiaryColor": "#243044", "background": "#0B0F14", "mainBkg": "#0B0F14", "clusterBkg": "#121820", "titleColor": "#E8EDF4"}}}%%
 flowchart TB
-  subgraph controlPlane ["Control plane · agents systemd"]
+  subgraph controlPlane ["Control plane · agents systemd · Supabase"]
+    DB["Supabase PostgREST · local Docker"]
     DASH["Dashboard port 9477"]
     ASYNC["Async swarm runtime"]
-    SLOT["SDK slot pool · max 4"]
+    SLOT["SDK slot pool · max 8"]
     WD["Watchdog · swarm-health.json"]
+    DB --> DASH
+    DB --> ASYNC
     DASH --> ASYNC --> SLOT
     WD --> ASYNC
   end
@@ -123,10 +126,19 @@ Single entry for a persistent self-driving swarm:
 ```bash
 cd li-cursor-agents
 source ~/Documents/Cursor/.env   # CURSOR_API_KEY, GH_TOKEN
+npm run db:ensure                # Docker + Supabase CLI; writes .env.supabase
 ./scripts/install-agents-swarm-systemd.sh
 ```
 
-This installs user systemd for the dashboard (`:9477`, `LI_AUTO_START_ASYNC_SWARM=1`) plus optional async-swarm and watchdog. Stop autostart: `touch data/control-plane/DISABLE_AUTOSTART`.
+**Control plane store:** production swarm uses **`LI_CONTROL_PLANE_STORE=supabase`** (default in `scripts/env.defaults.sh` and systemd install). State, worker heartbeats, handoffs, and runs persist to local Supabase (`http://127.0.0.1:54321` by default). `data/control-plane/state.json` remains an IPC mirror when the dashboard and async-swarm are separate processes; it is not the source of truth when store=supabase.
+
+- **Verify:** `curl -sf http://127.0.0.1:9477/api/runtime | jq '{store, db_enabled, control_plane_store}'` — expect `store: "supabase"`, `db_enabled: true`.
+- **Disk-only (CI/tests):** `LI_CONTROL_PLANE_STORE=disk` or legacy `LI_STACK_SKIP_SUPABASE=1`.
+- **Dual Supabase Docker failover (WP-INF-02):** set `LI_SUPABASE_FAILOVER=1` before `npm run db:ensure` and systemd install. Primary stack stays on ports **54321/54322** (`.env.supabase`); standby is a git worktree at `../li-cursor-agents-standby` on **54421/54422** (`.env.supabase.standby`). `scripts/supabase-health-probe.sh` curls primary REST first, then standby; swarm units source the winning endpoint without logging keys. Runtime re-probe defaults to **60s** (`LI_SUPABASE_FAILOVER_PROBE_MS`) so a killed primary container is detected within ~90s. `data/control-plane/swarm-health.json` includes `store: supabase` and `supabase_endpoint: primary|standby` when failover is on. If both endpoints fail, boot falls back to `LI_CONTROL_PLANE_STORE=disk` (same as single-stack Docker-down behavior). Without `LI_SUPABASE_FAILOVER`, behavior is unchanged.
+- **Manual failover test (Docker required):** `npm run db:ensure && LI_SUPABASE_FAILOVER=1 npm run db:standby-ensure`, then `npm run db:failover-probe` (prints env lines; check stderr for `primary OK`). Stop primary DB container (`docker stop supabase_db_li-cursor-agents`), wait ≤90s or re-run probe — expect `standby OK`. Restore primary and probe again.
+- **Migrate disk → Supabase** (optional, does not wipe DB): after `npm run db:ensure`, `set -a && source .env.supabase && set +a && node scripts/backfill-control-plane-db.mjs` imports `data/control-plane/state.json`, `latest-report.json`, and `data/runs/*.md`.
+
+This installs user systemd for the dashboard (`:9477`, `LI_AUTO_START_ASYNC_SWARM=0` when async-swarm is installed) plus `li-agents-async-swarm` and watchdog. Units set `LI_CONTROL_PLANE_STORE=supabase` unless overridden at install time. Only the async-swarm unit runs the swarm process; the dashboard serves API/UI. Stop autostart: `touch data/control-plane/DISABLE_AUTOSTART`.
 
 **LAN access (other machines on your network):** by default the ops-server binds to loopback (`127.0.0.1`). To expose the dashboard API and static UI on the LAN:
 
@@ -146,8 +158,8 @@ Retiring old units (data preserved): in `lic`, `./scripts/retire-goal-plan-loops
 
 ### Research lane
 
-1. Loads `config/research-goals.yaml`.
-2. Picks the next eligible goal via cadence and priority (`pickNextGoal` / `pickNextGoalForAgent`).
+1. Loads `config/research-goals.yaml` (**19 verticals** — see [research-verticals.md](./research-verticals.md)).
+2. Picks the next eligible goal via cadence and priority (`pickNextGoal` / `pickNextGoalForAgent`); one research SDK slot rotates all verticals over time (`LI_SDK_MAX_CONCURRENT=5`).
 3. Uses `config/goal-scaffolds/<id>.md` and optional research-session continuity.
 4. Runs the configured `agent`; may enqueue handoffs for implement agents.
 
@@ -175,10 +187,24 @@ Read-only board: `GET /api/goals` (YAML only, no DB).
 
 ## SDK slots
 
-Research (1) + implement (1) + worker pool (2) = default `LI_SDK_MAX_CONCURRENT=4`. Details: [sdk-slot-policy.md](./sdk-slot-policy.md).
+Research (1) + implement (1) + worker pool (competes for remaining slots) = default `LI_SDK_MAX_CONCURRENT=5`. Details: [sdk-slot-policy.md](./sdk-slot-policy.md).
+
+## Hung-agent sweep
+
+Crashed workers can leave stale SDK slot files or orphan `run-agent` / `async-swarm` processes. The sweep reclaims locks and stops stuck PIDs without killing the dashboard or systemd swarm:
+
+```bash
+./scripts/sweep-hung-agents.sh          # dry-run
+./scripts/sweep-hung-agents.sh --apply
+```
+
+Timer: `li-agents-sweep.timer` (30m) from `install-agents-swarm-systemd.sh`. See [hung-agent-sweep.md](./hung-agent-sweep.md).
+
+Periodic health markdown: `li-agents-health-report.timer` (20m) — see [swarm-health-monitoring.md](./swarm-health-monitoring.md).
 
 ## Related docs
 
 - [agent-automations.md](./agent-automations.md)
 - [sdk-slot-policy.md](./sdk-slot-policy.md)
+- [hung-agent-sweep.md](./hung-agent-sweep.md)
 - `lic/.cursor/skills/goal-plan-loop-persistent/SKILL.md` — **deprecated**; use this doc

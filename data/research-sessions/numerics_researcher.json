@@ -1,0 +1,32 @@
+{
+  "session_id": "66d1f3bf-7ced-4520-95f5-7c6fba34da72",
+  "agent_id": "numerics_researcher",
+  "goal_id": "chem_sim_algorithms",
+  "cycle": 1,
+  "status": "in_progress",
+  "current_focus": {
+    "kind": "survey_sota",
+    "target": "Chemistry / QM algorithms — SOTA survey and Li gap analysis"
+  },
+  "queue": [
+    {
+      "kind": "li_gap_analysis",
+      "target": "goal:chem_sim_algorithms"
+    },
+    {
+      "kind": "digest",
+      "target": "docs/research/goals/chem_sim_algorithms"
+    }
+  ],
+  "hypotheses": [],
+  "completed_steps": [],
+  "artifacts": {
+    "progress_md": "lic/docs/ecosystem/research-sessions/chem_sim_algorithms-cycle.md"
+  },
+  "connections": [],
+  "deferred_findings": [],
+  "last_run_id": "numerics_researcher-1779774199339",
+  "last_run_status": "incomplete",
+  "created_at": "2026-05-26T17:50:00.000Z",
+  "updated_at": "2026-05-26T17:50:00.000Z"
+}

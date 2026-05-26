@@ -327,6 +327,28 @@ body {
   margin-bottom: 1rem;
 }
 
+.researchers-layout:has(.researchers-detail-panel[hidden]) {
+  grid-template-columns: 1fr;
+}
+
+tr.research-run-row {
+  cursor: pointer;
+}
+
+tr.research-run-row:hover td {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.04));
+}
+
+tr.research-run-row.selected td {
+  background: var(--accent-muted, rgba(99, 102, 241, 0.12));
+}
+
+.research-summary-lead {
+  font-size: 0.95rem;
+  line-height: 1.45;
+  margin: 0.75rem 0 1rem;
+}
+
 .hint {
   color: var(--muted);
   font-size: 0.85rem;

@@ -17,6 +17,7 @@ Close CWE/catalog gaps and tier5 exploit rows with **li stricter-or-equal** vs n
 
 ## Evidence required
 
-- Research study linked in PR.
+- **Whitepaper** in `research-findings/whitepapers/YYYY-MM/offensive_security/<slug>/` (skill `publish-research-whitepaper`).
+- Research study linked in PR and whitepaper `links`.
 - `./scripts/security-research-gates.sh` green (or study-only path documented).
 - Handoff to `code_implementer` for multi-package fixes; `issue_planner` for roadmap-only items.

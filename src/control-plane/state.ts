@@ -3,7 +3,7 @@ import { statePath } from "./paths.js";
 import { DEFAULT_STATE, type ControlPlaneState } from "./types.js";
 import { agentLog } from "../agent-log.js";
 import { loadControlPlaneStateHybrid, persistControlPlaneState } from "../db/persist.js";
-import { dbEnabled, useDiskStore, useSupabaseStore } from "../db/client.js";
+import { dbEnabled, useSupabaseStore } from "../db/client.js";
 
 let memoryState: ControlPlaneState | null = null;
 

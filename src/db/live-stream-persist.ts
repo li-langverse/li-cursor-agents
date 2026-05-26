@@ -1,5 +1,6 @@
-import type { AgentRunInputRecord, AgentRunTrace, AgentRunTraceEvent } from "../agent-run-trace.js";
+import type { AgentRunInputRecord, AgentRunTrace } from "../agent-run-trace.js";
 import { dbEnabled, getSupabase } from "./client.js";
+import { flushRunEvents, resetRunEventsState } from "./run-events.js";
 import { withSupabaseRetry } from "./supabase-retry.js";
 
 /** Persist finest-grain SDK stream to Supabase during runs (Next.js reads without worker in-process state). */
@@ -9,23 +10,22 @@ export function liveStreamDbEnabled(): boolean {
   return off !== "0" && off !== "false";
 }
 
-const lastPersistedDeltaSeq = new Map<string, number>();
 const flushTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const liveRunMeta = new Map<string, { agentId: string; startedAt: string; outputPath?: string; reason?: string; backend?: string }>();
 
 export function resetLiveStreamPersistState(runId?: string): void {
   if (runId) {
-    lastPersistedDeltaSeq.delete(runId);
     liveRunMeta.delete(runId);
     const t = flushTimers.get(runId);
     if (t) clearTimeout(t);
     flushTimers.delete(runId);
+    resetRunEventsState(runId);
     return;
   }
-  lastPersistedDeltaSeq.clear();
   liveRunMeta.clear();
   for (const t of flushTimers.values()) clearTimeout(t);
   flushTimers.clear();
+  resetRunEventsState();
 }
 
 export async function upsertLiveAgentRunStart(params: {
@@ -64,7 +64,6 @@ export async function upsertLiveAgentRunStart(params: {
     );
     if (error) throw new Error(`upsertLiveAgentRunStart: ${error.message}`);
   });
-  lastPersistedDeltaSeq.set(params.runId, -1);
 }
 
 export async function flushLiveTraceToDb(
@@ -96,7 +95,6 @@ async function flushLiveTraceToDbNow(
   opts?: { runInput?: AgentRunInputRecord; agentId?: string },
 ): Promise<void> {
   const now = new Date().toISOString();
-  const newDeltas = deltasAfterLastPersisted(runId, trace.deltas ?? []);
 
   const meta = liveRunMeta.get(runId);
   const agentId = opts?.agentId ?? meta?.agentId;
@@ -136,23 +134,7 @@ async function flushLiveTraceToDbNow(
       );
       if (upsertErr) throw new Error(`flushLiveTraceToDb upsert: ${upsertErr.message}`);
     }
-
-    if (newDeltas.length) {
-      const rows = newDeltas.map((d) => ({
-        run_id: runId,
-        seq: d.seq,
-        event_type: `stream_${d.type}`,
-        payload: d,
-      }));
-      const { error: evErr } = await getSupabase().from("agent_run_events").insert(rows);
-      if (evErr) throw new Error(`flushLiveTraceToDb events: ${evErr.message}`);
-      const last = newDeltas[newDeltas.length - 1]!;
-      lastPersistedDeltaSeq.set(runId, last.seq);
-    }
   });
-}
 
-function deltasAfterLastPersisted(runId: string, deltas: AgentRunTraceEvent[]): AgentRunTraceEvent[] {
-  const after = lastPersistedDeltaSeq.get(runId) ?? -1;
-  return deltas.filter((d) => d.seq > after);
+  await flushRunEvents(runId);
 }

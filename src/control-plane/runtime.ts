@@ -13,14 +13,20 @@ import { loadState, saveState } from "./state.js";
 import type { ActiveAgentRun, AgentRunLifecycle, ControlPlaneState } from "./types.js";
 import type { AgentId } from "../types.js";
 import { asyncSwarmSnapshot } from "../async-swarm/async-swarm-state.js";
-import { computeInSdkCount } from "./active-run-metrics.js";
+import { computeInSdkCount, countRegisteredRunningRuns } from "./active-run-metrics.js";
 import {
   sdkMaxConcurrent,
   sdkSessionInProcessActive,
   sdkSlotsInUse,
 } from "../backends/sdk-session-lock.js";
+import { sdkSlotPolicySnapshot } from "../backends/sdk-slot-policy.js";
 import { swarmWorkersPaused } from "../swarm/swarm-worker-pause.js";
 import { upsertLiveAgentRunStart } from "../db/live-stream-persist.js";
+import {
+  flushRunEvents,
+  recordRunStarted,
+  runEventsPersistEnabled,
+} from "../db/run-events.js";
 import { allocateRunId } from "./run-paths.js";
 import { handoffRunStatus } from "../lanes/handoff-run-coordinator.js";
 import { runHandoffPhasedSwarm } from "../lanes/run-handoff-phases.js";
@@ -71,6 +77,10 @@ export function registerSupervisorRun(agentId: AgentId, reason: string, runId?: 
     status: "running",
     reason,
   });
+  if (runEventsPersistEnabled()) {
+    recordRunStarted(id, agentId, reason);
+    void flushRunEvents(id).catch(() => {});
+  }
   void upsertLiveAgentRunStart({
     runId: id,
     agentId,
@@ -159,13 +169,19 @@ export function runtimeSnapshot(state: ControlPlaneState) {
     stopped_agents: state.stopped_agents ?? [],
     current_supervisor_agent: state.current_supervisor_agent ?? null,
     active_runs: listActiveRuns(),
-    active_run_count: computeInSdkCount(listActiveRuns(), sdkSessionInProcessActive()),
+    active_runs_registered: countRegisteredRunningRuns(listActiveRuns()),
+    active_run_count: computeInSdkCount(
+      sdkSlotsInUse(),
+      sdkSessionInProcessActive(),
+      sdkMaxConcurrent(),
+    ),
     ...asyncSwarmSnapshot(),
     handoff_run: handoffRunStatus(),
     sdk_max_concurrent: sdkMaxConcurrent(),
     sdk_slots_in_use: sdkSlotsInUse(),
     sdk_sessions_active: sdkSessionInProcessActive(),
     workers_paused: swarmWorkersPaused(),
+    sdk_slot_policy: sdkSlotPolicySnapshot(),
   };
 }
 

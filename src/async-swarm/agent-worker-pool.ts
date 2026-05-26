@@ -15,7 +15,7 @@ import {
 import { loadState } from "../control-plane/state.js";
 import { asyncWorkerAgentIds } from "../lanes/lane-agent-ids.js";
 import { resolveSpawnWorkflowRepo } from "../handoffs/resolve-spawn-workflow-repo.js";
-import { isSdkSlotLockError } from "../backends/sdk-session-lock.js";
+import { isSdkSlotLockError, sdkSlotLikelyAvailable } from "../backends/sdk-session-lock.js";
 import { agentsPackageRoot, runAgent, shouldUseMock } from "../runner.js";
 import { resolveBenchmarksRoot } from "../preflight.js";
 import type { AgentId } from "../types.js";
@@ -82,6 +82,12 @@ export async function agentWorkerCycle(
   const state = loadState();
   if ((state.stopped_agents ?? []).includes(agentId)) {
     return { skipped: true, skip_reason: "agent stopped" };
+  }
+  if (!sdkSlotLikelyAvailable()) {
+    return {
+      skipped: true,
+      skip_reason: "sdk session slots busy (waiting for slot)",
+    };
   }
 
   const lightOpts = { light: true as const };

@@ -14,7 +14,9 @@ import {
   listRecentActivity,
   listRunsMerged,
 } from "../control-plane/runs-catalog.js";
+import { getRunEvents, listRunningAgentRuns } from "../db/runs.js";
 import { buildSwarmStatistics, type SwarmStatistics } from "../control-plane/swarm-statistics.js";
+import { buildRunErrorsSummary } from "../control-plane/run-errors-summary.js";
 import { defaultStatsRunLimit, parseStatsTimeRange } from "../control-plane/stats-time-range.js";
 import { agentLog } from "../agent-log.js";
 import { loadLiveInterventionsFromDb } from "../db/control-plane.js";
@@ -28,10 +30,11 @@ import { dataStoreLabel, dbEnabled, configuredStore } from "../db/client.js";
 import { loadWorkerStatusFromDb } from "../db/worker-status.js";
 import { loadLaneStateFromDb } from "../db/lane-state.js";
 import { researchLaneAgentIds } from "../lanes/lane-agent-ids.js";
-import { runtimeSnapshotFromDb, laneSnapshotFromDb } from "./runtime-read.js";
+import { runtimeSnapshotFromDbEnriched, laneSnapshotFromDb } from "./runtime-read.js";
 import { listSettingsViewsForRead, SETTING_CATEGORIES } from "./settings-read.js";
 import { loadQueuePayloadForRead } from "./queue-read.js";
 import { getAgentDetailFromDb } from "./agent-detail-read.js";
+import { getResearchRunDetail, listResearchRuns } from "../control-plane/research-runs-api.js";
 import type { AgentId } from "../types.js";
 
 let envReady = false;
@@ -95,8 +98,8 @@ async function handleGet(pathname: string, url: URL): Promise<Response | null> {
   const store = dataStoreLabel();
   const state = await loadStateForRead();
   const worker = await loadWorkerStatusFromDb();
-  const runtime = runtimeSnapshotFromDb(state, worker);
-  runtime.store = store;
+  const dbRunning = dbEnabled() ? await listRunningAgentRuns(30, { light: true }) : [];
+  const runtime = await runtimeSnapshotFromDbEnriched(state, worker, dbRunning);
 
   if (pathname === "/api/agents") {
     return jsonBody({ ...dashboardRosterSummary(), runtime });
@@ -194,6 +197,27 @@ async function handleGet(pathname: string, url: URL): Promise<Response | null> {
     return jsonBody({ runs: await listRunsMerged(limit), store });
   }
 
+  if (pathname === "/api/research/runs") {
+    const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit") ?? 50)));
+    return jsonBody(await listResearchRuns(limit));
+  }
+
+  const researchRunDetailMatch = pathname.match(/^\/api\/research\/runs\/([^/]+)$/);
+  if (researchRunDetailMatch) {
+    const runId = decodeURIComponent(researchRunDetailMatch[1]!);
+    const detail = await getResearchRunDetail(runId);
+    if (!detail) return jsonBody({ error: "research run not found" }, 404);
+    return jsonBody({ ...detail, store });
+  }
+
+  const runEventsMatch = pathname.match(/^\/api\/runs\/([^/]+)\/events$/);
+  if (runEventsMatch) {
+    const runId = decodeURIComponent(runEventsMatch[1]!);
+    const limit = Math.min(200, Math.max(1, Number(url.searchParams.get("limit") ?? 80)));
+    const events = await getRunEvents(runId, limit);
+    return jsonBody({ run_id: runId, events, store });
+  }
+
   const runDetailMatch = pathname.match(/^\/api\/runs\/([^/]+)$/);
   if (runDetailMatch) {
     const runId = decodeURIComponent(runDetailMatch[1]!);
@@ -215,6 +239,21 @@ async function handleGet(pathname: string, url: URL): Promise<Response | null> {
       const message = err instanceof Error ? err.message : String(err);
       agentLog("db-api", "warn", `statistics failed: ${message}`);
       return jsonBody({ error: message, statistics: null, store }, 500);
+    }
+  }
+
+  if (pathname === "/api/errors/summary" || pathname === "/api/runs/errors-summary") {
+    try {
+      const timeRange = parseStatsTimeRange(url.searchParams);
+      const limit = Math.min(
+        50_000,
+        Math.max(50, Number(url.searchParams.get("runs") ?? defaultStatsRunLimit(timeRange.preset))),
+      );
+      const summary = await buildRunErrorsSummary(limit, timeRange);
+      return jsonBody({ ...summary, store, reporting_only: true });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return jsonBody({ error: message, store }, 500);
     }
   }
 

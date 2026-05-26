@@ -1,4 +1,8 @@
-import { isSdkSlotLockError } from "../backends/sdk-session-lock.js";
+import { isSdkSlotLockError, sdkSlotLikelyAvailable } from "../backends/sdk-session-lock.js";
+import {
+  buildPlanBacklogInstruction,
+  pickNextPlanBacklogTodo,
+} from "./plan-backlog-work.js";
 import { agentsPackageRoot, runAgent, shouldUseMock } from "../runner.js";
 import { resolveBenchmarksRoot, runPreflight } from "../preflight.js";
 import {
@@ -15,7 +19,13 @@ import {
   findAnyInProgressSession,
 } from "../research-sessions/session-lifecycle.js";
 import { buildResearchSessionContinuationBlock } from "../research-sessions/session-store.js";
-import { northStarFitForGoal } from "../research-goals/load-goals.js";
+import {
+  buildResearchGoalKickoffExtra,
+  findResearchGoalById,
+  resolveResearchFactoryContext,
+  resolveResearchFactoryContextForSession,
+  type ResearchFactoryContext,
+} from "../research-goals/research-goal-context.js";
 import { isHandoffRunInProgress } from "./handoff-run-coordinator.js";
 import { loadLaneState, recordGoalRun, saveLaneState } from "./lane-state.js";
 import type { AgentId } from "../types.js";
@@ -35,6 +45,7 @@ export type ResearchWorkTarget = {
   goal?: ResearchGoal;
   session?: ResearchSession;
   extra: string;
+  factoryContext?: ResearchFactoryContext;
 };
 
 function buildResearchWorkTarget(
@@ -42,8 +53,9 @@ function buildResearchWorkTarget(
   goal: ResearchGoal | undefined,
   session: ResearchSession | undefined,
   extra: string,
+  factoryContext?: ResearchFactoryContext,
 ): ResearchWorkTarget {
-  return { agentId, goal, session, extra };
+  return { agentId, goal, session, extra, factoryContext };
 }
 
 /** Work for one research agent only (used by parallel per-agent workers). */
@@ -53,13 +65,29 @@ export async function pickResearchWorkForAgent(
   if (agentUsesResearchSession(agentId)) {
     const session = await loadResearchSession(agentId);
     if (session?.status === "in_progress") {
-      return buildResearchWorkTarget(
-        agentId,
-        undefined,
-        session,
-        buildResearchSessionContinuationBlock(session),
-      );
+      const goal = session.goal_id ? findResearchGoalById(session.goal_id) : undefined;
+      const factoryContext = resolveResearchFactoryContextForSession(session);
+      const extra = goal
+        ? [
+            buildResearchGoalKickoffExtra(goal, session),
+            buildResearchSessionContinuationBlock(session, factoryContext?.publish_subdir),
+          ].join("\n")
+        : buildResearchSessionContinuationBlock(session, factoryContext?.publish_subdir);
+      return buildResearchWorkTarget(agentId, goal, session, extra, factoryContext);
     }
+  }
+
+  const planTodo = pickNextPlanBacklogTodo(agentId);
+  if (planTodo) {
+    const planGoal = loadResearchGoals().find((g) => resolveGoalAgent(g) === agentId);
+    const extra = buildPlanBacklogInstruction(agentId, planTodo);
+    return buildResearchWorkTarget(
+      agentId,
+      planGoal,
+      undefined,
+      planGoal ? [buildResearchGoalKickoffExtra(planGoal), extra].join("\n") : extra,
+      planGoal ? resolveResearchFactoryContext(planGoal) : undefined,
+    );
   }
 
   const state = loadLaneState();
@@ -71,37 +99,38 @@ export async function pickResearchWorkForAgent(
       agentId,
       goal,
       undefined,
-      [
-        "## Research goal (this run)",
-        "",
-        `- **Goal id:** \`${goal.id}\``,
-        `- **Title:** ${goal.title}`,
-        `- **north_star_fit:** ${northStarFitForGoal(goal)}`,
-        "",
-      ].join("\n"),
+      buildResearchGoalKickoffExtra(goal),
+      resolveResearchFactoryContext(goal),
     );
   }
 
   const session = await ensureSessionForGoal(agentId, goal);
+  const factoryContext = resolveResearchFactoryContext(goal);
   return buildResearchWorkTarget(
     agentId,
     goal,
     session,
-    [buildGoalKickoffBlock(goal, session), buildResearchSessionContinuationBlock(session)].join(
-      "\n",
-    ),
+    [
+      buildGoalKickoffBlock(goal, session),
+      buildResearchSessionContinuationBlock(session, factoryContext.publish_subdir),
+    ].join("\n"),
+    factoryContext,
   );
 }
 
 export async function pickResearchLaneTarget(): Promise<ResearchWorkTarget | null> {
   const resumed = await findAnyInProgressSession();
   if (resumed) {
-    return buildResearchWorkTarget(
-      resumed.agent_id as AgentId,
-      undefined,
-      resumed,
-      buildResearchSessionContinuationBlock(resumed),
-    );
+    const agentId = resumed.agent_id as AgentId;
+    const goal = resumed.goal_id ? findResearchGoalById(resumed.goal_id) : undefined;
+    const factoryContext = resolveResearchFactoryContextForSession(resumed);
+    const extra = goal
+      ? [
+          buildResearchGoalKickoffExtra(goal, resumed),
+          buildResearchSessionContinuationBlock(resumed, factoryContext?.publish_subdir),
+        ].join("\n")
+      : buildResearchSessionContinuationBlock(resumed, factoryContext?.publish_subdir);
+    return buildResearchWorkTarget(agentId, goal, resumed, extra, factoryContext);
   }
 
   const state = loadLaneState();
@@ -132,6 +161,13 @@ export async function researchAgentWorkerCycle(
   if (isHandoffRunInProgress()) {
     return { skipped: true, skip_reason: "handoff run-all in progress", agentId };
   }
+  if (!sdkSlotLikelyAvailable()) {
+    return {
+      skipped: true,
+      skip_reason: "sdk session slots busy (waiting for slot)",
+      agentId,
+    };
+  }
 
   const target = await pickResearchWorkForAgent(agentId);
   if (!target) {
@@ -150,6 +186,7 @@ export async function researchAgentWorkerCycle(
       mock: Boolean(mock),
       dryRun: Boolean(options?.dryRun),
       extraInstruction: target.extra,
+      researchContext: target.factoryContext,
     });
   } catch (err) {
     if (isSdkSlotLockError(err)) throw err;
@@ -208,6 +245,7 @@ export async function researchLaneTick(options?: {
     mock: Boolean(mock),
     dryRun: Boolean(options?.dryRun),
     extraInstruction: target.extra,
+    researchContext: target.factoryContext,
   });
 
   if (target.goal?.id) {

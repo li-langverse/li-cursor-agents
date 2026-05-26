@@ -1,7 +1,7 @@
 /** One continuous loop per research-lane agent — parallel goals on the demo/benchmarks repo. */
 
 import { agentLog } from "../agent-log.js";
-import { isSdkSlotLockError } from "../backends/sdk-session-lock.js";
+import { isSdkSlotLockError, sdkSlotLikelyAvailable } from "../backends/sdk-session-lock.js";
 import { researchLaneAgentIds } from "../lanes/lane-agent-ids.js";
 import { loadLaneState } from "../lanes/lane-state.js";
 import { researchAgentIdleMs } from "../lanes/research-parallel.js";
@@ -45,6 +45,16 @@ async function researchAgentLoop(
       if (maxCycles > 0 && cycles >= maxCycles) break;
       cycles++;
       try {
+        if (!sdkSlotLikelyAvailable()) {
+          const delayMs = nextContinuousLoopDelayMs({
+            skipped: true,
+            skip_reason: "sdk session slots busy (waiting for slot)",
+            hasMoreWork: false,
+            idleMs,
+          });
+          await sleepUntil(abort, delayMs);
+          continue;
+        }
         let cycle;
         try {
           cycle = await researchAgentWorkerCycle(agentId, { mock });

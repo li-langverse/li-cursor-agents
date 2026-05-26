@@ -1,6 +1,7 @@
 import { loadState } from "../control-plane/state.js";
 import { isAsyncSwarmRunning } from "../async-swarm/async-swarm-state.js";
 import { listActiveRuns } from "../control-plane/runtime.js";
+import { dataStoreLabel } from "../db/client.js";
 import { persistWorkerHeartbeat } from "./heartbeat.js";
 import { runSwarmWatchdogTick } from "../swarm/swarm-watchdog.js";
 import { workerConsole } from "./worker-console.js";
@@ -12,7 +13,8 @@ export function startWorkerHeartbeatLoop(): void {
   if (heartbeatTimer) return;
   const ms = Number(process.env.LI_WORKER_HEARTBEAT_MS ?? 3_000);
   const interval = Number.isFinite(ms) && ms >= 1_000 ? ms : 3_000;
-  workerConsole("heartbeat", "info", `worker_status sync every ${interval}ms → Supabase`);
+  const store = dataStoreLabel();
+  workerConsole("heartbeat", "info", `worker_status sync every ${interval}ms → ${store}`);
   void flushWorkerHeartbeat();
   const watchdogEvery = Math.max(
     1,
@@ -60,7 +62,7 @@ export async function flushWorkerHeartbeat(): Promise<void> {
         .filter((r) => r.status === "running")
         .map((r) => r.agent_id)
         .join(", ");
-      workerConsole("heartbeat", "info", `worker_status → Supabase: ${running} active run(s)`, ids);
+      workerConsole("heartbeat", "info", `worker_status → ${dataStoreLabel()}: ${running} active run(s)`, ids);
     }
   }
 }

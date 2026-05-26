@@ -34,3 +34,4 @@ cat data/latest/ci-bug-triage.json
 
 - **Fixed** — repo, PR URL, test path
 - **Deferred** — blocked items with next step
+- When `GH_TOKEN` is set: branch pushed and PR opened with `## Agent deliverable` checklist

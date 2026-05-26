@@ -52,6 +52,10 @@ export function buildLiveAgentRows(
       run_input: run.run_input,
       reason: run.reason,
     });
+    const eventDetail =
+      run.recent_events?.length
+        ? (run.recent_events[run.recent_events.length - 1]?.payload?.message?.trim() ?? "")
+        : (run.last_event?.message?.trim() ?? "");
     pushRow(
       map,
       {
@@ -59,7 +63,7 @@ export function buildLiveAgentRows(
         agentName: rosterName(agents, run.agent_id),
         kind: "sdk_run",
         headline: stream.headline,
-        detail: stream.detail || stream.snippet || run.reason?.trim() || "Agent run in progress",
+        detail: eventDetail || stream.detail || stream.snippet || run.reason?.trim() || "Agent run in progress",
         startedAt: run.started_at,
         runId: run.run_id,
       },

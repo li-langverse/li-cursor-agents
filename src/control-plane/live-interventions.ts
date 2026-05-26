@@ -62,7 +62,15 @@ export function filterInterventionsForOpenPrs(
   });
 }
 
+export function briefingRefreshTimeoutMs(): number {
+  const raw = process.env.LI_BRIEFING_REFRESH_TIMEOUT_MS?.trim();
+  const n = Number(raw ?? 25_000);
+  return Number.isFinite(n) && n >= 5_000 ? Math.min(120_000, Math.floor(n)) : 25_000;
+}
+
 export function maybeRefreshStaleBriefing(briefingGeneratedAt: string | undefined): boolean {
+  if (process.env.LI_BRIEFING_REFRESH_ON_READ === "0") return false;
+
   const maxAgeMs = Number(process.env.LI_BRIEFING_MAX_AGE_MS ?? 20 * 60 * 1000);
   const throttleMs = Number(process.env.LI_BRIEFING_REFRESH_THROTTLE_MS ?? 5 * 60 * 1000);
   const generatedMs = briefingGeneratedAt ? new Date(briefingGeneratedAt).getTime() : 0;
@@ -78,7 +86,7 @@ export function maybeRefreshStaleBriefing(briefingGeneratedAt: string | undefine
     cwd: root,
     encoding: "utf8",
     env: { ...process.env },
-    timeout: 180_000,
+    timeout: briefingRefreshTimeoutMs(),
   });
   return proc.status === 0;
 }
@@ -97,7 +105,10 @@ export function loadBriefingFromPath(path: string): Record<string, unknown> | nu
   return raw && typeof raw === "object" ? (raw as Record<string, unknown>) : null;
 }
 
-export function loadFreshBriefing(stored: ControlPlaneReport | null): {
+export function loadFreshBriefing(
+  stored: ControlPlaneReport | null,
+  options?: { skipRefresh?: boolean },
+): {
   briefing: Record<string, unknown>;
   path?: string;
   briefingGeneratedAt: string;
@@ -116,7 +127,7 @@ export function loadFreshBriefing(stored: ControlPlaneReport | null): {
   if (!briefing) return null;
 
   const generatedAt = String(briefing.generated_at ?? "");
-  if (maybeRefreshStaleBriefing(generatedAt)) {
+  if (!options?.skipRefresh && maybeRefreshStaleBriefing(generatedAt)) {
     briefing = loadBriefingFromPath(path) ?? briefing;
   }
 

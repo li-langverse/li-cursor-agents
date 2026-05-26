@@ -33,6 +33,9 @@
     "agents:implement-lane": "npm run build && node dist/cli/implement-lane.js",
     "agents:maintenance-lane": "npm run build && node dist/cli/maintenance-lane.js",
     "agents:async-swarm": "npm run build && node dist/cli/async-swarm.js start",
+    "research-goals:sync": "npm run build && node dist/cli/sync-research-goals-from-factory.js",
+    "agents:sweep-hung": "npm run build && node dist/cli/sweep-hung-agents.js",
+    "agents:repair-research-sessions": "npm run build && node dist/cli/repair-research-sessions.js",
     "briefing:enrich": "npm run build && LI_CONTROL_PLANE_STORE=disk node dist/cli/enrich-briefing.js",
     "swarm:dispatch-benchmarks": "npm run build && node dist/cli/dispatch-benchmarks-audit.js",
     "db:probe": "npm run build && node dist/cli/db-probe.js",
@@ -43,6 +46,7 @@
     "test:log-timestamps": "npm run build && node scripts/test-log-timestamps.mjs",
     "test:db-api": "npm run build && CURSOR_MOCK=1 LI_CONTROL_PLANE_STORE=disk node --test dist/e2e/db-api.e2e.js",
     "test:live-stream-db": "npm run build && CURSOR_MOCK=1 LI_E2E_USE_SUPABASE=1 node --test dist/e2e/agent-live-stream-supabase.e2e.js",
+    "test:e2e:lidb": "npm run build && CURSOR_MOCK=1 LI_CONTROL_PLANE_STORE=lidb LI_E2E_LIDB=1 LI_LIDB_MOCK=1 node --test dist/e2e/lidb-control-plane.e2e.js",
     "test:playwright": "npm run build && cd dashboard-ui && npm install && npm run test:e2e",
     "test:playwright:mock": "npm run build && cd dashboard-ui && npm install && npm run test:e2e:mock",
     "test:playwright:integration": "npm run build && cd dashboard-ui && npm install && LI_PLAYWRIGHT_USE_SUPABASE=1 npm run test:e2e:integration",
@@ -60,9 +64,13 @@
     "test:worker-swarm": "npm run build && CURSOR_MOCK=1 LI_CONTROL_PLANE_STORE=disk node --test dist/e2e/worker-swarm.e2e.js",
     "test:dashboard-ui": "node scripts/check-dashboard-no-motion.mjs && npm --prefix dashboard-ui run build",
     "test:dev-stack-ready": "node --test scripts/dev-stack-ready-lib.test.mjs",
+    "health:report": "bash scripts/swarm-health-report.sh",
+    "test:health-report": "node scripts/test-swarm-health-report.mjs",
     "smoke:dashboard": "node scripts/smoke-dashboard-api.mjs",
     "verify:dashboard": "npm run build && node scripts/verify-dashboard-live.mjs",
     "db:ensure": "bash scripts/ensure-supabase.sh",
+    "db:failover-probe": "bash scripts/supabase-health-probe.sh",
+    "db:standby-ensure": "bash scripts/ensure-supabase-standby.sh",
     "db:backfill": "node scripts/backfill-control-plane-db.mjs",
     "test:agent-matrix": "npm run build && CURSOR_MOCK=1 LI_CONTROL_PLANE_STORE=disk node --test dist/e2e/agent-matrix.e2e.js",
     "test:e2e:slow": "npm run build && CURSOR_MOCK=1 LI_CONTROL_PLANE_STORE=disk node --test dist/e2e/agent-matrix.e2e.js dist/e2e/agent-parallel-pool.e2e.js dist/e2e/agent-activity-pipeline.e2e.js dist/lanes/research-lane.test.js",
@@ -84,10 +92,12 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@supabase/supabase-js": "^2.49.0",
     "@types/pg": "^8.20.0",
-    "pg": "^8.21.0"
+    "pg": "^8.21.0",
+    "ws": "^8.21.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "@types/ws": "^8.18.1",
     "typescript": "^5.7.0"
   }
 }
