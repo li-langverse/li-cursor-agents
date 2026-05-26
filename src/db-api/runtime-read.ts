@@ -1,4 +1,7 @@
-import { computeInSdkCount } from "../control-plane/active-run-metrics.js";
+import {
+  computeInSdkCount,
+  countRegisteredRunningRuns,
+} from "../control-plane/active-run-metrics.js";
 import { enrichActiveRunsWithRecentEvents } from "../control-plane/enrich-active-runs.js";
 import { mergeActiveRunsForDisplay } from "../control-plane/merge-active-runs.js";
 import { sdkMaxConcurrent, sdkSlotsInUse } from "../backends/sdk-session-lock.js";
@@ -43,13 +46,15 @@ export function runtimeSnapshotFromDb(
   const w = worker ?? defaultWorkerStatus();
   const loopRunning = w.supervisor_loop_running || Boolean(state.supervisor_loop_running);
   const activeRuns: ActiveAgentRun[] = mergeActiveRunsForDisplay(w.active_runs, dbRunning);
+  const sdkMax = w.sdk_max_concurrent ?? sdkMaxConcurrent();
   return {
     supervisor_loop_running: loopRunning,
     supervisor_loop_started_at: loopRunning ? (state.supervisor_loop_started_at ?? null) : null,
     stopped_agents: state.stopped_agents ?? [],
     current_supervisor_agent: state.current_supervisor_agent ?? null,
     active_runs: activeRuns,
-    active_run_count: computeInSdkCount(activeRuns, w.sdk_sessions_active),
+    active_runs_registered: countRegisteredRunningRuns(w.active_runs),
+    active_run_count: computeInSdkCount(sdkSlotsInUse(), w.sdk_sessions_active, sdkMax),
     async_swarm_running: w.async_swarm_running,
     handoff_run: w.handoff_run,
     sdk_max_concurrent: w.sdk_max_concurrent ?? sdkMaxConcurrent(),
@@ -71,7 +76,11 @@ export async function runtimeSnapshotFromDbEnriched(
   return {
     ...snap,
     active_runs: enriched,
-    active_run_count: computeInSdkCount(enriched, snap.sdk_sessions_active),
+    active_run_count: computeInSdkCount(
+      sdkSlotsInUse(),
+      snap.sdk_sessions_active,
+      snap.sdk_max_concurrent ?? sdkMaxConcurrent(),
+    ),
   };
 }
 

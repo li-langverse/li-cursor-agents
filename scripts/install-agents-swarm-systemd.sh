@@ -59,7 +59,7 @@ Environment=HOME=$HOME PATH=$SERVICE_PATH LI_CURSOR_ENV_FILE=$ENV_FILE LI_CURSOR
 Environment=NODE_BIN=$NODE_BIN LI_AGENT_DASHBOARD_PORT=$PORT LI_AGENT_DASHBOARD_HOST=$DASHBOARD_HOST LI_CONTROL_PLANE_STORE=$STORE
 Environment=LI_SDK_MAX_CONCURRENT=$SDK_MAX LI_AUTO_START_ASYNC_SWARM=${DASHBOARD_AUTO_SWARM} LI_SWARM_DETACHED=1 LI_SWARM_EXTERNAL=${DASHBOARD_EXTERNAL_SWARM} LI_AUTO_START_SUPERVISOR=0
 ExecStart=$ROOT/scripts/agents-dashboard-systemd.sh
-Restart=on-failure
+Restart=always
 RestartSec=30
 StandardOutput=append:${LOG_DIR}/agents-dashboard-systemd.log
 StandardError=append:${LOG_DIR}/agents-dashboard-systemd.log

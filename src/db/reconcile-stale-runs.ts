@@ -33,6 +33,7 @@ export async function reconcileStaleRunningAgentRuns(): Promise<number> {
         error: "stale_running_reconciled",
         updated_at: now,
       })
+      .eq("status", "running")
       .in("run_id", ids);
 
     if (updateErr) throw new Error(`reconcileStaleRunningAgentRuns update: ${updateErr.message}`);

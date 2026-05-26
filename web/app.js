@@ -160,6 +160,10 @@ function renderAgentBackendUi() {
   }
 }
 
+function countRunningActive(rt) {
+  return (rt?.active_runs ?? []).filter((r) => r.status === "running").length;
+}
+
 function agentStatusMap(roster, report, runtime, statusPayload) {
   const map = new Map();
   const activeRuns = runtime?.active_runs ?? [];
@@ -223,7 +227,7 @@ function agentStatusMap(roster, report, runtime, statusPayload) {
 }
 
 async function loadDashboard() {
-  const [report, status, roster, runsPayload, supervisorActivity, activityPayload, interventionsPayload, statisticsPayload, handoffsPayload, swarmBriefingPayload, workQueuePayload] =
+  const [report, status, roster, runsPayload, supervisorActivity, activityPayload, interventionsPayload, statisticsPayload, errorsSummaryPayload, handoffsPayload, swarmBriefingPayload, workQueuePayload] =
     await Promise.all([
       fetchJson("/api/report").catch(() => ({})),
       fetchJson("/api/status").catch((e) => {
@@ -236,6 +240,7 @@ async function loadDashboard() {
       fetchJson("/api/activity/recent?limit=25").catch(() => ({ items: [] })),
       fetchJson("/api/interventions").catch(() => ({ interventions: [] })),
       fetchJson(`/api/statistics?${statisticsQueryString()}`).catch(() => ({ statistics: null })),
+      fetchJson(`/api/runs/errors-summary?${statisticsQueryString()}`).catch(() => null),
       fetchJson("/api/handoffs?limit=30").catch(() => ({ handoffs: [] })),
       fetchJson("/api/swarm/briefing").catch(() => ({})),
       fetchJson("/api/queue").catch(() => ({ queue: [] })),
@@ -253,6 +258,7 @@ async function loadDashboard() {
     activityPayload,
     interventionsPayload,
     statisticsPayload,
+    errorsSummaryPayload,
     handoffsPayload,
     swarmBriefingPayload,
     workQueuePayload,
@@ -456,7 +462,30 @@ function renderActionFeed(feed, items, { compact = false, emptyMessage } = {}) {
   feed.innerHTML = items.map((item) => renderActivityCard(item, { compact })).join("");
 }
 
+function renderErrorsSummary() {
+  const panel = $("#errors-summary-panel");
+  if (!panel) return;
+  const summary = ui.data?.errorsSummaryPayload;
+  if (!summary?.total_errors) {
+    panel.hidden = true;
+    panel.innerHTML = "";
+    return;
+  }
+  panel.hidden = false;
+  const rows = (summary.categories ?? [])
+    .slice(0, 8)
+    .map(
+      (c) =>
+        `<tr><td class="mono">${esc(c.error_key)}</td><td>${c.count}</td><td>${c.agents.length} agents</td></tr>`,
+    )
+    .join("");
+  panel.innerHTML = `<h3>Errors (${summary.total_errors} runs · ${summary.unique_categories} kinds)</h3>
+    <p class="hint">Grouped by message; stale reconcile deduped in history. <a href="../docs/ecosystem/learn-from-errors.md" target="_blank" rel="noopener">Learn from errors</a></p>
+    <table class="data-table"><thead><tr><th>Error</th><th>Count</th><th>Scope</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
 function renderActivityFeed() {
+  renderErrorsSummary();
   const items = ui.data?.activityPayload?.items ?? [];
   renderActionFeed($("#activity-feed"), items, {
     emptyMessage: "No agent runs yet — start the supervisor or run an agent.",
@@ -508,9 +537,9 @@ function renderSidebar() {
       <dt>Agent backend</dt><dd class="${agentBackend === "mock" ? "text-warn" : "text-ok"}">${esc(agentBackend)}</dd>
       <dt>Swarm</dt><dd class="${swarmOn ? "text-ok" : ""}">${swarmOn ? "● running" : "○ stopped"}</dd>
       <dt>Since</dt><dd>${swarmOn && swarmStarted ? formatTime(swarmStarted) : "—"}</dd>
-      <dt>SDK slots</dt><dd>${rt.sdk_max_concurrent ?? "—"}</dd>
+      <dt>SDK in use</dt><dd>${rt.active_run_count ?? 0} / ${rt.sdk_max_concurrent ?? "—"}</dd>
+      <dt>Registered</dt><dd title="Worker tracks (may wait for slot)">${rt.active_runs_registered ?? countRunningActive(rt)} · ${(rt.active_runs ?? []).filter((r) => r.status === "running").length} listed</dd>
       <dt>Queue</dt><dd>${qLen} pending</dd>
-      <dt>Running now</dt><dd>${rt.active_run_count ?? 0}</dd>
       <dt>Agents</dt><dd>${roster?.total ?? "—"}</dd>
       <dt>Briefing</dt><dd title="${escAttr(report?.briefing_hash ?? "")}">${esc((report?.briefing_hash ?? "—").slice(0, 12))}</dd>
     </dl>`;

@@ -47,6 +47,7 @@ test("runtimeSnapshotFromDb active_run_count reflects running rows and sdk slots
     },
   );
   assert.equal(snap.active_run_count, 1);
+  assert.equal(snap.active_runs_registered, 1);
   assert.equal(typeof snap.sdk_slots_in_use, "number");
   assert.equal(typeof snap.workers_paused, "boolean");
   assert.equal(snap.sdk_max_concurrent, 2);
@@ -79,7 +80,7 @@ test("runtimeStoreFields exposes store, db_enabled, control_plane_store for /api
   else process.env.SUPABASE_SERVICE_ROLE_KEY = prev.key;
 });
 
-test("runtimeSnapshotFromDb merges DB-only running rows into active_run_count", () => {
+test("runtimeSnapshotFromDb merges DB-only running rows into active_runs but not in-sdk count", () => {
   const snap = runtimeSnapshotFromDb(
     {
       version: 1,
@@ -118,7 +119,8 @@ test("runtimeSnapshotFromDb merges DB-only running rows into active_run_count", 
       },
     ],
   );
-  assert.equal(snap.active_run_count, 1);
+  assert.equal(snap.active_run_count, 0);
+  assert.equal(snap.active_runs_registered, 0);
   assert.equal(snap.active_runs.length, 1);
   assert.equal(snap.active_runs[0]!.run_id, "stale-db-only");
   assert.equal(snap.store, "disk");

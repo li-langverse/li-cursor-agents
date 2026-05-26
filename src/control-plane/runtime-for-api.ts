@@ -1,5 +1,6 @@
 import { isAsyncSwarmRunning } from "../async-swarm/async-swarm-state.js";
-import { computeInSdkCount } from "./active-run-metrics.js";
+import { computeInSdkCount, countRegisteredRunningRuns } from "./active-run-metrics.js";
+import { sdkMaxConcurrent, sdkSlotsInUse } from "../backends/sdk-session-lock.js";
 import { enrichActiveRunsWithRecentEvents } from "./enrich-active-runs.js";
 import { mergeActiveRunsForDisplay } from "./merge-active-runs.js";
 import { runtimeSnapshot } from "./runtime.js";
@@ -12,16 +13,25 @@ import { loadWorkerStatusPeer, type WorkerStatusRow } from "../db/worker-status.
 let peerCache: { at: number; row: WorkerStatusRow | null } | null = null;
 const PEER_CACHE_MS = 2_000;
 
-async function withEnrichedRuns<T extends { active_runs: ActiveAgentRun[]; active_run_count: number }>(
+async function withEnrichedRuns<
+  T extends {
+    active_runs: ActiveAgentRun[];
+    active_run_count: number;
+    active_runs_registered: number;
+  },
+>(
   base: T,
   activeRuns: ActiveAgentRun[],
+  heartbeatRuns: ActiveAgentRun[],
   sdkSessionsActive: number,
+  sdkMax: number,
 ): Promise<T> {
   const enriched = await enrichActiveRunsWithRecentEvents(activeRuns);
   return {
     ...base,
     active_runs: enriched,
-    active_run_count: computeInSdkCount(enriched, sdkSessionsActive),
+    active_runs_registered: countRegisteredRunningRuns(heartbeatRuns),
+    active_run_count: computeInSdkCount(sdkSlotsInUse(), sdkSessionsActive, sdkMax),
   };
 }
 
@@ -32,7 +42,13 @@ export async function runtimeForApi(state: ControlPlaneState) {
 
   if (isAsyncSwarmRunning() || local.async_swarm_running) {
     const activeRuns = mergeActiveRunsForDisplay(local.active_runs, dbRunning);
-    return withEnrichedRuns(local, activeRuns, local.sdk_sessions_active ?? 0);
+    return withEnrichedRuns(
+      local,
+      activeRuns,
+      local.active_runs,
+      local.sdk_sessions_active ?? 0,
+      local.sdk_max_concurrent ?? sdkMaxConcurrent(),
+    );
   }
 
   const now = Date.now();
@@ -42,17 +58,25 @@ export async function runtimeForApi(state: ControlPlaneState) {
   const peer = peerCache.row;
   if (!peer?.async_swarm_running) {
     const activeRuns = mergeActiveRunsForDisplay(local.active_runs, dbRunning);
-    return withEnrichedRuns(local, activeRuns, local.sdk_sessions_active ?? 0);
+    return withEnrichedRuns(
+      local,
+      activeRuns,
+      local.active_runs,
+      local.sdk_sessions_active ?? 0,
+      local.sdk_max_concurrent ?? sdkMaxConcurrent(),
+    );
   }
 
   const peerRuns = peer.active_runs.length ? peer.active_runs : local.active_runs;
   const activeRuns = mergeActiveRunsForDisplay(peerRuns, dbRunning);
   const runningRuns = activeRuns.filter((r) => r.status === "running");
+  const sdkMax = peer.sdk_max_concurrent ?? local.sdk_max_concurrent ?? sdkMaxConcurrent();
   const merged = {
     ...local,
     async_swarm_running: true,
     active_runs: activeRuns,
-    active_run_count: computeInSdkCount(activeRuns, peer.sdk_sessions_active),
+    active_runs_registered: countRegisteredRunningRuns(peerRuns),
+    active_run_count: computeInSdkCount(sdkSlotsInUse(), peer.sdk_sessions_active, sdkMax),
     worker_pool: {
       running: true,
       worker_count: runningRuns.length > 0 ? runningRuns.length : 1,
@@ -67,5 +91,11 @@ export async function runtimeForApi(state: ControlPlaneState) {
     sdk_sessions_active: peer.sdk_sessions_active ?? local.sdk_sessions_active,
     sdk_max_concurrent: peer.sdk_max_concurrent ?? local.sdk_max_concurrent,
   };
-  return withEnrichedRuns(merged, activeRuns, peer.sdk_sessions_active ?? local.sdk_sessions_active ?? 0);
+  return withEnrichedRuns(
+    merged,
+    activeRuns,
+    peerRuns,
+    peer.sdk_sessions_active ?? local.sdk_sessions_active ?? 0,
+    sdkMax,
+  );
 }

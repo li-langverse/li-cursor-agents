@@ -13,7 +13,7 @@ import { loadState, saveState } from "./state.js";
 import type { ActiveAgentRun, AgentRunLifecycle, ControlPlaneState } from "./types.js";
 import type { AgentId } from "../types.js";
 import { asyncSwarmSnapshot } from "../async-swarm/async-swarm-state.js";
-import { computeInSdkCount } from "./active-run-metrics.js";
+import { computeInSdkCount, countRegisteredRunningRuns } from "./active-run-metrics.js";
 import {
   sdkMaxConcurrent,
   sdkSessionInProcessActive,
@@ -168,7 +168,12 @@ export function runtimeSnapshot(state: ControlPlaneState) {
     stopped_agents: state.stopped_agents ?? [],
     current_supervisor_agent: state.current_supervisor_agent ?? null,
     active_runs: listActiveRuns(),
-    active_run_count: computeInSdkCount(listActiveRuns(), sdkSessionInProcessActive()),
+    active_runs_registered: countRegisteredRunningRuns(listActiveRuns()),
+    active_run_count: computeInSdkCount(
+      sdkSlotsInUse(),
+      sdkSessionInProcessActive(),
+      sdkMaxConcurrent(),
+    ),
     ...asyncSwarmSnapshot(),
     handoff_run: handoffRunStatus(),
     sdk_max_concurrent: sdkMaxConcurrent(),

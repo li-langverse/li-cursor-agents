@@ -39,7 +39,11 @@ Clear pause and restart async swarm (or dashboard **Stop agents** → **Start ag
 | `sdk_max_concurrent` | Effective cap (`LI_SDK_MAX_CONCURRENT`) |
 | `sdk_slots_in_use` | Non-stale cross-process slot lock files held |
 | `sdk_sessions_active` | In-process SDK depth in this dashboard process |
+| `active_run_count` | **In SDK now** — `min(max(slots_in_use, in-process), sdk_max)`; not the length of `active_runs` |
+| `active_runs_registered` | Running tracks in the worker heartbeat (may exceed cap while waiting for a slot) |
 | `workers_paused` | `LI_SWARM_PAUSE_WORKERS` is set |
+
+If `active_runs` is much larger than `active_run_count`, see [concurrent-runs-troubleshooting.md](./concurrent-runs-troubleshooting.md).
 
 ## Tuning
 

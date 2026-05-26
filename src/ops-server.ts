@@ -49,6 +49,7 @@ import { loadRecentRunSummariesAsync } from "./control-plane/build-report.js";
 import { loadObserverState } from "./observer/state.js";
 import { scanSwarmHealth } from "./observer/swarm-health.js";
 import { buildSwarmStatistics } from "./control-plane/swarm-statistics.js";
+import { buildRunErrorsSummary } from "./control-plane/run-errors-summary.js";
 import { defaultStatsRunLimit, parseStatsTimeRange } from "./control-plane/stats-time-range.js";
 import { agentLog } from "./agent-log.js";
 import {
@@ -607,6 +608,22 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       const message = err instanceof Error ? err.message : String(err);
       agentLog("dashboard", "warn", `statistics failed: ${message}`);
       json(res, 500, { error: message, statistics: null, store });
+    }
+    return;
+  }
+
+  if (url.pathname === "/api/runs/errors-summary" && req.method === "GET") {
+    try {
+      const timeRange = parseStatsTimeRange(url.searchParams);
+      const limit = Math.min(
+        50_000,
+        Math.max(50, Number(url.searchParams.get("runs") ?? defaultStatsRunLimit(timeRange.preset))),
+      );
+      const summary = await buildRunErrorsSummary(limit, timeRange);
+      json(res, 200, { ...summary, store });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      json(res, 500, { error: message, store });
     }
     return;
   }

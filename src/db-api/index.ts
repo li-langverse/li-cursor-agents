@@ -16,6 +16,7 @@ import {
 } from "../control-plane/runs-catalog.js";
 import { getRunEvents, listRunningAgentRuns } from "../db/runs.js";
 import { buildSwarmStatistics, type SwarmStatistics } from "../control-plane/swarm-statistics.js";
+import { buildRunErrorsSummary } from "../control-plane/run-errors-summary.js";
 import { defaultStatsRunLimit, parseStatsTimeRange } from "../control-plane/stats-time-range.js";
 import { agentLog } from "../agent-log.js";
 import { loadLiveInterventionsFromDb } from "../db/control-plane.js";
@@ -224,6 +225,21 @@ async function handleGet(pathname: string, url: URL): Promise<Response | null> {
       const message = err instanceof Error ? err.message : String(err);
       agentLog("db-api", "warn", `statistics failed: ${message}`);
       return jsonBody({ error: message, statistics: null, store }, 500);
+    }
+  }
+
+  if (pathname === "/api/runs/errors-summary") {
+    try {
+      const timeRange = parseStatsTimeRange(url.searchParams);
+      const limit = Math.min(
+        50_000,
+        Math.max(50, Number(url.searchParams.get("runs") ?? defaultStatsRunLimit(timeRange.preset))),
+      );
+      const summary = await buildRunErrorsSummary(limit, timeRange);
+      return jsonBody({ ...summary, store });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return jsonBody({ error: message, store }, 500);
     }
   }
 

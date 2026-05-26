@@ -201,7 +201,7 @@ export interface ListRunsGlobalInRangeOptions {
 
 const RUNS_FULL_SELECT = "*";
 const RUNS_LIGHT_SELECT =
-  "run_id, agent_id, started_at, status, pr_urls, completion, meta, run_trace";
+  "run_id, agent_id, started_at, finished_at, status, error, pr_urls, completion, meta, run_trace";
 
 /** Scan agent_runs history with optional time bounds (newest first). */
 export async function listRunsGlobalInRange(

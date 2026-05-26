@@ -2,6 +2,7 @@ export interface RuntimePayload {
   async_swarm_running?: boolean;
   async_swarm_started_at?: string;
   active_run_count?: number;
+  active_runs_registered?: number;
   active_runs?: Array<{
     agent_id: string;
     run_id: string;
