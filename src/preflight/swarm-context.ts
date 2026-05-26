@@ -12,10 +12,7 @@ import {
   buildImplementationQueueInstruction,
 } from "./implementation-queue.js";
 
-const RESEARCH_SESSION_AGENTS = new Set<string>([
-  ...RESEARCH_SESSION_AGENT_IDS,
-  "numerics_researcher",
-]);
+const RESEARCH_SESSION_AGENTS = new Set<string>(RESEARCH_SESSION_AGENT_IDS);
 
 const HANDOFF_CONSUMER_AGENTS = new Set([
   "package_architect",

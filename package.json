@@ -35,6 +35,7 @@
     "agents:async-swarm": "npm run build && node dist/cli/async-swarm.js start",
     "research-goals:sync": "npm run build && node dist/cli/sync-research-goals-from-factory.js",
     "agents:sweep-hung": "npm run build && node dist/cli/sweep-hung-agents.js",
+    "agents:repair-research-sessions": "npm run build && node dist/cli/repair-research-sessions.js",
     "briefing:enrich": "npm run build && LI_CONTROL_PLANE_STORE=disk node dist/cli/enrich-briefing.js",
     "swarm:dispatch-benchmarks": "npm run build && node dist/cli/dispatch-benchmarks-audit.js",
     "db:probe": "npm run build && node dist/cli/db-probe.js",

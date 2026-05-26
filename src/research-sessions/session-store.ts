@@ -159,7 +159,9 @@ export async function advanceResearchSession(
   if (patch.deferred_finding) deferred_findings.push(patch.deferred_finding);
 
   let current_focus = patch.next_focus !== undefined ? patch.next_focus : session.current_focus;
-  if (patch.dequeue && queue.length) current_focus = queue[0] ?? null;
+  if (patch.dequeue) {
+    current_focus = queue.length ? (queue[0] ?? null) : (patch.next_focus !== undefined ? patch.next_focus : null);
+  }
 
   const hypotheses = patch.hypotheses ?? session.hypotheses ?? [];
 

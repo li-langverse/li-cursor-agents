@@ -9,8 +9,9 @@ import {
 } from "./session-store.js";
 import type { ResearchFocus, ResearchSession } from "./types.js";
 
-/** Agents that use multi-cycle research sessions (not per-vertical registry entries). */
+/** Agents that use multi-cycle research sessions (factory verticals + aux goals). */
 export const RESEARCH_SESSION_AGENT_IDS = [
+  "numerics_researcher",
   "goal_researcher",
   "proof_gap_researcher",
   "stdlib_researcher",
@@ -51,10 +52,37 @@ export function defaultFocusQueueForGoal(goal: ResearchGoal): ResearchFocus[] {
   }
 }
 
+/** Session stuck in_progress with an empty queue but a stale current_focus (pre-fix dequeue bug). */
+export function isZombieInProgressSession(session: ResearchSession): boolean {
+  if (session.status !== "in_progress" || session.queue.length > 0) return false;
+  return session.current_focus != null;
+}
+
+/** Clear stale focus so cycle_complete can apply and the lane can rotate goals. */
+export async function repairZombieResearchSession(
+  agentId: AgentId,
+): Promise<ResearchSession | null> {
+  const session = await loadResearchSession(agentId);
+  if (!session || !isZombieInProgressSession(session)) return session;
+  const repaired: ResearchSession = {
+    ...session,
+    current_focus: null,
+    status: "cycle_complete",
+    updated_at: nowIso(),
+  };
+  await saveResearchSession(repaired);
+  return repaired;
+}
+
 export async function findAnyInProgressSession(): Promise<ResearchSession | null> {
   for (const agentId of SESSION_AGENTS) {
-    const s = await loadResearchSession(agentId);
-    if (s) return s;
+    let s = await loadResearchSession(agentId);
+    if (!s) continue;
+    if (isZombieInProgressSession(s)) {
+      s = await repairZombieResearchSession(agentId);
+      if (s?.status === "cycle_complete") continue;
+    }
+    if (s?.status === "in_progress") return s;
   }
   return null;
 }
