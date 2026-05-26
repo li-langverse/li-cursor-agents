@@ -14,6 +14,7 @@ BASE_URL="http://127.0.0.1:${PORT}"
 REPORT_DIR="${LI_REPORT_DIR:-$ROOT/logs/swarm-health-reports}"
 DRY_RUN="${LI_DRY_RUN:-0}"
 MOCK_UNHEALTHY="${LI_MOCK_UNHEALTHY:-0}"
+MOCK_RUNTIME_TIMEOUT="${LI_MOCK_RUNTIME_TIMEOUT:-0}"
 TS_UTC="$(date -u +%Y-%m-%dT%H-%M)"
 REPORT_FILE="$REPORT_DIR/${TS_UTC}.md"
 LATEST_LINK="$REPORT_DIR/latest.md"
@@ -46,6 +47,9 @@ curl_api() {
   if [[ "$DRY_RUN" == "1" ]]; then
     case "$path" in
       /api/runtime)
+        if [[ "$MOCK_RUNTIME_TIMEOUT" == "1" ]]; then
+          return 1
+        fi
         if [[ "$MOCK_UNHEALTHY" == "1" ]]; then
           printf '%s' '{"async_swarm_running":false,"store":"supabase","db_enabled":true,"control_plane_store":"supabase","active_run_count":0,"sdk_slots_in_use":0,"sdk_max_concurrent":5,"active_runs_registered":0}' >"$out"
         else

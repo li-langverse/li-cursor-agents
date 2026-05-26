@@ -267,8 +267,18 @@ def recommendations(
     prod: dict[str, Any],
     exit_code: int,
     stale: int,
+    runtime_ok: bool,
+    dash: str,
+    async_svc: str,
 ) -> list[str]:
     rec: list[str] = []
+    if not runtime_ok:
+        if dash == "active" and async_svc == "active":
+            rec.append(
+                "`GET /api/runtime` timed out while both systemd units are active — inspect dashboard API latency, `worker_status.active_runs` payload size, and Supabase/heartbeat logs."
+            )
+        elif dash != "active":
+            rec.append("Dashboard service is not active — restart/check `li-agents-dashboard.service` before trusting API rows.")
     if real_errors > 5:
         rec.append(
             f"**{real_errors} real errors** in 24h — inspect top categories and recent-error-learnings; stale reconcile ({stale}) is informational only."
@@ -293,7 +303,8 @@ def recommendations(
         )
     elif stale_research:
         rec.append("Last successful researcher run is **older than 24h** — consider nudging research lane or checking slot contention.")
-    if exit_code != 0 and len(rec) < 3:
+    api_timeout_with_active_units = not runtime_ok and dash == "active" and async_svc == "active"
+    if exit_code != 0 and len(rec) < 3 and not api_timeout_with_active_units:
         rec.append("Overall **UNHEALTHY** — fix dashboard/async-swarm before trusting Researchers tab status rows.")
     return rec[:3]
 
@@ -375,7 +386,7 @@ def main() -> int:
     op = score_operational(exit_code, dash, async_svc, real_e, async_running)
     heal = score_self_healing(stale_e, real_e, async_running)
     improve = score_self_improvement(prod, eco, meta, iv_count)
-    recs = recommendations(real_e, async_running, prod, exit_code, stale_e)
+    recs = recommendations(real_e, async_running, prod, exit_code, stale_e, runtime_ok, dash, async_svc)
 
     print("# Swarm health report")
     print()

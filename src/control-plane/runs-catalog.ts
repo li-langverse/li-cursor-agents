@@ -254,7 +254,7 @@ async function listLiveRunCatalogEntries(): Promise<RunCatalogEntry[]> {
     for (const r of worker?.active_runs ?? []) {
       if (r.status === "running") byId.set(r.run_id, r);
     }
-    for (const row of await listRunningAgentRuns(30)) {
+    for (const row of await listRunningAgentRuns(30, { light: true })) {
       if (byId.has(row.run_id)) continue;
       byId.set(row.run_id, {
         run_id: row.run_id,

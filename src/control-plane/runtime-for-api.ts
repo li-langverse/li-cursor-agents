@@ -1,5 +1,6 @@
 import { isAsyncSwarmRunning } from "../async-swarm/async-swarm-state.js";
 import { computeInSdkCount, countRegisteredRunningRuns } from "./active-run-metrics.js";
+import { compactActiveRunsForStatus } from "./active-run-snapshot.js";
 import { sdkMaxConcurrent, sdkSlotsInUse } from "../backends/sdk-session-lock.js";
 import { enrichActiveRunsWithRecentEvents } from "./enrich-active-runs.js";
 import { mergeActiveRunsForDisplay } from "./merge-active-runs.js";
@@ -29,7 +30,7 @@ async function withEnrichedRuns<
   const enriched = await enrichActiveRunsWithRecentEvents(activeRuns);
   return {
     ...base,
-    active_runs: enriched,
+    active_runs: compactActiveRunsForStatus(enriched),
     active_runs_registered: countRegisteredRunningRuns(heartbeatRuns),
     active_run_count: computeInSdkCount(sdkSlotsInUse(), sdkSessionsActive, sdkMax),
   };
@@ -38,7 +39,7 @@ async function withEnrichedRuns<
 /** Dashboard API runtime: in-process swarm, else latest peer heartbeat (systemd async-swarm / disk file). */
 export async function runtimeForApi(state: ControlPlaneState) {
   const local = runtimeSnapshot(state);
-  const dbRunning = dbEnabled() ? await listRunningAgentRuns(30) : [];
+  const dbRunning = dbEnabled() ? await listRunningAgentRuns(30, { light: true }) : [];
 
   if (isAsyncSwarmRunning() || local.async_swarm_running) {
     const activeRuns = mergeActiveRunsForDisplay(local.active_runs, dbRunning);

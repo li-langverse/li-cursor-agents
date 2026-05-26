@@ -79,4 +79,9 @@ const unhealthy = run({ LI_MOCK_UNHEALTHY: "1" });
 assert.equal(unhealthy.code, 1, "unhealthy mock should exit 1");
 assert.match(unhealthy.body, /UNHEALTHY/);
 
+const apiTimeout = run({ LI_MOCK_RUNTIME_TIMEOUT: "1" });
+assert.equal(apiTimeout.code, 1, "runtime timeout mock should exit 1");
+assert.match(apiTimeout.body, /`GET \/api\/runtime` timed out while both systemd units are active/);
+assert.doesNotMatch(apiTimeout.body, /fix dashboard\/async-swarm before trusting/);
+
 console.log("OK test-swarm-health-report.mjs");

@@ -1,6 +1,7 @@
 import { agentBackendLabel } from "../runner.js";
 import { resolveCursorApiKey } from "../env.js";
 import { runtimeSnapshot, isSupervisorLoopRunning, listActiveRuns } from "../control-plane/runtime.js";
+import { compactActiveRunsForStatus } from "../control-plane/active-run-snapshot.js";
 import { handoffRunStatus } from "../lanes/handoff-run-coordinator.js";
 import { laneRuntimeSnapshot } from "../lanes/lane-runtime.js";
 import type { ControlPlaneState } from "../control-plane/types.js";
@@ -42,7 +43,8 @@ export async function persistWorkerHeartbeat(state: ControlPlaneState): Promise<
     sdk_ready: agentBackendLabel() === "cursor-sdk" && Boolean(resolveCursorApiKey()),
     sdk_max_concurrent: sdkMaxConcurrent(),
     sdk_sessions_active: sdkSessionInProcessActive(),
-    active_runs: activeRuns,
+    // Full prompts/traces stay in agent_runs; worker_status is a hot dashboard heartbeat.
+    active_runs: compactActiveRunsForStatus(activeRuns),
     handoff_run: handoffRunStatus() as unknown as Record<string, unknown>,
     last_tick_at: state.last_tick_at || new Date().toISOString(),
   });

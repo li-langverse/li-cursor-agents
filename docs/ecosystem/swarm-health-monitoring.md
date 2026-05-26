@@ -50,6 +50,7 @@ Scores are **not** persisted; they guide skimming only.
 | Condition | Suggestion |
 |-----------|------------|
 | `real_error_count` > 5 (1d) | Inspect real categories + [recent-error-learnings.md](./recent-error-learnings.md) |
+| `GET /api/runtime` fails while both units are active | Inspect dashboard API latency, `worker_status.active_runs` payload size, and Supabase/heartbeat logs |
 | `async_swarm_running` false | Check async-swarm service and dashboard logs |
 | No researcher `finished` in 24h (or none ever in recent runs) | Check research lane, goals, SDK slots |
 | Overall UNHEALTHY (fallback) | Fix dashboard/async before trusting Researchers tab |

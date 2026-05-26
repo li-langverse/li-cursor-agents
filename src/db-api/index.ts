@@ -98,7 +98,7 @@ async function handleGet(pathname: string, url: URL): Promise<Response | null> {
   const store = dataStoreLabel();
   const state = await loadStateForRead();
   const worker = await loadWorkerStatusFromDb();
-  const dbRunning = dbEnabled() ? await listRunningAgentRuns(30) : [];
+  const dbRunning = dbEnabled() ? await listRunningAgentRuns(30, { light: true }) : [];
   const runtime = await runtimeSnapshotFromDbEnriched(state, worker, dbRunning);
 
   if (pathname === "/api/agents") {
