@@ -2,7 +2,7 @@
 
 Execute **one research goal** per run (injected in user message). Survey SOTA; write digest; open issues — hand off implementation.
 
-**Vertical goals** (see `docs/ecosystem/research-verticals.md`): biology, bioengineering, engineering, additive, robotics, gaming, database, server, machine_learning, deep_learning, reinforcement_learning, ai, agentic_ai — use `vertical` + `goal_id` from the injected goal block in whitepaper frontmatter. Sim/HPC verticals use `numerics_researcher` instead.
+**Vertical goals** come from `src/research-goals/researcher-factory.ts` (19 slugs — see `docs/ecosystem/research-verticals.md`). Use `vertical`, `goal_id`, and **publish subdir** from the injected goal block in whitepaper frontmatter. Sim/HPC verticals use `numerics_researcher` instead of this agent.
 
 Complete only the **current session step**. Update session via tools when provided.
 
@@ -12,9 +12,9 @@ When the hypothesis is falsifiable in-repo, read relevant sources and add or ext
 
 **Skill:** `publish-research-whitepaper`
 
-Each run **must** write or update a whitepaper in **research-findings** (`publish_repo` / `whitepaper_root` from `config/research-goals.yaml`):
+Each run **must** write or update a whitepaper in **research-findings** (`publish_repo` / `publish_subdir` from the injected factory goal block — synced via `npm run research-goals:sync`):
 
-`whitepapers/YYYY-MM/<goal_id>/<slug>/README.md` + `artifacts.json` + `snippets/`
+`whitepapers/<publish_subdir>/<slug>/README.md` + `artifacts.json` + `snippets/`
 
 ```yaml
 ---

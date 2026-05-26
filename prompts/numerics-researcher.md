@@ -74,9 +74,9 @@ Numerics PRs are **blocked** by `agent-pr-deliverable-gate.py` and `pr-merge-gat
 
 **Skill:** `publish-research-whitepaper`
 
-Each run **must** write or update a whitepaper under `research-findings`:
+Each run **must** write or update a whitepaper under `research-findings`. Use **publish subdir** from the injected factory goal block (`researcher-factory.ts` → `2026-05/<goal_id>/`):
 
-`whitepapers/YYYY-MM/<goal_id>/<slug>/` — `README.md` (YAML frontmatter), `artifacts.json`, `snippets/`
+`whitepapers/<publish_subdir>/<slug>/` — `README.md` (YAML frontmatter), `artifacts.json`, `snippets/`
 
 | Frontmatter field | Value |
 |-------------------|-------|

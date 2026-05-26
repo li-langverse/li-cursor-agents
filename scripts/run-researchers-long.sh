@@ -57,16 +57,38 @@ log "start node=$("$NODE_BIN" -v) duration=${DURATION}s pause=${PAUSE}s agents=$
 
 EXTRA='Produce Executive summary, Deliverable/findings with evidence paths, and Deferred. Cite real preflight/briefing data. For numerics: include li-tests/, benchmarks/, or docs/numerics/ references when proposing changes.'
 
+pick_factory_goal_extra() {
+  local agent="$1"
+  "$NODE_BIN" -e "
+import { loadResearchGoals, pickNextGoalForAgent, resolveGoalAgent } from './dist/research-goals/load-goals.js';
+import { buildResearchGoalKickoffExtra } from './dist/research-goals/research-goal-context.js';
+const agent = process.argv[1];
+const goals = loadResearchGoals();
+const goal = pickNextGoalForAgent(agent, goals, {});
+if (!goal || !goal.vertical) process.exit(0);
+process.stdout.write(buildResearchGoalKickoffExtra(goal));
+" "$agent" 2>/dev/null || true
+}
+
 idx=0
 while [[ $SECONDS -lt $END ]]; do
   agent="${AGENTS[$((idx % ${#AGENTS[@]}))]}"
   idx=$((idx + 1))
   remaining=$((END - SECONDS))
   log "run agent=${agent} remaining_sec=${remaining}"
+  RUN_EXTRA="$EXTRA"
+  if [[ "$agent" == "goal_researcher" || "$agent" == "numerics_researcher" ]]; then
+    GOAL_BLOCK="$(pick_factory_goal_extra "$agent")"
+    if [[ -n "$GOAL_BLOCK" ]]; then
+      RUN_EXTRA="${GOAL_BLOCK}
+
+${EXTRA}"
+    fi
+  fi
   set +e
   LI_AGENT_VERIFY_MODE=0 \
   LI_REPO_WORKFLOW_SKIP_PUSH=0 \
-  LI_AGENT_EXTRA_INSTRUCTION="$EXTRA" \
+  LI_AGENT_EXTRA_INSTRUCTION="$RUN_EXTRA" \
     "$NODE_BIN" dist/cli/run-agent.js \
       --agent "$agent" \
       --benchmarks "${BENCHMARKS_ROOT}" \

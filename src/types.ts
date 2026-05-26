@@ -1,4 +1,5 @@
 import type { AgentRunInputRecord, AgentRunTrace } from "./agent-run-trace.js";
+import type { ResearchFactoryContext } from "./research-goals/research-goal-context.js";
 import type { AgentRunErrorDetail } from "./agent-output-format.js";
 
 /** Agent run request / result contract (SDK or mock). */
@@ -90,6 +91,8 @@ export interface AgentRunOptions {
   apiKey?: string;
   modelId?: string;
   extraInstruction?: string;
+  /** Factory vertical / publish metadata when spawned from research lane. */
+  researchContext?: ResearchFactoryContext;
   /** Override repo for guaranteed-push workflow clone (e.g. `lic` for goal implementation). */
   workflowRepo?: string;
   /** When set (supervisor tracking), output + DB use this run_id. */

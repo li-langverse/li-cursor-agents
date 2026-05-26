@@ -15,7 +15,11 @@ import {
   findAnyInProgressSession,
 } from "../research-sessions/session-lifecycle.js";
 import { buildResearchSessionContinuationBlock } from "../research-sessions/session-store.js";
-import { northStarFitForGoal } from "../research-goals/load-goals.js";
+import {
+  buildResearchGoalKickoffExtra,
+  resolveResearchFactoryContext,
+  type ResearchFactoryContext,
+} from "../research-goals/research-goal-context.js";
 import { isHandoffRunInProgress } from "./handoff-run-coordinator.js";
 import { loadLaneState, recordGoalRun, saveLaneState } from "./lane-state.js";
 import type { AgentId } from "../types.js";
@@ -35,6 +39,7 @@ export type ResearchWorkTarget = {
   goal?: ResearchGoal;
   session?: ResearchSession;
   extra: string;
+  factoryContext?: ResearchFactoryContext;
 };
 
 function buildResearchWorkTarget(
@@ -42,8 +47,9 @@ function buildResearchWorkTarget(
   goal: ResearchGoal | undefined,
   session: ResearchSession | undefined,
   extra: string,
+  factoryContext?: ResearchFactoryContext,
 ): ResearchWorkTarget {
-  return { agentId, goal, session, extra };
+  return { agentId, goal, session, extra, factoryContext };
 }
 
 /** Work for one research agent only (used by parallel per-agent workers). */
@@ -71,14 +77,8 @@ export async function pickResearchWorkForAgent(
       agentId,
       goal,
       undefined,
-      [
-        "## Research goal (this run)",
-        "",
-        `- **Goal id:** \`${goal.id}\``,
-        `- **Title:** ${goal.title}`,
-        `- **north_star_fit:** ${northStarFitForGoal(goal)}`,
-        "",
-      ].join("\n"),
+      buildResearchGoalKickoffExtra(goal),
+      resolveResearchFactoryContext(goal),
     );
   }
 
@@ -90,6 +90,7 @@ export async function pickResearchWorkForAgent(
     [buildGoalKickoffBlock(goal, session), buildResearchSessionContinuationBlock(session)].join(
       "\n",
     ),
+    resolveResearchFactoryContext(goal),
   );
 }
 
@@ -150,6 +151,7 @@ export async function researchAgentWorkerCycle(
       mock: Boolean(mock),
       dryRun: Boolean(options?.dryRun),
       extraInstruction: target.extra,
+      researchContext: target.factoryContext,
     });
   } catch (err) {
     if (isSdkSlotLockError(err)) throw err;
@@ -208,6 +210,7 @@ export async function researchLaneTick(options?: {
     mock: Boolean(mock),
     dryRun: Boolean(options?.dryRun),
     extraInstruction: target.extra,
+    researchContext: target.factoryContext,
   });
 
   if (target.goal?.id) {

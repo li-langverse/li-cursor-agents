@@ -19,6 +19,9 @@ export interface AgentRunInputRecord {
   system_prompt: string;
   user_message: string;
   extra_instruction?: string;
+  research_goal_id?: string;
+  research_vertical?: string;
+  publish_subdir?: string;
 }
 
 export interface AgentRunTraceFileEdit {
@@ -71,10 +74,13 @@ export function buildRunInput(params: {
   preflightGeneratedAt?: string;
   modelId?: string;
   extraInstruction?: string;
+  researchGoalId?: string;
+  researchVertical?: string;
+  publishSubdir?: string;
   dryRun: boolean;
   mock: boolean;
 }): AgentRunInputRecord {
-  return {
+  const input: AgentRunInputRecord = {
     version: TRACE_VERSION,
     agent_id: params.agentId,
     backend: params.backend,
@@ -90,6 +96,10 @@ export function buildRunInput(params: {
     user_message: params.userMessage,
     extra_instruction: params.extraInstruction,
   };
+  if (params.researchGoalId) input.research_goal_id = params.researchGoalId;
+  if (params.researchVertical) input.research_vertical = params.researchVertical;
+  if (params.publishSubdir) input.publish_subdir = params.publishSubdir;
+  return input;
 }
 
 export function createTraceCollector(): {

@@ -323,6 +323,7 @@ async function runAgentBody(
       ? hashBriefing(preflight.briefing)
       : undefined;
 
+  const researchCtx = options.researchContext;
   const runInput = buildRunInput({
     agentId: definition.id,
     backend: mock ? "mock" : "cursor-sdk",
@@ -335,6 +336,9 @@ async function runAgentBody(
     preflightGeneratedAt: preflight.generated_at,
     modelId: options.modelId,
     extraInstruction: extra,
+    researchGoalId: researchCtx?.goal_id,
+    researchVertical: researchCtx?.vertical,
+    publishSubdir: researchCtx?.publish_subdir,
     dryRun: options.dryRun,
     mock,
   });

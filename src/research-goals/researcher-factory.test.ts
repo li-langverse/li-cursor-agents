@@ -8,9 +8,12 @@ import {
   researchLongRunAgentIds,
   NUMERICS_VERTICAL_SLUGS,
   whitepaperPathForGoal,
+  getVerticalSpec,
 } from "./researcher-factory.js";
-import { resolveGoalAgent } from "./load-goals.js";
+import { loadResearchGoals, pickNextGoalForAgent, resolveGoalAgent } from "./load-goals.js";
 import { researchLaneAgentIds } from "../lanes/lane-agent-ids.js";
+import { verticalKickoffHints } from "./vertical-prompt-hints.js";
+import { AGENT_REGISTRY } from "../agents/registry.js";
 
 const USER_VERTICALS = [
   "numerics",
@@ -101,4 +104,34 @@ test("physics and md factory goals use numerics_researcher", () => {
   assert.equal(goals.find((g) => g.id === "physics_sim")?.agent, "numerics_researcher");
   assert.equal(goals.find((g) => g.id === "md_sim_algorithms")?.agent, "numerics_researcher");
   assert.equal(resolveGoalAgent(goals.find((g) => g.id === "biology_systems")!), "goal_researcher");
+});
+
+test("every vertical slug has prompt hints and publishSubdir", () => {
+  for (const spec of RESEARCH_VERTICALS) {
+    assert.ok(spec.promptHints && spec.promptHints.length >= 1, `hints for ${spec.slug}`);
+    assert.match(spec.publishSubdir, /^2026-05\//);
+    assert.equal(getVerticalSpec(spec.slug)?.goalId, spec.goalId);
+    assert.ok(verticalKickoffHints(spec.slug).length >= 1);
+  }
+});
+
+test("all factory research agents exist in registry", () => {
+  const registryIds = new Set(AGENT_REGISTRY.map((a) => a.id));
+  const goals = buildResearchGoalsFromFactory();
+  for (const g of goals) {
+    const agent = resolveGoalAgent(g);
+    assert.ok(registryIds.has(agent), `registry missing agent ${agent} for goal ${g.id}`);
+  }
+});
+
+test("pickNextGoalForAgent returns a goal for each vertical lane agent", () => {
+  const goals = loadResearchGoals();
+  for (const agentId of ["numerics_researcher", "goal_researcher"] as const) {
+    const picked = pickNextGoalForAgent(agentId, goals, {});
+    assert.ok(picked, `no goal for ${agentId}`);
+    assert.ok(
+      goals.some((g) => resolveGoalAgent(g) === agentId && g.vertical),
+      `no vertical goals for ${agentId}`,
+    );
+  }
 });

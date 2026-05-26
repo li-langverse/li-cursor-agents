@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { northStarFitForGoal, type ResearchGoal } from "../research-goals/load-goals.js";
+import { buildResearchGoalKickoffExtra } from "../research-goals/research-goal-context.js";
+import type { ResearchGoal } from "../research-goals/load-goals.js";
 import type { AgentId } from "../types.js";
 import {
   advanceResearchSession,
@@ -87,17 +88,7 @@ export async function ensureSessionForGoal(
 }
 
 export function buildGoalKickoffBlock(goal: ResearchGoal, session: ResearchSession): string {
-  return [
-    "## Research goal (this run)",
-    "",
-    `- **Goal id:** \`${goal.id}\``,
-    `- **Title:** ${goal.title}`,
-    `- **Session:** \`${session.session_id}\` cycle ${session.cycle}`,
-    `- **north_star_fit:** ${northStarFitForGoal(goal)}`,
-    "",
-    "Complete **only** the current focus step; checkpoint artifacts on disk.",
-    "",
-  ].join("\n");
+  return buildResearchGoalKickoffExtra(goal, session);
 }
 
 export async function completeResearchRunStep(

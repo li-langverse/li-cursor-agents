@@ -17,7 +17,7 @@ Every **research-mode** run must leave a scannable whitepaper in **research-find
 |------|---------|
 | Repo root | `../research-findings` from `li-cursor-agents` |
 | Override | `LI_RESEARCH_FINDINGS_ROOT` |
-| Whitepaper dir | `whitepapers/YYYY-MM/<goal_id>/<slug>/` |
+| Whitepaper dir | `whitepapers/<publish_subdir>/<slug>/` — `publish_subdir` from researcher factory (`2026-05/<goal_id>/`) or injected goal block |
 | Template | `research-findings/templates/whitepaper-template.md` |
 
 `slug` = backlog todo id or short kebab (e.g. `md-r1-stability-matrix`).
@@ -86,4 +86,4 @@ Whitepapers **supplement** (do not replace):
 
 ## Config
 
-`config/research-goals.yaml` — `publish_repo: research-findings` and `whitepaper_root` per goal (or defaults block).
+Runtime source of truth: `src/research-goals/researcher-factory.ts` (export: `npm run research-goals:sync` → `config/research-goals.yaml`). Use injected **publish subdir** when present.

@@ -1,0 +1,65 @@
+import { northStarFitForGoal, type ResearchGoal } from "./load-goals.js";
+import { DEFAULT_PUBLISH_REPO, getVerticalSpec, whitepaperPathForGoal } from "./researcher-factory.js";
+import { buildVerticalKickoffBlock, verticalKickoffHints } from "./vertical-prompt-hints.js";
+import type { ResearchSession } from "../research-sessions/types.js";
+
+/** Factory-derived metadata injected into research lane / run traces. */
+export interface ResearchFactoryContext {
+  goal_id: string;
+  vertical?: string;
+  publish_subdir?: string;
+  whitepaper_path: string;
+  publish_repo: string;
+  prompt_hints: string[];
+}
+
+export function resolveResearchFactoryContext(goal: ResearchGoal): ResearchFactoryContext {
+  const spec = goal.vertical ? getVerticalSpec(goal.vertical) : undefined;
+  const publishSubdir = spec?.publishSubdir;
+  const whitepaperPath = whitepaperPathForGoal(goal.id);
+  const promptHints = spec?.promptHints ?? (goal.vertical ? verticalKickoffHints(goal.vertical) : []);
+  return {
+    goal_id: goal.id,
+    vertical: goal.vertical,
+    publish_subdir: publishSubdir,
+    whitepaper_path: whitepaperPath,
+    publish_repo: goal.publish_repo ?? DEFAULT_PUBLISH_REPO,
+    prompt_hints: [...promptHints],
+  };
+}
+
+/** User-message appendix for research lane and run-agent goal-directed runs. */
+export function buildResearchGoalKickoffExtra(
+  goal: ResearchGoal,
+  session?: ResearchSession,
+): string {
+  const ctx = resolveResearchFactoryContext(goal);
+  const lines = [
+    "## Research goal (this run)",
+    "",
+    `- **Goal id:** \`${goal.id}\``,
+    `- **Title:** ${goal.title}`,
+  ];
+  if (ctx.vertical) lines.push(`- **Vertical:** \`${ctx.vertical}\``);
+  if (ctx.publish_subdir) {
+    lines.push(`- **Publish subdir:** \`${ctx.publish_subdir}\``);
+    lines.push(`- **Whitepaper path:** \`${ctx.whitepaper_path}\``);
+  }
+  lines.push(`- **Publish repo:** \`${ctx.publish_repo}\``);
+  if (session) {
+    lines.push(`- **Session:** \`${session.session_id}\` cycle ${session.cycle}`);
+  }
+  lines.push(`- **north_star_fit:** ${northStarFitForGoal(goal)}`, "");
+
+  if (ctx.vertical) {
+    lines.push(buildVerticalKickoffBlock(ctx.vertical, goal.id, goal.title));
+  } else if (ctx.prompt_hints.length) {
+    lines.push("### Hints", ...ctx.prompt_hints.map((h) => `- ${h}`), "");
+  }
+
+  const stepHint = session
+    ? "Complete **only** the current focus step; checkpoint artifacts on disk."
+    : "Complete this research goal for the run; cite evidence paths in the deliverable.";
+  lines.push(stepHint, "");
+  return lines.join("\n");
+}
