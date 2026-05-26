@@ -32,7 +32,7 @@ cat data/lanes/state.json
 
 # 2) Optional: one-shot repair via Node (rebuild + script)
 npm run build
-node dist/cli/repair-research-sessions.js --apply
+node dist/cli/repair-research-sessions.js --apply   # disk + supabase when LI_CONTROL_PLANE_STORE=supabase
 
 # 3) Stale SDK locks (dead PID only — do not delete live swarm locks)
 ./scripts/sweep-hung-agents.sh --dry-run
