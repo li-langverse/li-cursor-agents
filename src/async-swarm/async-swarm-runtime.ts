@@ -1,4 +1,5 @@
 import { agentLog } from "../agent-log.js";
+import { sdkMaxConcurrentFromEnv, SWARM_PARALLEL_DEFAULT } from "../config/swarm-concurrency.js";
 import { pushSupervisorActivity } from "../control-plane/supervisor-activity.js";
 import { loadState, saveState } from "../control-plane/state.js";
 import { stopSupervisorLoop } from "../control-plane/runtime.js";
@@ -68,10 +69,11 @@ export async function startAsyncSwarm(options?: {
   agentLog("async-swarm", "info", message);
   await flushWorkerHeartbeat();
 
+  const sdkSlots = sdkMaxConcurrentFromEnv();
   workerConsole(
     "async-swarm",
     "info",
-    `worker pool: ${workers.agents.length} agents; proactive_all_pool=${proactiveAllPoolWorkersEnabled()}`,
+    `worker pool: ${workers.agents.length} agents; sdk_max_concurrent=${sdkSlots} (default ${SWARM_PARALLEL_DEFAULT}); proactive_all_pool=${proactiveAllPoolWorkersEnabled()}`,
     workers.agents.slice(0, 8).join(", ") + (workers.agents.length > 8 ? ", …" : ""),
   );
 

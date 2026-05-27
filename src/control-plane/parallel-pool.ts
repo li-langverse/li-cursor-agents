@@ -21,9 +21,4 @@ export async function runWithConcurrencyLimit<T>(
   await Promise.all(runners);
 }
 
-export function swarmMaxParallelFromEnv(): number {
-  const raw = process.env.LI_SWARM_MAX_PARALLEL ?? process.env.LI_SWARM_MAX_CONCURRENT;
-  if (raw == null || raw === "") return 0;
-  const n = Number(raw);
-  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0;
-}
+export { swarmMaxParallelFromEnv } from "../config/swarm-concurrency.js";

@@ -228,7 +228,17 @@ export const SETTINGS_SCHEMA: SettingDefinition[] = [
     type: "number",
     defaultValue: "4",
     min: 1,
-    max: 16,
+    max: 4,
+  },
+  {
+    key: "LI_SWARM_MAX_PARALLEL",
+    label: "Swarm max parallel spawns",
+    description: "Caps legacy run-all parallel spawns (0 = unlimited). Hard max 4.",
+    category: "sdk",
+    type: "number",
+    defaultValue: "4",
+    min: 0,
+    max: 4,
   },
   {
     key: "LI_SDK_SESSION_GAP_MS",
