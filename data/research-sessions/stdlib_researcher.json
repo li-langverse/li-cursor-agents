@@ -5,34 +5,37 @@
   "cycle": 1,
   "status": "in_progress",
   "current_focus": {
-    "kind": "audit_package",
-    "target": "li-std-core (sample)"
+    "kind": "synthesize_step",
+    "target": "cycle summary"
   },
-  "queue": [
-    {
-      "kind": "gap_vs_sota",
-      "target": "linear algebra stdlibs"
-    },
-    {
-      "kind": "synthesize_step",
-      "target": "cycle summary"
-    }
-  ],
+  "queue": [],
   "hypotheses": [],
   "completed_steps": [
     {
       "id": "inventory_std_tree-1",
       "summary": "Inventoried 25 std/*.li modules (~1180 LOC); documented resolution, seal registry, test linkage, missing std.summary/plot; cycle digest lic/docs/ecosystem/stdlib-research/cycle-1-inventory-std-tree.md",
       "artifact": "lic/docs/ecosystem/research-sessions/stdlib_ecosystem-cycle.md"
+    },
+    {
+      "id": "gap_vs_sota_linalg-1",
+      "summary": "Gap vs NumPy/BLAS/Eigen/Julia: prelude+MIR owns linalg; std.math tag-only; li-math spatial; packages/linalg missing; simd_dot red (C kernel); num_* harness gaps; handoff package_architect + code_implementer",
+      "artifact": "lic/docs/ecosystem/stdlib-research/cycle-1-gap-linalg-sota.md"
     }
   ],
   "artifacts": {
     "progress_md": "lic/docs/ecosystem/research-sessions/stdlib_ecosystem-cycle.md"
   },
-  "connections": [],
-  "deferred_findings": [],
+  "connections": [
+    "prelude sum/dot/norm/axpy → compiler MIR (PH-2i)",
+    "li-math / li-std-math → spatial Vec3/Mat4 (not scientific linalg)",
+    "planned packages/linalg → num_* catalog + decompositions"
+  ],
+  "deferred_findings": [
+    "audit_package li-std-core sample",
+    "research-findings whitepaper (no publish_subdir on stdlib_ecosystem)"
+  ],
   "last_run_id": null,
   "last_run_status": null,
   "created_at": "2026-05-19T19:37:34.335Z",
-  "updated_at": "2026-05-27T12:00:00.000Z"
+  "updated_at": "2026-05-27T12:30:00.000Z"
 }
