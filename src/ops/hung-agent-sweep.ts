@@ -8,6 +8,9 @@ import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { reclaimAllStaleSdkSlots } from "../backends/sdk-session-lock.js";
+import { dbEnabled } from "../db/client.js";
+import { reconcileUnregisteredRunningAgentRuns } from "../db/reconcile-stale-runs.js";
+import { loadWorkerStatusFromDb } from "../db/worker-status.js";
 import { agentsPackageRoot } from "../runner.js";
 import { listUserPlanLoopUnits, systemctlUserIsActive } from "../swarm/systemd-probe.js";
 
@@ -38,6 +41,7 @@ export interface HungAgentSweepReport {
   apply: boolean;
   force: boolean;
   sdk_slots_reclaimed: number;
+  unregistered_runs_reconciled: number;
   candidates: SweepCandidate[];
   executed: SweepCandidate[];
   skipped_protected: SweepCandidate[];
@@ -375,6 +379,9 @@ export function formatHungAgentSweepReport(report: HungAgentSweepReport): string
   if (report.skipped_protected.length) {
     lines.push(`skipped_protected: ${report.skipped_protected.length} (use --force to kill)`);
   }
+  if (report.unregistered_runs_reconciled > 0) {
+    lines.push(`unregistered_runs_reconciled: ${report.unregistered_runs_reconciled}`);
+  }
   return lines.join("\n");
 }
 
@@ -413,11 +420,32 @@ export async function runHungAgentSweep(
     }
   }
 
+  let unregistered_runs_reconciled = 0;
+  if (apply && dbEnabled()) {
+    try {
+      const asyncState = await systemctlUserIsActive(ASYNC_SWARM_UNIT);
+      const swarmUnitActive = asyncState === "active" || asyncState === "activating";
+      if (swarmUnitActive) {
+        const worker = await loadWorkerStatusFromDb();
+        const registeredIds = (worker?.active_runs ?? [])
+          .filter((r) => r.status === "running")
+          .map((r) => r.run_id);
+        unregistered_runs_reconciled = await reconcileUnregisteredRunningAgentRuns(registeredIds, {
+          worker,
+          force: true,
+        });
+      }
+    } catch {
+      /* best-effort — sweep still reports process cleanup */
+    }
+  }
+
   return {
     dry_run: dryRun,
     apply,
     force,
     sdk_slots_reclaimed: sdkReclaimed,
+    unregistered_runs_reconciled,
     candidates,
     executed,
     skipped_protected,
