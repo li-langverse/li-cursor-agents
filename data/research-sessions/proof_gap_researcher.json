@@ -3,21 +3,9 @@
   "agent_id": "proof_gap_researcher",
   "goal_id": "provability_holes",
   "cycle": 1,
-  "status": "in_progress",
-  "current_focus": {
-    "kind": "trusted_surface",
-    "target": "lic/docs/semantics/trusted.lean"
-  },
-  "queue": [
-    {
-      "kind": "contract_tier",
-      "target": "li-tests contract tiers"
-    },
-    {
-      "kind": "synthesize_step",
-      "target": "proof-gap digest"
-    }
-  ],
+  "status": "complete",
+  "current_focus": null,
+  "queue": [],
   "hypotheses": [
     {
       "status": "verified",
@@ -33,6 +21,21 @@
       "status": "verified",
       "statement": "Discharge.lean duplicate sqrt_open_bound_spec breaks Tier B build",
       "evidence": "Discharge.lean:75-79,119-124; check_discharge_duplicate_defs.sh exit 1"
+    },
+    {
+      "status": "verified",
+      "statement": "Manifest duplicate outcome keys silently downgrade Tier C",
+      "evidence": "run_all.sh:355; 3 manifest blocks fixed"
+    },
+    {
+      "status": "verified",
+      "statement": "Tier A allows false ensures; --allow-open-vc ships violating binary",
+      "evidence": "false_ensures_still_builds.li; lic check exit 0; binary exit 42"
+    },
+    {
+      "status": "verified",
+      "statement": "trusted.lean is sole user axiom injection point",
+      "evidence": "semantics/README.md:9-16; trusted.lean"
     }
   ],
   "completed_steps": [
@@ -40,18 +43,32 @@
       "id": "read_register-1",
       "summary": "Verified G-* register vs lic sources; found Discharge dup + register row duplication",
       "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "contract_tier-2",
+      "summary": "Tier A/B/C mapping; manifest fixes; false_ensures specimen",
+      "artifact": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    },
+    {
+      "id": "synthesize_step-3",
+      "summary": "Full digest + research-findings whitepaper PROV-R0-1",
+      "artifact": "research-findings/whitepapers/2026-05/provability_holes/prov-r0-cycle1-proof-gap-digest/"
     }
   ],
   "artifacts": {
-    "progress_md": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md"
+    "progress_md": "lic/docs/ecosystem/research-sessions/provability_holes-cycle.md",
+    "whitepaper": "research-findings/whitepapers/2026-05/provability_holes/prov-r0-cycle1-proof-gap-digest/README.md"
   },
   "connections": [],
   "deferred_findings": [
     "Register markdown dedup (human doc PR)",
-    "run_all.sh duplicate compile_ok branches (tooling)"
+    "run_all.sh duplicate compile_ok branches (tooling)",
+    "G-meta compiler≡Lean proof",
+    "Loop decreases enforcement (G-CONTRACT-02)",
+    "mat2_at2 trusted vs MIR closure"
   ],
-  "last_run_id": "4c1f93b0-read_register",
+  "last_run_id": "4c1f93b0-synthesize",
   "last_run_status": "finished",
   "created_at": "2026-05-27T13:53:00.000Z",
-  "updated_at": "2026-05-27T14:30:00.000Z"
+  "updated_at": "2026-05-27T17:30:00.000Z"
 }
