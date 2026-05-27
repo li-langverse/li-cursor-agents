@@ -36,6 +36,37 @@ test("pushBriefingDerivedWorkItems enqueues PR and security work", () => {
   assert.equal(items.filter((i) => i.agent_id === "pr_reviewer").length, 1);
 });
 
+test("pushBriefingDerivedWorkItems uses cibug:swarm ids for swarm_work_queue", () => {
+  const prev = process.env.LI_BUG_FIXER_SWARM_ONLY;
+  process.env.LI_BUG_FIXER_SWARM_ONLY = "1";
+  try {
+    const items: AgentWorkQueueItem[] = [];
+    const seen = new Set<string>();
+    pushBriefingDerivedWorkItems(items, seen, {
+      ci_bug_triage: {
+        swarm_work_queue: [
+          {
+            repo: "lic",
+            number: 42,
+            reason: "agent PR CI red",
+            originating_agent_id: "code_implementer",
+            goal_id: "cad_fundamentals",
+          },
+        ],
+        work_queue: [{ repo: "lic", number: 99, reason: "should not enqueue when swarm present" }],
+      },
+    });
+    const bug = items.filter((i) => i.agent_id === "bug_fixer");
+    assert.equal(bug.length, 1);
+    assert.ok(bug[0]?.id.startsWith("cibug:swarm:"));
+    assert.equal(bug[0]?.meta?.originating_agent_id, "code_implementer");
+    assert.equal(bug[0]?.meta?.goal_id, "cad_fundamentals");
+  } finally {
+    if (prev === undefined) delete process.env.LI_BUG_FIXER_SWARM_ONLY;
+    else process.env.LI_BUG_FIXER_SWARM_ONLY = prev;
+  }
+});
+
 test("pushBriefingDerivedWorkItems enqueues org repo onboarding fan-out", () => {
   const items: AgentWorkQueueItem[] = [];
   const seen = new Set<string>();

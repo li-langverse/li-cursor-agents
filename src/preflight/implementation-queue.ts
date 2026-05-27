@@ -1,5 +1,11 @@
 /** Build implementation work queue from briefing for code_implementer / bug_fixer. */
 
+import {
+  bugFixerSwarmOnly,
+  ciBugTriageFromBriefing,
+  selectBugFixerCiQueueRows,
+} from "./ci-bug-triage-queue.js";
+
 export interface WorkQueueItem {
   kind?: string;
   repo?: string;
@@ -9,6 +15,9 @@ export interface WorkQueueItem {
   reason?: string;
   ph_id?: string;
   module?: string;
+  originating_agent_id?: string;
+  goal_id?: string;
+  scope?: "swarm" | "org";
 }
 
 export interface ImplementationQueue {
@@ -65,11 +74,12 @@ export function buildImplementationQueue(briefing: unknown): ImplementationQueue
     if (fromManifest.length) sources.push("remediation_manifest");
   }
 
-  const ciBug = b.ci_bug_triage as Record<string, unknown> | undefined;
-  if (ciBug?.work_queue && Array.isArray(ciBug.work_queue)) {
-    sources.push("ci_bug_triage");
-    for (const row of ciBug.work_queue.slice(0, 8)) {
-      if (row && typeof row === "object") items.push(row as WorkQueueItem);
+  const ciBug = ciBugTriageFromBriefing(b);
+  const ciSelected = selectBugFixerCiQueueRows(ciBug);
+  if (ciSelected.rows.length) {
+    sources.push(ciSelected.source);
+    for (const row of ciSelected.rows) {
+      items.push(row as WorkQueueItem);
     }
   }
 
@@ -127,6 +137,31 @@ export function buildImplementationQueue(briefing: unknown): ImplementationQueue
   }
 
   return { work_queue: items.slice(0, 12), sources };
+}
+
+/** bug_fixer prompt queue: swarm_work_queue first when LI_BUG_FIXER_SWARM_ONLY (default on). */
+export function buildBugFixerImplementationQueue(briefing: unknown): ImplementationQueue {
+  const base = buildImplementationQueue(briefing);
+  if (!briefing || typeof briefing !== "object") return base;
+  const ciBug = ciBugTriageFromBriefing(briefing);
+  const ciSelected = selectBugFixerCiQueueRows(ciBug);
+  if (!ciSelected.rows.length) return base;
+
+  const withoutCi = base.work_queue.filter(
+    (w) => w.scope !== "swarm" && w.scope !== "org" && !isCiTriageRow(w),
+  );
+  const sources = new Set(base.sources);
+  sources.add(ciSelected.source);
+  const ciRows = ciSelected.rows.map((r) => ({ ...r, scope: bugFixerSwarmOnly() ? ("swarm" as const) : undefined }));
+  return {
+    work_queue: [...ciRows, ...withoutCi].slice(0, 12),
+    sources: [...sources],
+  };
+}
+
+function isCiTriageRow(w: WorkQueueItem): boolean {
+  const k = String(w.kind ?? "");
+  return k === "pr_ci" || k === "local_ci" || k === "issue" || k === "swarm_pr_ci";
 }
 
 export function buildImplementationQueueInstruction(queue: ImplementationQueue): string {

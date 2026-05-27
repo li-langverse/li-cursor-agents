@@ -45,3 +45,23 @@ test("buildImplementationQueue merges remediation_manifest queue items", () => {
   });
   assert.ok(q.work_queue.some((w) => w.kind === "ui_remediation"));
 });
+
+test("buildBugFixerImplementationQueue prefers swarm_work_queue", async () => {
+  const { buildBugFixerImplementationQueue } = await import("./implementation-queue.js");
+  const prev = process.env.LI_BUG_FIXER_SWARM_ONLY;
+  process.env.LI_BUG_FIXER_SWARM_ONLY = "1";
+  try {
+    const q = buildBugFixerImplementationQueue({
+      ci_bug_triage: {
+        swarm_work_queue: [{ repo: "lic", number: 3, kind: "pr_ci", goal_id: "game_engine_ux" }],
+        work_queue: [{ repo: "lic", number: 4, kind: "pr_ci" }],
+      },
+    });
+    assert.ok(q.sources.includes("ci_bug_triage.swarm_work_queue"));
+    assert.equal(q.work_queue[0]?.number, 3);
+    assert.equal(q.work_queue[0]?.goal_id, "game_engine_ux");
+  } finally {
+    if (prev === undefined) delete process.env.LI_BUG_FIXER_SWARM_ONLY;
+    else process.env.LI_BUG_FIXER_SWARM_ONLY = prev;
+  }
+});

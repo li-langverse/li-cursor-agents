@@ -16,6 +16,7 @@ import { loadResearchGoals, northStarFitForGoal } from "../research-goals/load-g
 import { enqueueImplementationHandoff } from "./implementation-handoff.js";
 import { enqueueUxRemediationHandoff } from "./ui-ux-remediation.js";
 import { applyOrgRepoOnboarderPostRun } from "./org-repo-onboarding.js";
+import { enqueueSwarmCiBugFixerHandoff } from "./swarm-ci-bug-handoff.js";
 import {
   buildRemediationManifest,
   isUiUxTesterAgent,
@@ -186,4 +187,8 @@ export async function applySwarmPostRunEffects(
   await applyPackageArchitectPostRun(result);
   await applyOrgRepoOnboarderPostRun(result, briefing, briefingHash);
   await applyUxTesterPostRun(result, briefing, briefingHash);
+  const prUrl = result.completion?.pr_urls?.[0];
+  if (prUrl) {
+    await enqueueSwarmCiBugFixerHandoff({ result, briefing, briefingHash, prUrl });
+  }
 }

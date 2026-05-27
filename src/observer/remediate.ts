@@ -3,11 +3,13 @@ import { canonicalAgentId } from "../agents/registry.js";
 import type { ControlPlaneState, QueuedAgentTask } from "../control-plane/types.js";
 import type { AgentRunResult } from "../types.js";
 import type { AgentId } from "../types.js";
+import { briefingHasSwarmPrCiRed } from "../preflight/ci-bug-triage-queue.js";
 import { restartAsyncSwarmUnit } from "../swarm/swarm-restart.js";
 import type { ObserverState, RemediationAction, SwarmFinding } from "./types.js";
 
 const HEALER_AGENTS: Record<string, AgentId> = {
   ci_red: "bug_fixer",
+  swarm_pr_ci_red: "bug_fixer",
   workspace_dirty: "workspace_sweeper",
   implementation_gap: "implementation_gaps",
 };
@@ -112,6 +114,14 @@ export function buildRemediations(params: {
         reason: "observer:red benchmarks in briefing",
       });
     }
+  }
+
+  if (briefingHasSwarmPrCiRed(params.briefing) && !briefingHasRedBench(params.briefing)) {
+    pushUnique({
+      kind: "dispatch_healer",
+      agentId: HEALER_AGENTS.swarm_pr_ci_red,
+      reason: "observer:swarm agent PR(s) with failing CI (ci-bug-triage / deliverable gate)",
+    });
   }
 
   if (briefingWorkspaceDirty(params.briefing)) {

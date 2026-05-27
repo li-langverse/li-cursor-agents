@@ -1,5 +1,11 @@
 import { taskFingerprint } from "../heap/task-queue.js";
 import { orgNewReposDiscoveryFromBriefing } from "../org-repos/discovery.js";
+import {
+  bugFixerSwarmOnly,
+  ciBugTriageFromBriefing,
+  resolveCiBugTriageQueues,
+  SWARM_CI_BUG_QUEUE_CAP,
+} from "../preflight/ci-bug-triage-queue.js";
 import type { AgentWorkQueueItem } from "./agent-work-queue.js";
 
 function ciIsGreen(ci: unknown): boolean {
@@ -157,24 +163,62 @@ function pushMergePlanWork(items: AgentWorkQueueItem[], seen: Set<string>, b: Re
 }
 
 function pushCiBugTriageWork(items: AgentWorkQueueItem[], seen: Set<string>, b: Record<string, unknown>): void {
-  const triage = b.ci_bug_triage as Record<string, unknown> | undefined;
-  const queue = triage?.work_queue;
-  if (!Array.isArray(queue)) return;
-  for (let i = 0; i < Math.min(queue.length, 10); i++) {
-    const row = queue[i] as Record<string, unknown>;
-    if (!row || typeof row !== "object") continue;
+  const triage = ciBugTriageFromBriefing(b);
+  const { swarm, org, fallback } = resolveCiBugTriageQueues(triage);
+  const swarmOnly = bugFixerSwarmOnly();
+
+  const enqueueRow = (
+    row: Record<string, unknown>,
+    index: number,
+    scope: "swarm" | "org" | "legacy",
+  ) => {
     const repo = String(row.repo ?? "lic");
     const num = row.number != null ? Number(row.number) : undefined;
     const reason = String(row.reason ?? row.title ?? row.kind ?? "CI/bug triage item");
+    const idPrefix = scope === "swarm" ? "cibug:swarm" : "cibug";
+    const originating = row.originating_agent_id ? String(row.originating_agent_id) : undefined;
+    const goalId = row.goal_id ? String(row.goal_id) : undefined;
     pushItem(items, seen, {
-      id: `cibug:${repo}:${num ?? i}:${taskFingerprint("bug_fixer", reason)}`,
+      id: `${idPrefix}:${repo}:${num ?? index}:${taskFingerprint("bug_fixer", reason)}`,
       agent_id: "bug_fixer",
       source: "implementation",
-      priority: 78,
+      priority: scope === "swarm" ? 82 : 78,
       reason: `Fix ${repo}${num ? `#${num}` : ""}: ${reason.slice(0, 100)}`,
       status: "pending",
-      meta: { repo, pr: num, url: row.url ? String(row.url) : undefined },
+      meta: {
+        repo,
+        pr: num,
+        url: row.url ? String(row.url) : undefined,
+        originating_agent_id: originating,
+        goal_id: goalId,
+        scope,
+      },
     });
+  };
+
+  if (swarmOnly && swarm.length) {
+    for (let i = 0; i < Math.min(swarm.length, SWARM_CI_BUG_QUEUE_CAP); i++) {
+      const row = swarm[i];
+      if (row && typeof row === "object") enqueueRow(row as Record<string, unknown>, i, "swarm");
+    }
+    return;
+  }
+
+  if (swarmOnly && !swarm.length && fallback.length) {
+    for (let i = 0; i < Math.min(fallback.length, 10); i++) {
+      const row = fallback[i];
+      if (row && typeof row === "object") enqueueRow(row as Record<string, unknown>, i, "legacy");
+    }
+    return;
+  }
+
+  const combined = [...swarm, ...org, ...fallback];
+  for (let i = 0; i < Math.min(combined.length, 10); i++) {
+    const row = combined[i];
+    if (!row || typeof row !== "object") continue;
+    const scope: "swarm" | "org" | "legacy" =
+      i < swarm.length ? "swarm" : i < swarm.length + org.length ? "org" : "legacy";
+    enqueueRow(row as Record<string, unknown>, i, scope);
   }
 }
 
