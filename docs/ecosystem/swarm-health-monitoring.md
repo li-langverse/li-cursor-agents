@@ -67,7 +67,7 @@ After a dashboard or async-swarm **restart** (SIGTERM, `systemctl restart`, work
 
 `GET /api/errors/summary?range=1d` (alias `/api/runs/errors-summary`) includes:
 
-- `stale_reconcile_count` — rows in category `stale_running_reconciled`
+- `stale_reconcile_count` — rows in `stale_running_reconciled` or `unregistered_running_reconciled`
 - `real_error_count` — all other error rows in the window
 - `total_errors` — raw error row count (unchanged)
 

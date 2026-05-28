@@ -12,6 +12,7 @@ import {
   publishSubdirForGoalId,
   whitepaperPathForGoal,
 } from "../research-goals/researcher-factory.js";
+import { isStaleReconcileError } from "../db/reconcile-error-categories.js";
 import type { AgentId } from "../types.js";
 import { getRunDetail, listRunsMerged, type RunCatalogEntry } from "./runs-catalog.js";
 import { runsDir } from "./paths.js";
@@ -105,7 +106,7 @@ function verticalLabel(vertical: string | null, goalId: string | null): string |
 export function researchErrorCategory(error: string | null | undefined): string | null {
   const err = (error ?? "").trim();
   if (!err) return null;
-  if (err === "stale_running_reconciled") return "stale_running_reconciled";
+  if (isStaleReconcileError(err)) return err;
   if (err.includes("sdk-session.lock")) return "sdk_slot_timeout";
   return err.length > 120 ? `${err.slice(0, 120)}…` : err;
 }

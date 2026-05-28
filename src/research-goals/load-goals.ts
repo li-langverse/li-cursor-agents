@@ -87,7 +87,7 @@ export function resolveGoalAgent(goal: ResearchGoal): AgentId {
   return "goal_researcher";
 }
 
-function eligibleGoals(
+export function eligibleGoals(
   goals: ResearchGoal[],
   goalLastRunAt: Record<string, string>,
   now: number,

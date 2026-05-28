@@ -1,3 +1,7 @@
+import {
+  isStaleReconcileCategory,
+  isStaleReconcileError,
+} from "../db/reconcile-error-categories.js";
 import { listRunsGlobalInRange } from "../db/runs.js";
 import type { AgentRunHistoryRow } from "../db/runs.js";
 import type { ParsedStatsTimeRange } from "./stats-time-range.js";
@@ -28,15 +32,13 @@ export interface RunErrorsSummary {
   range_until?: string;
   /** Raw error rows in range (no dedupe). */
   total_errors: number;
-  /** Rows categorized as restart bookkeeping (`stale_running_reconciled`). */
+  /** Rows categorized as restart bookkeeping (stale / unregistered reconcile). */
   stale_reconcile_count: number;
   /** Rows with any other error category — actionable failures. */
   real_error_count: number;
   unique_categories: number;
   categories: RunErrorCategory[];
 }
-
-const STALE_RECONCILE_CATEGORY = "stale_running_reconciled";
 
 export function splitStaleReconcileCounts(categories: RunErrorCategory[]): {
   stale_reconcile_count: number;
@@ -45,7 +47,7 @@ export function splitStaleReconcileCounts(categories: RunErrorCategory[]): {
   let stale_reconcile_count = 0;
   let real_error_count = 0;
   for (const c of categories) {
-    if (c.category === STALE_RECONCILE_CATEGORY) stale_reconcile_count += c.count;
+    if (isStaleReconcileCategory(c.category)) stale_reconcile_count += c.count;
     else real_error_count += c.count;
   }
   return { stale_reconcile_count, real_error_count };
@@ -53,7 +55,7 @@ export function splitStaleReconcileCounts(categories: RunErrorCategory[]): {
 
 function errorCategory(row: AgentRunHistoryRow): string {
   const err = (row.error ?? "").trim() || "(no error message)";
-  if (err === "stale_running_reconciled") return "stale_running_reconciled";
+  if (isStaleReconcileError(err)) return err;
   if (err.includes("sdk-session.lock")) return "sdk_slot_timeout";
   return err.slice(0, 200);
 }
