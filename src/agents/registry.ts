@@ -399,6 +399,25 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     guaranteedPush: true,
     cursorSdkMode: "agent",
   },
+  {
+    id: "world_studio_builder",
+    name: "World Studio builder",
+    description:
+      "Executes WORLD-STUDIO-MASTER-PLAN.md in native Li — shell, sim, agent MCP, canvas, exports — until plan-loop todos are done.",
+    category: "platform",
+    promptFile: "world-studio-builder.md",
+    skills: [
+      "explore-li-ecosystem",
+      "studio-design-review",
+      "studio-agentic-ux",
+      "studio-ui-ux-rubric",
+    ],
+    needsWeb: false,
+    preflightKeys: ["briefing"],
+    repoWorkflow: true,
+    guaranteedPush: true,
+    cursorSdkMode: "agent",
+  },
 ];
 
 export function getAgent(id: string): AgentDefinition | undefined {

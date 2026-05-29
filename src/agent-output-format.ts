@@ -138,6 +138,7 @@ export function buildMockDeliverable(
       return buildImplementationGapsMockBody(briefing);
     case "code_implementer":
     case "studio_ui_ux_builder":
+    case "world_studio_builder":
     case "bug_fixer":
     case "security_auditor":
       return buildImplementationGapsMockBody(briefing);
