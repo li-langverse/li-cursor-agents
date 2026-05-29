@@ -11,6 +11,11 @@ import { liveBriefingHash } from "../control-plane/live-interventions.js";
 import { loadState } from "../control-plane/state.js";
 import { buildAgentWorkQueue } from "../control-plane/agent-work-queue.js";
 import { loadLaneState, saveLaneState } from "./lane-state.js";
+import {
+  isMaintenancePreflightInFlight,
+  withMaintenancePreflightLock,
+} from "./maintenance-preflight-lock.js";
+import { agentLog } from "../agent-log.js";
 
 export interface MaintenanceLaneTickResult {
   ok: boolean;
@@ -47,11 +52,19 @@ export async function maintenanceLaneTick(options?: {
     console.error(`maintenance-lane: failed ${failedHandoffs.length} handoff(s) missing north_star_fit`);
   }
 
-  const preflight = await runPreflightAsync(
-    benchmarksRoot,
-    options?.skipSlowPreflight !== false,
-    options?.abortSignal,
-  );
+  agentLog("maintenance-lane", "info", "preflight starting (agent-briefing.py)");
+  let preflight;
+  try {
+    preflight = await withMaintenancePreflightLock(() =>
+      runPreflightAsync(benchmarksRoot, options?.skipSlowPreflight !== false, options?.abortSignal),
+    );
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("already in flight")) {
+      return { ok: false, skip_reason: msg };
+    }
+    throw err;
+  }
   const raw =
     preflight.briefing && typeof preflight.briefing === "object"
       ? (preflight.briefing as Record<string, unknown>)

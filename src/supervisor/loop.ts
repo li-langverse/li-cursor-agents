@@ -115,7 +115,7 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
       needs_meta_observer: false,
     } satisfies import("../observer/types.js").SwarmHealthReport);
   if (observerEnabled) {
-    const ingest = runSwarmGapIngestTick();
+    const ingest = await runSwarmGapIngestTick();
     if (!ingest.ok) {
       console.warn(`observer: swarm-gap-ingest failed: ${ingest.detail}`);
     }

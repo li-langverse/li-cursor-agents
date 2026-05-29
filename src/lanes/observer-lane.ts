@@ -40,7 +40,7 @@ export async function observerLaneTick(): Promise<ObserverLaneTickResult> {
   const observerState = loadObserverState(state);
   const briefing = loadCachedBriefing() ?? {};
 
-  const ingest = runSwarmGapIngestTick();
+  const ingest = await runSwarmGapIngestTick();
   if (!ingest.ok) {
     // eslint-disable-next-line no-console
     console.warn(`observer-lane: swarm-gap-ingest failed: ${ingest.detail}`);

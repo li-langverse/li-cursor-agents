@@ -21,6 +21,7 @@ import {
   buildImplementationQueueInstruction,
 } from "./preflight/implementation-queue.js";
 import { compactBriefingForPrompt } from "./preflight/briefing-summary.js";
+import { loadCachedBriefing } from "./briefing/load-cached-briefing.js";
 
 function hasBriefingScript(root: string): boolean {
   return existsSync(join(root, "scripts", "agent-briefing.py"));
@@ -56,6 +57,44 @@ function readBriefingBundle(benchmarksRoot: string): PreflightBundle {
     briefing,
     runs: {},
   };
+}
+
+/** Disk/memory briefing for agent runs — avoids blocking spawnSync on agent-briefing.py. */
+export function preflightBundleFromCachedBriefing(
+  benchmarksRoot?: string,
+): PreflightBundle | null {
+  const briefing = loadCachedBriefing();
+  if (!briefing || Object.keys(briefing).length === 0) return null;
+  const root = benchmarksRoot ?? resolveBenchmarksRoot();
+  const briefingPath = root
+    ? join(root, "data", "latest", "agent-briefing.json")
+    : "data/latest/agent-briefing.json";
+  return {
+    generated_at: new Date().toISOString(),
+    briefing_path: briefingPath,
+    briefing,
+    runs: { cached: { exit_code: 0 } },
+  };
+}
+
+/**
+ * Agent-run preflight: cached briefing first, then on-disk JSON, then async python (non-blocking).
+ * Set LI_AGENT_RUN_REFRESH_PREFLIGHT=1 to force a fresh agent-briefing.py run.
+ */
+export async function resolvePreflightForAgentRun(
+  benchmarksRoot: string | undefined,
+  skipSlow = true,
+): Promise<PreflightBundle> {
+  if (process.env.LI_AGENT_RUN_REFRESH_PREFLIGHT !== "1") {
+    const cached = preflightBundleFromCachedBriefing(benchmarksRoot);
+    if (cached?.briefing) return cached;
+  }
+  const root = benchmarksRoot ?? resolveBenchmarksRoot();
+  if (root) {
+    const diskPath = join(root, "data", "latest", "agent-briefing.json");
+    if (existsSync(diskPath)) return readBriefingBundle(root);
+  }
+  return runPreflightAsync(benchmarksRoot, skipSlow);
 }
 
 function preflightTimeoutMs(): number {

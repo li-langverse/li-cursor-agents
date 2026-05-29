@@ -23,7 +23,11 @@ import {
   runImplementerPreflightGate,
 } from "./preflight/implementer-preflight-gate.js";
 import { buildSkillsPromptAppendix } from "./agents/load-skills.js";
-import { buildUserMessage, runPreflight, resolveBenchmarksRoot } from "./preflight.js";
+import {
+  buildUserMessage,
+  resolveBenchmarksRoot,
+  resolvePreflightForAgentRun,
+} from "./preflight.js";
 import { resolveCursorSdkMode, sdkModeSystemPrefix } from "./agents/sdk-mode.js";
 import {
   formatRolloutDigest,
@@ -155,7 +159,7 @@ async function runAgentBody(
   const packageRoot = agentsPackageRoot();
   const benchmarksRoot = resolveBenchmarksRoot(options.benchmarksRoot);
   const mock = shouldUseMock(options.mock);
-  const preflight = runPreflight(benchmarksRoot, true);
+  const preflight = await resolvePreflightForAgentRun(benchmarksRoot, true);
 
   if (!mock && !options.dryRun) {
     const gatePreflight = runImplementerPreflightGate(definition.id, options.extraInstruction);

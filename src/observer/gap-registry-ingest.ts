@@ -1,8 +1,9 @@
-import { spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import path from "node:path";
+import { trackManagedSubprocess } from "../swarm/managed-subprocess.js";
 
-/** Programmatic gap registry refresh (no LLM) — called on supervisor observer ticks. */
-export function runSwarmGapIngestTick(): { ok: boolean; detail: string } {
+/** Programmatic gap registry refresh (no LLM) — non-blocking for async-swarm event loop. */
+export async function runSwarmGapIngestTick(): Promise<{ ok: boolean; detail: string }> {
   if (process.env.LI_SWARM_GAP_INGEST_DISABLE === "1") {
     return { ok: true, detail: "disabled" };
   }
@@ -13,23 +14,54 @@ export function runSwarmGapIngestTick(): { ok: boolean; detail: string } {
   }
 
   const script = path.join(licRoot, "scripts", "swarm-gap-ingest.py");
-  const proc = spawnSync("python3", [script], {
-    cwd: licRoot,
-    env: {
-      ...process.env,
-      LIC_ROOT: licRoot,
-      LI_LANGVERSE_ROOT: process.env.LI_LANGVERSE_ROOT ?? path.dirname(licRoot),
-    },
-    encoding: "utf-8",
-    timeout: Number(process.env.LI_SWARM_GAP_INGEST_TIMEOUT_MS ?? 120_000),
-  });
+  const timeoutMs = Number(process.env.LI_SWARM_GAP_INGEST_TIMEOUT_MS ?? 60_000);
 
-  const tail = `${proc.stdout ?? ""}${proc.stderr ?? ""}`.slice(-400);
-  if (proc.error) {
-    return { ok: false, detail: proc.error.message };
+  try {
+    const exitCode = await new Promise<number>((resolve, reject) => {
+      const child = spawn("python3", [script], {
+        cwd: licRoot,
+        env: {
+          ...process.env,
+          LIC_ROOT: licRoot,
+          LI_LANGVERSE_ROOT: process.env.LI_LANGVERSE_ROOT ?? path.dirname(licRoot),
+        },
+        stdio: ["ignore", "pipe", "pipe"],
+        detached: process.platform !== "win32",
+      });
+      trackManagedSubprocess(child);
+
+      let tail = "";
+      const append = (chunk: Buffer | string) => {
+        tail = `${tail}${String(chunk)}`.slice(-400);
+      };
+      child.stdout?.on("data", append);
+      child.stderr?.on("data", append);
+
+      const timer = setTimeout(() => {
+        try {
+          child.kill("SIGTERM");
+        } catch {
+          /* */
+        }
+        reject(new Error(`swarm-gap-ingest timeout after ${timeoutMs}ms`));
+      }, timeoutMs);
+
+      child.on("error", (err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+      child.on("close", (code) => {
+        clearTimeout(timer);
+        if (code === 0) resolve(0);
+        else reject(new Error(tail.trim() || `exit ${code ?? 1}`));
+      });
+    });
+    if (exitCode !== 0) {
+      return { ok: false, detail: `exit ${exitCode}` };
+    }
+    return { ok: true, detail: "ok" };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { ok: false, detail: msg };
   }
-  if (proc.status !== 0) {
-    return { ok: false, detail: tail || `exit ${proc.status}` };
-  }
-  return { ok: true, detail: tail.trim() || "ok" };
 }

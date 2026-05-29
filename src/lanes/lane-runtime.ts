@@ -198,7 +198,7 @@ export function stopImplementLaneLoop(): { stopped: boolean; message: string } {
 }
 
 async function maintenanceLoop(abort: AbortSignal): Promise<void> {
-  const startupDelay = Number(process.env.LI_MAINTENANCE_STARTUP_DELAY_MS ?? 0);
+  const startupDelay = Number(process.env.LI_MAINTENANCE_STARTUP_DELAY_MS ?? 120_000);
   if (startupDelay > 0) {
     await sleepUntil(abort, startupDelay);
   }
@@ -253,12 +253,13 @@ export function stopMaintenanceLaneLoop(): { stopped: boolean; message: string }
 }
 
 async function observerLoop(abort: AbortSignal): Promise<void> {
-  const startupDelay = Number(process.env.LI_OBSERVER_STARTUP_DELAY_MS ?? 60_000);
+  const startupDelay = Number(process.env.LI_OBSERVER_STARTUP_DELAY_MS ?? 15_000);
   if (startupDelay > 0) {
     await sleepUntil(abort, startupDelay);
   }
   while (!abort.aborted) {
     try {
+      agentLog("observer-lane", "info", "tick starting");
       const tick = await observerLaneTick();
       const msg = tick.ok
         ? `healthy=${tick.health?.healthy} spawned=${(tick.spawned ?? []).join(",") || "none"} findings=${tick.health?.findings.length ?? 0}`
