@@ -3,7 +3,7 @@ import { canonicalAgentId } from "../agents/registry.js";
 import type { ControlPlaneState, QueuedAgentTask } from "../control-plane/types.js";
 import type { AgentRunResult } from "../types.js";
 import type { AgentId } from "../types.js";
-import { restartAsyncSwarmUnit } from "../swarm/swarm-restart.js";
+import { applySelfHealActions } from "../swarm/swarm-self-heal.js";
 import type { ObserverState, RemediationAction, SwarmFinding } from "./types.js";
 
 const HEALER_AGENTS: Record<string, AgentId> = {
@@ -162,10 +162,15 @@ export function buildRemediations(params: {
 export async function applyInfrastructureRemediations(
   actions: RemediationAction[],
 ): Promise<{ restarted: boolean; message: string }> {
-  const restart = actions.find((a) => a.kind === "restart_async_swarm");
-  if (!restart) return { restarted: false, message: "none" };
-  const r = await restartAsyncSwarmUnit(restart.reason);
-  return { restarted: r.ok, message: r.message };
+  const infra = actions.filter(
+    (a) =>
+      a.kind === "restart_async_swarm" ||
+      a.kind === "reconcile_stale_runs" ||
+      a.kind === "flush_worker_heartbeat",
+  );
+  if (!infra.length) return { restarted: false, message: "none" };
+  const r = await applySelfHealActions(infra);
+  return { restarted: r.restarted, message: r.message };
 }
 
 export function remediationsToTasks(

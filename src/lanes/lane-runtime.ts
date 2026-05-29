@@ -204,7 +204,7 @@ async function maintenanceLoop(abort: AbortSignal): Promise<void> {
   }
   while (!abort.aborted) {
     try {
-      const tick = await maintenanceLaneTick({ skipSlowPreflight: true });
+      const tick = await maintenanceLaneTick({ skipSlowPreflight: true, abortSignal: abort });
       agentLog(
         "maintenance-lane",
         tick.ok ? "info" : "warn",
@@ -301,6 +301,24 @@ export function stopObserverLaneLoop(): { stopped: boolean; message: string } {
   }
   observerAbort.abort();
   return { stopped: true, message: "observer lane stopping" };
+}
+
+/** Best-effort wait for lane loops to finish after abort (shutdown / SIGTERM). */
+export async function waitForLaneLoopsSettled(timeoutMs = 12_000): Promise<boolean> {
+  const promises = [researchPromise, implementPromise, maintenancePromise, observerPromise].filter(
+    (p): p is Promise<void> => p != null,
+  );
+  if (!promises.length) return true;
+  let settled = false;
+  await Promise.race([
+    Promise.allSettled(promises).then(() => {
+      settled = true;
+    }),
+    new Promise<void>((resolve) => {
+      setTimeout(resolve, timeoutMs);
+    }),
+  ]);
+  return settled;
 }
 
 export function updateLaneFlags(patch: Partial<LaneStateFile>): LaneStateFile {

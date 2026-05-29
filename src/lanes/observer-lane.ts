@@ -46,7 +46,17 @@ export async function observerLaneTick(): Promise<ObserverLaneTickResult> {
     console.warn(`observer-lane: swarm-gap-ingest failed: ${ingest.detail}`);
   }
 
-  const recentRuns = await loadRecentRunSummariesAsync(16);
+  let recentRuns: Awaited<ReturnType<typeof loadRecentRunSummariesAsync>> = [];
+  let storeUnreachable = false;
+  try {
+    recentRuns = await loadRecentRunSummariesAsync(16);
+  } catch (err) {
+    storeUnreachable = true;
+    const msg = err instanceof Error ? err.message : String(err);
+    // eslint-disable-next-line no-console
+    console.warn(`observer-lane: recent runs unavailable: ${msg}`);
+  }
+
   const swarmHealth = scanSwarmHealth({
     state,
     briefing,
@@ -54,7 +64,15 @@ export async function observerLaneTick(): Promise<ObserverLaneTickResult> {
     recentRuns,
   });
 
-  const infra = await applyInfrastructureRemediations(swarmHealth.remediations);
+  const extraRemediations = [...swarmHealth.remediations];
+  if (storeUnreachable) {
+    extraRemediations.unshift({
+      kind: "reconcile_stale_runs",
+      reason: "observer: Supabase run history unavailable — reconcile stale rows",
+    });
+  }
+
+  const infra = await applyInfrastructureRemediations(extraRemediations);
 
   const spawned: string[] = [];
   const limit = maxSpawnsPerTick();

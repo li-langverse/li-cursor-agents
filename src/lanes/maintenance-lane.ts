@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
 import { enrichBriefingObject } from "../briefing/enrich-briefing-file.js";
 import { failHandoffsMissingNorthStar } from "../handoffs/handoff-hygiene.js";
-import { resolveBenchmarksRoot, runPreflight } from "../preflight.js";
+import { resolveBenchmarksRoot, runPreflightAsync } from "../preflight.js";
 import { dispatchSwarmAuditRefresh } from "../benchmarks/dispatch-swarm-audit.js";
 import { saveLatestBriefingSnapshot } from "../db/briefing.js";
 import { setCachedBriefing } from "../briefing/load-cached-briefing.js";
@@ -30,6 +30,7 @@ export function isMaintenanceLaneEnabled(): boolean {
 export async function maintenanceLaneTick(options?: {
   benchmarksRoot?: string;
   skipSlowPreflight?: boolean;
+  abortSignal?: AbortSignal;
 }): Promise<MaintenanceLaneTickResult> {
   if (!isMaintenanceLaneEnabled()) {
     return { ok: false, skip_reason: "maintenance lane disabled" };
@@ -46,7 +47,11 @@ export async function maintenanceLaneTick(options?: {
     console.error(`maintenance-lane: failed ${failedHandoffs.length} handoff(s) missing north_star_fit`);
   }
 
-  const preflight = runPreflight(benchmarksRoot, options?.skipSlowPreflight !== false);
+  const preflight = await runPreflightAsync(
+    benchmarksRoot,
+    options?.skipSlowPreflight !== false,
+    options?.abortSignal,
+  );
   const raw =
     preflight.briefing && typeof preflight.briefing === "object"
       ? (preflight.briefing as Record<string, unknown>)

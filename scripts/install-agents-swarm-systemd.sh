@@ -83,6 +83,8 @@ Environment=HOME=$HOME PATH=$SERVICE_PATH LI_CURSOR_ENV_FILE=$ENV_FILE LI_CURSOR
 Environment=NODE_BIN=$NODE_BIN LI_CONTROL_PLANE_STORE=$STORE LI_SDK_MAX_CONCURRENT=$SDK_MAX LI_SWARM_MAX_PARALLEL=$SWARM_MAX
 Environment=LI_AUTO_START_ASYNC_SWARM=1 LI_SWARM_DETACHED=0 LI_MAINTENANCE_LANE_ENABLED=1
 ExecStart=$ROOT/scripts/agents-async-swarm-systemd.sh
+TimeoutStopSec=300
+KillMode=control-group
 Restart=on-failure
 RestartSec=60
 StandardOutput=append:${LOG_DIR}/agents-async-swarm-systemd.log
@@ -124,7 +126,7 @@ EOF
   cat >"$SERVICE_DIR/li-agents-swarm-watchdog.timer" <<EOF
 [Timer]
 OnBootSec=3min
-OnUnitActiveSec=5min
+OnUnitActiveSec=3min
 Persistent=true
 [Install]
 WantedBy=timers.target

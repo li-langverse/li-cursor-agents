@@ -72,6 +72,20 @@ systemctl --user restart li-agents-async-swarm
 
 Meta agents (`swarm_observer`, `ecosystem_grader`) may **recommend** prompt edits in reports; applying them is still a human PR on `li-cursor-agents`.
 
+## Autonomous self-healing (harness)
+
+With the **full** profile, recovery is mostly hands-off:
+
+| Layer | What it does |
+|-------|----------------|
+| **Heartbeat watchdog** (~60s) | Reconciles stale `agent_runs`, fixes `worker_status` drift, spawns healers when briefing flags CI/dirty/gaps |
+| **Observer lane** (~2 min) | Retries error streaks, dispatches `workspace_sweeper` / `bug_fixer`, reconciles DB when Supabase blips |
+| **systemd watchdog timer** (~3 min) | Restarts `li-agents-async-swarm` if the unit is `inactive`, `failed`, stuck `deactivating`, or active without a process |
+| **Startup reconcile** | On async-swarm boot: mark orphan `running` rows, resume lanes if configured |
+| **Graceful stop** | `TimeoutStopSec=300`; SIGTERM aborts maintenance preflight children instead of hanging until SIGKILL |
+
+Do **not** set `LI_OBSERVER_DISABLE` or `LI_SWARM_PAUSE_WORKERS` in `li-cursor-agents/.env` when running the full profile — the wrapper unsets pause for async-swarm, but observer disable is still read from `.env`.
+
 ## Related
 
 - [swarm-architecture.md](./swarm-architecture.md)

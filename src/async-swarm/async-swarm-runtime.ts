@@ -24,6 +24,8 @@ import {
 } from "../worker/heartbeat-loop.js";
 import { proactiveAllPoolWorkersEnabled } from "../control-plane/proactive-agent-work.js";
 import { workerConsole } from "../worker/worker-console.js";
+import { waitForLaneLoopsSettled } from "../lanes/lane-runtime.js";
+import { killManagedSubprocessesAndWait } from "../swarm/managed-subprocess.js";
 
 export { isAsyncSwarmRunning, asyncSwarmSnapshot } from "./async-swarm-state.js";
 
@@ -71,6 +73,15 @@ export async function startAsyncSwarm(options?: {
 
   pushSupervisorActivity("info", message, { mode: "async_swarm", mock });
   agentLog("async-swarm", "info", message);
+  void import("../worker/swarm-reconcile.js")
+    .then((m) => m.reconcileSwarmAfterStartup())
+    .catch((err) => {
+      agentLog(
+        "async-swarm",
+        "warn",
+        `startup reconcile: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    });
   await flushWorkerHeartbeat();
 
   const sdkSlots = sdkMaxConcurrentFromEnv();
@@ -84,7 +95,10 @@ export async function startAsyncSwarm(options?: {
   return { started: true, message };
 }
 
-export async function stopAsyncSwarm(): Promise<{ stopped: boolean; message: string }> {
+export async function stopAsyncSwarm(options?: {
+  waitLanesMs?: number;
+  killSubprocesses?: boolean;
+}): Promise<{ stopped: boolean; message: string }> {
   if (!isAsyncSwarmRunning()) {
     return { stopped: false, message: "async swarm not running" };
   }
@@ -95,11 +109,19 @@ export async function stopAsyncSwarm(): Promise<{ stopped: boolean; message: str
   stopObserverLaneLoop();
   const workers = stopAgentWorkerPool();
 
+  const waitMs = options?.waitLanesMs ?? Number(process.env.LI_ASYNC_SWARM_STOP_WAIT_MS ?? 12_000);
+  const lanesSettled = await waitForLaneLoopsSettled(waitMs);
+
+  if (options?.killSubprocesses !== false) {
+    const graceMs = Number(process.env.LI_ASYNC_SWARM_SUBPROCESS_GRACE_MS ?? 5_000);
+    await killManagedSubprocessesAndWait(graceMs);
+  }
+
   setAsyncSwarmRunning(false);
   stopWorkerHeartbeatLoop();
   await flushWorkerHeartbeat();
 
-  const message = `Async swarm stopped; ${workers.message}`;
+  const message = `Async swarm stopped; ${workers.message}; lanes_settled=${lanesSettled}`;
   pushSupervisorActivity("info", message, { mode: "async_swarm" });
   agentLog("async-swarm", "info", message);
 

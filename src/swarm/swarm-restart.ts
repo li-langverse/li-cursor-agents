@@ -12,7 +12,18 @@ async function systemctlUserRestart(unit: string): Promise<void> {
   await execFileAsync("systemctl", ["--user", "restart", unit], { timeout: 30_000 });
 }
 
-export async function restartAsyncSwarmUnit(reason: string): Promise<{
+async function systemctlUserKill(unit: string, signal: "SIGTERM" | "SIGKILL"): Promise<void> {
+  await execFileAsync("systemctl", ["--user", "kill", `-s`, signal, unit], { timeout: 15_000 });
+}
+
+async function systemctlUserStart(unit: string): Promise<void> {
+  await execFileAsync("systemctl", ["--user", "start", unit], { timeout: 30_000 });
+}
+
+export async function restartAsyncSwarmUnit(
+  reason: string,
+  options?: { force?: boolean },
+): Promise<{
   ok: boolean;
   message: string;
 }> {
@@ -21,11 +32,17 @@ export async function restartAsyncSwarmUnit(reason: string): Promise<{
   }
   const unitState = await systemctlUserIsActive(ASYNC_SWARM_UNIT);
   if (unitState !== "not-found") {
-    if (unitState === "active" || unitState === "activating") {
+    if ((unitState === "active" || unitState === "activating") && !options?.force) {
       return { ok: true, message: `${ASYNC_SWARM_UNIT} already ${unitState}` };
     }
     try {
-      await systemctlUserRestart(ASYNC_SWARM_UNIT);
+      if (unitState === "deactivating" || options?.force) {
+        await systemctlUserKill(ASYNC_SWARM_UNIT, "SIGKILL");
+        await new Promise((r) => setTimeout(r, 500));
+        await systemctlUserStart(ASYNC_SWARM_UNIT);
+      } else {
+        await systemctlUserRestart(ASYNC_SWARM_UNIT);
+      }
       agentLog("watchdog", "info", `systemctl restart ${ASYNC_SWARM_UNIT}: ${reason}`);
       return { ok: true, message: `restarted ${ASYNC_SWARM_UNIT}` };
     } catch (err) {

@@ -6,7 +6,8 @@ export type SwarmFindingKind =
   | "sdk_unavailable"
   | "supervisor_stale"
   | "goal_mismatch"
-  | "retry_budget_exhausted";
+  | "retry_budget_exhausted"
+  | "store_unreachable";
 
 export type SwarmFindingSeverity = "critical" | "high" | "medium" | "low";
 
@@ -25,7 +26,9 @@ export type RemediationActionKind =
   | "dispatch_healer"
   | "schedule_meta_observer"
   | "clear_stopped_agent"
-  | "restart_async_swarm";
+  | "restart_async_swarm"
+  | "reconcile_stale_runs"
+  | "flush_worker_heartbeat";
 
 export interface RemediationAction {
   kind: RemediationActionKind;
