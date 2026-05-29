@@ -285,7 +285,7 @@ goals:
     cadence_hours: 48
     enabled: true
     allow_implementation: false
-    handoff_to: [code_implementer, docs_maintainer, issue_planner]
+    handoff_to: [studio_ui_ux_builder, code_implementer, docs_maintainer, issue_planner]
   - id: provability_holes
     title: Proof holes — compiler, contracts, trusted axioms
     domains: [ecosystem]
