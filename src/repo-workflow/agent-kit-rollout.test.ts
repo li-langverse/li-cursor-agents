@@ -2,7 +2,15 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { rolloutAgentKitPrs, rolloutNeedsLlmFollowUp } from "./agent-kit-rollout.js";
+import {
+  rolloutAgentKitPrs,
+  rolloutNeedsLlmFollowUp,
+  syncBranchName,
+} from "./agent-kit-rollout.js";
+
+test("syncBranchName is stable per repo", () => {
+  assert.equal(syncBranchName("li-demo"), "chore/agent-kit-sync-li-demo");
+});
 
 test("rolloutAgentKitPrs dry-run from fixture briefing", () => {
   const briefing = JSON.parse(

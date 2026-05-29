@@ -8,6 +8,7 @@ import {
   resolveRoadmapRoot,
 } from "../preflight/agent-kit-sync.js";
 import { commitPushOpenPr } from "./pr.js";
+import { runCmd } from "./git.js";
 import { cloneDirFor, isGovernanceRepo, prepareIsolatedClone } from "./workspace.js";
 import type { AgentKitRolloutRow, RepoWorkflowOptions } from "./types.js";
 
@@ -34,9 +35,37 @@ function installAgentKit(
   };
 }
 
-function branchName(repo: string, canonicalVersion: string): string {
-  const safe = canonicalVersion.replace(/[^a-zA-Z0-9._-]/g, "-");
-  return `chore/agent-kit-${safe}-${repo}`;
+/** Stable branch name used across org agent-kit sync PRs. */
+export function syncBranchName(repo: string): string {
+  return `chore/agent-kit-sync-${repo}`;
+}
+
+function remoteBranchExists(org: string, repo: string, branch: string, dryRun: boolean): boolean {
+  if (dryRun) return false;
+  const r = runCmd(
+    "gh",
+    ["api", `repos/${org}/${repo}/git/ref/heads/${branch}`, "--silent"],
+    process.cwd(),
+    false,
+  );
+  return r.ok;
+}
+
+function openPrForBranch(org: string, repo: string, branch: string, dryRun: boolean): string | undefined {
+  if (dryRun) return undefined;
+  const r = runCmd(
+    "gh",
+    ["pr", "list", "--repo", `${org}/${repo}`, "--head", branch, "--state", "open", "--json", "url"],
+    process.cwd(),
+    false,
+  );
+  if (!r.ok || !r.stdout) return undefined;
+  try {
+    const rows = JSON.parse(r.stdout) as { url?: string }[];
+    return rows[0]?.url;
+  } catch {
+    return undefined;
+  }
 }
 
 /** Isolated clone → install agent-kit → commit → push → open PR per drifted repo. */
@@ -74,15 +103,24 @@ export function rolloutAgentKitPrs(
   for (const entry of entries) {
     const repo = entry.repo;
     const governance = isGovernanceRepo(repo);
-    const branch = branchName(repo, canonVersion);
+    const branch = syncBranchName(repo);
+    const trackRemote = remoteBranchExists(org, repo, branch, dryRun);
+    const prevTrack = process.env.LI_REPO_WORKFLOW_TRACK_REMOTE;
+    if (trackRemote) process.env.LI_REPO_WORKFLOW_TRACK_REMOTE = "1";
 
-    const prep = prepareIsolatedClone(repo, {
-      org,
-      runId,
-      workspaceRoot: options.workspaceRoot,
-      dryRun,
-      branchName: branch,
-    });
+    let prep;
+    try {
+      prep = prepareIsolatedClone(repo, {
+        org,
+        runId,
+        workspaceRoot: options.workspaceRoot,
+        dryRun,
+        branchName: branch,
+      });
+    } finally {
+      if (prevTrack !== undefined) process.env.LI_REPO_WORKFLOW_TRACK_REMOTE = prevTrack;
+      else delete process.env.LI_REPO_WORKFLOW_TRACK_REMOTE;
+    }
 
     if (!prep.ok) {
       rows.push({
@@ -136,16 +174,32 @@ export function rolloutAgentKitPrs(
         .join("\n"),
     });
 
+    let workflowOk = pr.ok;
+    let prUrl = pr.pr_url;
+    let skipped = pr.skipped;
+    let skipReason = pr.skip_reason;
+    let error = pr.error;
+
+    if (!prUrl && !dryRun) {
+      const existing = openPrForBranch(org, repo, branch, dryRun);
+      if (existing) {
+        workflowOk = true;
+        prUrl = existing;
+        skipped = true;
+        skipReason = skipReason ?? "existing open PR for sync branch";
+      }
+    }
+
     rows.push({
       repo,
       workspace: prep.cloneDir,
       install_ok: true,
-      workflow_ok: pr.ok,
-      pr_url: pr.pr_url,
-      skipped: pr.skipped,
-      skip_reason: pr.skip_reason,
+      workflow_ok: workflowOk,
+      pr_url: prUrl,
+      skipped,
+      skip_reason: skipReason,
       governance,
-      error: pr.error,
+      error,
     });
   }
 
