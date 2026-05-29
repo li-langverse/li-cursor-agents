@@ -1,10 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  appendAttributionToBody,
   branchNameForAgentRun,
-  formatAttributionComment,
   formatCommitMessageWithAttribution,
+  defaultSwarmPrBody,
   parseAttributionFromText,
   parsePrNumberFromUrl,
   prKeyFromUrl,
@@ -17,21 +16,14 @@ test("branchNameForAgentRun encodes agent and run suffix", () => {
   );
 });
 
-test("formatAttributionComment round-trips via parseAttributionFromText", () => {
-  const attr = {
-    run_id: "docs_maintainer-1780030100234",
+test("defaultSwarmPrBody includes run_id as plain markdown not HTML comment", () => {
+  const body = defaultSwarmPrBody("docs_maintainer", {
+    run_id: "docs_maintainer-100",
     agent_id: "docs_maintainer",
-    repo: "li-demo",
-    org: "li-langverse",
-    branch: "chore/agent-docs_maintainer-0100234",
-  };
-  const body = appendAttributionToBody("## Summary\n- docs touch", attr);
-  const parsed = parseAttributionFromText(body);
-  assert.ok(parsed);
-  assert.equal(parsed!.run_id, attr.run_id);
-  assert.equal(parsed!.agent_id, attr.agent_id);
-  assert.equal(parsed!.repo, attr.repo);
-  assert.equal(parsed!.branch, attr.branch);
+    branch: "chore/agent-docs_maintainer-00000100",
+  });
+  assert.match(body, /docs_maintainer-100/);
+  assert.doesNotMatch(body, /<!--/);
 });
 
 test("parseAttributionFromText reads git commit trailers", () => {
@@ -65,9 +57,4 @@ test("prKeyFromUrl and parsePrNumberFromUrl", () => {
   const url = "https://github.com/li-langverse/li-demo/pull/42";
   assert.equal(prKeyFromUrl(url), "li-demo#42");
   assert.equal(parsePrNumberFromUrl(url), 42);
-});
-
-test("formatAttributionComment is stable JSON", () => {
-  const c = formatAttributionComment({ run_id: "a-1", agent_id: "a" });
-  assert.match(c, /^<!-- li-agent-run: \{/);
 });

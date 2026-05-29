@@ -1,6 +1,5 @@
 import { resolveCursorEnvFileHint } from "../env.js";
 import {
-  appendAttributionToBody,
   formatCommitMessageWithAttribution,
   githubLabelsForSwarm,
   parsePrNumberFromUrl,
@@ -134,9 +133,7 @@ export function commitPushOpenPr(
     };
   }
 
-  const prBody = options.swarmAttribution
-    ? appendAttributionToBody(options.prBody, options.swarmAttribution)
-    : options.prBody;
+  const prBody = options.prBody;
   const ghArgs = [
     "pr",
     "create",

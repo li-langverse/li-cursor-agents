@@ -1,8 +1,6 @@
 /** Trace GitHub artifacts (branches, commits, PRs, issues) back to swarm agent runs. */
 
-export const SWARM_ATTR_HTML_MARKER = "li-agent-run";
 export const SWARM_ATTR_GIT_TRAILER = "Li-Agent-Run";
-export const SWARM_ATTR_ISSUE_TRAILER = "Li-Agent-Run";
 export const SWARM_LABEL = "li-swarm";
 
 export interface SwarmAttribution {
@@ -14,7 +12,7 @@ export interface SwarmAttribution {
   goal_id?: string;
   vertical?: string;
   handoff_id?: string;
-  /** ISO timestamp when attribution block was stamped */
+  /** ISO timestamp when attribution was recorded */
   stamped_at?: string;
 }
 
@@ -41,19 +39,6 @@ export function buildSwarmAttribution(input: SwarmAttribution): SwarmAttribution
   };
 }
 
-/** Machine-readable HTML comment embedded in PR/issue bodies. */
-export function formatAttributionComment(attribution: SwarmAttribution): string {
-  const payload = JSON.stringify(buildSwarmAttribution(attribution));
-  return `<!-- ${SWARM_ATTR_HTML_MARKER}: ${payload} -->`;
-}
-
-export function appendAttributionToBody(body: string, attribution: SwarmAttribution): string {
-  const marker = formatAttributionComment(attribution);
-  if (body.includes(SWARM_ATTR_HTML_MARKER)) return body;
-  const trimmed = body.trimEnd();
-  return trimmed ? `${trimmed}\n\n${marker}\n` : `${marker}\n`;
-}
-
 /** Git commit message trailer — survives `git log` and `gh api` queries. */
 export function formatCommitMessageWithAttribution(message: string, attribution: SwarmAttribution): string {
   const trailer = `${SWARM_ATTR_GIT_TRAILER}: ${attribution.run_id}`;
@@ -63,30 +48,11 @@ export function formatCommitMessageWithAttribution(message: string, attribution:
   return `${base}\n\n${trailer}\n${agentTrailer}\n`;
 }
 
-export function formatIssueBodyWithAttribution(body: string, attribution: SwarmAttribution): string {
-  return appendAttributionToBody(body, attribution);
-}
-
-const HTML_ATTR_RE = new RegExp(
-  `<!--\\s*${SWARM_ATTR_HTML_MARKER}:\\s*(\\{[\\s\\S]*?\\})\\s*-->`,
-  "i",
-);
-
 const GIT_TRAILER_RE = new RegExp(`^${SWARM_ATTR_GIT_TRAILER}:\\s*(\\S+)\\s*$`, "im");
 const GIT_AGENT_RE = /^Li-Agent-Id:\s*(\S+)\s*$/im;
 
 export function parseAttributionFromText(text: string): SwarmAttribution | null {
   if (!text?.trim()) return null;
-
-  const html = HTML_ATTR_RE.exec(text);
-  if (html?.[1]) {
-    try {
-      const parsed = JSON.parse(html[1]) as SwarmAttribution;
-      if (parsed.run_id && parsed.agent_id) return parsed;
-    } catch {
-      /* fall through */
-    }
-  }
 
   const runMatch = GIT_TRAILER_RE.exec(text);
   const agentMatch = GIT_AGENT_RE.exec(text);
@@ -135,20 +101,17 @@ export function defaultSwarmPrBody(
   attribution: SwarmAttribution,
   reason?: string,
 ): string {
-  return appendAttributionToBody(
-    [
-      "<!-- li-agent -->",
-      "## Agent deliverable",
-      `- [x] Branch pushed by li-cursor-agents post-hook (\`${agentId}\`)`,
-      `- [x] Run: \`${attribution.run_id}\``,
-      "- [x] CI triggered on PR",
-      reason ? `- **Task:** ${reason}` : "",
-      "- [ ] merge-approved (human after review)",
-      "",
-      "_Automated commit/push after agent run — review diff before merge._",
-    ]
-      .filter(Boolean)
-      .join("\n"),
-    attribution,
-  );
+  return [
+    "## Agent deliverable",
+    `- [x] Branch pushed by li-cursor-agents post-hook (\`${agentId}\`)`,
+    `- [x] Swarm run \`${attribution.run_id}\` · agent \`${attribution.agent_id}\``,
+    attribution.branch ? `- [x] Branch \`${attribution.branch}\`` : "",
+    "- [x] CI triggered on PR",
+    reason ? `- **Task:** ${reason}` : "",
+    "- [ ] merge-approved (human after review)",
+    "",
+    "_Automated commit/push after agent run — review diff before merge._",
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
