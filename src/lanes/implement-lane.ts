@@ -16,7 +16,7 @@ import {
   buildImplementGoalInstruction,
   loadImplementGoals,
   markBacklogTodoDone,
-  pickNextImplementWorkForAgent,
+  pickNextImplementWork,
   recordTodoGateResult,
   runImplementGoalGates,
 } from "../implement-goals/load-goals.js";
@@ -95,14 +95,13 @@ export async function pickHandoffImplementTarget(): Promise<{
   return null;
 }
 
-/** Handoff queue first; then goal-directed implement goals for code_implementer. */
+/** Handoff queue first; then goal-directed implement goals (all configured agents). */
 export async function pickImplementLaneTarget(): Promise<ImplementLaneTarget | null> {
   const handoff = await pickHandoffImplementTarget();
   if (handoff) return { kind: "handoff", ...handoff };
 
   const state = loadLaneState();
-  const picked = pickNextImplementWorkForAgent(
-    "code_implementer",
+  const picked = pickNextImplementWork(
     loadImplementGoals(),
     state.implement_goal_last_run_at ?? {},
     state.implement_goal_last_gate_pass ?? {},
@@ -110,7 +109,7 @@ export async function pickImplementLaneTarget(): Promise<ImplementLaneTarget | n
   if (!picked) return null;
   return {
     kind: "implement_goal",
-    agentId: "code_implementer",
+    agentId: picked.agentId,
     goal: picked.goal,
     todo: picked.todo,
   };
@@ -153,11 +152,17 @@ export async function implementLaneTick(options?: {
     });
 
     let gatePass = false;
-    if (result.status === "finished" && !options?.dryRun) {
-      const gates = runImplementGoalGates(goal);
-      gatePass = gates.ok;
-      recordTodoGateResult(goal.id, todo.id, gatePass, result.status);
-      if (gatePass) markBacklogTodoDone(goal, todo.id);
+    const terminal =
+      result.status === "finished" || result.status === "error" || result.status === "cancelled";
+    if (terminal && !options?.dryRun) {
+      if (result.status === "finished") {
+        const gates = runImplementGoalGates(goal);
+        gatePass = gates.ok;
+        recordTodoGateResult(goal.id, todo.id, gatePass, result.status);
+        if (gatePass) markBacklogTodoDone(goal, todo.id);
+      } else {
+        recordTodoGateResult(goal.id, todo.id, false, result.status);
+      }
       recordImplementGoalRun(loadLaneState(), goal.id, gatePass);
     } else if (result.status === "finished") {
       gatePass = true;

@@ -6,6 +6,7 @@ import {
   loadImplementGoals,
   pickNextImplementGoal,
   pickNextImplementGoalForAgent,
+  pickNextImplementWork,
   pickNextImplementWorkForAgent,
 } from "./load-goals.js";
 import { parseBacklogTodos, pickNextBacklogTodo } from "./backlog-io.js";
@@ -43,6 +44,24 @@ test("pickNextImplementGoal respects cadence", () => {
   );
   assert.ok(picked);
   assert.notEqual(picked?.id, "httpd_parity");
+});
+
+test("pickNextImplementWork matches best per-agent pick by priority", () => {
+  const goals = loadImplementGoals();
+  const now = Date.now();
+  const picked = pickNextImplementWork(goals, {}, {}, now);
+  const agentIds = [...new Set(goals.map((g) => g.agent))];
+  let manual: { goal: (typeof goals)[0]; agentId: string; priority: number } | null = null;
+  for (const agentId of agentIds) {
+    const p = pickNextImplementWorkForAgent(agentId, goals, {}, {}, now);
+    if (!p) continue;
+    const priority = p.goal.priority ?? 0;
+    if (!manual || priority > manual.priority) {
+      manual = { goal: p.goal, agentId, priority };
+    }
+  }
+  assert.equal(picked?.goal.id ?? null, manual?.goal.id ?? null);
+  assert.equal(picked?.agentId ?? null, manual?.agentId ?? null);
 });
 
 test("pickNextImplementGoalForAgent scopes goals to one agent", () => {

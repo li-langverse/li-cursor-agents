@@ -149,3 +149,31 @@ export function pickNextImplementWorkForAgent(
   }
   return null;
 }
+
+/** Highest-priority implement work across all configured goal agents (e.g. gui_ux_tester + code_implementer). */
+export function pickNextImplementWork(
+  goals: ImplementGoal[],
+  goalLastRunAt: Record<string, string>,
+  goalLastGatePass: Record<string, boolean> = {},
+  now = Date.now(),
+): { goal: ImplementGoal; todo: BacklogTodo; agentId: AgentId } | null {
+  const agentIds = [...new Set(goals.map((g) => g.agent).filter(Boolean))] as AgentId[];
+  let best: { goal: ImplementGoal; todo: BacklogTodo; agentId: AgentId; priority: number } | null =
+    null;
+  for (const agentId of agentIds) {
+    const picked = pickNextImplementWorkForAgent(
+      agentId,
+      goals,
+      goalLastRunAt,
+      goalLastGatePass,
+      now,
+    );
+    if (!picked) continue;
+    const priority = picked.goal.priority ?? 0;
+    if (!best || priority > best.priority) {
+      best = { ...picked, agentId, priority };
+    }
+  }
+  if (!best) return null;
+  return { goal: best.goal, todo: best.todo, agentId: best.agentId };
+}

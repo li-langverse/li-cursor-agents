@@ -83,60 +83,62 @@ export async function upsertAgentRun(input: PersistRunInput): Promise<void> {
 
   const outputMd = run.outputText ?? null;
 
-  const { error } = await getSupabase().from("agent_runs").upsert(
-    {
-      run_id: runId,
-      agent_id: run.agentId,
-      started_at: startedAt,
-      finished_at: finishedAt,
-      status: run.status,
-      backend: run.backend,
-      briefing_hash: run.briefing_hash ?? null,
-      reason: run.reason ?? null,
-      fingerprint: run.fingerprint ?? null,
-      coordinator: run.coordinator ?? null,
-      duration_ms: run.durationMs ?? null,
-      output_md: outputMd,
-      output_path: run.outputPath,
-      error: run.error ?? null,
-      completion: run.completion ?? null,
-      pr_urls: prUrls,
-      run_input: run.runInput ?? null,
-      run_trace: run.trace ?? null,
-      meta: {
-        rollout_count: rolloutRows?.length ?? 0,
-        tool_call_count: run.trace?.tool_call_count ?? 0,
-        file_edit_count: run.trace?.file_edits?.length ?? 0,
-        swarm_attribution:
-          run.swarmAttribution ??
-          run.completion?.swarm_attribution ??
-          null,
+  await withSupabaseRetry("upsertAgentRun", async () => {
+    const { error } = await getSupabase().from("agent_runs").upsert(
+      {
+        run_id: runId,
+        agent_id: run.agentId,
+        started_at: startedAt,
+        finished_at: finishedAt,
+        status: run.status,
+        backend: run.backend,
+        briefing_hash: run.briefing_hash ?? null,
+        reason: run.reason ?? null,
+        fingerprint: run.fingerprint ?? null,
+        coordinator: run.coordinator ?? null,
+        duration_ms: run.durationMs ?? null,
+        output_md: outputMd,
+        output_path: run.outputPath,
+        error: run.error ?? null,
+        completion: run.completion ?? null,
+        pr_urls: prUrls,
+        run_input: run.runInput ?? null,
+        run_trace: run.trace ?? null,
+        meta: {
+          rollout_count: rolloutRows?.length ?? 0,
+          tool_call_count: run.trace?.tool_call_count ?? 0,
+          file_edit_count: run.trace?.file_edits?.length ?? 0,
+          swarm_attribution:
+            run.swarmAttribution ??
+            run.completion?.swarm_attribution ??
+            null,
+        },
+        updated_at: finishedAt,
       },
-      updated_at: finishedAt,
-    },
-    { onConflict: "run_id" },
-  );
+      { onConflict: "run_id" },
+    );
 
-  if (error) throw new Error(`agent_runs upsert: ${error.message}`);
+    if (error) throw new Error(error.message);
 
-  if (rolloutRows?.length) {
-    await getSupabase().from("repo_workflow_rollouts").delete().eq("run_id", runId);
-    const inserts = rolloutRows.map((r) => ({
-      run_id: runId,
-      rollout_kind: "agent_kit",
-      repo: r.repo,
-      install_ok: r.install_ok,
-      workflow_ok: r.workflow_ok,
-      pr_url: r.pr_url ?? null,
-      skipped: r.skipped ?? false,
-      skip_reason: r.skip_reason ?? null,
-      governance: r.governance ?? false,
-      error: r.error ?? null,
-      workspace: r.workspace ?? null,
-    }));
-    const { error: roErr } = await getSupabase().from("repo_workflow_rollouts").insert(inserts);
-    if (roErr) throw new Error(`repo_workflow_rollouts insert: ${roErr.message}`);
-  }
+    if (rolloutRows?.length) {
+      await getSupabase().from("repo_workflow_rollouts").delete().eq("run_id", runId);
+      const inserts = rolloutRows.map((r) => ({
+        run_id: runId,
+        rollout_kind: "agent_kit",
+        repo: r.repo,
+        install_ok: r.install_ok,
+        workflow_ok: r.workflow_ok,
+        pr_url: r.pr_url ?? null,
+        skipped: r.skipped ?? false,
+        skip_reason: r.skip_reason ?? null,
+        governance: r.governance ?? false,
+        error: r.error ?? null,
+        workspace: r.workspace ?? null,
+      }));
+      const { error: roErr } = await getSupabase().from("repo_workflow_rollouts").insert(inserts);
+      if (roErr) throw new Error(`repo_workflow_rollouts insert: ${roErr.message}`);
+    }
+  });
 
   await getSupabase().from("agent_run_events").insert({
     run_id: runId,
