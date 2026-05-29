@@ -1,4 +1,11 @@
 import { resolveCursorEnvFileHint } from "../env.js";
+import {
+  appendAttributionToBody,
+  formatCommitMessageWithAttribution,
+  githubLabelsForSwarm,
+  parsePrNumberFromUrl,
+  type SwarmAttribution,
+} from "../swarm/swarm-attribution.js";
 import { hasGitToken, gitStatusPorcelain, runCmd } from "./git.js";
 import type { CommitPushPrResult, RepoWorkflowOptions } from "./types.js";
 
@@ -18,6 +25,7 @@ export function commitPushOpenPr(
     openPr?: boolean;
     /** When true, assume `git add` already ran (e.g. workspace sweeper safe paths). */
     skipGitAdd?: boolean;
+    swarmAttribution?: SwarmAttribution;
   },
 ): CommitPushPrResult {
   const dryRun = options.dryRun ?? false;
@@ -73,7 +81,10 @@ export function commitPushOpenPr(
     }
   }
 
-  const commit = runCmd("git", ["commit", "-m", options.commitMessage], cloneDir, dryRun);
+  const commitMessage = options.swarmAttribution
+    ? formatCommitMessageWithAttribution(options.commitMessage, options.swarmAttribution)
+    : options.commitMessage;
+  const commit = runCmd("git", ["commit", "-m", commitMessage], cloneDir, dryRun);
   if (!commit.ok) {
     return {
       ok: false,
@@ -84,13 +95,21 @@ export function commitPushOpenPr(
     };
   }
 
+  let commitSha: string | undefined;
+  const rev = runCmd("git", ["rev-parse", "HEAD"], cloneDir, dryRun);
+  if (rev.ok && rev.stdout.trim()) commitSha = rev.stdout.trim();
+
   if (options.skipPush) {
     return {
       ok: true,
       committed: true,
       pushed: false,
       branch,
+      commit_sha: commitSha,
       skip_reason: "LI_REPO_WORKFLOW_SKIP_PUSH=1",
+      swarm_attribution: options.swarmAttribution
+        ? { ...options.swarmAttribution, branch, commit_sha: commitSha, repo: options.repo, org: options.org }
+        : undefined,
     };
   }
 
@@ -115,25 +134,29 @@ export function commitPushOpenPr(
     };
   }
 
-  const pr = runCmd(
-    "gh",
-    [
-      "pr",
-      "create",
-      "--repo",
-      `${options.org}/${options.repo}`,
-      "--base",
-      options.baseBranch,
-      "--head",
-      branch,
-      "--title",
-      options.prTitle,
-      "--body",
-      options.prBody,
-    ],
-    cloneDir,
-    dryRun,
-  );
+  const prBody = options.swarmAttribution
+    ? appendAttributionToBody(options.prBody, options.swarmAttribution)
+    : options.prBody;
+  const ghArgs = [
+    "pr",
+    "create",
+    "--repo",
+    `${options.org}/${options.repo}`,
+    "--base",
+    options.baseBranch,
+    "--head",
+    branch,
+    "--title",
+    options.prTitle,
+    "--body",
+    prBody,
+  ];
+  if (options.swarmAttribution) {
+    for (const label of githubLabelsForSwarm(options.swarmAttribution.agent_id)) {
+      ghArgs.push("--label", label);
+    }
+  }
+  const pr = runCmd("gh", ghArgs, cloneDir, dryRun);
 
   if (!pr.ok) {
     return {
@@ -141,18 +164,34 @@ export function commitPushOpenPr(
       committed: true,
       pushed: true,
       branch,
+      commit_sha: commitSha,
       error: pr.stderr || "gh pr create failed",
     };
   }
 
   const url = pr.stdout.split("\n").find((l) => l.includes("github.com")) ?? pr.stdout;
+  const prUrl = url.trim();
+  const prNumber = parsePrNumberFromUrl(prUrl);
 
   return {
     ok: true,
     committed: true,
     pushed: true,
     branch,
-    pr_url: url.trim(),
+    pr_url: prUrl,
+    pr_number: prNumber,
+    commit_sha: commitSha,
+    swarm_attribution: options.swarmAttribution
+      ? {
+          ...options.swarmAttribution,
+          branch,
+          commit_sha: commitSha,
+          repo: options.repo,
+          org: options.org,
+          pr_url: prUrl,
+          pr_number: prNumber,
+        }
+      : undefined,
   };
 }
 

@@ -27,6 +27,21 @@ cd li-cursor-agents
   --body "…"
 ```
 
+## Swarm attribution (traceability)
+
+Every post-hook PR/commit is stamped so you can trace GitHub artifacts back to a swarm run:
+
+| Surface | Marker |
+|---------|--------|
+| PR / issue body | `<!-- li-agent-run: {"run_id":"…","agent_id":"…"} -->` |
+| Commit message | `Li-Agent-Run: <run_id>` + `Li-Agent-Id: <agent_id>` trailers |
+| Branch | `chore/agent-<agent_id>-<suffix>` |
+| PR labels | `li-swarm`, `agent:<agent_id>` |
+
+Query the dashboard: `GET /api/swarm/artifacts?run_id=…&branch=…&pr=li-demo#7`
+
+When opening issues (`issue_planner`), append the same HTML comment block to the issue body.
+
 ## PR body template (code-changing agents)
 
 ```markdown

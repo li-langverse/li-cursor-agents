@@ -1,6 +1,7 @@
 import { appendFileSync } from "node:fs";
 import type { AgentDefinition } from "../types.js";
 import type { AgentRunResult } from "../types.js";
+import { buildSwarmAttribution, type SwarmGitArtifact } from "../swarm/swarm-attribution.js";
 import { commitPushOpenPr, pushUnpublishedCommits } from "./pr.js";
 import type { CommitPushPrResult } from "./types.js";
 import {
@@ -12,6 +13,23 @@ import {
 export interface PostHookPushResult extends CommitPushPrResult {
   workspace: string;
   repo: string;
+  swarm_attribution?: SwarmGitArtifact;
+}
+
+function attributionForSession(
+  session: RepoWorkflowSession,
+  definition: AgentDefinition,
+  result: AgentRunResult,
+): SwarmGitArtifact {
+  return buildSwarmAttribution({
+    run_id: session.runId,
+    agent_id: definition.id,
+    repo: session.repo,
+    org: session.org,
+    branch: session.branch,
+    goal_id: result.runInput?.research_goal_id,
+    vertical: result.runInput?.research_vertical,
+  });
 }
 
 const IMPLEMENT_RHYTHM_AGENTS = new Set(["code_implementer", "bug_fixer"]);
@@ -26,6 +44,10 @@ export function shouldOpenPrAfterRun(agentId: string): boolean {
 
 export function formatPushDigest(push: PostHookPushResult): string {
   const lines = ["", "## Repo workflow push (post-hook)", ""];
+  if (push.swarm_attribution?.run_id) {
+    lines.push(`- **Swarm run:** \`${push.swarm_attribution.run_id}\` (\`${push.swarm_attribution.agent_id}\`)`);
+  }
+  if (push.commit_sha) lines.push(`- **Commit:** \`${push.commit_sha.slice(0, 12)}\``);
   if (push.pr_url) lines.push(`- **PR:** ${push.pr_url}`);
   if (push.pushed) lines.push(`- **Pushed:** \`${push.branch}\` → origin`);
   if (push.committed && !push.pushed) lines.push(`- **Committed locally** (push skipped)`);
@@ -93,12 +115,20 @@ export function commitPushOpenPrAfterAgentRun(
     };
   }
 
+  const swarmAttribution = attributionForSession(session, definition, result);
   const title =
     process.env.LI_REPO_WORKFLOW_PR_TITLE?.trim() ??
     `chore(${session.repo}): ${definition.name} automated update`;
   const body =
     process.env.LI_REPO_WORKFLOW_PR_BODY?.trim() ??
-    defaultPrBody(definition.id, result.reason);
+    defaultPrBody(
+      definition.id,
+      result.reason,
+      session.runId,
+      session.repo,
+      session.org,
+      session.branch,
+    );
 
   let push = commitPushOpenPr(session.cloneDir, {
     branch: session.branch,
@@ -111,6 +141,7 @@ export function commitPushOpenPrAfterAgentRun(
     dryRun,
     skipPush,
     openPr: shouldOpenPrAfterRun(definition.id),
+    swarmAttribution,
   });
 
   if (!skipPush && !push.pushed) {
@@ -126,6 +157,7 @@ export function commitPushOpenPrAfterAgentRun(
     ...push,
     workspace: session.cloneDir,
     repo: session.repo,
+    swarm_attribution: push.swarm_attribution ?? swarmAttribution,
   };
 }
 
@@ -145,17 +177,21 @@ export function applyPostHookToRunResult(
     }
   }
 
+  const swarmMeta = push.swarm_attribution;
   return {
     ...result,
     outputText,
+    swarmAttribution: swarmMeta,
     completion: result.completion
       ? {
           ...result.completion,
           pr_urls,
+          swarm_attribution: swarmMeta,
           evidence: [
             ...result.completion.evidence,
             ...(push.pushed ? ["post_hook_pushed"] : []),
             ...(push.committed ? ["post_hook_committed"] : []),
+            ...(swarmMeta ? ["swarm_attribution_stamped"] : []),
           ],
         }
       : result.completion,

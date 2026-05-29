@@ -49,6 +49,7 @@ import { loadRecentRunSummariesAsync } from "./control-plane/build-report.js";
 import { loadObserverState } from "./observer/state.js";
 import { scanSwarmHealth } from "./observer/swarm-health.js";
 import { buildSwarmStatistics } from "./control-plane/swarm-statistics.js";
+import { buildSwarmArtifactsIndex } from "./control-plane/swarm-artifacts.js";
 import { buildRunErrorsSummary } from "./control-plane/run-errors-summary.js";
 import { getResearchRunDetail, listResearchRuns } from "./control-plane/research-runs-api.js";
 import { defaultStatsRunLimit, parseStatsTimeRange } from "./control-plane/stats-time-range.js";
@@ -481,6 +482,21 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
       report,
       swarm: loadSwarmBriefingSnapshot(null),
     });
+    return;
+  }
+
+  if (url.pathname === "/api/swarm/artifacts" && req.method === "GET") {
+    const limit = Math.min(500, Math.max(1, Number(url.searchParams.get("limit") ?? 100)));
+    const scanLimit = Math.min(2000, Math.max(limit, 200));
+    const runs = await listRunsMerged(scanLimit);
+    const index = buildSwarmArtifactsIndex(runs, {
+      run_id: url.searchParams.get("run_id") ?? undefined,
+      agent_id: url.searchParams.get("agent_id") ?? undefined,
+      branch: url.searchParams.get("branch") ?? undefined,
+      pr: url.searchParams.get("pr") ?? undefined,
+      limit,
+    });
+    json(res, 200, index);
     return;
   }
 

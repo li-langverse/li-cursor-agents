@@ -21,8 +21,10 @@ export interface CommitPushPrResult {
   pushed: boolean;
   pr_url?: string;
   pr_number?: number;
+  commit_sha?: string;
   branch: string;
   error?: string;
+  swarm_attribution?: import("../swarm/swarm-attribution.js").SwarmGitArtifact;
 }
 
 export interface RepoWorkflowOptions {

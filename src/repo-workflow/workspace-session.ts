@@ -3,6 +3,11 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { agentsPackageRoot } from "../runner.js";
 import type { AgentDefinition, AgentId } from "../types.js";
+import {
+  branchNameForAgentRun,
+  buildSwarmAttribution,
+  defaultSwarmPrBody,
+} from "../swarm/swarm-attribution.js";
 import { defaultBranch, gitStatusPorcelain, runCmd } from "./git.js";
 import { prepareIsolatedClone } from "./workspace.js";
 import type { PrepareWorkspaceResult, RepoWorkflowOptions } from "./types.js";
@@ -113,7 +118,7 @@ export function beginRepoWorkflowSession(input: {
   const branchName =
     input.branchName ??
     process.env.LI_REPO_WORKFLOW_BRANCH?.trim() ??
-    `chore/agent-${input.agentId}-${runId.slice(-8)}`;
+    branchNameForAgentRun(input.agentId, runId);
   const dryRun = input.dryRun ?? false;
   const skipPush = input.skipPush ?? false;
   const useFixture =
@@ -181,17 +186,20 @@ export function workspaceHasChanges(session: RepoWorkflowSession): boolean {
   return Boolean(gitStatusPorcelain(session.cloneDir, session.dryRun).trim());
 }
 
-export function defaultPrBody(agentId: string, reason?: string): string {
-  return [
-    "<!-- li-agent -->",
-    "## Agent deliverable",
-    `- [x] Branch pushed by li-cursor-agents post-hook (\`${agentId}\`)`,
-    "- [x] CI triggered on PR",
-    reason ? `- **Task:** ${reason}` : "",
-    "- [ ] merge-approved (human after review)",
-    "",
-    "_Automated commit/push after agent run — review diff before merge._",
-  ]
-    .filter(Boolean)
-    .join("\n");
+export function defaultPrBody(
+  agentId: string,
+  reason?: string,
+  runId?: string,
+  repo?: string,
+  org?: string,
+  branch?: string,
+): string {
+  const attribution = buildSwarmAttribution({
+    run_id: runId ?? `${agentId}-unknown`,
+    agent_id: agentId,
+    repo,
+    org,
+    branch,
+  });
+  return defaultSwarmPrBody(agentId, attribution, reason);
 }
