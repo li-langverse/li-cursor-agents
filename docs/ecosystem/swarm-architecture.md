@@ -173,7 +173,7 @@ Retiring old units (data preserved): in `lic`, `./scripts/retire-goal-plan-loops
 
 Meta agents run on staggered intervals. `pickNextWorkForAgent` reads `GET /api/queue` and prefers work aligned with active research goals when available.
 
-Maintenance lane refreshes briefing and scorecards without LLM SDK slots.
+Maintenance lane refreshes briefing and scorecards without LLM SDK slots. **Runtime profiles** (full self-improvement vs research-only): [swarm-runtime-profiles.md](./swarm-runtime-profiles.md).
 
 ## Goal registry and API
 

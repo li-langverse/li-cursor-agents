@@ -3,6 +3,7 @@ import { workerConsole } from "../worker/worker-console.js";
 import { shouldUseMock } from "../runner.js";
 import { implementLaneIntervalMs, implementLaneTick } from "./implement-lane.js";
 import { maintenanceLaneIntervalMs, maintenanceLaneTick } from "./maintenance-lane.js";
+import { observerLaneIntervalMs, observerLaneTick } from "./observer-lane.js";
 import { loadLaneState, saveLaneState, type LaneStateFile } from "./lane-state.js";
 import { researchParallelEnabled } from "./research-parallel.js";
 import { researchLaneIntervalMs, researchLaneTick } from "./research-lane.js";
@@ -15,9 +16,11 @@ import {
 let researchAbort: AbortController | null = null;
 let implementAbort: AbortController | null = null;
 let maintenanceAbort: AbortController | null = null;
+let observerAbort: AbortController | null = null;
 let researchPromise: Promise<void> | null = null;
 let implementPromise: Promise<void> | null = null;
 let maintenancePromise: Promise<void> | null = null;
+let observerPromise: Promise<void> | null = null;
 
 export function laneRuntimeSnapshot(state: LaneStateFile = loadLaneState()) {
   return {
@@ -31,9 +34,11 @@ export function laneRuntimeSnapshot(state: LaneStateFile = loadLaneState()) {
     last_research_tick_at: state.last_research_tick_at ?? null,
     last_implement_tick_at: state.last_implement_tick_at ?? null,
     last_maintenance_tick_at: state.last_maintenance_tick_at ?? null,
+    observer_lane_running: observerAbort !== null && !observerAbort.signal.aborted,
     research_interval_ms: researchLaneIntervalMs(),
     implement_interval_ms: implementLaneIntervalMs(),
     maintenance_interval_ms: maintenanceLaneIntervalMs(),
+    observer_interval_ms: observerLaneIntervalMs(),
   };
 }
 
@@ -245,6 +250,57 @@ export function stopMaintenanceLaneLoop(): { stopped: boolean; message: string }
   }
   maintenanceAbort.abort();
   return { stopped: true, message: "maintenance lane stopping" };
+}
+
+async function observerLoop(abort: AbortSignal): Promise<void> {
+  const startupDelay = Number(process.env.LI_OBSERVER_STARTUP_DELAY_MS ?? 60_000);
+  if (startupDelay > 0) {
+    await sleepUntil(abort, startupDelay);
+  }
+  while (!abort.aborted) {
+    try {
+      const tick = await observerLaneTick();
+      const msg = tick.ok
+        ? `healthy=${tick.health?.healthy} spawned=${(tick.spawned ?? []).join(",") || "none"} findings=${tick.health?.findings.length ?? 0}`
+        : `skipped: ${tick.skip_reason}`;
+      agentLog("observer-lane", tick.ok ? "info" : "warn", msg);
+    } catch (err) {
+      agentLog(
+        "observer-lane",
+        "ERROR",
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+    await sleepUntil(abort, observerLaneIntervalMs());
+  }
+}
+
+export function startObserverLaneLoop(): { started: boolean; message: string } {
+  if (observerAbort && !observerAbort.signal.aborted) {
+    return { started: false, message: "observer lane already running" };
+  }
+  observerAbort = new AbortController();
+  observerPromise = observerLoop(observerAbort.signal)
+    .catch((err) => {
+      agentLog(
+        "observer-lane",
+        "ERROR",
+        `loop exited: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    })
+    .finally(() => {
+      observerAbort = null;
+      observerPromise = null;
+    });
+  return { started: true, message: "observer lane loop started" };
+}
+
+export function stopObserverLaneLoop(): { stopped: boolean; message: string } {
+  if (!observerAbort) {
+    return { stopped: false, message: "observer lane not running" };
+  }
+  observerAbort.abort();
+  return { stopped: true, message: "observer lane stopping" };
 }
 
 export function updateLaneFlags(patch: Partial<LaneStateFile>): LaneStateFile {
