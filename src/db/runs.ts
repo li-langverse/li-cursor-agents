@@ -191,6 +191,37 @@ export async function listRunsGlobal(limit = 80): Promise<AgentRunHistoryRow[]> 
   return listRunsGlobalInRange({ limit });
 }
 
+export interface ResearchGoalRunRow {
+  status: string;
+  error?: string | null;
+}
+
+/** Recent runs for one research goal (indexed filter — avoids global scan per worker). */
+export async function listRunsForResearchGoal(
+  goalId: string,
+  limit = 12,
+): Promise<ResearchGoalRunRow[]> {
+  if (!dbEnabled()) return [];
+
+  const max = Math.min(50, Math.max(1, limit));
+
+  return withSupabaseRetry("listRunsForResearchGoal", async () => {
+    const { data, error } = await getSupabase()
+      .from("agent_runs")
+      .select("status, error")
+      .neq("backend", "mock")
+      .filter("run_input->>research_goal_id", "eq", goalId)
+      .order("started_at", { ascending: false })
+      .limit(max);
+
+    if (error) throw new Error(`listRunsForResearchGoal: ${error.message}`);
+    return ((data ?? []) as ResearchGoalRunRow[]).map((row) => ({
+      status: String(row.status),
+      error: row.error ?? null,
+    }));
+  });
+}
+
 export interface ListRunsGlobalInRangeOptions {
   since?: Date | null;
   until?: Date | null;

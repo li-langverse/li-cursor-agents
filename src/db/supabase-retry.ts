@@ -1,10 +1,9 @@
-import { resetSupabaseClient } from "./client.js";
-
 const TRANSIENT_RE =
-  /fetch failed|ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|socket hang up|network|Failed to fetch|UND_ERR_CONNECT_TIMEOUT/i;
+  /fetch failed|ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|socket hang up|network|Failed to fetch|UND_ERR_CONNECT_TIMEOUT|terminated|aborted|\babort\b/i;
 
 export function isTransientSupabaseError(err: unknown): boolean {
   if (!err) return false;
+  if (err instanceof Error && err.name === "AbortError") return true;
   const msg = err instanceof Error ? err.message : String(err);
   if (TRANSIENT_RE.test(msg)) return true;
   const cause = err instanceof Error && "cause" in err ? (err as Error & { cause?: unknown }).cause : undefined;
@@ -34,7 +33,8 @@ export async function withSupabaseRetry<T>(
       if (!transient || i === attempts - 1) {
         throw err instanceof Error ? err : new Error(`${op}: ${String(err)}`);
       }
-      resetSupabaseClient();
+      // Do not reset the shared client mid-retry: concurrent in-flight PostgREST
+      // requests on the same singleton abort with TypeError("terminated").
       await sleep(baseDelayMs * 2 ** i);
     }
   }

@@ -1,7 +1,7 @@
 import { isStaleReconcileError } from "../db/reconcile-error-categories.js";
 import { dbEnabled } from "../db/client.js";
 import { isAsyncSwarmRunning } from "../async-swarm/async-swarm-state.js";
-import { listRunsMerged } from "../control-plane/runs-catalog.js";
+import { listRunsForResearchGoal } from "../db/runs.js";
 
 export interface ResearchGoalRunSample {
   status: string;
@@ -69,11 +69,7 @@ export async function recentRunsForResearchGoal(
   goalId: string,
   limit = 12,
 ): Promise<ResearchGoalRunSample[]> {
-  const merged = await listRunsMerged(Math.max(limit * 4, 80));
-  return merged
-    .filter((e) => e.run_input?.research_goal_id === goalId)
-    .slice(0, limit)
-    .map((e) => ({ status: e.status, error: e.error ?? null }));
+  return listRunsForResearchGoal(goalId, limit);
 }
 
 export async function researchGoalDispatchBlocked(

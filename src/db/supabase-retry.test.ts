@@ -9,7 +9,20 @@ test("normalizeSupabaseApiUrl maps localhost to 127.0.0.1", () => {
 
 test("isTransientSupabaseError detects fetch failed", () => {
   assert.equal(isTransientSupabaseError(new TypeError("fetch failed")), true);
+  assert.equal(isTransientSupabaseError(new TypeError("terminated")), true);
+  assert.equal(isTransientSupabaseError(Object.assign(new Error("aborted"), { name: "AbortError" })), true);
   assert.equal(isTransientSupabaseError(new Error("saveControlPlaneState: duplicate key")), false);
+});
+
+test("withSupabaseRetry retries TypeError terminated", async () => {
+  let calls = 0;
+  const result = await withSupabaseRetry("testOp", async () => {
+    calls++;
+    if (calls === 1) throw new TypeError("terminated");
+    return "ok";
+  }, { attempts: 3, baseDelayMs: 1 });
+  assert.equal(result, "ok");
+  assert.equal(calls, 2);
 });
 
 test("withSupabaseRetry succeeds after transient failure", async () => {
