@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **Cursor My Machines worker directories** — Windows worker scripts accept `-WorkerDir` / `CURSOR_WORKER_DIR`; docs show registering this PC as a selectable `majico` machine ([release note](docs/release-notes/2026-05-29-cursor-my-machines-worker-dir.md)).
 - **Goal-directed SDK loop** — `run-agent --goal` / `--goal-file` / `LI_AGENT_GOAL`; reusable `scripts/goal-directed-loop.sh` (any registry agent + goal text until done or `--max`).
 - **Parallel Cursor SDK sessions** — `LI_SDK_MAX_CONCURRENT` (default `4` in `env.defaults.sh`) with cross-process slot locks; re-entrant lock fixes lane + backend deadlock.
 - **Dashboard Start agents** — one button starts/stops continuous async swarm (`/api/async-swarm/start|stop`); work queue panel uses `GET /api/queue`.

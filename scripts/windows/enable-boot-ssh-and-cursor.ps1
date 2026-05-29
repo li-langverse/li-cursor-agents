@@ -7,6 +7,7 @@ param(
     [switch]$SkipSsh,
     [switch]$SkipCursorWorker,
     [string]$WorkerName = $(if ($env:CURSOR_WORKER_NAME) { $env:CURSOR_WORKER_NAME } else { $env:COMPUTERNAME }),
+    [string]$WorkerDir = $(if ($env:CURSOR_WORKER_DIR) { $env:CURSOR_WORKER_DIR } else { "" }),
     [string]$TaskName = "LiCursorMyMachinesWorker"
 )
 
@@ -24,6 +25,7 @@ if (-not $SkipSsh) {
     if (-not (Test-IsAdmin)) {
         Write-Host "Re-launching elevated for OpenSSH setup..."
         $arg = "-NoProfile -ExecutionPolicy Bypass -File `"$PSCommandPath`" -WorkerName `"$WorkerName`" -TaskName `"$TaskName`""
+        if ($WorkerDir) { $arg += " -WorkerDir `"$WorkerDir`"" }
         if ($SkipCursorWorker) { $arg += " -SkipCursorWorker" }
         Start-Process powershell.exe -Verb RunAs -ArgumentList $arg -Wait
         exit $LASTEXITCODE
@@ -66,6 +68,7 @@ if (-not $SkipCursorWorker) {
     }
 
     $taskArgs = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$WorkerScript`" -WorkerName `"$WorkerName`""
+    if ($WorkerDir) { $taskArgs += " -WorkerDir `"$WorkerDir`"" }
     $action = New-ScheduledTaskAction `
         -Execute "powershell.exe" `
         -Argument $taskArgs `
@@ -86,6 +89,7 @@ if (-not $SkipCursorWorker) {
 
     Write-Host "    Repo: $RepoRoot"
     Write-Host "    Worker name: $WorkerName"
+    if ($WorkerDir) { Write-Host "    Worker dir: $WorkerDir" }
     Write-Host "    Scheduled task: $TaskName (At logon)"
     Get-ScheduledTask -TaskName $TaskName | Format-Table TaskName, State -AutoSize
     Start-ScheduledTask -TaskName $TaskName

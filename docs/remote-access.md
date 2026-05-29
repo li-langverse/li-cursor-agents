@@ -76,6 +76,34 @@ cursor --folder-uri "vscode-remote://ssh-remote+li-ubuntu/home/julian/projects/l
 
 See `scripts/ssh/ssh-config.example` for `li-ubuntu` / `li-windows` host blocks.
 
+## Cursor Cloud Agents / My Machines
+
+Cursor-hosted cloud machines do **not** automatically include this PC. To make this PC selectable for a repo such as `majico`, run a local **My Machines** worker with a name that matches the environment you want to pick.
+
+Manual `majico` worker (replace the path with the actual checkout):
+
+```powershell
+agent login
+.\scripts\windows\start-cursor-worker.ps1 -WorkerName majico -WorkerDir "C:\Users\Julian\Documents\Programming\majico"
+```
+
+Start that worker at Windows logon:
+
+```powershell
+.\scripts\windows\enable-boot-ssh-and-cursor.ps1 `
+  -SkipSsh `
+  -WorkerName majico `
+  -WorkerDir "C:\Users\Julian\Documents\Programming\majico" `
+  -TaskName LiCursorMyMachinesWorkerMajico
+```
+
+Notes:
+
+- The worker appears in `cursor.com/agents` only for the same Cursor account/team that ran `agent login`.
+- Cursor routes jobs to the worker when the worker directory's git remote matches the target repo.
+- For Slack/GitHub/Linear triggers, use `worker=majico` or `machine=majico`.
+- Secrets and saved cloud environments still live in Cursor's UI; do not commit API keys.
+
 ## Troubleshooting
 
 | Symptom | Check |
