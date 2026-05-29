@@ -1,36 +1,81 @@
 {
-  "session_id": "00de0db9-7e21-4eb3-9b85-f2d5a80294e6",
+  "session_id": "cee09172-b61f-4f7b-84de-aae2d0e5972f",
   "agent_id": "stdlib_researcher",
   "goal_id": "stdlib_ecosystem",
   "cycle": 1,
   "status": "in_progress",
   "current_focus": {
-    "kind": "inventory_std_tree",
-    "target": "lic/std/**"
+    "kind": "synthesize_step",
+    "target": "cycle summary"
   },
-  "queue": [
+  "queue": [],
+  "hypotheses": [
+  {
+    "statement": "Prelude GEMM + packages/linalg LAPACK-class APIs can share one shape/proof story without duplicating ops in std/math.",
+    "status": "proposed"
+  }
+  ],
+  "completed_steps": [
     {
-      "kind": "audit_package",
-      "target": "li-std-core (sample)"
+      "id": "inventory_std_tree-1",
+      "summary": "Inventoried lic/std/** (25 modules, WP0-B stubs, seam/bytes evidence)",
+      "artifact": "lic/docs/ecosystem/stdlib-research/cycle-1-inventory-std-tree.md"
     },
     {
-      "kind": "gap_vs_sota",
-      "target": "linear algebra stdlibs"
-    },
-    {
-      "kind": "synthesize_step",
-      "target": "cycle summary"
+      "id": "gap_vs_sota-linalg-1",
+      "summary": "Linalg gap vs BLAS/LAPACK/NumPy; prelude vs std/math; AL-10 missing; tier-1 perf/proof gaps",
+      "artifact": "lic/docs/ecosystem/stdlib-research/cycle-1-gap-vs-sota-linalg.md"
     }
   ],
-  "hypotheses": [],
-  "completed_steps": [],
   "artifacts": {
-    "progress_md": "lic/docs/ecosystem/research-sessions/stdlib_ecosystem-cycle.md"
+    "progress_md": "lic/docs/ecosystem/research-sessions/stdlib_ecosystem-cycle.md",
+    "cycle_digest": "lic/docs/ecosystem/stdlib-research/cycle-1-gap-vs-sota-linalg.md",
+    "whitepaper": "research-findings/whitepapers/2026-05/stdlib_ecosystem/std-r0-cycle1-linalg-gap/README.md"
   },
-  "connections": [],
-  "deferred_findings": [],
-  "last_run_id": null,
-  "last_run_status": null,
+  "connections": [
+    {
+      "from": "prelude @ / dot",
+      "to": "compiler/mir ArrayDotF64 ArrayMatMul2DF64",
+      "kind": "lowering"
+    },
+    {
+      "from": "packages/li-math",
+      "to": "prelude @",
+      "kind": "import"
+    },
+    {
+      "from": "li-std-math",
+      "to": "packages/li-math",
+      "kind": "org_mirror"
+    },
+    {
+      "from": "lic/std/runtime/seam.li",
+      "to": "runtime/li_rt_net.c",
+      "kind": "trusted_extern"
+    },
+    {
+      "from": "lic/std/bytes",
+      "to": "packages/li-bytes",
+      "kind": "import"
+    },
+    {
+      "from": "lic/std/collections|heap|algorithms",
+      "to": "prelude list/dict",
+      "kind": "blocked_wp_wa"
+    },
+    {
+      "from": "packages/lig",
+      "to": "FFI matmul_f32",
+      "kind": "parallel_track"
+    }
+  ],
+  "deferred_findings": [
+    "ecosystem-explorer.json missing WP0-B modules in std_modules_on_disk",
+    "stdlib.md L51-53 stale vs on-disk collections/heap/algorithms",
+    "audit_package li-std-core deferred (version stub only)"
+  ],
+  "last_run_id": "stdlib_researcher-cee09172-linalg-gap",
+  "last_run_status": "completed_step",
   "created_at": "2026-05-19T19:37:34.335Z",
-  "updated_at": "2026-05-19T19:37:34.335Z"
+  "updated_at": "2026-05-28T21:00:00.000Z"
 }

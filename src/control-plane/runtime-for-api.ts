@@ -12,7 +12,16 @@ import { listRunningAgentRuns } from "../db/runs.js";
 import { loadWorkerStatusPeer, type WorkerStatusRow } from "../db/worker-status.js";
 
 let peerCache: { at: number; row: WorkerStatusRow | null } | null = null;
-const PEER_CACHE_MS = 2_000;
+const PEER_CACHE_MS = Number(process.env.LI_RUNTIME_PEER_CACHE_MS ?? 2_000);
+
+/** Tests and post-deploy refresh — drop stale peer rows cached while Supabase was down. */
+export function clearRuntimePeerCache(): void {
+  peerCache = null;
+}
+
+async function loadPeerForRuntimeApi(): Promise<WorkerStatusRow | null> {
+  return loadWorkerStatusPeer();
+}
 
 async function withEnrichedRuns<
   T extends {
@@ -36,7 +45,7 @@ async function withEnrichedRuns<
   };
 }
 
-/** Dashboard API runtime: in-process swarm, else latest peer heartbeat (systemd async-swarm / disk file). */
+/** Dashboard API runtime: in-process swarm, else latest peer heartbeat from Supabase `worker_status`. */
 export async function runtimeForApi(state: ControlPlaneState) {
   const local = runtimeSnapshot(state);
   const dbRunning = dbEnabled() ? await listRunningAgentRuns(30, { light: true }) : [];
@@ -54,7 +63,7 @@ export async function runtimeForApi(state: ControlPlaneState) {
 
   const now = Date.now();
   if (!peerCache || now - peerCache.at > PEER_CACHE_MS) {
-    peerCache = { at: now, row: await loadWorkerStatusPeer() };
+    peerCache = { at: now, row: await loadPeerForRuntimeApi() };
   }
   const peer = peerCache.row;
   if (!peer?.async_swarm_running) {

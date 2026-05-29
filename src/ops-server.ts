@@ -213,6 +213,15 @@ export function startOpsServer(port: number): ReturnType<typeof createServer> {
       }
     });
     startOpsBackgroundServices(currentApiState);
+    void import("./swarm/swarm-watchdog.js")
+      .then((m) => m.writeSwarmHealthSnapshot())
+      .catch((err) => {
+        agentLog(
+          "dashboard",
+          "warn",
+          `swarm-health snapshot: ${err instanceof Error ? err.message : err}`,
+        );
+      });
     agentLog("dashboard", "info", `Agent dashboard: http://${bindHost}:${p}/`);
     agentLog(
       "dashboard",

@@ -9,7 +9,8 @@ DATA_DIR="$ROOT/data/control-plane"
 LOG_DIR="$ROOT/logs"
 PORT="${LI_AGENT_DASHBOARD_PORT:-9477}"
 DASHBOARD_HOST="${LI_AGENT_DASHBOARD_HOST:-127.0.0.1}"
-SDK_MAX="${LI_SDK_MAX_CONCURRENT:-5}"
+SDK_MAX="${LI_SDK_MAX_CONCURRENT:-4}"
+SWARM_MAX="${LI_SWARM_MAX_PARALLEL:-4}"
 _store_cli="${LI_CONTROL_PLANE_STORE:-}"
 STORE="${_store_cli:-supabase}"
 if [[ -f "$ENV_FILE" && -z "$_store_cli" ]]; then
@@ -32,12 +33,14 @@ INSTALL_WATCHDOG=1
 INSTALL_ASYNC=1
 INSTALL_SWEEP=1
 INSTALL_HEALTH_REPORT=1
+INSTALL_RESEARCH_LANE=0
 for arg in "$@"; do
   case "$arg" in
     --no-watchdog) INSTALL_WATCHDOG=0 ;;
     --no-sweep) INSTALL_SWEEP=0 ;;
     --no-health-report) INSTALL_HEALTH_REPORT=0 ;;
     --dashboard-only) INSTALL_ASYNC=0 ;;
+    --research-lane) INSTALL_RESEARCH_LANE=1 ;;
     --lan) DASHBOARD_HOST="0.0.0.0" ;;
   esac
 done
@@ -59,7 +62,7 @@ Type=simple
 WorkingDirectory=$ROOT
 Environment=HOME=$HOME PATH=$SERVICE_PATH LI_CURSOR_ENV_FILE=$ENV_FILE LI_CURSOR_AGENTS_ROOT=$ROOT
 Environment=NODE_BIN=$NODE_BIN LI_AGENT_DASHBOARD_PORT=$PORT LI_AGENT_DASHBOARD_HOST=$DASHBOARD_HOST LI_CONTROL_PLANE_STORE=$STORE
-Environment=LI_SDK_MAX_CONCURRENT=$SDK_MAX LI_AUTO_START_ASYNC_SWARM=${DASHBOARD_AUTO_SWARM} LI_SWARM_DETACHED=1 LI_SWARM_EXTERNAL=${DASHBOARD_EXTERNAL_SWARM} LI_AUTO_START_SUPERVISOR=0
+Environment=LI_SDK_MAX_CONCURRENT=$SDK_MAX LI_SWARM_MAX_PARALLEL=$SWARM_MAX LI_AUTO_START_ASYNC_SWARM=${DASHBOARD_AUTO_SWARM} LI_SWARM_DETACHED=1 LI_SWARM_EXTERNAL=${DASHBOARD_EXTERNAL_SWARM} LI_AUTO_START_SUPERVISOR=0
 ExecStart=$ROOT/scripts/agents-dashboard-systemd.sh
 Restart=always
 RestartSec=30
@@ -77,13 +80,34 @@ After=network-online.target
 Type=simple
 WorkingDirectory=$ROOT
 Environment=HOME=$HOME PATH=$SERVICE_PATH LI_CURSOR_ENV_FILE=$ENV_FILE LI_CURSOR_AGENTS_ROOT=$ROOT
-Environment=NODE_BIN=$NODE_BIN LI_CONTROL_PLANE_STORE=$STORE LI_SDK_MAX_CONCURRENT=$SDK_MAX
+Environment=NODE_BIN=$NODE_BIN LI_CONTROL_PLANE_STORE=$STORE LI_SDK_MAX_CONCURRENT=$SDK_MAX LI_SWARM_MAX_PARALLEL=$SWARM_MAX
 Environment=LI_AUTO_START_ASYNC_SWARM=1 LI_SWARM_DETACHED=0
 ExecStart=$ROOT/scripts/agents-async-swarm-systemd.sh
 Restart=on-failure
 RestartSec=60
 StandardOutput=append:${LOG_DIR}/agents-async-swarm-systemd.log
 StandardError=append:${LOG_DIR}/agents-async-swarm-systemd.log
+[Install]
+WantedBy=default.target
+EOF
+fi
+if [[ "$INSTALL_RESEARCH_LANE" == "1" ]]; then
+  cat >"$SERVICE_DIR/li-agents-research-lane.service" <<EOF
+[Unit]
+Description=Li agents research lane (rotation only)
+After=network-online.target
+[Service]
+Type=simple
+WorkingDirectory=$ROOT
+Environment=HOME=$HOME PATH=$SERVICE_PATH LI_CURSOR_ENV_FILE=$ENV_FILE LI_CURSOR_AGENTS_ROOT=$ROOT
+Environment=NODE_BIN=$NODE_BIN LI_CONTROL_PLANE_STORE=$STORE LI_SDK_MAX_CONCURRENT=$SDK_MAX LI_SWARM_MAX_PARALLEL=$SWARM_MAX
+Environment=LI_RESEARCH_LANE_ENABLED=1 LI_IMPLEMENT_LANE_ENABLED=0 LI_MAINTENANCE_LANE_ENABLED=0
+Environment=LI_SWARM_PAUSE_WORKERS=1 LI_OBSERVER_DISABLE=1 LI_SWARM_GAP_INGEST_DISABLE=1
+ExecStart=$NODE_BIN $ROOT/dist/cli/research-lane.js
+Restart=always
+RestartSec=30
+StandardOutput=append:${LOG_DIR}/agents-research-lane-systemd.log
+StandardError=append:${LOG_DIR}/agents-research-lane-systemd.log
 [Install]
 WantedBy=default.target
 EOF
@@ -112,7 +136,7 @@ if [[ "$INSTALL_SWEEP" == "1" ]]; then
 Type=oneshot
 WorkingDirectory=$ROOT
 Environment=HOME=$HOME PATH=$SERVICE_PATH LI_CURSOR_ENV_FILE=$ENV_FILE LI_CURSOR_AGENTS_ROOT=$ROOT
-Environment=NODE_BIN=$NODE_BIN LI_CONTROL_PLANE_STORE=$STORE LI_SDK_MAX_CONCURRENT=$SDK_MAX
+Environment=NODE_BIN=$NODE_BIN LI_CONTROL_PLANE_STORE=$STORE LI_SDK_MAX_CONCURRENT=$SDK_MAX LI_SWARM_MAX_PARALLEL=$SWARM_MAX
 ExecStart=$ROOT/scripts/sweep-hung-agents.sh --apply
 EOF
   cat >"$SERVICE_DIR/li-agents-sweep.timer" <<EOF
@@ -133,6 +157,7 @@ if command -v lsof >/dev/null 2>&1; then
 fi
 systemctl --user enable --now li-agents-dashboard.service
 [[ "$INSTALL_ASYNC" == "1" ]] && systemctl --user enable li-agents-async-swarm.service
+[[ "$INSTALL_RESEARCH_LANE" == "1" ]] && systemctl --user enable --now li-agents-research-lane.service
 [[ "$INSTALL_WATCHDOG" == "1" ]] && systemctl --user enable --now li-agents-swarm-watchdog.timer
 [[ "$INSTALL_SWEEP" == "1" ]] && systemctl --user enable --now li-agents-sweep.timer
 if [[ "$INSTALL_HEALTH_REPORT" == "1" ]]; then

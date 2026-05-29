@@ -22,7 +22,11 @@ export async function collectSwarmInfrastructureHealth(): Promise<SwarmInfrastru
     written_at: new Date().toISOString(),
     disable_autostart: isDisableAutostartSet(),
     async_swarm: {
-      process_active: isAsyncSwarmRunning(),
+      process_active:
+        isAsyncSwarmRunning() ||
+        isDetachedSwarmChildRunning() ||
+        asyncState === "active" ||
+        asyncState === "activating",
       detached_child_active: isDetachedSwarmChildRunning(),
       systemd_dashboard: dashboardState === "not-found" ? null : dashboardState,
       systemd_async_swarm: asyncState === "not-found" ? null : asyncState,

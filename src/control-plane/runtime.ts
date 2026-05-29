@@ -30,7 +30,9 @@ import {
 import { allocateRunId } from "./run-paths.js";
 import { handoffRunStatus } from "../lanes/handoff-run-coordinator.js";
 import { runHandoffPhasedSwarm } from "../lanes/run-handoff-phases.js";
+import { clampSwarmParallel } from "../config/swarm-concurrency.js";
 import { resolveSpawnWorkflowRepo } from "../handoffs/resolve-spawn-workflow-repo.js";
+import { runWithConcurrencyLimit, swarmMaxParallelFromEnv } from "./parallel-pool.js";
 
 const activeRuns = new Map<string, ActiveAgentRun>();
 const childByRunId = new Map<string, ChildProcess>();
@@ -46,7 +48,7 @@ export function defaultSupervisorOptions(overrides?: Partial<SupervisorOptions>)
     forceFirstTick: true,
     intervalMs: Number(process.env.LI_SUPERVISOR_INTERVAL_MS ?? 120_000),
     cooldownMs: Number(process.env.LI_AGENTS_COOLDOWN_MS ?? 300_000),
-    maxTasksPerTick: Number(process.env.LI_SUPERVISOR_MAX_TASKS ?? 3),
+    maxTasksPerTick: clampSwarmParallel(Number(process.env.LI_SUPERVISOR_MAX_TASKS ?? 3)),
     benchmarksRoot: resolveBenchmarksRoot(),
     skipSlowPreflight: false,
     ...overrides,
@@ -423,18 +425,22 @@ export async function runAllAgentsNow(): Promise<{
 
   const spawned: ActiveAgentRun[] = [];
   const skipped: Array<{ agent: AgentId; reason: string }> = [];
-
-  for (const agentId of agentIds) {
+  const toSpawn = [...agentIds].filter((agentId) => {
     if (stopped.has(agentId)) {
       skipped.push({ agent: agentId, reason: "stopped" });
-      continue;
+      return false;
     }
+    return true;
+  });
+  const maxParallel = swarmMaxParallelFromEnv();
+
+  await runWithConcurrencyLimit(toSpawn, maxParallel, async (agentId) => {
     const workflowRepo =
       agentId === "code_implementer" ? await resolveSpawnWorkflowRepo(agentId) : undefined;
     const result = spawnAgentRun(agentId, "swarm run-all", { workflowRepo });
     if (result.ok) spawned.push(result.run);
     else skipped.push({ agent: agentId, reason: result.error });
-  }
+  });
 
   return { spawned, skipped };
 }

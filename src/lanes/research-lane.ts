@@ -6,11 +6,14 @@ import {
 import { agentsPackageRoot, runAgent, shouldUseMock } from "../runner.js";
 import { resolveBenchmarksRoot, runPreflight } from "../preflight.js";
 import {
+  eligibleGoals,
   loadResearchGoals,
-  pickNextGoal,
-  pickNextGoalForAgent,
   resolveGoalAgent,
 } from "../research-goals/load-goals.js";
+import {
+  researchGoalDispatchBlocked,
+  researchLaneInfraBlocked,
+} from "./research-goal-circuit-breaker.js";
 import { loadResearchSession } from "../research-sessions/session-store.js";
 import {
   agentUsesResearchSession,
@@ -58,13 +61,38 @@ function buildResearchWorkTarget(
   return { agentId, goal, session, extra, factoryContext };
 }
 
+async function pickNextUnblockedGoalForAgent(
+  agentId: AgentId,
+  options?: { force?: boolean },
+): Promise<ResearchGoal | null> {
+  const state = loadLaneState();
+  const candidates = eligibleGoals(
+    loadResearchGoals().filter((g) => resolveGoalAgent(g) === agentId),
+    state.goal_last_run_at,
+    Date.now(),
+  );
+  for (const goal of candidates) {
+    const block = await researchGoalDispatchBlocked(goal.id, options);
+    if (!block.blocked) return goal;
+  }
+  return null;
+}
+
 /** Work for one research agent only (used by parallel per-agent workers). */
 export async function pickResearchWorkForAgent(
   agentId: AgentId,
+  options?: { force?: boolean },
 ): Promise<ResearchWorkTarget | null> {
+  const infra = researchLaneInfraBlocked(options);
+  if (infra.blocked) return null;
+
   if (agentUsesResearchSession(agentId)) {
     const session = await loadResearchSession(agentId);
     if (session?.status === "in_progress") {
+      if (session.goal_id) {
+        const block = await researchGoalDispatchBlocked(session.goal_id, options);
+        if (block.blocked) return null;
+      }
       const goal = session.goal_id ? findResearchGoalById(session.goal_id) : undefined;
       const factoryContext = resolveResearchFactoryContextForSession(session);
       const extra = goal
@@ -90,8 +118,7 @@ export async function pickResearchWorkForAgent(
     );
   }
 
-  const state = loadLaneState();
-  const goal = pickNextGoalForAgent(agentId, loadResearchGoals(), state.goal_last_run_at);
+  const goal = await pickNextUnblockedGoalForAgent(agentId, options);
   if (!goal) return null;
 
   if (!goal.uses_research_session && !agentUsesResearchSession(agentId)) {
@@ -118,9 +145,16 @@ export async function pickResearchWorkForAgent(
   );
 }
 
-export async function pickResearchLaneTarget(): Promise<ResearchWorkTarget | null> {
+export async function pickResearchLaneTarget(options?: { force?: boolean }): Promise<ResearchWorkTarget | null> {
+  const infra = researchLaneInfraBlocked(options);
+  if (infra.blocked) return null;
+
   const resumed = await findAnyInProgressSession();
   if (resumed) {
+    if (resumed.goal_id) {
+      const block = await researchGoalDispatchBlocked(resumed.goal_id, options);
+      if (block.blocked) return null;
+    }
     const agentId = resumed.agent_id as AgentId;
     const goal = resumed.goal_id ? findResearchGoalById(resumed.goal_id) : undefined;
     const factoryContext = resolveResearchFactoryContextForSession(resumed);
@@ -134,11 +168,13 @@ export async function pickResearchLaneTarget(): Promise<ResearchWorkTarget | nul
   }
 
   const state = loadLaneState();
-  const goal = pickNextGoal(loadResearchGoals(), state.goal_last_run_at);
-  if (!goal) return null;
-
-  const agentId = resolveGoalAgent(goal);
-  return pickResearchWorkForAgent(agentId);
+  for (const goal of eligibleGoals(loadResearchGoals(), state.goal_last_run_at, Date.now())) {
+    const block = await researchGoalDispatchBlocked(goal.id, options);
+    if (block.blocked) continue;
+    const agentId = resolveGoalAgent(goal);
+    return pickResearchWorkForAgent(agentId, options);
+  }
+  return null;
 }
 
 export interface ResearchAgentCycleResult {
@@ -152,14 +188,23 @@ export interface ResearchAgentCycleResult {
 /** One research-agent cycle (parallel pool) — same runAgent path as lane tick. */
 export async function researchAgentWorkerCycle(
   agentId: AgentId,
-  options?: { mock?: boolean; dryRun?: boolean; benchmarksRoot?: string },
+  options?: {
+    mock?: boolean;
+    dryRun?: boolean;
+    benchmarksRoot?: string;
+    force?: boolean;
+  },
 ): Promise<ResearchAgentCycleResult> {
   const laneState = loadLaneState();
-  if (!laneState.research_lane_enabled) {
+  if (!options?.force && !laneState.research_lane_enabled) {
     return { skipped: true, skip_reason: "research lane disabled", agentId };
   }
-  if (isHandoffRunInProgress()) {
+  if (!options?.force && isHandoffRunInProgress()) {
     return { skipped: true, skip_reason: "handoff run-all in progress", agentId };
+  }
+  const infra = researchLaneInfraBlocked({ force: options?.force });
+  if (infra.blocked) {
+    return { skipped: true, skip_reason: infra.reason ?? "research infra blocked", agentId };
   }
   if (!sdkSlotLikelyAvailable()) {
     return {
@@ -169,7 +214,7 @@ export async function researchAgentWorkerCycle(
     };
   }
 
-  const target = await pickResearchWorkForAgent(agentId);
+  const target = await pickResearchWorkForAgent(agentId, { force: options?.force });
   if (!target) {
     return { skipped: true, skip_reason: "no eligible goal or session for agent", agentId };
   }
@@ -230,7 +275,12 @@ export async function researchLaneTick(options?: {
     return { skipped: true, skip_reason: "handoff run-all in progress" };
   }
 
-  const target = await pickResearchLaneTarget();
+  const infra = researchLaneInfraBlocked({ force: options?.force });
+  if (infra.blocked) {
+    return { skipped: true, skip_reason: infra.reason ?? "research infra blocked" };
+  }
+
+  const target = await pickResearchLaneTarget({ force: options?.force });
   if (!target) {
     return { skipped: true, skip_reason: "no eligible research goal or session" };
   }

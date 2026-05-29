@@ -10,7 +10,9 @@ import {
   spawnDetachedAsyncSwarm,
 } from "../swarm/detached-swarm-process.js";
 import { workerConsole } from "./worker-console.js";
-import { reconcileStaleRunningAgentRuns } from "../db/reconcile-stale-runs.js";
+import { reconcileStaleRunningAgentRuns, reconcileUnregisteredRunningAgentRuns } from "../db/reconcile-stale-runs.js";
+import { writeSwarmHealthSnapshot } from "../swarm/swarm-watchdog.js";
+import { systemctlUserIsActive } from "../swarm/systemd-probe.js";
 import { flushWorkerHeartbeat } from "./heartbeat-loop.js";
 
 function swarmActiveOnThisHost(): boolean {
@@ -34,6 +36,43 @@ export function shouldResumeAsyncSwarmAfterRestart(input: {
   return input.envAutoStart || input.workerAsyncSwarmRunning;
 }
 
+const ASYNC_SWARM_UNIT = "li-agents-async-swarm.service";
+
+async function systemdAsyncSwarmActive(): Promise<boolean> {
+  try {
+    const state = await systemctlUserIsActive(ASYNC_SWARM_UNIT);
+    return state === "active" || state === "activating";
+  } catch {
+    return false;
+  }
+}
+
+async function reconcileRunningAgentRunsOnBoot(): Promise<void> {
+  if (!dbEnabled()) return;
+  try {
+    const n = await reconcileStaleRunningAgentRuns();
+    if (n > 0) {
+      workerConsole("reconcile", "info", `marked ${n} stale agent_runs as error`);
+    }
+    const worker = await loadWorkerStatusFromDb();
+    const registeredIds = (worker?.active_runs ?? [])
+      .filter((r) => r.status === "running")
+      .map((r) => r.run_id);
+    const forceUnregistered =
+      (await systemdAsyncSwarmActive()) || swarmActiveOnThisHost();
+    const u = await reconcileUnregisteredRunningAgentRuns(registeredIds, {
+      worker,
+      force: forceUnregistered,
+    });
+    if (u > 0) {
+      workerConsole("reconcile", "info", `marked ${u} unregistered agent_runs as error`);
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    workerConsole("reconcile", "warn", `stale run reconcile skipped: ${msg}`);
+  }
+}
+
 /**
  * After worker restart, in-memory swarm is off but Supabase worker_status may still say on.
  * Resume workers when DB says swarm was running, or when LI_AUTO_START_ASYNC_SWARM=1.
@@ -41,17 +80,11 @@ export function shouldResumeAsyncSwarmAfterRestart(input: {
  */
 export async function reconcileSwarmAfterStartup(): Promise<void> {
   const state = loadState();
-  if (dbEnabled()) {
-    try {
-      const n = await reconcileStaleRunningAgentRuns();
-      if (n > 0) {
-        workerConsole("reconcile", "info", `marked ${n} stale agent_runs as error`);
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      workerConsole("reconcile", "warn", `stale run reconcile skipped: ${msg}`);
-    }
-  }
+  await reconcileRunningAgentRunsOnBoot();
+  void writeSwarmHealthSnapshot().catch((err) => {
+    const msg = err instanceof Error ? err.message : String(err);
+    workerConsole("reconcile", "warn", `swarm-health snapshot skipped: ${msg}`);
+  });
   workerConsole(
     "reconcile",
     "info",

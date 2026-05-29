@@ -2,6 +2,7 @@ import { agentLog } from "../agent-log.js";
 import { isAsyncSwarmRunning, startAsyncSwarm } from "../async-swarm/async-swarm-runtime.js";
 import { dbEnabled } from "../db/client.js";
 import { loadWorkerStatusFromDb, saveWorkerStatusToDb } from "../db/worker-status.js";
+import { systemctlUserIsActive } from "./systemd-probe.js";
 import { workerConsole } from "../worker/worker-console.js";
 import {
   detachedSwarmEnabled,
@@ -22,8 +23,31 @@ function swarmActiveOnThisHost(): boolean {
   return isAsyncSwarmRunning() || isDetachedSwarmChildRunning();
 }
 
-export async function markDetachedSwarmStopped(reason: string): Promise<void> {
+const ASYNC_SWARM_SYSTEMD_UNIT = "li-agents-async-swarm.service";
+
+async function systemdAsyncSwarmUnitActive(): Promise<boolean> {
+  try {
+    const state = await systemctlUserIsActive(ASYNC_SWARM_SYSTEMD_UNIT);
+    return state === "active" || state === "activating";
+  } catch {
+    return false;
+  }
+}
+
+export async function markDetachedSwarmStopped(
+  reason: string,
+  deps?: { systemdUnitActive?: () => Promise<boolean> },
+): Promise<void> {
   if (!dbEnabled()) return;
+  const unitActive = deps?.systemdUnitActive ?? systemdAsyncSwarmUnitActive;
+  if (await unitActive()) {
+    workerConsole(
+      "watchdog",
+      "info",
+      `skip markDetachedSwarmStopped (${reason}): ${ASYNC_SWARM_SYSTEMD_UNIT} is active`,
+    );
+    return;
+  }
   try {
     const worker = await loadWorkerStatusFromDb();
     if (!worker?.async_swarm_running) return;

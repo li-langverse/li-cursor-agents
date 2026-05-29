@@ -1,8 +1,9 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import type { ActiveAgentRun } from "../control-plane/types.js";
-import { workerStatusPath } from "../control-plane/paths.js";
 import { dbEnabled, getSupabase } from "./client.js";
+import { applyAsyncSwarmWriterGuard } from "./worker-status-merge.js";
 import { withSupabaseRetry } from "./supabase-retry.js";
+
+export { applyAsyncSwarmWriterGuard } from "./worker-status-merge.js";
 
 export interface WorkerStatusRow {
   supervisor_loop_running: boolean;
@@ -36,59 +37,26 @@ const DEFAULT_WORKER_STATUS: WorkerStatusRow = {
   updated_at: new Date(0).toISOString(),
 };
 
-export function loadWorkerStatusFromDisk(): WorkerStatusRow | null {
-  const path = workerStatusPath();
-  if (!existsSync(path)) return null;
-  try {
-    const raw = JSON.parse(readFileSync(path, "utf8")) as Partial<WorkerStatusRow>;
-    return {
-      ...DEFAULT_WORKER_STATUS,
-      ...raw,
-      supervisor_loop_running: Boolean(raw.supervisor_loop_running),
-      async_swarm_running: Boolean(raw.async_swarm_running),
-      research_lane_running: Boolean(raw.research_lane_running),
-      implement_lane_running: Boolean(raw.implement_lane_running),
-      maintenance_lane_running: Boolean(raw.maintenance_lane_running),
-      sdk_ready: Boolean(raw.sdk_ready),
-      active_runs: (raw.active_runs as ActiveAgentRun[]) ?? [],
-      handoff_run: (raw.handoff_run as Record<string, unknown> | null) ?? null,
-      updated_at: String(raw.updated_at ?? new Date().toISOString()),
-    };
-  } catch {
-    return null;
-  }
-}
-
-function saveWorkerStatusToDisk(row: Partial<WorkerStatusRow>): void {
-  const path = workerStatusPath();
-  const prev = loadWorkerStatusFromDisk() ?? defaultWorkerStatus();
-  writeFileSync(
-    path,
-    JSON.stringify({ ...prev, ...row, updated_at: new Date().toISOString() }, null, 2) + "\n",
-    "utf8",
-  );
-}
-
 const PEER_DB_TIMEOUT_MS = Number(process.env.LI_SUPABASE_PEER_TIMEOUT_MS ?? 3_000);
 
-/** Supabase when configured; otherwise JSON under data/control-plane/. */
+/** Latest `worker_status` row from Supabase (sole source of truth for peer processes). */
 export async function loadWorkerStatusPeer(): Promise<WorkerStatusRow | null> {
-  if (!dbEnabled()) return loadWorkerStatusFromDisk();
+  if (!dbEnabled()) return null;
+
   try {
-    const row = await Promise.race([
+    return await Promise.race([
       loadWorkerStatusFromDb(),
       new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error("loadWorkerStatusPeer timeout")), PEER_DB_TIMEOUT_MS);
       }),
     ]);
-    return row;
   } catch {
-    return loadWorkerStatusFromDisk();
+    return null;
   }
 }
 
 export async function loadWorkerStatusFromDb(): Promise<WorkerStatusRow | null> {
-  if (!dbEnabled()) return loadWorkerStatusFromDisk();
+  if (!dbEnabled()) return null;
 
   return withSupabaseRetry("loadWorkerStatus", async () => {
     const { data, error } = await getSupabase()
@@ -118,21 +86,37 @@ export async function loadWorkerStatusFromDb(): Promise<WorkerStatusRow | null> 
   });
 }
 
-export async function saveWorkerStatusToDb(row: Partial<WorkerStatusRow>): Promise<void> {
-  // Always mirror for split dashboard (disk) + async-swarm (supabase) systemd layout.
-  saveWorkerStatusToDisk(row);
+export interface SaveWorkerStatusOptions {
+  /** When true, never persist async_swarm_running=false (live async-swarm process). */
+  writerSwarmAlive?: boolean;
+}
+
+export async function saveWorkerStatusToDb(
+  row: Partial<WorkerStatusRow>,
+  options?: SaveWorkerStatusOptions,
+): Promise<void> {
   if (!dbEnabled()) return;
+
+  const updatedAt = new Date().toISOString();
+  const patch = applyAsyncSwarmWriterGuard(row, Boolean(options?.writerSwarmAlive));
+  const payload = { ...patch, updated_at: updatedAt };
 
   await withSupabaseRetry("saveWorkerStatus", async () => {
     const { error } = await getSupabase()
       .from("worker_status")
       .upsert({
         id: 1,
-        ...row,
-        updated_at: new Date().toISOString(),
+        ...payload,
       });
     if (error) throw new Error(`saveWorkerStatus: ${error.message}`);
   });
+
+  if (patch.async_swarm_running === true) {
+    const readBack = await loadWorkerStatusFromDb();
+    if (readBack && !readBack.async_swarm_running) {
+      throw new Error("saveWorkerStatus: read-back async_swarm_running still false");
+    }
+  }
 }
 
 export function defaultWorkerStatus(): WorkerStatusRow {

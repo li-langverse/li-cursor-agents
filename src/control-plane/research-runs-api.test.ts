@@ -22,6 +22,10 @@ test("RESEARCH_DASHBOARD_AGENT_IDS includes core researchers", () => {
 
 test("researchErrorCategory normalizes known errors", () => {
   assert.equal(researchErrorCategory("stale_running_reconciled"), "stale_running_reconciled");
+  assert.equal(
+    researchErrorCategory("unregistered_running_reconciled"),
+    "unregistered_running_reconciled",
+  );
   assert.equal(researchErrorCategory("sdk-session.lock timeout"), "sdk_slot_timeout");
   assert.equal(researchErrorCategory(""), null);
 });

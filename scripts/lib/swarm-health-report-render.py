@@ -21,7 +21,16 @@ RESEARCH_AGENT_IDS = frozenset(
     }
 )
 META_AGENT_IDS = ("swarm_observer", "ecosystem_grader")
-STALE_CATEGORY = "stale_running_reconciled"
+STALE_RECONCILE_CATEGORIES = frozenset(
+    {
+        "stale_running_reconciled",
+        "unregistered_running_reconciled",
+    }
+)
+
+
+def is_stale_reconcile_category(category: str | None) -> bool:
+    return (category or "").strip() in STALE_RECONCILE_CATEGORIES
 SUCCESS_STATUSES = frozenset({"finished", "completed"})
 
 
@@ -80,13 +89,17 @@ def error_split(errors: dict[str, Any] | None) -> tuple[int, int, int, list[dict
         cats = errors.get("categories") or []
         for c in cats:
             n = int(c.get("count") or 0)
-            if c.get("category") == STALE_CATEGORY:
+            if is_stale_reconcile_category(c.get("category")):
                 stale += n
             else:
                 real += n
         if total == 0:
             total = stale + real
-    real_cats = [c for c in (errors.get("categories") or []) if c.get("category") != STALE_CATEGORY]
+    real_cats = [
+        c
+        for c in (errors.get("categories") or [])
+        if not is_stale_reconcile_category(c.get("category"))
+    ]
     real_cats.sort(key=lambda c: (-int(c.get("count") or 0), c.get("category") or ""))
     return total, stale, real, real_cats[:3]
 
@@ -101,11 +114,11 @@ def research_productivity(research: dict[str, Any] | None, runs: dict[str, Any] 
         if st in SUCCESS_STATUSES:
             finished += 1
         elif st == "error":
-            if STALE_CATEGORY in str(cat):
+            if is_stale_reconcile_category(str(cat)):
                 stale += 1
             else:
                 error += 1
-        elif STALE_CATEGORY in str(cat):
+        elif is_stale_reconcile_category(str(cat)):
             stale += 1
         if r.get("goal_id") or r.get("vertical"):
             with_goal += 1

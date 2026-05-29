@@ -3,6 +3,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import { existsSync, mkdirSync, readFileSync, statSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { sdkMaxConcurrentFromEnv } from "../config/swarm-concurrency.js";
 import { controlPlaneRoot } from "../control-plane/paths.js";
 
 const lockDepth = new AsyncLocalStorage<number>();
@@ -22,11 +23,9 @@ function locksDir(): string {
   return dir;
 }
 
-/** Max simultaneous SDK sessions (in-process + cross-process slots). Default 1. */
+/** Max simultaneous SDK sessions (in-process + cross-process slots). Default 4, hard cap 4. */
 export function sdkMaxConcurrent(): number {
-  const n = Number(process.env.LI_SDK_MAX_CONCURRENT ?? 1);
-  if (!Number.isFinite(n) || n < 1) return 1;
-  return Math.min(16, Math.floor(n));
+  return sdkMaxConcurrentFromEnv();
 }
 
 export function sdkSlotMaxWaitMs(): number {

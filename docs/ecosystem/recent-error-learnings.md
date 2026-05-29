@@ -22,6 +22,7 @@ See [concurrent-runs-troubleshooting.md](./concurrent-runs-troubleshooting.md).
 | Category | Pattern | Likely cause | Action |
 |----------|---------|--------------|--------|
 | `stale_running_reconciled` | High count, many agents, same minute `finished_at` | Dashboard/swarm SIGTERM or crash; reconcile on restart | Normal after incident; check `active_run_count` vs slots, not raw error row count |
+| `unregistered_running_reconciled` | Same pattern, often while `async_swarm_running` is false | DB `running` rows not in worker heartbeat; boot reconcile | Same as stale — bookkeeping; research lane circuit breaker pauses the goal after a streak |
 | `sdk_slot_timeout` | `sdk-session.lock: timeout` | All 5 slots held (long runs or orphan swarm) | `sweep-hung-agents.sh --apply`; one `li-agents-async-swarm` unit |
 | `(no error message)` | `status=error`, empty `error` | Legacy or interrupted persist | Inspect `run_id` via `/api/runs/:id` |
 | Agent-specific | Unique string per agent | Task/tool failure | Fix agent prompt or deps |
