@@ -231,7 +231,9 @@ Every supervisor tick runs a **programmatic observer** before dispatch:
 
 Humans see **`swarm_degraded`** only when auto-heal is exhausted (e.g. missing API key, stuck supervisor). Dashboard: `GET /api/swarm/health`. Meta prompt: `prompts/swarm-observer.md`.
 
-Env: `LI_OBSERVER_MAX_RETRIES_PER_AGENT`, `LI_OBSERVER_MAX_REMEDIATIONS_PER_TICK`, `LI_OBSERVER_STALE_AGENT_MS`.
+Env: `LI_OBSERVER_MAX_RETRIES_PER_AGENT`, `LI_OBSERVER_MAX_REMEDIATIONS_PER_TICK`, `LI_OBSERVER_STALE_AGENT_MS`, `LI_OBSERVER_BRIEFING_STALE_MS` (default 6h), `LI_OBSERVER_HANDOFF_BACKLOG_THRESHOLD` (default 4).
+
+`GET /api/swarm/health` returns `swarm_degraded`, `degraded_reasons`, `failure_classes`, and `observer_retry_counts` for the dashboard.
 
 **Dashboard → Settings** edits all runtime knobs (supervisor, observer, SDK, local CI, lanes, …). Values persist to `data/control-plane/runtime-settings.json` and apply immediately to the running ops server (restart only for port / store).
 

@@ -6,7 +6,11 @@ export type SwarmFindingKind =
   | "sdk_unavailable"
   | "supervisor_stale"
   | "goal_mismatch"
-  | "retry_budget_exhausted";
+  | "retry_budget_exhausted"
+  | "briefing_stale"
+  | "preflight_failed"
+  | "handoffs_backlog"
+  | "run_failure_pattern";
 
 export type SwarmFindingSeverity = "critical" | "high" | "medium" | "low";
 
@@ -44,6 +48,11 @@ export interface SwarmHealthReport {
   runs_sampled: number;
   error_rate: number;
   needs_meta_observer: boolean;
+  /** True when auto-heal is exhausted (matches supervisor swarm_degraded intervention). */
+  swarm_degraded?: boolean;
+  degraded_reasons?: string[];
+  /** Recent run failure classes seen this scan (for dashboard). */
+  failure_classes?: Partial<Record<string, number>>;
 }
 
 export interface ObserverState {
