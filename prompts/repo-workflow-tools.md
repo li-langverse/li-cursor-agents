@@ -27,6 +27,20 @@ cd li-cursor-agents
   --body "…"
 ```
 
+## Swarm attribution (traceability)
+
+Post-hook runs stamp GitHub artifacts without HTML comments in PR bodies:
+
+| Surface | Marker |
+|---------|--------|
+| Commit message | `Li-Agent-Run: <run_id>` + `Li-Agent-Id: <agent_id>` trailers |
+| Branch | `chore/agent-<agent_id>-<suffix>` |
+| PR labels | `li-swarm`, `agent:<agent_id>` |
+| PR body | Plain markdown lines: swarm run id + agent id (human-readable) |
+| Control plane | `agent_runs.meta.swarm_attribution` + `GET /api/swarm/artifacts` |
+
+Query: `GET /api/swarm/artifacts?run_id=…&branch=…&pr=li-demo#7`
+
 ## PR body template (code-changing agents)
 
 ```markdown

@@ -109,6 +109,8 @@ export interface AgentRunCompletionMeta {
   skip_reason?: string;
   gaps: string[];
   evidence: string[];
+  /** Branches, commits, PRs stamped by repo-workflow post-hook */
+  swarm_attribution?: import("./swarm/swarm-attribution.js").SwarmGitArtifact;
 }
 
 export interface AgentRunResult {
@@ -130,6 +132,8 @@ export interface AgentRunResult {
   runInput?: AgentRunInputRecord;
   /** LLM output, thinking, tool steps, and file edits. */
   trace?: AgentRunTrace;
+  /** GitHub artifacts linked to this run (post-hook or rollout). */
+  swarmAttribution?: import("./swarm/swarm-attribution.js").SwarmGitArtifact;
 }
 
 export interface AgentBackend {

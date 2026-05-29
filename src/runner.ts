@@ -202,10 +202,13 @@ async function runAgentBody(
   let workCwd = options.cwd || packageRoot;
   let workflowSession: RepoWorkflowSession | undefined;
 
+  const workflowRunId = options.runId ?? allocateRunId(definition.id);
+
   if (agentUsesGuaranteedPush(definition)) {
     workflowSession = beginRepoWorkflowSession({
       agentId: definition.id,
       repo: options.workflowRepo,
+      runId: workflowRunId,
       dryRun: options.dryRun,
       skipPush: mock || options.dryRun || process.env.LI_REPO_WORKFLOW_SKIP_PUSH === "1",
       useFixture: mock,
@@ -395,7 +398,7 @@ async function runAgentBody(
     result = await backend.run(definition, systemPrompt, userMessage, {
       ...options,
       cwd: workCwd,
-      runId: options.runId,
+      runId: options.runId ?? workflowRunId,
       runInput,
     });
   } catch (err) {

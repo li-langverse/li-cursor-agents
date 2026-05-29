@@ -44,6 +44,9 @@ test("post-hook commits li-demo fixture workspace (push skipped)", () => {
 
   const log = runCmd("git", ["log", "-1", "--oneline"], session.cloneDir, false);
   assert.ok(log.ok && log.stdout.includes("post-hook"));
+  const body = runCmd("git", ["log", "-1", "--format=%B"], session.cloneDir, false);
+  assert.ok(body.ok && body.stdout.includes("Li-Agent-Run:"));
+  assert.ok(push.swarm_attribution?.run_id);
 });
 
 test("post-hook dry-run reports synthetic push for dirty workspace", () => {

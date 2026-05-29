@@ -6,9 +6,11 @@ import { stopSupervisorLoop } from "../control-plane/runtime.js";
 import {
   startImplementLaneLoop,
   startMaintenanceLaneLoop,
+  startObserverLaneLoop,
   startResearchLaneLoop,
   stopImplementLaneLoop,
   stopMaintenanceLaneLoop,
+  stopObserverLaneLoop,
   stopResearchLaneLoop,
   updateLaneFlags,
 } from "../lanes/lane-runtime.js";
@@ -46,6 +48,7 @@ export async function startAsyncSwarm(options?: {
   const research = startResearchLaneLoop({ mock });
   const implement = startImplementLaneLoop({ mock });
   const maintenance = startMaintenanceLaneLoop({ mock });
+  const observer = startObserverLaneLoop();
   const workers = startAgentWorkerPool({ mock });
 
   setAsyncSwarmRunning(true);
@@ -62,6 +65,7 @@ export async function startAsyncSwarm(options?: {
     research.message,
     implement.message,
     maintenance.message,
+    observer.message,
     workers.message,
   ].join("; ");
 
@@ -88,6 +92,7 @@ export async function stopAsyncSwarm(): Promise<{ stopped: boolean; message: str
   stopResearchLaneLoop();
   stopImplementLaneLoop();
   stopMaintenanceLaneLoop();
+  stopObserverLaneLoop();
   const workers = stopAgentWorkerPool();
 
   setAsyncSwarmRunning(false);

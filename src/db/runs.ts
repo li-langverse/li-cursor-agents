@@ -107,6 +107,10 @@ export async function upsertAgentRun(input: PersistRunInput): Promise<void> {
         rollout_count: rolloutRows?.length ?? 0,
         tool_call_count: run.trace?.tool_call_count ?? 0,
         file_edit_count: run.trace?.file_edits?.length ?? 0,
+        swarm_attribution:
+          run.swarmAttribution ??
+          run.completion?.swarm_attribution ??
+          null,
       },
       updated_at: finishedAt,
     },
