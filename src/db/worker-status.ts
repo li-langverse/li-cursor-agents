@@ -3,6 +3,12 @@ import type { ActiveAgentRun } from "../control-plane/types.js";
 import { workerStatusPath } from "../control-plane/paths.js";
 import { dbEnabled, getSupabase } from "./client.js";
 import { withSupabaseRetry } from "./supabase-retry.js";
+import {
+  applyAsyncSwarmWriterGuard,
+  pickFreshestWorkerStatus,
+} from "./worker-status-merge.js";
+
+export { pickFreshestWorkerStatus, applyAsyncSwarmWriterGuard } from "./worker-status-merge.js";
 
 export interface WorkerStatusRow {
   supervisor_loop_running: boolean;
@@ -73,18 +79,21 @@ const PEER_DB_TIMEOUT_MS = Number(process.env.LI_SUPABASE_PEER_TIMEOUT_MS ?? 3_0
 
 /** Supabase when configured; otherwise JSON under data/control-plane/. */
 export async function loadWorkerStatusPeer(): Promise<WorkerStatusRow | null> {
-  if (!dbEnabled()) return loadWorkerStatusFromDisk();
+  const disk = loadWorkerStatusFromDisk();
+  if (!dbEnabled()) return disk;
+
+  let db: WorkerStatusRow | null = null;
   try {
-    const row = await Promise.race([
+    db = await Promise.race([
       loadWorkerStatusFromDb(),
       new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error("loadWorkerStatusPeer timeout")), PEER_DB_TIMEOUT_MS);
       }),
     ]);
-    return row;
   } catch {
-    return loadWorkerStatusFromDisk();
+    db = null;
   }
+  return pickFreshestWorkerStatus(db, disk);
 }
 
 export async function loadWorkerStatusFromDb(): Promise<WorkerStatusRow | null> {
@@ -118,9 +127,21 @@ export async function loadWorkerStatusFromDb(): Promise<WorkerStatusRow | null> 
   });
 }
 
-export async function saveWorkerStatusToDb(row: Partial<WorkerStatusRow>): Promise<void> {
+export interface SaveWorkerStatusOptions {
+  /** When true, never persist async_swarm_running=false (live async-swarm process). */
+  writerSwarmAlive?: boolean;
+}
+
+export async function saveWorkerStatusToDb(
+  row: Partial<WorkerStatusRow>,
+  options?: SaveWorkerStatusOptions,
+): Promise<void> {
+  const updatedAt = new Date().toISOString();
+  const patch = applyAsyncSwarmWriterGuard(row, Boolean(options?.writerSwarmAlive));
+  const payload = { ...patch, updated_at: updatedAt };
+
   // Always mirror for split dashboard (disk) + async-swarm (supabase) systemd layout.
-  saveWorkerStatusToDisk(row);
+  saveWorkerStatusToDisk(payload);
   if (!dbEnabled()) return;
 
   await withSupabaseRetry("saveWorkerStatus", async () => {
@@ -128,11 +149,17 @@ export async function saveWorkerStatusToDb(row: Partial<WorkerStatusRow>): Promi
       .from("worker_status")
       .upsert({
         id: 1,
-        ...row,
-        updated_at: new Date().toISOString(),
+        ...payload,
       });
     if (error) throw new Error(`saveWorkerStatus: ${error.message}`);
   });
+
+  if (patch.async_swarm_running === true) {
+    const readBack = await loadWorkerStatusFromDb();
+    if (readBack && !readBack.async_swarm_running) {
+      throw new Error("saveWorkerStatus: read-back async_swarm_running still false");
+    }
+  }
 }
 
 export function defaultWorkerStatus(): WorkerStatusRow {

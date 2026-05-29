@@ -53,7 +53,18 @@ export function stopWorkerHeartbeatLoop(): void {
 let lastLoggedRunning = -1;
 
 export async function flushWorkerHeartbeat(): Promise<void> {
-  await persistWorkerHeartbeat(loadState());
+  try {
+    await persistWorkerHeartbeat(loadState());
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    workerConsole("heartbeat", "warn", `worker_status persist failed: ${msg}`);
+    if (isAsyncSwarmRunning()) {
+      await new Promise((r) => setTimeout(r, 400));
+      await persistWorkerHeartbeat(loadState());
+    } else {
+      throw err;
+    }
+  }
   const running = listActiveRuns().filter((r) => r.status === "running").length;
   if (running !== lastLoggedRunning) {
     lastLoggedRunning = running;

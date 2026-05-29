@@ -20,25 +20,28 @@ export async function persistWorkerHeartbeat(state: ControlPlaneState): Promise<
     return;
   }
 
-  let asyncSwarmRunning = Boolean(runtime.async_swarm_running);
+  const asyncSwarmRunning = isAsyncSwarmRunning() || Boolean(runtime.async_swarm_running);
   let researchLaneRunning = lanes.research_lane_running;
   let implementLaneRunning = lanes.implement_lane_running;
   let maintenanceLaneRunning = lanes.maintenance_lane_running;
   let activeRuns = listActiveRuns();
 
-  await saveWorkerStatusToDb({
-    supervisor_loop_running: isSupervisorLoopRunning() || Boolean(runtime.supervisor_loop_running),
-    async_swarm_running: asyncSwarmRunning,
-    research_lane_running: researchLaneRunning,
-    implement_lane_running: implementLaneRunning,
-    maintenance_lane_running: maintenanceLaneRunning,
-    agent_backend: agentBackendLabel(),
-    sdk_ready: agentBackendLabel() === "cursor-sdk" && Boolean(resolveCursorApiKey()),
-    sdk_max_concurrent: sdkMaxConcurrent(),
-    sdk_sessions_active: sdkSessionInProcessActive(),
-    // Full prompts/traces stay in agent_runs; worker_status is a hot dashboard heartbeat.
-    active_runs: compactActiveRunsForStatus(activeRuns),
-    handoff_run: handoffRunStatus() as unknown as Record<string, unknown>,
-    last_tick_at: state.last_tick_at || new Date().toISOString(),
-  });
+  await saveWorkerStatusToDb(
+    {
+      supervisor_loop_running: isSupervisorLoopRunning() || Boolean(runtime.supervisor_loop_running),
+      async_swarm_running: asyncSwarmRunning,
+      research_lane_running: researchLaneRunning,
+      implement_lane_running: implementLaneRunning,
+      maintenance_lane_running: maintenanceLaneRunning,
+      agent_backend: agentBackendLabel(),
+      sdk_ready: agentBackendLabel() === "cursor-sdk" && Boolean(resolveCursorApiKey()),
+      sdk_max_concurrent: sdkMaxConcurrent(),
+      sdk_sessions_active: sdkSessionInProcessActive(),
+      // Full prompts/traces stay in agent_runs; worker_status is a hot dashboard heartbeat.
+      active_runs: compactActiveRunsForStatus(activeRuns),
+      handoff_run: handoffRunStatus() as unknown as Record<string, unknown>,
+      last_tick_at: state.last_tick_at || new Date().toISOString(),
+    },
+    { writerSwarmAlive: isAsyncSwarmRunning() },
+  );
 }

@@ -55,6 +55,14 @@ Scores are **not** persisted; they guide skimming only.
 | No researcher `finished` in 24h (or none ever in recent runs) | Check research lane, goals, SDK slots |
 | Overall UNHEALTHY (fallback) | Fix dashboard/async before trusting Researchers tab |
 
+## Split dashboard vs async-swarm (`worker_status`)
+
+The dashboard (`serve-dashboard`) and async-swarm (`async-swarm.js start`) are **separate processes**. `/api/runtime` reads `worker_status` from Supabase (or `data/control-plane/worker-status.json`), not the async-swarm in-memory flag.
+
+If Supabase upserts fail (`fetch failed`), disk may be newer than DB — health uses **freshest** `updated_at` (DB + disk). The async-swarm writer never persists `async_swarm_running=false` while the swarm process is alive; `markDetachedSwarmStopped` skips when `li-agents-async-swarm.service` is active.
+
+After deploy, restart **both** units: `systemctl --user restart li-agents-async-swarm li-agents-dashboard`.
+
 ## Interpreting `stale_running_reconciled`
 
 After a dashboard or async-swarm **restart** (SIGTERM, `systemctl restart`, workspace sweep `try-restart`), boot reconcile marks orphaned `agent_runs` rows as `error` with category **`stale_running_reconciled`**. That is **bookkeeping**, not agent task failure.
