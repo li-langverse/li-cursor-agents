@@ -2,36 +2,6 @@
   "generated_at": "2026-05-19T12:00:00Z",
   "recommended_agents": [
     {
-      "agent": "gui_ui_tester",
-      "reason": "ui-audit: 2 failing target(s) — GUI surfaces",
-      "source": "ui_audit"
-    },
-    {
-      "agent": "tui_ui_tester",
-      "reason": "ui-audit: 2 failing target(s) — TUI surfaces",
-      "source": "ui_audit"
-    },
-    {
-      "agent": "docs_ux_tester",
-      "reason": "ux-audit: rubric or journey below threshold",
-      "source": "ux_audit"
-    },
-    {
-      "agent": "tui_ux_tester",
-      "reason": "ux-audit: rubric or journey below threshold",
-      "source": "ux_audit"
-    },
-    {
-      "agent": "code_implementer",
-      "reason": "swarm: 1 handoff(s) ready to implement",
-      "source": "swarm_scorecard"
-    },
-    {
-      "agent": "swarm_observer",
-      "reason": "swarm: research goal swarm_coverage eligible (priority 10)",
-      "source": "research_goals_status"
-    },
-    {
       "agent": "docs_ui_tester",
       "reason": "e2e: ui-audit docs failures"
     },
@@ -124,7 +94,7 @@
         ],
         "axe_violations": [],
         "pixel_diff": {
-          "max_ratio": 0,
+          "max_ratio": 0.0,
           "threshold": 0.04
         },
         "contrast_failures": [],
@@ -143,7 +113,7 @@
         ],
         "axe_violations": [],
         "pixel_diff": {
-          "max_ratio": 0,
+          "max_ratio": 0.0,
           "threshold": 0.04
         },
         "contrast_failures": [],
@@ -162,7 +132,7 @@
         ],
         "axe_violations": [],
         "pixel_diff": {
-          "max_ratio": 0,
+          "max_ratio": 0.0,
           "threshold": 0.04
         },
         "contrast_failures": [],
@@ -441,18 +411,10 @@
           "agents_list_empty"
         ],
         "agent_source": "gui_ux_tester"
-      },
-      {
-        "kind": "swarm_handoff",
-        "reason": "handoff:7d9efafe-e788-46df-ad01-9050d403b2a4",
-        "title": "cad_fundamentals",
-        "ph_id": "cad_fundamentals",
-        "repo": "lic"
       }
     ],
     "sources": [
-      "ux_audit_fixture",
-      "agent_handoffs"
+      "ux_audit_fixture"
     ]
   },
   "org_roadmap": {
@@ -470,220 +432,5 @@
     "layers": [],
     "flat_tasks": [],
     "validation_errors": []
-  },
-  "swarm_scorecard": {
-    "pending_handoffs": 1,
-    "pending_placement": 0,
-    "ready_to_implement": 1,
-    "by_domain": {},
-    "active_research_session": "numerics_researcher:chem_sim_algorithms (cycle 1)",
-    "research_lane_enabled": true,
-    "implement_lane_enabled": true,
-    "last_research_tick_at": "2026-05-29T03:59:32.749Z",
-    "last_implement_tick_at": "2026-05-19T08:54:29.180Z"
-  },
-  "research_goals_status": [
-    {
-      "goal_id": "numerics_sota",
-      "title": "Numerics / HPC benchmark SOTA",
-      "agent": "numerics_researcher",
-      "priority": 7,
-      "eligible": true
-    },
-    {
-      "goal_id": "md_sim_algorithms",
-      "title": "MD algorithms — SOTA survey and Li gap analysis",
-      "agent": "numerics_researcher",
-      "priority": 8,
-      "eligible": true
-    },
-    {
-      "goal_id": "chem_sim_algorithms",
-      "title": "Chemistry / QM algorithms — SOTA survey and Li gap analysis",
-      "agent": "numerics_researcher",
-      "priority": 8,
-      "eligible": true
-    },
-    {
-      "goal_id": "physics_sim",
-      "title": "Computational physics — PDE/FEM/continuum SOTA and Li gaps",
-      "agent": "numerics_researcher",
-      "priority": 7,
-      "eligible": true
-    },
-    {
-      "goal_id": "biology_systems",
-      "title": "Biology / bioinformatics — models, pipelines, Li package gaps",
-      "agent": "goal_researcher",
-      "priority": 6,
-      "eligible": true
-    },
-    {
-      "goal_id": "bioengineering_systems",
-      "title": "Bioengineering — tissue/bioprocess modeling and Li std gaps",
-      "agent": "goal_researcher",
-      "priority": 6,
-      "eligible": true
-    },
-    {
-      "goal_id": "engineering_mechanical",
-      "title": "Mechanical / structural engineering — FEA, multiphysics, Li gaps",
-      "agent": "goal_researcher",
-      "priority": 6,
-      "eligible": true
-    },
-    {
-      "goal_id": "additive_manufacturing",
-      "title": "Additive manufacturing — slicing, lattice, process sim SOTA",
-      "agent": "goal_researcher",
-      "priority": 5,
-      "eligible": true
-    },
-    {
-      "goal_id": "robotics_systems",
-      "title": "Robotics — motion planning, control, perception on Li",
-      "agent": "goal_researcher",
-      "priority": 7,
-      "eligible": true
-    },
-    {
-      "goal_id": "database_platform",
-      "title": "Database / storage — query engines, embedded DB, Li data layer",
-      "agent": "goal_researcher",
-      "priority": 6,
-      "eligible": true
-    },
-    {
-      "goal_id": "server_platform",
-      "title": "Server / deploy — httpd, services, observability, secure ops",
-      "agent": "goal_researcher",
-      "priority": 6,
-      "eligible": true
-    },
-    {
-      "goal_id": "simulation_techniques",
-      "title": "Simulation science — methods, coupling, reference architectures",
-      "agent": "numerics_researcher",
-      "priority": 7,
-      "eligible": true
-    },
-    {
-      "goal_id": "scientific_distributed_computing",
-      "title": "Scientific & distributed computing — MPI, partitions, cloud HPC on Li",
-      "agent": "numerics_researcher",
-      "priority": 7,
-      "eligible": true
-    },
-    {
-      "goal_id": "ml_systems",
-      "title": "Machine learning — frameworks, training pipelines, Li package gaps",
-      "agent": "goal_researcher",
-      "priority": 6,
-      "eligible": true
-    },
-    {
-      "goal_id": "deep_learning_systems",
-      "title": "Deep learning — architectures, inference, accelerators on Li",
-      "agent": "goal_researcher",
-      "priority": 6,
-      "eligible": true
-    },
-    {
-      "goal_id": "rl_systems",
-      "title": "Reinforcement learning — envs, policies, sim-to-real on Li",
-      "agent": "goal_researcher",
-      "priority": 6,
-      "eligible": true
-    },
-    {
-      "goal_id": "ai_ecosystem",
-      "title": "AI-first tooling on Li (training, inference, agents)",
-      "agent": "goal_researcher",
-      "priority": 6,
-      "eligible": true
-    },
-    {
-      "goal_id": "agentic_ai_systems",
-      "title": "Agentic AI — tool use, multi-agent orchestration, safety on Li",
-      "agent": "goal_researcher",
-      "priority": 7,
-      "eligible": true
-    },
-    {
-      "goal_id": "game_engine_ux",
-      "title": "Easy game engine + AI integration patterns",
-      "agent": "goal_researcher",
-      "priority": 5,
-      "eligible": true
-    },
-    {
-      "goal_id": "cad_fundamentals",
-      "title": "CAD/geometry — kernels, packages, and Li std gaps",
-      "agent": "goal_researcher",
-      "priority": 5,
-      "eligible": true
-    },
-    {
-      "goal_id": "web_platform",
-      "title": "Web stack, HTTP, WASM, secure deploy story",
-      "agent": "goal_researcher",
-      "priority": 5,
-      "eligible": true
-    },
-    {
-      "goal_id": "ecosystem_gaps",
-      "title": "Org-wide std/packages + ecosystem signals",
-      "agent": "gap_explorer",
-      "priority": 4,
-      "eligible": true
-    },
-    {
-      "goal_id": "stdlib_ecosystem",
-      "title": "Deep std + li-std-* audit; packages to build vs improve",
-      "agent": "stdlib_researcher",
-      "priority": 8,
-      "eligible": true
-    },
-    {
-      "goal_id": "ui_ux_quality",
-      "title": "Internal UI/UX vs SOTA (docs, GUI, TUI)",
-      "agent": "gui_ux_tester",
-      "priority": 5,
-      "eligible": true
-    },
-    {
-      "goal_id": "provability_holes",
-      "title": "Proof holes — compiler, contracts, trusted axioms",
-      "agent": "proof_gap_researcher",
-      "priority": 9,
-      "eligible": true
-    },
-    {
-      "goal_id": "swarm_coverage",
-      "title": "Swarm gap orchestration — registry, backlog apply, handoffs",
-      "agent": "swarm_observer",
-      "priority": 10,
-      "eligible": true
-    },
-    {
-      "goal_id": "offensive_security",
-      "title": "Offensive security — fuzz, tier5 exploits, CWE feed",
-      "agent": "security_auditor",
-      "priority": 9,
-      "eligible": true
-    }
-  ],
-  "provability_scorecard": {
-    "open_plan_findings": 0,
-    "last_digest_hint": "lic/docs/verification/research-digests/",
-    "provability_goal_priority": 9,
-    "trigger_goal_id": "provability_holes"
-  },
-  "handoff_audit": {
-    "open_handoffs": 1,
-    "missing_north_star_fit": [],
-    "invalid_north_star_fit": []
-  },
-  "swarm_enriched_at": "2026-05-29T05:37:36.105Z",
-  "swarm_recommendations_merged_at": "2026-05-29T05:37:36.106Z"
+  }
 }
