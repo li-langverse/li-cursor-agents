@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { clearRuntimePeerCache, runtimeForApi } from "./runtime-for-api.js";
 import { loadState } from "./state.js";
 import { resetSupabaseClient, setSupabaseClientForTest } from "../db/client.js";
 
-test("runtimeForApi uses fresher disk peer when DB row says swarm off", async () => {
+test("runtimeForApi uses Supabase worker_status when local swarm is off", async () => {
   const prev = {
     store: process.env.LI_CONTROL_PLANE_STORE,
     planeDir: process.env.LI_CONTROL_PLANE_DIR,
@@ -21,19 +21,6 @@ test("runtimeForApi uses fresher disk peer when DB row says swarm off", async ()
   process.env.LI_STACK_SKIP_SUPABASE = "0";
   process.env.SUPABASE_URL = "http://127.0.0.1:54321";
   process.env.SUPABASE_SERVICE_ROLE_KEY = "test";
-
-  writeFileSync(
-    join(dir, "worker-status.json"),
-    `${JSON.stringify({
-      async_swarm_running: true,
-      research_lane_running: true,
-      implement_lane_running: true,
-      maintenance_lane_running: false,
-      active_runs: [{ run_id: "live-1", agent_id: "bench_improver", status: "running", pid: 1, started_at: new Date().toISOString() }],
-      updated_at: "2026-05-29T03:00:00.000Z",
-    })}\n`,
-    "utf8",
-  );
 
   setSupabaseClientForTest({
     from(table: string) {
@@ -53,7 +40,6 @@ test("runtimeForApi uses fresher disk peer when DB row says swarm off", async ()
           },
         };
       }
-      assert.equal(table, "worker_status");
       return {
         select() {
           return this;
@@ -66,18 +52,26 @@ test("runtimeForApi uses fresher disk peer when DB row says swarm off", async ()
             data: {
               id: 1,
               supervisor_loop_running: false,
-              async_swarm_running: false,
-              research_lane_running: false,
-              implement_lane_running: false,
+              async_swarm_running: true,
+              research_lane_running: true,
+              implement_lane_running: true,
               maintenance_lane_running: false,
               agent_backend: "cursor-sdk",
               sdk_ready: true,
               sdk_max_concurrent: 4,
               sdk_sessions_active: 0,
-              active_runs: [],
+              active_runs: [
+                {
+                  run_id: "live-1",
+                  agent_id: "bench_improver",
+                  status: "running",
+                  pid: 1,
+                  started_at: new Date().toISOString(),
+                },
+              ],
               handoff_run: null,
               last_tick_at: null,
-              updated_at: "2026-05-28T20:00:00.000Z",
+              updated_at: "2026-05-29T03:00:00.000Z",
             },
             error: null,
           });

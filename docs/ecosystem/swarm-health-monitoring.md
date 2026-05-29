@@ -57,9 +57,9 @@ Scores are **not** persisted; they guide skimming only.
 
 ## Split dashboard vs async-swarm (`worker_status`)
 
-The dashboard (`serve-dashboard`) and async-swarm (`async-swarm.js start`) are **separate processes**. `/api/runtime` reads `worker_status` from Supabase (or `data/control-plane/worker-status.json`), not the async-swarm in-memory flag.
+The dashboard (`serve-dashboard`) and async-swarm (`async-swarm.js start`) are **separate processes**. `/api/runtime` reads `worker_status` from **Supabase only**, not the async-swarm in-memory flag.
 
-If Supabase upserts fail (`fetch failed`), disk may be newer than DB — health uses **freshest** `updated_at` (DB + disk). The async-swarm writer never persists `async_swarm_running=false` while the swarm process is alive; `markDetachedSwarmStopped` skips when `li-agents-async-swarm.service` is active.
+The async-swarm writer never persists `async_swarm_running=false` while the swarm process is alive; `markDetachedSwarmStopped` skips when `li-agents-async-swarm.service` is active. Ensure `LI_CONTROL_PLANE_STORE=supabase` and Supabase credentials are set — `worker_status` is not mirrored to disk.
 
 After deploy, restart **both** units: `systemctl --user restart li-agents-async-swarm li-agents-dashboard`.
 

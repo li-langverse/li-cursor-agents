@@ -1,17 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {
-  applyAsyncSwarmWriterGuard,
-  pickFreshestWorkerStatus,
-} from "./worker-status-merge.js";
-import { defaultWorkerStatus } from "./worker-status.js";
-
-test("pickFreshestWorkerStatus chooses latest updated_at", () => {
-  const older = { ...defaultWorkerStatus(), async_swarm_running: false, updated_at: "2026-05-28T20:00:00.000Z" };
-  const newer = { ...defaultWorkerStatus(), async_swarm_running: true, updated_at: "2026-05-28T21:00:00.000Z" };
-  const picked = pickFreshestWorkerStatus(older, null, newer);
-  assert.equal(picked?.async_swarm_running, true);
-});
+import { applyAsyncSwarmWriterGuard } from "./worker-status-merge.js";
 
 test("applyAsyncSwarmWriterGuard blocks false while swarm writer is alive", () => {
   const patch = applyAsyncSwarmWriterGuard(

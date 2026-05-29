@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { markDetachedSwarmStopped } from "./swarm-watchdog-core.js";
@@ -18,12 +18,6 @@ test("markDetachedSwarmStopped skips when li-agents-async-swarm systemd unit is 
   process.env.LI_TEST_MODE = "1";
   process.env.SUPABASE_URL = "http://127.0.0.1:54321";
   process.env.SUPABASE_SERVICE_ROLE_KEY = "test";
-
-  writeFileSync(
-    join(dir, "worker-status.json"),
-    `${JSON.stringify({ async_swarm_running: true, active_runs: [], updated_at: new Date().toISOString() })}\n`,
-    "utf8",
-  );
 
   let upsertCalled = false;
   setSupabaseClientForTest({
@@ -69,10 +63,6 @@ test("markDetachedSwarmStopped skips when li-agents-async-swarm systemd unit is 
     systemdUnitActive: async () => true,
   });
   assert.equal(upsertCalled, false);
-  const disk = JSON.parse(readFileSync(join(dir, "worker-status.json"), "utf8")) as {
-    async_swarm_running?: boolean;
-  };
-  assert.equal(disk.async_swarm_running, true);
 
   setSupabaseClientForTest(null);
   resetSupabaseClient();

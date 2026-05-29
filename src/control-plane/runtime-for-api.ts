@@ -9,12 +9,7 @@ import type { ActiveAgentRun } from "./types.js";
 import type { ControlPlaneState } from "./types.js";
 import { dbEnabled } from "../db/client.js";
 import { listRunningAgentRuns } from "../db/runs.js";
-import {
-  loadWorkerStatusFromDisk,
-  loadWorkerStatusPeer,
-  pickFreshestWorkerStatus,
-  type WorkerStatusRow,
-} from "../db/worker-status.js";
+import { loadWorkerStatusPeer, type WorkerStatusRow } from "../db/worker-status.js";
 
 let peerCache: { at: number; row: WorkerStatusRow | null } | null = null;
 const PEER_CACHE_MS = Number(process.env.LI_RUNTIME_PEER_CACHE_MS ?? 2_000);
@@ -25,12 +20,7 @@ export function clearRuntimePeerCache(): void {
 }
 
 async function loadPeerForRuntimeApi(): Promise<WorkerStatusRow | null> {
-  const peer = await loadWorkerStatusPeer();
-  if (!peer) return null;
-  if (peer.async_swarm_running) return peer;
-  const disk = loadWorkerStatusFromDisk();
-  const fresher = pickFreshestWorkerStatus(peer, disk);
-  return fresher;
+  return loadWorkerStatusPeer();
 }
 
 async function withEnrichedRuns<
@@ -55,7 +45,7 @@ async function withEnrichedRuns<
   };
 }
 
-/** Dashboard API runtime: in-process swarm, else latest peer heartbeat (systemd async-swarm / disk file). */
+/** Dashboard API runtime: in-process swarm, else latest peer heartbeat from Supabase `worker_status`. */
 export async function runtimeForApi(state: ControlPlaneState) {
   const local = runtimeSnapshot(state);
   const dbRunning = dbEnabled() ? await listRunningAgentRuns(30, { light: true }) : [];
