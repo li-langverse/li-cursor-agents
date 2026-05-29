@@ -19,13 +19,19 @@ export interface MaintenanceLaneTickResult {
   benchmarks_dispatch?: { ok: boolean; skipped?: boolean; skip_reason?: string; error?: string };
 }
 
+/** Default on — set `LI_MAINTENANCE_LANE_ENABLED=0` to skip briefing refresh ticks. */
+export function isMaintenanceLaneEnabled(): boolean {
+  const v = process.env.LI_MAINTENANCE_LANE_ENABLED?.trim().toLowerCase();
+  if (v === "0" || v === "false" || v === "off" || v === "no") return false;
+  return true;
+}
+
 /** Refresh briefing snapshot + scorecards without spawning an LLM agent. */
 export async function maintenanceLaneTick(options?: {
   benchmarksRoot?: string;
   skipSlowPreflight?: boolean;
 }): Promise<MaintenanceLaneTickResult> {
-  const lane = loadLaneState();
-  if (process.env.LI_MAINTENANCE_LANE_ENABLED === "0") {
+  if (!isMaintenanceLaneEnabled()) {
     return { ok: false, skip_reason: "maintenance lane disabled" };
   }
 
