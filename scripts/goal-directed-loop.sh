@@ -18,6 +18,9 @@ MAX=0
 DRY_RUN=0
 UNTIL_COMPLETE="${LI_GOAL_LOOP_UNTIL_COMPLETE:-0}"
 WHILE_PR_OPEN="${LI_GOAL_LOOP_WHILE_PR_OPEN:-0}"
+UNTIL_LOCAL="${LI_GOAL_LOOP_UNTIL_LOCAL:-}"
+GOAL_LOOP_TZ="${LI_GOAL_LOOP_TZ:-Europe/Berlin}"
+DEADLINE_TS=""
 SLEEP_SEC="${LI_GOAL_LOOP_SLEEP_SEC:-90}"
 LAST_GAPS_FILE="${LI_GOAL_LOOP_GAPS_FILE:-$ROOT/data/goal-directed-loop-last-gaps.txt}"
 
@@ -34,6 +37,7 @@ while [[ $# -gt 0 ]]; do
     --dry-run) DRY_RUN=1; shift ;;
     --until-complete) UNTIL_COMPLETE=1; shift ;;
     --while-pr-open) WHILE_PR_OPEN=1; shift ;;
+    --until-local) UNTIL_LOCAL="$2"; shift 2 ;;
     --sleep) SLEEP_SEC="$2"; shift 2 ;;
     -h|--help)
       sed -n '2,22p' "$0"
@@ -119,6 +123,36 @@ gh_open_pr_count() {
     || echo 0
 }
 
+deadline_epoch() {
+  local hm="$1"
+  local h="${hm%%:*}"
+  local m="${hm#*:}"
+  m="${m%%:*}"
+  local now today tomorrow
+  now="$(date +%s)"
+  today="$(TZ="$GOAL_LOOP_TZ" date -d "today ${h}:${m}:00" +%s 2>/dev/null || date -d "today ${h}:${m}:00" +%s)"
+  if [[ "$today" -gt "$now" ]]; then
+    echo "$today"
+    return
+  fi
+  tomorrow="$(TZ="$GOAL_LOOP_TZ" date -d "tomorrow ${h}:${m}:00" +%s 2>/dev/null || date -d "tomorrow ${h}:${m}:00" +%s)"
+  echo "$tomorrow"
+}
+
+goal_loop_past_deadline() {
+  [[ -z "$DEADLINE_TS" ]] && return 1
+  local now
+  now="$(date +%s)"
+  if [[ "$now" -ge "$DEADLINE_TS" ]]; then
+    return 0
+  fi
+  local remaining=$((DEADLINE_TS - now))
+  if [[ "$remaining" -lt 300 ]]; then
+    return 0
+  fi
+  return 1
+}
+
 audit_p0_remaining() {
   local audit="$CWD/scripts/audit-dashboard-gaps.py"
   [[ -f "$audit" ]] || return 1
@@ -128,10 +162,25 @@ audit_p0_remaining() {
   return 0
 }
 
+if [[ -n "$UNTIL_LOCAL" ]]; then
+  export TZ="$GOAL_LOOP_TZ"
+  DEADLINE_TS="$(deadline_epoch "$UNTIL_LOCAL")"
+  echo "goal-directed-loop: run until local ${UNTIL_LOCAL} (${GOAL_LOOP_TZ}) -> $(TZ="$GOAL_LOOP_TZ" date -d "@${DEADLINE_TS}" -Iseconds 2>/dev/null || date -d "@${DEADLINE_TS}")"
+  if [[ "$MAX" -gt 0 && "$MAX" -lt 50 ]]; then
+  echo "goal-directed-loop: --until-local active; iteration cap raised (was max=$MAX)"
+  fi
+  MAX=999
+fi
+
 iter=0
 while :; do
+  if goal_loop_past_deadline; then
+    echo "goal-directed-loop: local deadline ${UNTIL_LOCAL} reached ($(date -Iseconds)) — stop"
+    exit 0
+  fi
+
   iter=$((iter + 1))
-  echo "==> goal-directed-loop iteration $iter agent=$AGENT repo=${WORKFLOW_REPO:-—} (live output below)"
+  echo "==> goal-directed-loop iteration $iter agent=$AGENT repo=${WORKFLOW_REPO:-â€”} (live output below)"
 
   if [[ "$iter" -gt 1 ]]; then
     gaps_tail=""
@@ -140,7 +189,7 @@ while :; do
 ## Goal-directed loop iteration $iter
 
 Continue the same sprint goal. Babysit open PR(s): fix CI, resolve review threads, push scoped fixes.
-Update existing PRs — do not open duplicates for the same branch.
+Update existing PRs â€” do not open duplicates for the same branch.
 
 Prior completion gaps:
 ${gaps_tail:-_(none recorded)_}
@@ -163,13 +212,13 @@ EOF
     if [[ "$WHILE_PR_OPEN" == "1" && -n "$WORKFLOW_REPO" ]]; then
       open_n="$(gh_open_pr_count "$WORKFLOW_REPO")"
       if [[ "$open_n" -gt 0 ]]; then
-        echo "goal-directed-loop: $open_n open PR(s) on li-langverse/$WORKFLOW_REPO — continuing (babysit)"
+        echo "goal-directed-loop: $open_n open PR(s) on li-langverse/$WORKFLOW_REPO â€” continuing (babysit)"
         code=2
       fi
     fi
     if [[ "$code" -eq 0 && "$WORKFLOW_REPO" == "benchmarks" && -f "$CWD/scripts/audit-dashboard-gaps.py" ]]; then
       if audit_p0_remaining; then
-        echo "goal-directed-loop: audit-dashboard-gaps P0 still failing — continuing"
+        echo "goal-directed-loop: audit-dashboard-gaps P0 still failing â€” continuing"
         code=2
       fi
     fi
@@ -181,7 +230,7 @@ EOF
   fi
 
   if [[ "$code" -eq 2 ]]; then
-    echo "goal-directed-loop: incomplete deliverable (exit 2) — retry after sleep" >&2
+    echo "goal-directed-loop: incomplete deliverable (exit 2) â€” retry after sleep" >&2
   else
     echo "goal-directed-loop: agent exit $code" >&2
   fi
