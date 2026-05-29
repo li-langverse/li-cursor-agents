@@ -7,19 +7,31 @@ import { canonicalAgentId } from "../agents/registry.js";
 import type { ObserverState, SwarmFinding, SwarmHealthReport } from "./types.js";
 import { buildRemediations } from "./remediate.js";
 import { isSwarmActiveOnHost } from "../swarm/swarm-watchdog-core.js";
+import {
+  briefingPreflightFailed,
+  briefingStaleMs,
+  briefingWorkspaceDirty,
+  classifyRunFailure,
+  isBriefingStale,
+} from "./classify-failure.js";
+import { computeSwarmDegraded, degradedReasons } from "./degraded.js";
+import type { RunFailureClass } from "./classify-failure.js";
 
 const DEFAULT_RUN_WINDOW = 16;
 const ERROR_STREAK_THRESHOLD = 2;
 
 function isSdkError(run: AgentRunResult): boolean {
-  const blob = `${run.error ?? ""} ${run.outputText ?? ""}`.toLowerCase();
-  return (
-    blob.includes("api key") ||
-    blob.includes("unauthorized") ||
-    blob.includes("authentication") ||
-    blob.includes("cursor_api") ||
-    blob.includes("401")
-  );
+  return classifyRunFailure(run)?.class === "sdk_auth";
+}
+
+function tallyFailureClasses(runs: AgentRunResult[]): Partial<Record<RunFailureClass, number>> {
+  const tally: Partial<Record<RunFailureClass, number>> = {};
+  for (const run of runs) {
+    const c = classifyRunFailure(run);
+    if (!c) continue;
+    tally[c.class] = (tally[c.class] ?? 0) + 1;
+  }
+  return tally;
 }
 
 function countErrors(runs: AgentRunResult[]): number {
@@ -163,6 +175,64 @@ export function scanSwarmHealth(params: {
   const goalFinding = recommendedNotRecentlyRun(params.briefing, runs);
   if (goalFinding) findings.push(goalFinding);
 
+  if (isBriefingStale(params.briefing)) {
+    const ageH = Math.round((briefingStaleMs(params.briefing) ?? 0) / 3_600_000);
+    findings.push({
+      kind: "briefing_stale",
+      severity: "medium",
+      title: "Briefing snapshot is stale",
+      detail: `generated_at is ~${ageH}h old — refresh preflight or run maintenance lane.`,
+      auto_healable: true,
+    });
+  }
+
+  if (briefingPreflightFailed(params.briefing)) {
+    findings.push({
+      kind: "preflight_failed",
+      severity: "high",
+      title: "Preflight script(s) failed in latest briefing",
+      detail: "One or more preflight_runs exited non-zero; observer will schedule meta audit.",
+      auto_healable: true,
+    });
+  }
+
+  const audit = (params.briefing as Record<string, unknown> | null)?.handoff_audit as
+    | Record<string, unknown>
+    | undefined;
+  const openHandoffs = audit?.open_handoffs;
+  const handoffThreshold = Number(process.env.LI_OBSERVER_HANDOFF_BACKLOG_THRESHOLD ?? 4);
+  if (typeof openHandoffs === "number" && openHandoffs >= handoffThreshold) {
+    findings.push({
+      kind: "handoffs_backlog",
+      severity: "medium",
+      title: `${openHandoffs} open handoff(s) in backlog`,
+      detail: `Threshold ${handoffThreshold}; placement or implement lane may be stuck.`,
+      auto_healable: true,
+    });
+  }
+
+  const failureTally = tallyFailureClasses(runs);
+  const dominant = Object.entries(failureTally).sort((a, b) => b[1] - a[1])[0];
+  if (dominant && dominant[1] >= 2) {
+    const [klass, n] = dominant;
+    findings.push({
+      kind: "run_failure_pattern",
+      severity: klass === "sdk_auth" ? "critical" : "medium",
+      title: `Repeated ${klass} failures (${n} recent runs)`,
+      detail: "Classified from run stderr; see failure_classes on health report.",
+      auto_healable: klass !== "sdk_auth",
+    });
+    if (klass === "repo_dirty" && !briefingWorkspaceDirty(params.briefing)) {
+      findings.push({
+        kind: "run_failure_pattern",
+        severity: "medium",
+        title: "Run errors suggest dirty workspace",
+        detail: "workspace_dirty_sweep not set in briefing — dispatch sweeper.",
+        auto_healable: true,
+      });
+    }
+  }
+
   const distinctFailedAgents = new Set(
     runs.filter((r) => r.status === "error").map((r) => canonicalAgentId(r.agentId)),
   );
@@ -185,7 +255,7 @@ export function scanSwarmHealth(params: {
     findings.length === 0 ||
     findings.every((f) => f.severity === "low" || (f.auto_healable && remediations.length > 0));
 
-  return {
+  const report: SwarmHealthReport = {
     scanned_at: new Date().toISOString(),
     healthy,
     findings,
@@ -193,5 +263,9 @@ export function scanSwarmHealth(params: {
     runs_sampled: runs.length,
     error_rate: errorRate,
     needs_meta_observer: needsMetaObserver,
+    failure_classes: Object.keys(failureTally).length > 0 ? failureTally : undefined,
   };
+  report.swarm_degraded = computeSwarmDegraded(report);
+  report.degraded_reasons = degradedReasons(report);
+  return report;
 }

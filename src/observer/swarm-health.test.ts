@@ -43,4 +43,33 @@ describe("scanSwarmHealth", () => {
     assert.equal(health.needs_meta_observer, true);
     assert.ok(health.remediations.some((r) => r.agentId === "swarm_observer"));
   });
+
+  test("sets swarm_degraded when supervisor stale and no remediations", () => {
+    const health = scanSwarmHealth({
+      state: {
+        ...DEFAULT_STATE,
+        supervisor_status: "running_agent",
+        current_supervisor_agent: "bug_fixer",
+        last_tick_at: new Date(Date.now() - 2 * 60 * 60_000).toISOString(),
+      },
+      briefing: {},
+      observerState: { retry_counts: {} },
+      recentRuns: [run("gap_explorer", "finished"), run("docs_maintainer", "finished")],
+    });
+    assert.ok(health.findings.some((f) => f.kind === "supervisor_stale"));
+    assert.equal(health.remediations.length, 0);
+    assert.equal(health.swarm_degraded, true);
+    assert.ok(health.degraded_reasons?.length);
+  });
+
+  test("flags stale briefing", () => {
+    const old = new Date(Date.now() - 8 * 60 * 60_000).toISOString();
+    const health = scanSwarmHealth({
+      state: { ...DEFAULT_STATE },
+      briefing: { generated_at: old },
+      observerState: { retry_counts: {} },
+      recentRuns: [],
+    });
+    assert.ok(health.findings.some((f) => f.kind === "briefing_stale"));
+  });
 });

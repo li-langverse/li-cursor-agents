@@ -4,6 +4,12 @@ import type { ControlPlaneState, QueuedAgentTask } from "../control-plane/types.
 import type { AgentRunResult } from "../types.js";
 import type { AgentId } from "../types.js";
 import { restartAsyncSwarmUnit } from "../swarm/swarm-restart.js";
+import {
+  briefingHandoffsBacklogged,
+  briefingPreflightFailed,
+  briefingWorkspaceDirty,
+  classifyRunFailure,
+} from "./classify-failure.js";
 import type { ObserverState, RemediationAction, SwarmFinding } from "./types.js";
 
 const HEALER_AGENTS: Record<string, AgentId> = {
@@ -26,15 +32,6 @@ function briefingHasRedBench(briefing: unknown): boolean {
   const bench = audit?.benchmarks as Record<string, unknown> | undefined;
   const red = bench?.red;
   return Array.isArray(red) && red.length > 0;
-}
-
-function briefingWorkspaceDirty(briefing: unknown): boolean {
-  if (!briefing || typeof briefing !== "object") return false;
-  const sweep = (briefing as Record<string, unknown>).workspace_dirty_sweep as
-    | Record<string, unknown>
-    | undefined;
-  const repos = sweep?.repos_needing_sweep;
-  return Array.isArray(repos) && repos.length > 0;
 }
 
 function envAutoStartSwarm(): boolean {
@@ -119,6 +116,30 @@ export function buildRemediations(params: {
       kind: "dispatch_healer",
       agentId: HEALER_AGENTS.workspace_dirty,
       reason: "observer:workspace_dirty_sweep in briefing",
+    });
+  } else if (
+    params.runs.filter((r) => classifyRunFailure(r)?.class === "repo_dirty").length >= 2
+  ) {
+    pushUnique({
+      kind: "dispatch_healer",
+      agentId: HEALER_AGENTS.workspace_dirty,
+      reason: "observer:repeated repo_dirty run failures",
+    });
+  }
+
+  if (briefingPreflightFailed(params.briefing)) {
+    pushUnique({
+      kind: "schedule_meta_observer",
+      agentId: "swarm_observer",
+      reason: "observer:preflight script failure in briefing",
+    });
+  }
+
+  if (briefingHandoffsBacklogged(params.briefing)) {
+    pushUnique({
+      kind: "schedule_meta_observer",
+      agentId: "swarm_observer",
+      reason: "observer:handoff backlog in briefing",
     });
   }
 
