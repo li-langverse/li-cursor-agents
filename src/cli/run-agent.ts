@@ -78,7 +78,7 @@ function parseArgs(argv: string[]) {
 }
 
 function printHelp() {
-  console.log(`li-agent — Cursor SDK local runner (real SDK by default)
+  console.log(`li-agent â€” Cursor SDK local runner (real SDK by default)
 
 Usage:
   li-agent --list
@@ -88,7 +88,7 @@ Usage:
 
 Agents: ${AGENT_REGISTRY.map((a) => a.id).join(", ")}
 
-Goal-directed (reusable — no per-plan agent id):
+Goal-directed (reusable â€” no per-plan agent id):
   --goal / --instruction <text>   Injected as "## Additional instruction"
   --goal-file <path>              Same, from file
   LI_AGENT_GOAL / LI_AGENT_EXTRA_INSTRUCTION   Env fallback when flags omitted
@@ -107,7 +107,7 @@ async function main() {
   if (args.list) {
     for (const a of AGENT_REGISTRY) {
       console.log(
-        `${a.id}\t${a.category}\tweb=${a.needsWeb}\t${a.name}\t— ${a.description}`,
+        `${a.id}\t${a.category}\tweb=${a.needsWeb}\t${a.name}\tâ€” ${a.description}`,
       );
     }
     return;
@@ -122,7 +122,7 @@ async function main() {
     const { terminalStreamEnabled } = await import("../sdk/terminal-stream.js");
     if (terminalStreamEnabled()) {
       console.error(
-        "SDK tool activity streams to stderr ([sdk] ▶/✓ lines). Set LI_SDK_TERMINAL_STREAM=0 to disable.",
+        "SDK tool activity streams to stderr ([sdk] â–¶/âœ“ lines). Set LI_SDK_TERMINAL_STREAM=0 to disable.",
       );
     }
   }
