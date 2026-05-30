@@ -4,6 +4,7 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
+| 2026-05-30 code_implementer (13) | 243 → 244 | 0 | Phase B REST merge 403 rate limit; Phase C rebase+push lip#46,#47,#48 (dirty→blocked, CI green); lip#45 + lit#21–23 blocked CI-green; li-cursor-agents#51 CLEAN; implementation_queue lip/lit 1–8 **stale** |
 | 2026-05-30 code_implementer (12) | 232 → ~229 | 3 | Phase B blocked×1 (roadmap#43); merge lit#20 (Pages deploy); close lip#44 superseded; rebase+push lip#45 (CI green, merge pending rate limit); implementation_queue lip/lit 1–8 **stale**; REST rate limit 403 mid-batch |
 | 2026-05-30 code_implementer (11) | 232 → 227 | 5 | Phase B blocked×5 (benchmarks#240–242, lic#547–548 incl. lip/lit tier1-smoke); Phase C rebase+push li-cursor-agents#51; lip/lit implementation_queue 1–8 **verified stale** (0 open PRs, main CI green); unrelated-history blockers on li-std-*, li-net, li-httpd, li-language#17 |
 | 2026-05-30 code_implementer (10) | ~230 | 1 | Phase A queue refresh (168/229 classified, rate limit); Phase B blocked×1 (benchmarks#237); Phase C rebase+push li-cursor-agents#51, benchmarks#228, roadmap#44; implementation_queue lip/lit 1–8 **stale** (0 open, main CI green); REST core limit 0 until 14:38 UTC |
@@ -14,6 +15,14 @@ Started: 2026-05-30
 | 2026-05-30 code_implementer (2) | ~239 → ~228 | 12+ | REST blocked batch (lip#40,lis#31-32,li-std-*,li-net,li-language,li-httpd); merge lip#31,lit#17,li-cursor-agents#50; rebase+push lip#22,lit#13; closed lip#42 (lis main premature); GraphQL rate limit — REST only |
 | 2026-05-30 code_implementer | 239 → 228 | 11 | Phase A queue refresh; Phase B blocked merge (lic#534, benchmarks#220, li-demo#18); Phase C local rebase+merge (lip#24,25,26,28,30, benchmarks#215, roadmap#44,45); org-rebase-pr-branch.py: pull/N/head fetch + force-with-lease |
 | 2026-05-30 prior session | 255 → 231 | 27 | See org-pr-merge-final-report.md |
+
+## Rebased this iteration (13)
+
+| PR | Method |
+|----|--------|
+| lip#46 | merge main + resolve docs/registry.md + push |
+| lip#47 | merge main + ci.yml (lis E2E) + registry.md + push |
+| lip#48 | merge main + ci.yml + CHANGELOG.md + push |
 
 ## Rebased this iteration (12)
 
@@ -78,7 +87,7 @@ Started: 2026-05-30
 
 ## Blockers noted
 
-- GitHub API rate limit (REST 403 + GraphQL) — pause merges; retry `org-merge-blocked.py` after reset
-- lip#45 — CI green, merge pending rate limit reset
+- GitHub API rate limit (REST 403 + GraphQL) — pause merges; retry `org-merge-blocked.py` after reset (~15:25 UTC hit)
+- lip#45–48, lit#21–23 — CI green BLOCKED; merge when rate limit resets
 - lis#28/#30 — unrelated histories; needs manual rebase strategy
 - `org-rebase-pr-branch.py` — set `LI_SIBLING_REPOS_ROOT` to org workspace root when run from li-cursor-agents clone
