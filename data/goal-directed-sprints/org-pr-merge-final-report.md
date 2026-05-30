@@ -123,9 +123,11 @@
 
 ## Session 35 (2026-05-31 code_implementer-83175237)
 
-**Closed (Phase E):** lic#601 (workspace_sweeper fallback re-opened post-#599 — 664 commits, 61 files, +38k/-879 lines, merge conflicts with main, emit.cpp/matmul regressions vs main; branch `chore/workspace-sweep-1780171200` preserved).
+**Closed (Phase E):** lic#601 (workspace_sweeper fallback re-opened post-#599 — 664 commits, 61 files, +38k/-879 lines, merge conflicts with main, emit.cpp/matmul regressions vs main), lic#602 (duplicate workspace_sweeper re-opened during #89 merge — same branch, 100 commits, 61 files).
 
-**Open PR count:** 1 → **0** (`org-pr-open-count.py --require-zero` exit 0; `org-pr-merge-completion-gate.sh` exit 0).
+**Merged:** li-cursor-agents#89 (REST squash — session 35 sprint digest; CI green).
+
+**Open PR count:** 1 → **0** (`org-pr-merge-completion-gate.sh` exit 0).
 
 **Handoffs:** `cad_fundamentals` skipped (`package_placement: null`).
 
