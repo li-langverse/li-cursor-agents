@@ -33,7 +33,7 @@
     "compiler_studio": "2026-05-30T01:07:33.645Z",
     "studio_ui_ux": "2026-05-30T08:12:53.397Z"
   },
-  "last_research_tick_at": "2026-05-30T12:19:13.248Z",
+  "last_research_tick_at": "2026-05-30T15:57:05.361Z",
   "proactive_last_run_at": {
     "bug_fixer": "2026-05-30T12:04:24.185Z",
     "bench_improver": "2026-05-30T15:32:47.531Z",
@@ -54,7 +54,7 @@
     "docs_ui_tester": "2026-05-30T15:23:28.600Z",
     "workspace_sweeper": "2026-05-29T17:51:35.171Z",
     "ci_maintainer": "2026-05-30T15:28:16.070Z",
-    "docs_maintainer": "2026-05-30T15:14:56.512Z",
+    "docs_maintainer": "2026-05-30T15:56:53.329Z",
     "agent_kit_maintainer": "2026-05-30T15:48:17.302Z"
   },
   "last_implement_tick_at": "2026-05-30T15:25:36.168Z",
