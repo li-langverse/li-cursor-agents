@@ -50,6 +50,7 @@ def main() -> None:
 
     pr = get_pr(args.repo, args.num)
     head_ref = pr["head"]["ref"]
+    base_ref = pr["base"]["ref"]
     head_repo = pr["head"]["repo"]["full_name"]
     local = os.path.join(ROOT, args.repo)
     if not os.path.isdir(os.path.join(local, ".git")):
@@ -60,7 +61,7 @@ def main() -> None:
     pull_ref = f"pull/{args.num}/head"
     local_head = f"pr-{args.num}-head"
     for cmd in (
-        ["git", "fetch", "origin", "main"],
+        ["git", "fetch", "origin", base_ref],
         ["git", "fetch", "origin", f"{pull_ref}:{local_head}"],
     ):
         code, out = run(cmd, local)
@@ -70,9 +71,10 @@ def main() -> None:
             sys.exit(code)
 
     branch = f"pr-{args.num}-rebase"
+    base_remote = f"origin/{base_ref}"
     for cmd in (
         ["git", "checkout", "-B", branch, local_head],
-        ["git", "merge", "origin/main", "-m", f"merge main into {head_ref}"],
+        ["git", "merge", base_remote, "-m", f"merge {base_ref} into {head_ref}"],
     ):
         code, out = run(cmd, local)
         print(f"$ {' '.join(cmd)} -> {code}", flush=True)
@@ -81,8 +83,13 @@ def main() -> None:
             if args.ours_main:
                 run(["git", "checkout", "--ours", "."], local)
                 run(["git", "add", "-A"], local)
-                code2, out2 = run(
-                    ["git", "commit", "-m", f"merge main into {head_ref} (prefer main)"],
+                code2, out2 =                 run(
+                    [
+                        "git",
+                        "commit",
+                        "-m",
+                        f"merge {base_ref} into {head_ref} (prefer base)",
+                    ],
                     local,
                 )
                 print(f"auto-resolve prefer-main -> {code2}", flush=True)

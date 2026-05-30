@@ -4,8 +4,33 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
+| 2026-05-30 code_implementer (25) | 62 → 50 | 3 | Phase C/E: close **12** superseded dirty (lic#554–556, li-cursor-agents#19–63, roadmap#48, benchmarks#223); Phase B merge li-httpd#20–22; fix `org-rebase-pr-branch.py` to merge PR base ref; add baseline filter + dirty gate; lidb#6/#14/#19 **unrelated histories** blocker |
 | 2026-05-30 code_implementer (24) | ~60 | 0 | Phase D: rebased lic#550,#552 onto main; opened lic#557 (bench TimingStats `.mean` + narrow tier5 path filter); completion gate false-green (rate limit emptied queue classify); lic#439 stale (merged) |
 | 2026-05-30 code_implementer (22) | 215 → ~212 | 3 | Phase A queue refresh (215 classified, 156 dirty); Phase B REST squash benchmarks#201; Phase C rebase+merge benchmarks#197,#194 (prefer-main); implementation_queue lip/lit 1–8 **stale** (0 open, main CI green) |
+
+## Merged this iteration (session 25)
+
+| PR | Method |
+|----|--------|
+| li-httpd#20 | blocked CI-green REST squash |
+| li-httpd#21 | blocked CI-green REST squash |
+| li-httpd#22 | blocked CI-green REST squash |
+
+## Closed superseded (session 25, Phase E)
+
+12 dirty PRs closed (no unique commits vs main): lic#554–556, li-cursor-agents#19,#20,#28,#35,#60,#61,#62,#63, roadmap#48, benchmarks#223.
+
+## Added (session 25)
+
+- `scripts/org-pr-baseline-filter.py` — old/new subset queue filter
+- `scripts/org-pr-dirty-completion-gate.sh` — Phase C completion gate
+- `data/goal-directed-sprints/org-pr-merge-baseline.json` — frozen baseline snapshot
+- `org-rebase-pr-branch.py` — merge PR base ref (not always main)
+
+## Blockers (session 25)
+
+- lidb#6, #14, #19 — unrelated histories vs base `feat/ph-db-2-liorm-liq` (needs human rebase/cherry-pick)
+- ~22 `ci_not_ok` remain (lic matmul bench PRs, agent-kit sync satellites)
 
 ## Merged this iteration (session 23)
 

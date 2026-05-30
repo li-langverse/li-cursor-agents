@@ -5,7 +5,11 @@
     "green_clean": 0,
     "blocked_ci_ok": 0,
     "dirty": 4,
-    "ci_not_ok": 22
+    "ci_not_ok": 22,
+    "subset": "old",
+    "baseline_size": 25,
+    "green": 0,
+    "blocked": 0
   },
   "green": [],
   "blocked": [],
