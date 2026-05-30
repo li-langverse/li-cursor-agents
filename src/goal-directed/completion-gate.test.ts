@@ -79,3 +79,14 @@ false
   assert.equal(result.progressOnly, true);
   assert.match(result.reason, /progress gate passed; phases remaining: B/);
 });
+
+test("phasesMarkedDone reads **DONE** in last column (3-col table)", () => {
+  const md = ### Phase W0 - foundation
+### Phase W1 - core
+| Phase | Scope | Status |
+| **W0** | docs | **DONE** |
+| **W1** | sim | pending |
+;
+  assert.deepEqual(phasesMarkedDone(md), ["W0"]);
+  assert.deepEqual(requiredPhases(md), ["W0", "W1"]);
+});

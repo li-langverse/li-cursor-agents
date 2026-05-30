@@ -81,8 +81,16 @@ dist_needs_rebuild() {
 ensure_dist_built() {
   if dist_needs_rebuild; then
     echo "goal-directed-loop: rebuilding dist (gate/agent TypeScript newer than dist)"
+    export PATH="$ROOT/node_modules/.bin:$PATH"
     npm ci --prefix "$ROOT" >/dev/null 2>&1 || true
-    npm run build --prefix "$ROOT"
+    if ! npm run build --prefix "$ROOT"; then
+      if [[ -f "$ROOT/dist/cli/goal-completion-gate.js" ]]; then
+        echo "goal-directed-loop: WARN rebuild failed; using existing dist" >&2
+      else
+        echo "goal-directed-loop: FATAL build failed and dist/cli missing" >&2
+        exit 1
+      fi
+    fi
   fi
 }
 
@@ -194,6 +202,7 @@ fi
 
 max_label="${MAX}"
 [[ "$MAX" -le 0 ]] && max_label="unlimited"
+export LI_GOAL_LOOP_GATE_ONLY=1
 echo "goal-directed-loop: agent=$AGENT repo=${WORKFLOW_REPO:-—}"
 echo "goal-directed-loop: success = completion gate only | max=$max_label | until-local=${UNTIL_LOCAL:-none} (${GOAL_LOOP_TZ})"
 [[ -n "$GATE_GOAL_FILE" ]] && echo "goal-directed-loop: goal=$GATE_GOAL_FILE"

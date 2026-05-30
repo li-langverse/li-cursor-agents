@@ -20,13 +20,21 @@ export function extractCompletionGateScript(goalText: string): string | null {
   return extractGateScript(goalText, "Completion gate");
 }
 
-/** Phases marked **DONE** in status table rows: | **A** | ... | **DONE** | */
+/** Phases marked **DONE** in status table (2-col or 3+ col with **DONE** in last column). */
 export function phasesMarkedDone(goalText: string): string[] {
   const done: string[] = [];
-  const rowRe = /\|\s*\*\*([A-Z0-9]+)\*\*\s*\|\s*\*\*DONE\*\*\s*\|/gi;
-  for (const m of goalText.matchAll(rowRe)) {
-    const p = m[1].toUpperCase();
+  const add = (phase: string) => {
+    const p = phase.toUpperCase();
     if (!done.includes(p)) done.push(p);
+  };
+  const statusColRe =
+    /\|\s*\*\*([A-Z0-9]+)\*\*\s*(?:\|[^|\n]*)+\|\s*\*\*DONE\*\*\s*\|/gi;
+  for (const m of goalText.matchAll(statusColRe)) {
+    add(m[1]);
+  }
+  const twoColRe = /\|\s*\*\*([A-Z0-9]+)\*\*\s*\|\s*\*\*DONE\*\*\s*\|/gi;
+  for (const m of goalText.matchAll(twoColRe)) {
+    add(m[1]);
   }
   return done;
 }
