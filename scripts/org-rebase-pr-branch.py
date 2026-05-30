@@ -11,7 +11,10 @@ import urllib.request
 
 ORG = "li-langverse"
 API = "https://api.github.com"
-ROOT = os.path.join(os.path.dirname(__file__), "..")
+# Sibling clones (lic, lip, …) live under the org workspace root, not li-cursor-agents/.
+ROOT = os.environ.get("LI_SIBLING_REPOS_ROOT") or os.path.join(
+    os.path.dirname(__file__), "..", ".."
+)
 
 
 def headers() -> dict[str, str]:
