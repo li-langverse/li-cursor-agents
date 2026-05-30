@@ -80,7 +80,22 @@
 
 **Verified stale:** implementation_queue lip/lit items 1–8 (0 open PRs; main CI green).
 
-**Open PR count:** 225 → 224.
+## Session 23 (2026-05-30 code_implementer)
+
+| Action | Count |
+|--------|------:|
+| Starting open PRs | 215 |
+| Ending open PRs | ~60 |
+| REST squash merges | 7 |
+| Superseded closes (Phase E) | 183 |
+
+**Merged:** benchmarks#201, li-cursor-agents#58, lit#24, lip#49, li-std-core#14–16.
+
+**Tooling:** `scripts/org-close-superseded-prs.py` — close dirty PRs with zero unique commits vs `main`.
+
+**Blocker:** REST rate limit 403 at ~60 open; li-httpd#20–22 blocked CI-green pending retry.
+
+**Open PR count:** 215 → ~60.
 
 ## Session 16 (2026-05-30 code_implementer)
 

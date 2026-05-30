@@ -4,7 +4,32 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
+| 2026-05-30 code_implementer (23) | 215 → ~60 | 7 | Phase B REST squash benchmarks#201, li-cursor-agents#58, lit#24, lip#49, li-std-core#14–16; Phase E close **183** superseded dirty PRs (no unique commits vs main); REST rate limit 403 at ~60 open; implementation_queue lip/lit 1–8 **stale** (0 open, main CI green) |
 | 2026-05-30 code_implementer (22) | 215 → ~212 | 3 | Phase A queue refresh (215 classified, 156 dirty); Phase B REST squash benchmarks#201; Phase C rebase+merge benchmarks#197,#194 (prefer-main); implementation_queue lip/lit 1–8 **stale** (0 open, main CI green) |
+
+## Merged this iteration (session 23)
+
+| PR | Method |
+|----|--------|
+| benchmarks#201 | blocked CI-green REST squash |
+| li-cursor-agents#58 | merge-green REST squash |
+| lit#24 | blocked CI-green REST squash |
+| lip#49 | blocked CI-green REST squash |
+| li-std-core#14 | blocked CI-green REST squash |
+| li-std-core#15 | blocked CI-green REST squash |
+| li-std-core#16 | blocked CI-green REST squash |
+
+## Closed superseded (session 23, Phase E)
+
+183 dirty PRs closed after `git log origin/main..FETCH_HEAD` returned empty (commits already on main). Sample: li-language#15–21, li-std-*#11–12, li-httpd#17, li-net#15, benchmarks#128–219, lic#367–529, lis#20–30, roadmap#19–37, studio#10, ui#8, li-httpd#10.
+
+Added `scripts/org-close-superseded-prs.py` for repeatable Phase E sweeps.
+
+## Blockers (session 23)
+
+- REST API rate limit (403, remaining=0) — blocked merge of li-httpd#20–22; retry after reset
+- ~22 `ci_not_ok` remain (lic matmul bench PRs, agent-kit sync satellites, lidb)
+- ~12 dirty remain (mostly li-cursor-agents sprint logs, lic#554 sweep)
 
 ## Merged this iteration (session 22)
 
