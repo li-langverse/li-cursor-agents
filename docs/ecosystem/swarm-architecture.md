@@ -49,6 +49,10 @@ The loop is continuous: **read signals → pick highest-value goal → run agent
 
 **New model:** one swarm reads the same goals and backlogs; `lic` is where plans and gate scripts live, not where processes run.
 
+
+## Message queue (limq)
+
+Durable swarm commands and events move to **[limq](../../../limq/docs/swarm-integration.md)** (LI_MQ_URL, consumer groups per LI_SWARM_ROLE). See [ADR-li-mq-swarm-transport.md](../architecture/ADR-li-mq-swarm-transport.md).
 ---
 
 ## Technical diagram (Mermaid)
