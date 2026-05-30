@@ -1,4 +1,4 @@
-ï»¿import test from "node:test";
+import test from "node:test";
 import assert from "node:assert/strict";
 import {
   extractCompletionGateScript,
@@ -42,8 +42,8 @@ python3 scripts/audit-dashboard-gaps.py
 });
 
 test("requiredPhases and phasesMarkedDone (status column only)", () => {
-  const md = `### Phase A â€” foo
-### Phase B â€” bar
+  const md = `### Phase A — foo
+### Phase B — bar
 | **A** | **DONE** | notes |
 | **B** | in progress | **DONE** in notes only |
 `;
@@ -56,8 +56,8 @@ test("evaluateGoalCompletion runs progress gate when phases remain", () => {
   const goal = join(dir, "plan.md");
   writeFileSync(
     goal,
-    `### Phase A â€” a
-### Phase B â€” b
+    `### Phase A — a
+### Phase B — b
 | **A** | **DONE** |
 | **B** | NEXT |
 
@@ -81,12 +81,12 @@ false
 });
 
 test("phasesMarkedDone reads **DONE** in last column (3-col table)", () => {
-  const md = ### Phase W0 - foundation
+  const md = `### Phase W0 - foundation
 ### Phase W1 - core
 | Phase | Scope | Status |
 | **W0** | docs | **DONE** |
 | **W1** | sim | pending |
-;
+`;
   assert.deepEqual(phasesMarkedDone(md), ["W0"]);
   assert.deepEqual(requiredPhases(md), ["W0", "W1"]);
 });
