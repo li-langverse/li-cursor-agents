@@ -1,46 +1,14 @@
 {
   "report": {
-    "total": 3,
-    "classified": 3,
+    "total": 0,
+    "classified": 0,
     "green_clean": 0,
     "blocked_ci_ok": 0,
-    "dirty": 2,
-    "ci_not_ok": 1
+    "dirty": 0,
+    "ci_not_ok": 0
   },
   "green": [],
   "blocked": [],
-  "dirty": [
-    {
-      "repo": "lic",
-      "number": 566,
-      "title": "chore(lic): workspace sweep fallback",
-      "mergeable": false,
-      "mergeable_state": "dirty",
-      "draft": false,
-      "ci": "no_checks",
-      "head": "3410337"
-    },
-    {
-      "repo": "li-cursor-agents",
-      "number": 69,
-      "title": "chore(li-cursor-agents): workspace sweep fallback",
-      "mergeable": false,
-      "mergeable_state": "dirty",
-      "draft": false,
-      "ci": "no_checks",
-      "head": "3e7249c"
-    }
-  ],
-  "ci_not_ok": [
-    {
-      "repo": "lidb",
-      "number": 24,
-      "title": "chore(org-merge): lidb tier_db CSV + stack (replaces #6,#14,#19,#20)",
-      "mergeable": true,
-      "mergeable_state": "unstable",
-      "draft": false,
-      "ci": "pending",
-      "head": "d9ce783"
-    }
-  ]
+  "dirty": [],
+  "ci_not_ok": []
 }

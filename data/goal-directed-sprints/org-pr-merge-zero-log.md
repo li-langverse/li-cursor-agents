@@ -4,7 +4,8 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
-| 2026-05-30 code_implementer (68077380) | 2 → 3 → 2 | 0 | Phase D lidb#24 CI fixes (6 commits on org-merge/lidb-stack-1); closed lic#565 sweep duplicate; native-smoke+audit still red — embed pytest/security |
+| 2026-05-30 code_implementer (21) | 2 → 0 | 2 | Phase C rebase+REST squash li-cursor-agents#71 (prefer-main), lic#567 (prefer-main + submodule fix); CI green on #71; **completion gate pass** |
+| 2026-05-30 code_implementer (20) | 4 → 0 | 2+2 | Phase B merge #70,#24; Phase D lidb CI fix; Phase E close lic#566, li-cursor-agents#69 (no unique commits); **completion gate pass** |
 | 2026-05-30 code_implementer (19) | 224 → 221 | 5 | Phase C rebase+REST squash benchmarks#211,#248,#225,#227, li-cursor-agents#55; rebase push benchmarks#222 (405 conflict); li-language#19–20 unrelated histories; implementation_queue lip/lit 1–8 **stale** (0 open) |
 | 2026-05-30 code_implementer (16) | 232 → ~226 | 6 | Phase C rebase+merge li-cursor-agents#53, roadmap#39,#44, benchmarks#247,#228,#249; rebase push lic#520 (CI fail); roadmap#37 unrelated histories blocker; implementation_queue lip/lit 1–8 **stale** |
 | 2026-05-30 code_implementer (15) | 235 → 232 | 6 | Phase B blocked×3 (lip#46–48); Phase C rebase+REST squash benchmarks#238,#196; implementation_queue lip/lit 1–8 **stale** (0 open, main CI green) |
