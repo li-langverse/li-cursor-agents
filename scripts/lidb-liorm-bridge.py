@@ -8,10 +8,13 @@ Commands (JSON on stdout):
   exec_sql <sql> <params_json>
   upsert_agent_run <payload_json>
   upsert_control_plane_state <payload_json>
+  upsert_handoff <payload_json>
+  upsert_control_plane_report <payload_json>
 """
 from __future__ import annotations
 
 import json
+import uuid
 import os
 import sys
 from pathlib import Path
@@ -104,12 +107,10 @@ def cmd_upsert_agent_run(payload_json: str) -> dict[str, Any]:
 
 
 def cmd_upsert_control_plane_state(payload_json: str) -> dict[str, Any]:
-    import json as json_mod
-
-    state = json_mod.loads(payload_json)
+    state = json.loads(payload_json)
     from liorm.embed_engine import execute_sql
 
-    payload = json_mod.dumps(state)
+    payload = json.dumps(state)
     updated_at = state.get("updated_at") or ""
     execute_sql("DELETE FROM control_plane_state WHERE id = ?", [1])
     try:
@@ -121,6 +122,49 @@ def cmd_upsert_control_plane_state(payload_json: str) -> dict[str, Any]:
         # Table may be absent until control-plane migration lands on native catalog.
         return {"ok": False, "error": "control_plane_state table not available in lidb catalog"}
     return {"ok": True}
+
+
+def cmd_upsert_handoff(payload_json: str) -> dict[str, Any]:
+    row = json.loads(payload_json)
+    handoff_id = str(row.get("handoff_id") or uuid.uuid4())
+    from liorm.embed_engine import execute_sql
+
+    existing = execute_sql("SELECT handoff_id FROM agent_handoffs WHERE handoff_id = ?", [handoff_id])
+    if existing:
+        return {"ok": True, "handoff_id": handoff_id, "skipped": True}
+    execute_sql(
+        "INSERT INTO agent_handoffs (handoff_id, from_agent, to_agents, status, briefing_hash, source_run_id, work) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [
+            handoff_id,
+            str(row.get("from_agent") or "unknown"),
+            json.dumps(row.get("to_agents") or []),
+            str(row.get("status") or "pending_placement"),
+            str(row.get("briefing_hash") or ""),
+            str(row.get("source_run_id") or ""),
+            json.dumps(row.get("work") or {}),
+        ],
+    )
+    return {"ok": True, "handoff_id": handoff_id}
+
+
+def cmd_upsert_control_plane_report(payload_json: str) -> dict[str, Any]:
+    row = json.loads(payload_json)
+    report_id = str(row.get("id") or uuid.uuid4())
+    from liorm.embed_engine import execute_sql
+
+    execute_sql(
+        "INSERT INTO control_plane_reports (id, generated_at, briefing_hash, payload, is_latest) "
+        "VALUES (?, ?, ?, ?, ?)",
+        [
+            report_id,
+            str(row.get("generated_at") or ""),
+            str(row.get("briefing_hash") or ""),
+            json.dumps(row.get("payload") or {}),
+            "1" if row.get("is_latest") else "0",
+        ],
+    )
+    return {"ok": True, "id": report_id}
 
 
 def main() -> int:
@@ -150,6 +194,14 @@ def main() -> int:
             if len(sys.argv) < 3:
                 raise ValueError("upsert_control_plane_state requires json payload")
             out = cmd_upsert_control_plane_state(sys.argv[2])
+        elif cmd == "upsert_handoff":
+            if len(sys.argv) < 3:
+                raise ValueError("upsert_handoff requires json payload")
+            out = cmd_upsert_handoff(sys.argv[2])
+        elif cmd == "upsert_control_plane_report":
+            if len(sys.argv) < 3:
+                raise ValueError("upsert_control_plane_report requires json payload")
+            out = cmd_upsert_control_plane_report(sys.argv[2])
         else:
             out = {"ok": False, "error": f"unknown command: {cmd}"}
     except Exception as exc:  # noqa: BLE001 — bridge must return JSON errors to Node
