@@ -4,6 +4,7 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
+| 2026-05-30 code_implementer (19) | 224 → 221 | 5 | Phase C rebase+REST squash benchmarks#211,#248,#225,#227, li-cursor-agents#55; rebase push benchmarks#222 (405 conflict); li-language#19–20 unrelated histories; implementation_queue lip/lit 1–8 **stale** (0 open) |
 | 2026-05-30 code_implementer (16) | 232 → ~226 | 6 | Phase C rebase+merge li-cursor-agents#53, roadmap#39,#44, benchmarks#247,#228,#249; rebase push lic#520 (CI fail); roadmap#37 unrelated histories blocker; implementation_queue lip/lit 1–8 **stale** |
 | 2026-05-30 code_implementer (15) | 235 → 232 | 6 | Phase B blocked×3 (lip#46–48); Phase C rebase+REST squash benchmarks#238,#196; implementation_queue lip/lit 1–8 **stale** (0 open, main CI green) |
 | 2026-05-30 code_implementer (10) | 243 → 244 | 0 | Phase B REST merge rate-limited (403); Phase C rebase+push lip#46,#47,#48 (dirty→blocked, CI green); lip#45 + lit#21–23 blocked CI-green pending merge; li-cursor-agents#51 CLEAN; implementation_queue lip/lit 1–8 stale — CI already green |
@@ -19,9 +20,11 @@ Started: 2026-05-30
 
 | PR | Method |
 |----|--------|
-| benchmarks#239 | rebase prefer-main + REST squash |
-| benchmarks#230 | rebase prefer-main + mark ready + REST squash |
-| lic#495 | rebase prefer-main + REST squash |
+| benchmarks#211 | blocked CI-green REST squash |
+| benchmarks#248 | rebase prefer-main + REST squash |
+| benchmarks#225 | rebase prefer-main + REST squash |
+| benchmarks#227 | rebase prefer-main + REST squash (2nd pass) |
+| li-cursor-agents#55 | rebase prefer-main + REST squash |
 
 ## Fixed (pushed, CI pending)
 
@@ -30,6 +33,9 @@ Started: 2026-05-30
 | lic#520 | Restore `li_parallel_for_i64` in `emit.cpp` (regression from bench_improver refactor) |
 
 ## Blockers noted
+
+| benchmarks#222 | rebase pushed; REST merge 405 (conflicts persist on GitHub) |
+| li-language#19–20 | unrelated histories — cannot merge main |
 | benchmarks#220 | blocked REST squash |
 | li-demo#18 | blocked REST squash |
 | lip#24 | rebase + REST squash |
