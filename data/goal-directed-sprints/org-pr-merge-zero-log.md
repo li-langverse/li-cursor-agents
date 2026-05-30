@@ -4,6 +4,7 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
+| 2026-05-30 code_implementer (20) | 220 → 219 | 0 | **org-prs-ci** Phase D: rebase+push lic#373, lic#378 (baseline); implementation_queue lip/lit 1–8 **stale** (merged); lic **main** `build-and-test` red since be826ffe (ci.sh step 5, not sibling checkout); baseline `ci_not_ok`=52 |
 | 2026-05-30 code_implementer (18) | 225 → 224 | 4 | Phase B REST squash li-cursor-agents#54,#51, lic#376; Phase C rebase+push lic#373,#376,#520, li-cursor-agents#51, benchmarks#211, lic#497; implementation_queue lip/lit 1–8 **stale** (0 open, main CI green); lic#373/#520 CI git checkout 128 (pending re-run) |
 | 2026-05-30 code_implementer (16) | 232 → ~226 | 6 | Phase C rebase+merge li-cursor-agents#53, roadmap#39,#44, benchmarks#247,#228,#249; rebase push lic#520 (CI fail); roadmap#37 unrelated histories blocker; implementation_queue lip/lit 1–8 **stale** |
 | 2026-05-30 code_implementer (15) | 235 → 232 | 6 | Phase B blocked×3 (lip#46–48); Phase C rebase+REST squash benchmarks#238,#196; implementation_queue lip/lit 1–8 **stale** (0 open, main CI green) |
@@ -28,7 +29,15 @@ Started: 2026-05-30
 
 | PR | Fix |
 |----|-----|
+| lic#373 | Rebase onto `main` (`org-rebase-pr-branch.py --ours-main`); CI re-run — still failing `build-and-test` / macOS (lic main red) |
+| lic#378 | Rebase onto `main`; CI re-run — still failing `build-and-test` / `registry-and-tier0` (lic main red) |
 | lic#520 | Restore `li_parallel_for_i64` in `emit.cpp` (regression from bench_improver refactor) |
+
+## org-prs-ci (baseline Phase D)
+
+- Queue refresh: `org-merge-open-prs.py --dry-run` → 219 open; `org-pr-baseline-filter.py --subset old` → **52** `ci_not_ok`
+- lip/lit queue items 1–8: **0 open PRs** (lip#31, lit#17 merged); lip/lit main CI green
+- Blocker: lic `main` `build-and-test` fails in `ci.sh` (git exit 128 annotation; sibling checkout step succeeds)
 
 ## Blockers noted
 | benchmarks#220 | blocked REST squash |
