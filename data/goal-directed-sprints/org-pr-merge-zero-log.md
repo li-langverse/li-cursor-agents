@@ -4,6 +4,7 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
+| 2026-05-30 code_implementer (7) | ~226 → ~214 | 11 | Phase B REST squash lic#542,#541,#533,#546,#518,#524, benchmarks#235,#234,#221,#229, roadmap#46; Phase C lic#524 rebase prefer-main; lip/lit implementation_queue 1–8 **cleared** (0 open PRs, main CI green); draft lic/benchmarks plan PRs skipped |
 | 2026-05-30 code_implementer (6) | 229 → ~226 | 2 | Phase B blocked×1 (lit#19 Pages deploy); Phase C rebase+push lic#544–533 (docs Pages); merge lic#544; lip/lit queues 0 open (implementation_queue 1–8 stale); GraphQL+REST rate limit mid-batch |
 | 2026-05-30 code_implementer (5) | 237 → 228 | 9 | Phase B green×1 (li-gui#2), blocked×6 (benchmarks#231–233, lic#543,545, lis#23); Phase C roadmap rebase+merge #34,#29; lit#19 opened (Pages deploy permissions); lip/lit queues 0 open — queue items 1–8 cleared |
 | 2026-05-30 code_implementer (4) | 235 → 229 | 17 | Phase B blocked×7 (li-std-math#14, li-std-core#13, li-net#17, li-httpd#19, li-language#16, lic#379, li-demo#15); Phase C rebase+merge roadmap×4 (#38,36,30,20), research-findings×2 (#7,3), li-local-ci#8; Phase D li-demo#16–17 rebase + docs-only CI green + merge; lip/lit queues now 0 open; GraphQL rate limit — REST only |
@@ -12,20 +13,21 @@ Started: 2026-05-30
 | 2026-05-30 code_implementer | 239 → 228 | 11 | Phase A queue refresh; Phase B blocked merge (lic#534, benchmarks#220, li-demo#18); Phase C local rebase+merge (lip#24,25,26,28,30, benchmarks#215, roadmap#44,45); org-rebase-pr-branch.py: pull/N/head fetch + force-with-lease |
 | 2026-05-30 prior session | 255 → 231 | 27 | See org-pr-merge-final-report.md |
 
-## Merged this iteration (6)
+## Merged this iteration (7)
 
 | PR | Method |
 |----|--------|
-| lit#19 | blocked REST squash (Pages deploy permissions) |
-| lic#544 | rebase prefer-main + REST squash (lic Pages index.html) |
-
-## Rebased pending merge (CI pending at rate limit):
-
-| PR | Status |
-|----|--------|
-| lic#542 | rebase pushed; merge pending CI + REST quota |
-| lic#541 | rebase pushed; merge pending CI + REST quota |
-| lic#533 | rebase pushed; merge pending CI + REST quota |
+| lic#542 | REST squash (Pages 404 recovery) |
+| lic#541 | REST squash (matmul MIR fast paths) |
+| lic#533 | REST squash (handbook cross-links) |
+| lic#546 | REST squash (bench_improver matmul assessment) |
+| lic#518 | REST squash (workspace sweep) |
+| benchmarks#235 | REST squash (org CI audit docs) |
+| benchmarks#234 | REST squash (workspace sweep) |
+| benchmarks#221 | REST squash (workspace sweep) |
+| benchmarks#229 | REST squash (workspace sweep) |
+| roadmap#46 | REST squash (PH-DB status refresh) |
+| lic#524 | rebase prefer-main + REST squash (matmul_blocked harness) |
 
 ## Blockers noted
 
