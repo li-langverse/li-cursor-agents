@@ -1,11 +1,11 @@
 {
   "report": {
-    "total": 32,
-    "classified": 32,
+    "total": 31,
+    "classified": 31,
     "green_clean": 0,
     "blocked_ci_ok": 0,
     "dirty": 1,
-    "ci_not_ok": 4
+    "ci_not_ok": 3
   },
   "green": [],
   "blocked": [],
@@ -18,7 +18,7 @@
       "mergeable_state": "dirty",
       "draft": false,
       "ci": "no_checks",
-      "head": "2bc5955"
+      "head": "2c0c1e5"
     }
   ],
   "ci_not_ok": [
@@ -29,7 +29,7 @@
       "mergeable": true,
       "mergeable_state": "blocked",
       "draft": false,
-      "ci": "pending",
+      "ci": "failure",
       "head": "959dbe9"
     },
     {
@@ -51,16 +51,6 @@
       "draft": true,
       "ci": "failure",
       "head": "a396d2e"
-    },
-    {
-      "repo": "studio",
-      "number": 14,
-      "title": "chore: refresh studio-x-demo after Wave 2 merge",
-      "mergeable": true,
-      "mergeable_state": "unstable",
-      "draft": false,
-      "ci": "failure",
-      "head": "86a1711"
     }
   ]
 }

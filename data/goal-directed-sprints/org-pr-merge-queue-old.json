@@ -1,11 +1,11 @@
 {
   "report": {
-    "total": 37,
-    "classified": 37,
+    "total": 31,
+    "classified": 31,
     "green_clean": 0,
     "blocked_ci_ok": 0,
     "dirty": 0,
-    "ci_not_ok": 7,
+    "ci_not_ok": 1,
     "subset": "old",
     "baseline_size": 25,
     "green": 0,
@@ -24,66 +24,6 @@
       "draft": true,
       "ci": "failure",
       "head": "a396d2e"
-    },
-    {
-      "repo": "physics.runtime",
-      "number": 2,
-      "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
-      "mergeable": true,
-      "mergeable_state": "unstable",
-      "draft": false,
-      "ci": "failure",
-      "head": "103cf39"
-    },
-    {
-      "repo": "physics.custom",
-      "number": 2,
-      "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
-      "mergeable": true,
-      "mergeable_state": "unstable",
-      "draft": false,
-      "ci": "failure",
-      "head": "e0a702d"
-    },
-    {
-      "repo": "net.httpd",
-      "number": 2,
-      "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
-      "mergeable": true,
-      "mergeable_state": "unstable",
-      "draft": false,
-      "ci": "failure",
-      "head": "9d6d987"
-    },
-    {
-      "repo": "mmo",
-      "number": 2,
-      "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
-      "mergeable": true,
-      "mergeable_state": "unstable",
-      "draft": false,
-      "ci": "failure",
-      "head": "b1e4836"
-    },
-    {
-      "repo": "studio",
-      "number": 15,
-      "title": "feat(sync): studio parity with lic main @ 7c0c373",
-      "mergeable": true,
-      "mergeable_state": "unstable",
-      "draft": false,
-      "ci": "failure",
-      "head": "69acc32"
-    },
-    {
-      "repo": "studio",
-      "number": 14,
-      "title": "chore: refresh studio-x-demo after Wave 2 merge",
-      "mergeable": true,
-      "mergeable_state": "unstable",
-      "draft": false,
-      "ci": "failure",
-      "head": "86a1711"
     }
   ]
 }
