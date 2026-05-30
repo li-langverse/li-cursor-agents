@@ -1,25 +1,14 @@
 {
   "report": {
-    "total": 1,
-    "classified": 1,
+    "total": 0,
+    "classified": 0,
     "green_clean": 0,
     "blocked_ci_ok": 0,
     "dirty": 0,
-    "ci_not_ok": 1
+    "ci_not_ok": 0
   },
   "green": [],
   "blocked": [],
   "dirty": [],
-  "ci_not_ok": [
-    {
-      "repo": "li-cursor-agents",
-      "number": 81,
-      "title": "chore(sprint): session 28 digest \u2014 zero open PRs gate",
-      "mergeable": true,
-      "mergeable_state": "unstable",
-      "draft": false,
-      "ci": "pending",
-      "head": "101b732"
-    }
-  ]
+  "ci_not_ok": []
 }
