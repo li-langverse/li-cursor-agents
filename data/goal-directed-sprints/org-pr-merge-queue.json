@@ -1,56 +1,14 @@
 {
   "report": {
-    "total": 31,
-    "classified": 31,
+    "total": 4,
+    "classified": 4,
     "green_clean": 0,
     "blocked_ci_ok": 0,
-    "dirty": 1,
-    "ci_not_ok": 3
+    "dirty": 0,
+    "ci_not_ok": 0
   },
   "green": [],
   "blocked": [],
-  "dirty": [
-    {
-      "repo": "lic",
-      "number": 560,
-      "title": "chore(lic): workspace sweep fallback",
-      "mergeable": false,
-      "mergeable_state": "dirty",
-      "draft": false,
-      "ci": "no_checks",
-      "head": "2c0c1e5"
-    }
-  ],
-  "ci_not_ok": [
-    {
-      "repo": "lic",
-      "number": 561,
-      "title": "fix(ci): bench TimingStats .mean + narrow tier5 path filter",
-      "mergeable": true,
-      "mergeable_state": "blocked",
-      "draft": false,
-      "ci": "failure",
-      "head": "959dbe9"
-    },
-    {
-      "repo": "lic",
-      "number": 559,
-      "title": "fix(ci): compile-open studio composable imports until object-call #322",
-      "mergeable": true,
-      "mergeable_state": "blocked",
-      "draft": false,
-      "ci": "pending",
-      "head": "29a0275"
-    },
-    {
-      "repo": "lic",
-      "number": 430,
-      "title": "docs(plan): PH-8p-a parallel test orchestration (#428)",
-      "mergeable": true,
-      "mergeable_state": "behind",
-      "draft": true,
-      "ci": "failure",
-      "head": "a396d2e"
-    }
-  ]
+  "dirty": [],
+  "ci_not_ok": []
 }
