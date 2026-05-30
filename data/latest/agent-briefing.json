@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-30T07:06Z",
+  "generated_at": "2026-05-30T07:37Z",
   "role": "preflight_for_cursor_agents",
   "note": "Intelligence (web, review, gaps) runs in Cursor Automations — not in this file. plan_audit needs LIC_ROOT (sibling ../lic or CI lic@dev checkout); catalog path gaps skip path=unknown and catalog_lifecycle=planned.",
   "lic_root": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
@@ -71,7 +71,7 @@
     "workspace_dirty_sweep": {
       "command": "python3 scripts/workspace-dirty-sweep.py",
       "exit_code": 0,
-      "stdout_tail": "wrote /home/s4il0r/Documents/Cursor/li-langverse/benchmarks/data/latest/workspace-dirty-sweep.json dirty_count=1\n",
+      "stdout_tail": "wrote /home/s4il0r/Documents/Cursor/li-langverse/benchmarks/data/latest/workspace-dirty-sweep.json dirty_count=2\n",
       "stderr_tail": ""
     },
     "agent_deliverable_gate": {
@@ -80,7 +80,7 @@
     }
   },
   "issue_triage": {
-    "generated_at": "2026-05-30T07:06Z",
+    "generated_at": "2026-05-30T07:37Z",
     "vision_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/vision-and-roadmap.md",
     "skill": "plan-feature-from-issue (see .cursor/skills/)",
     "summary": {
@@ -135,7 +135,7 @@
     "recommended_actions": []
   },
   "issue_backlog_hygiene": {
-    "generated_at": "2026-05-30T07:03Z",
+    "generated_at": "2026-05-30T07:31Z",
     "live_scan": true,
     "skill": "issue_hygiene agent — see .cursor/automations/issue-hygiene-agent.md",
     "summary": {
@@ -158,9 +158,9 @@
     "recommended_actions": []
   },
   "plan_completion_audit": {
-    "generated_at": "2026-05-30T07:03Z",
+    "generated_at": "2026-05-30T07:31Z",
     "roots": {
-      "lic": "../lic",
+      "lic": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
       "lis": "/home/s4il0r/Documents/Cursor/li-langverse/lis",
       "benchmarks": "/home/s4il0r/Documents/Cursor/li-langverse/benchmarks",
       "roadmap": "/home/s4il0r/Documents/Cursor/li-langverse/roadmap"
@@ -1218,7 +1218,7 @@
     ]
   },
   "ecosystem_audit": {
-    "generated_at": "2026-05-30T07:06Z",
+    "generated_at": "2026-05-30T07:37Z",
     "vision": {
       "master_plan": "https://github.com/li-langverse/lic/blob/main/docs/superpowers/plans/2026-05-14-li-master-plan.md",
       "benchmark_goal": "Li ≤1.2× cpp (tier-1/2); beat HPC SOTA everywhere — PH-5b, PH-7e pure-Li codegen",
@@ -1230,17 +1230,15 @@
       "failed_prs": 0,
       "ready_prs": 0,
       "repos_missing_ci_main": 0,
-      "repos_without_live_pages": 10
+      "repos_without_live_pages": 8
     },
     "failed_prs": [],
     "ready_prs": [],
     "missing_ci_on_main": [],
     "repos_without_live_docs": [
-      "lic",
       "lip",
       "lit",
       "lis",
-      "roadmap",
       "li-net",
       "li-httpd",
       "li-std-core",
@@ -1325,9 +1323,9 @@
       "unknown": []
     },
     "plan_completion": {
-      "generated_at": "2026-05-30T07:03Z",
+      "generated_at": "2026-05-30T07:31Z",
       "roots": {
-        "lic": "../lic",
+        "lic": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
         "lis": "/home/s4il0r/Documents/Cursor/li-langverse/lis",
         "benchmarks": "/home/s4il0r/Documents/Cursor/li-langverse/benchmarks",
         "roadmap": "/home/s4il0r/Documents/Cursor/li-langverse/roadmap"
@@ -2443,7 +2441,7 @@
     ]
   },
   "ecosystem_explorer": {
-    "generated_at": "2026-05-30T06:52Z",
+    "generated_at": "2026-05-30T07:31Z",
     "lic_root": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
     "lic_present": true,
     "std_modules_on_disk": [
@@ -2993,7 +2991,7 @@
     ]
   },
   "org_ci_audit": {
-    "generated_at": "2026-05-30T07:06Z",
+    "generated_at": "2026-05-30T07:37Z",
     "org": "li-langverse",
     "required_workflow": "ci.yml",
     "default_branch_policy": "main",
@@ -3010,7 +3008,7 @@
     "lic_monorepo_hint": "Run lic/scripts/ensure-package-ci.sh before push-official-package-repo.sh"
   },
   "org_agent_kit_audit": {
-    "generated_at": "2026-05-30T07:06Z",
+    "generated_at": "2026-05-30T07:37Z",
     "org": "li-langverse",
     "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
     "roadmap_kit": "/home/s4il0r/Documents/Cursor/li-langverse/roadmap/agent-kit",
@@ -3352,7 +3350,7 @@
     ]
   },
   "merge_plan": {
-    "generated_at": "2026-05-30T07:06Z",
+    "generated_at": "2026-05-30T07:37Z",
     "vision_order": "package CI / mirrors → benchmarks → lic → lip/lit/lis → roadmap",
     "ordering_rules": [
       "Repo tier: mirrors/httpd → benchmarks → lic → lip/lit/lis → roadmap (roadmap last)",
@@ -3379,7 +3377,7 @@
     "warnings": []
   },
   "pr_program": {
-    "generated_at": "2026-05-30T07:01Z",
+    "generated_at": "2026-05-30T07:31Z",
     "merge_first": null,
     "summary": {
       "open_prs": 0,
@@ -3392,11 +3390,11 @@
     "plan_warnings": []
   },
   "pr_branch_hygiene": {
-    "generated_at": "2026-05-30T06:55Z",
+    "generated_at": "2026-05-30T07:33Z",
     "org": "li-langverse",
     "summary": {
       "repos_scanned": 12,
-      "branches_needing_pr": 132,
+      "branches_needing_pr": 133,
       "prs_recommended_close": 0,
       "prs_safe_close_now": 0
     },
@@ -3523,6 +3521,14 @@
       },
       {
         "repo": "lic",
+        "branch": "chore/agent-bench_improver-25479701",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-bench_improver-25479701` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-25479701"
+      },
+      {
+        "repo": "lic",
         "branch": "chore/agent-bench_improver-41443459",
         "base": "main",
         "ahead_by": 1,
@@ -3560,14 +3566,6 @@
         "ahead_by": 1,
         "reason": "branch `chore/agent-bench_improver-58717209` is 1 commit(s) ahead of `main` with no open PR",
         "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-58717209"
-      },
-      {
-        "repo": "lic",
-        "branch": "chore/agent-bench_improver-65060558",
-        "base": "main",
-        "ahead_by": 2,
-        "reason": "branch `chore/agent-bench_improver-65060558` is 2 commit(s) ahead of `main` with no open PR",
-        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-65060558"
       },
       {
         "repo": "lip",
@@ -3827,6 +3825,22 @@
       },
       {
         "repo": "benchmarks",
+        "branch": "chore/agent-agent_kit_maintainer-1780124464879-digest",
+        "base": "main",
+        "ahead_by": 14,
+        "reason": "branch `chore/agent-agent_kit_maintainer-1780124464879-digest` is 14 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-agent_kit_maintainer-1780124464879-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-agent_kit_maintainer-1780124682795-digest",
+        "base": "main",
+        "ahead_by": 18,
+        "reason": "branch `chore/agent-agent_kit_maintainer-1780124682795-digest` is 18 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-agent_kit_maintainer-1780124682795-digest"
+      },
+      {
+        "repo": "benchmarks",
         "branch": "chore/agent-autoresearch-1780082345386",
         "base": "main",
         "ahead_by": 10,
@@ -3880,6 +3894,14 @@
         "ahead_by": 4,
         "reason": "branch `chore/agent-autoresearch-1780115445230-digest` is 4 commit(s) ahead of `main` with no open PR",
         "suggested_title": "chore(benchmarks): sync branch chore/agent-autoresearch-1780115445230-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-autoresearch-1780124755372-digest",
+        "base": "main",
+        "ahead_by": 15,
+        "reason": "branch `chore/agent-autoresearch-1780124755372-digest` is 15 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-autoresearch-1780124755372-digest"
       },
       {
         "repo": "benchmarks",
@@ -3944,22 +3966,6 @@
         "ahead_by": 4,
         "reason": "branch `chore/agent-docs_maintainer-1780109879421-digest` is 4 commit(s) ahead of `main` with no open PR",
         "suggested_title": "chore(benchmarks): sync branch chore/agent-docs_maintainer-1780109879421-digest"
-      },
-      {
-        "repo": "benchmarks",
-        "branch": "chore/agent-docs_maintainer-live-docs-audit",
-        "base": "main",
-        "ahead_by": 1,
-        "reason": "branch `chore/agent-docs_maintainer-live-docs-audit` is 1 commit(s) ahead of `main` with no open PR",
-        "suggested_title": "chore(benchmarks): sync branch chore/agent-docs_maintainer-live-docs-audit"
-      },
-      {
-        "repo": "benchmarks",
-        "branch": "chore/agent-docs_maintainer-live-docs-audit-v2",
-        "base": "main",
-        "ahead_by": 1,
-        "reason": "branch `chore/agent-docs_maintainer-live-docs-audit-v2` is 1 commit(s) ahead of `main` with no open PR",
-        "suggested_title": "chore(benchmarks): sync branch chore/agent-docs_maintainer-live-docs-audit-v2"
       },
       {
         "repo": "roadmap",
@@ -4101,8 +4107,8 @@
         "repo": "roadmap",
         "branch": "fix/live-development-overview",
         "base": "main",
-        "ahead_by": 4,
-        "reason": "branch `fix/live-development-overview` is 4 commit(s) ahead of `main` with no open PR",
+        "ahead_by": 3,
+        "reason": "branch `fix/live-development-overview` is 3 commit(s) ahead of `main` with no open PR",
         "suggested_title": "chore(roadmap): sync branch fix/live-development-overview"
       },
       {
@@ -4461,7 +4467,7 @@
     "prs_recommended_close": []
   },
   "ci_bug_triage": {
-    "generated_at": "2026-05-30T07:05Z",
+    "generated_at": "2026-05-30T07:33Z",
     "summary": {
       "local_ci_failures": 1,
       "bug_issues": 0,
@@ -4495,7 +4501,7 @@
   },
   "security_cwe_audit": null,
   "cwe_feed_delta": {
-    "generated_at": "2026-05-30T07:06Z",
+    "generated_at": "2026-05-30T07:37Z",
     "new_cwes": [],
     "missing_in_catalog": [
       "CWE-79",
@@ -4582,25 +4588,37 @@
     ]
   },
   "workspace_dirty_sweep": {
-    "generated_at": "2026-05-30T07:06Z",
+    "generated_at": "2026-05-30T07:37Z",
     "ecosystem_root": "/home/s4il0r/Documents/Cursor/li-langverse",
-    "dirty_count": 1,
+    "dirty_count": 2,
     "dirty_repos": [
       {
         "path": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
         "repo": "lic",
         "org": "li-langverse",
-        "branch": "perf/7e-matmul-blocked-codegen-bench-improver",
-        "changed_files": 4,
+        "branch": "research/provability-cycle16-mat2-codegen-lean-drift-2026-05-30",
+        "changed_files": 5,
         "safe_files": [
           "enchmarks/tier5_http/third_party/nginx",
           "data/goal-directed-agents/snapshot.json",
           "data/goal-directed-agents/watch.log",
+          "data/swarm-gap-registry/registry.yaml",
           "logs/access.log.1"
         ],
         "test_commands": [
           "./li-tests/run_all.sh"
         ]
+      },
+      {
+        "path": "/home/s4il0r/Documents/Cursor/li-langverse/benchmarks",
+        "repo": "benchmarks",
+        "org": "li-langverse",
+        "branch": "chore/agent-docs_maintainer-ecosystem-audit-1780126228470",
+        "changed_files": 1,
+        "safe_files": [
+          "ata/latest/ecosystem-quality-report.json"
+        ],
+        "test_commands": []
       }
     ]
   },
@@ -4629,7 +4647,7 @@
     },
     {
       "agent": "workspace_sweeper",
-      "reason": "1 sibling repo(s) with uncommitted work — fallback sweep"
+      "reason": "2 sibling repo(s) with uncommitted work — fallback sweep"
     },
     {
       "agent": "plan_verifier",
@@ -4649,11 +4667,11 @@
     },
     {
       "agent": "docs_maintainer",
-      "reason": "10 repos without live docs"
+      "reason": "8 repos without live docs"
     },
     {
       "agent": "pr_branch_opener",
-      "reason": "132 branch(es) pushed without open PR"
+      "reason": "133 branch(es) pushed without open PR"
     },
     {
       "agent": "bug_fixer",
@@ -4991,7 +5009,7 @@
   "agent_incomplete_runs": [],
   "agent_pr_deliverable_failures": [],
   "org_roadmap": {
-    "loaded_at": "2026-05-30T07:06Z",
+    "loaded_at": "2026-05-30T07:37Z",
     "vision_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/vision-and-roadmap.md",
     "engineering_standards_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/engineering-standards.md",
     "master_plan_url": "https://github.com/li-langverse/lic/blob/main/docs/superpowers/plans/2026-05-14-li-master-plan.md",
@@ -5056,7 +5074,7 @@
           },
           {
             "agent": "docs_maintainer",
-            "reason": "10 repos without live docs"
+            "reason": "8 repos without live docs"
           }
         ]
       },
@@ -5105,7 +5123,7 @@
       {
         "coordinator": "coord_ecosystem",
         "agent": "docs_maintainer",
-        "reason": "10 repos without live docs",
+        "reason": "8 repos without live docs",
         "priority": 40
       },
       {
@@ -5221,7 +5239,7 @@
     "active_research_session": "numerics_researcher:numerics_sota (cycle 1)",
     "research_lane_enabled": true,
     "implement_lane_enabled": true,
-    "last_research_tick_at": "2026-05-30T06:42:34.313Z",
+    "last_research_tick_at": "2026-05-30T07:07:59.898Z",
     "last_implement_tick_at": "2026-05-30T05:33:22.915Z"
   },
   "research_goals_status": [
@@ -5415,7 +5433,7 @@
       "title": "Swarm gap orchestration — registry, backlog apply, handoffs",
       "agent": "swarm_observer",
       "priority": 10,
-      "last_run_at": "2026-05-30T04:17:33.675Z",
+      "last_run_at": "2026-05-30T07:10:49.859Z",
       "eligible": false
     },
     {
@@ -5438,6 +5456,6 @@
     "missing_north_star_fit": [],
     "invalid_north_star_fit": []
   },
-  "swarm_enriched_at": "2026-05-30T07:06:51.711Z",
-  "swarm_recommendations_merged_at": "2026-05-30T07:06:51.711Z"
+  "swarm_enriched_at": "2026-05-30T07:37:39.987Z",
+  "swarm_recommendations_merged_at": "2026-05-30T07:37:39.987Z"
 }
