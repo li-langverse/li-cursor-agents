@@ -36,13 +36,13 @@
   "last_research_tick_at": "2026-05-30T12:19:13.248Z",
   "proactive_last_run_at": {
     "bug_fixer": "2026-05-30T12:04:24.185Z",
-    "bench_improver": "2026-05-30T14:56:15.484Z",
-    "studio_ui_ux_builder": "2026-05-30T14:36:54.038Z",
+    "bench_improver": "2026-05-30T15:16:36.844Z",
+    "studio_ui_ux_builder": "2026-05-30T15:18:39.418Z",
     "tui_ui_tester": "2026-05-30T13:49:44.570Z",
     "pr_alignment": "2026-05-30T14:03:59.417Z",
     "org_repo_onboarder": "2026-05-30T14:52:13.609Z",
-    "pr_reviewer": "2026-05-30T14:03:06.658Z",
-    "docs_ux_tester": "2026-05-30T07:00:41.048Z",
+    "pr_reviewer": "2026-05-30T15:16:52.840Z",
+    "docs_ux_tester": "2026-05-30T15:20:05.364Z",
     "pr_branch_opener": "2026-05-30T14:59:00.099Z",
     "autoresearch": "2026-05-30T15:00:17.548Z",
     "issue_planner": "2026-05-30T14:04:15.607Z",
@@ -51,11 +51,11 @@
     "ecosystem_grader": "2026-05-30T14:57:34.135Z",
     "gui_ui_tester": "2026-05-30T15:01:34.267Z",
     "tui_ux_tester": "2026-05-30T14:00:52.528Z",
-    "docs_ui_tester": "2026-05-30T14:16:49.080Z",
+    "docs_ui_tester": "2026-05-30T15:23:28.600Z",
     "workspace_sweeper": "2026-05-29T17:51:35.171Z",
-    "ci_maintainer": "2026-05-30T14:54:27.700Z",
-    "docs_maintainer": "2026-05-30T14:15:36.953Z",
-    "agent_kit_maintainer": "2026-05-30T14:59:01.540Z"
+    "ci_maintainer": "2026-05-30T15:12:47.361Z",
+    "docs_maintainer": "2026-05-30T15:14:56.512Z",
+    "agent_kit_maintainer": "2026-05-30T15:10:18.151Z"
   },
   "last_implement_tick_at": "2026-05-30T13:36:56.891Z",
   "last_maintenance_tick_at": "2026-05-30T14:02:15.415Z"
