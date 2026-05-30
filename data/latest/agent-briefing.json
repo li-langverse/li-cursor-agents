@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-30T19:57Z",
+  "generated_at": "2026-05-30T20:30Z",
   "role": "preflight_for_cursor_agents",
   "note": "Intelligence (web, review, gaps) runs in Cursor Automations — not in this file. plan_audit needs LIC_ROOT (sibling ../lic or CI lic@dev checkout); catalog path gaps skip path=unknown and catalog_lifecycle=planned.",
   "lic_root": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
@@ -80,7 +80,7 @@
     }
   },
   "issue_triage": {
-    "generated_at": "2026-05-30T19:57Z",
+    "generated_at": "2026-05-30T20:29Z",
     "vision_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/vision-and-roadmap.md",
     "skill": "plan-feature-from-issue (see .cursor/skills/)",
     "summary": {
@@ -481,7 +481,7 @@
     ]
   },
   "issue_backlog_hygiene": {
-    "generated_at": "2026-05-30T15:33Z",
+    "generated_at": "2026-05-30T19:59Z",
     "live_scan": true,
     "skill": "issue_hygiene agent — see .cursor/automations/issue-hygiene-agent.md",
     "summary": {
@@ -1271,9 +1271,9 @@
     ]
   },
   "plan_completion_audit": {
-    "generated_at": "2026-05-30T19:27Z",
+    "generated_at": "2026-05-30T19:59Z",
     "roots": {
-      "lic": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
+      "lic": "../lic",
       "lis": "/home/s4il0r/Documents/Cursor/li-langverse/lis",
       "benchmarks": "/home/s4il0r/Documents/Cursor/li-langverse/benchmarks",
       "roadmap": "/home/s4il0r/Documents/Cursor/li-langverse/roadmap"
@@ -2331,7 +2331,7 @@
     ]
   },
   "ecosystem_audit": {
-    "generated_at": "2026-05-30T19:56Z",
+    "generated_at": "2026-05-30T20:29Z",
     "vision": {
       "master_plan": "https://github.com/li-langverse/lic/blob/main/docs/superpowers/plans/2026-05-14-li-master-plan.md",
       "benchmark_goal": "Li ≤1.2× cpp (tier-1/2); beat HPC SOTA everywhere — PH-5b, PH-7e pure-Li codegen",
@@ -2339,55 +2339,14 @@
       "merge_order": "P0 package CI PRs → benchmarks#1 → lic dev→main"
     },
     "metrics": {
-      "open_prs": 5,
-      "failed_prs": 4,
+      "open_prs": 1,
+      "failed_prs": 0,
       "ready_prs": 0,
       "repos_missing_ci_main": 0,
       "repos_without_live_pages": 0,
       "repos_with_live_pages": 12
     },
-    "failed_prs": [
-      {
-        "repo": "benchmarks",
-        "number": 252,
-        "title": "docs: docs_maintainer digest run 1780170457780",
-        "url": "https://github.com/li-langverse/benchmarks/pull/252",
-        "base": "main",
-        "ci": "fail",
-        "draft": false,
-        "ready": false
-      },
-      {
-        "repo": "benchmarks",
-        "number": 251,
-        "title": "chore(ci): ci_maintainer digest 1780170449021 — org CI gate green",
-        "url": "https://github.com/li-langverse/benchmarks/pull/251",
-        "base": "main",
-        "ci": "fail",
-        "draft": false,
-        "ready": false
-      },
-      {
-        "repo": "li-gui",
-        "number": 3,
-        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
-        "url": "https://github.com/li-langverse/li-gui/pull/3",
-        "base": "main",
-        "ci": "fail",
-        "draft": false,
-        "ready": false
-      },
-      {
-        "repo": "lic",
-        "number": 568,
-        "title": "docs: open PH tracker + ui_ux_quality handoff refresh",
-        "url": "https://github.com/li-langverse/lic/pull/568",
-        "base": "main",
-        "ci": "fail",
-        "draft": false,
-        "ready": false
-      }
-    ],
+    "failed_prs": [],
     "ready_prs": [],
     "missing_ci_on_main": [],
     "repos_without_live_docs": [],
@@ -2416,9 +2375,9 @@
       "unknown": []
     },
     "plan_completion": {
-      "generated_at": "2026-05-30T19:27Z",
+      "generated_at": "2026-05-30T19:59Z",
       "roots": {
-        "lic": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
+        "lic": "../lic",
         "lis": "/home/s4il0r/Documents/Cursor/li-langverse/lis",
         "benchmarks": "/home/s4il0r/Documents/Cursor/li-langverse/benchmarks",
         "roadmap": "/home/s4il0r/Documents/Cursor/li-langverse/roadmap"
@@ -3477,16 +3436,6 @@
     },
     "recommended_actions": [
       {
-        "priority": "P0",
-        "action": "Fix failing PR CI before new feature work",
-        "prs": [
-          "benchmarks#252",
-          "benchmarks#251",
-          "li-gui#3",
-          "lic#568"
-        ]
-      },
-      {
         "priority": "P1",
         "action": "Plan completion debt — run plan-completion-audit automation",
         "total_findings": 166,
@@ -4045,7 +3994,7 @@
     ]
   },
   "org_ci_audit": {
-    "generated_at": "2026-05-30T19:56Z",
+    "generated_at": "2026-05-30T20:29Z",
     "org": "li-langverse",
     "required_workflow": "ci.yml",
     "default_branch_policy": "main",
@@ -4666,7 +4615,7 @@
     "lic_monorepo_hint": "Run lic/scripts/ensure-package-ci.sh before push-official-package-repo.sh"
   },
   "org_agent_kit_audit": {
-    "generated_at": "2026-05-30T19:57Z",
+    "generated_at": "2026-05-30T20:30Z",
     "org": "li-langverse",
     "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
     "roadmap_kit": "/home/s4il0r/Documents/Cursor/li-langverse/roadmap/agent-kit",
@@ -5585,7 +5534,7 @@
     ]
   },
   "merge_plan": {
-    "generated_at": "2026-05-30T19:57Z",
+    "generated_at": "2026-05-30T20:30Z",
     "vision_order": "package CI / mirrors → benchmarks → lic → lip/lit/lis → roadmap",
     "ordering_rules": [
       "Repo tier: mirrors/httpd → benchmarks → lic → lip/lit/lis → roadmap (roadmap last)",
@@ -5596,7 +5545,7 @@
       "Supervisor: one merge per tick; re-run pr-merge-queue-plan.py after each merge"
     ],
     "summary": {
-      "open_prs": 4,
+      "open_prs": 0,
       "merge_approved": 0,
       "gate_ready": 0,
       "auto_merge_candidates": 0,
@@ -5606,131 +5555,22 @@
     "merge_first": null,
     "next_merge": null,
     "merge_sequence": [],
-    "merge_order": [
-      {
-        "rank": 1,
-        "repo": "benchmarks",
-        "number": 251,
-        "url": "https://github.com/li-langverse/benchmarks/pull/251",
-        "title": "chore(ci): ci_maintainer digest 1780170449021 — org CI gate green",
-        "merge_approved": false,
-        "gate_ready": false,
-        "priority_score": 270,
-        "auto_merge_ok": false,
-        "blocked_reason": null,
-        "order_reason": "rank 1; priority_score=270; awaiting merge-approved label"
-      },
-      {
-        "rank": 2,
-        "repo": "benchmarks",
-        "number": 252,
-        "url": "https://github.com/li-langverse/benchmarks/pull/252",
-        "title": "docs: docs_maintainer digest run 1780170457780",
-        "merge_approved": false,
-        "gate_ready": false,
-        "priority_score": 270,
-        "auto_merge_ok": false,
-        "blocked_reason": null,
-        "order_reason": "rank 2; priority_score=270; awaiting merge-approved label"
-      },
-      {
-        "rank": 3,
-        "repo": "lic",
-        "number": 568,
-        "url": "https://github.com/li-langverse/lic/pull/568",
-        "title": "docs: open PH tracker + ui_ux_quality handoff refresh",
-        "merge_approved": false,
-        "gate_ready": false,
-        "priority_score": 280,
-        "auto_merge_ok": false,
-        "blocked_reason": null,
-        "order_reason": "rank 3; priority_score=280; awaiting merge-approved label"
-      },
-      {
-        "rank": 4,
-        "repo": "lic",
-        "number": 569,
-        "url": "https://github.com/li-langverse/lic/pull/569",
-        "title": "fix(ci): remove workspace gitlink breaking GHA checkout",
-        "merge_approved": false,
-        "gate_ready": false,
-        "priority_score": 280,
-        "auto_merge_ok": false,
-        "blocked_reason": null,
-        "order_reason": "rank 4; priority_score=280; awaiting merge-approved label"
-      }
-    ],
+    "merge_order": [],
     "stacks": [],
     "redundant": [],
     "warnings": []
   },
   "pr_program": {
-    "generated_at": "2026-05-30T19:55Z",
+    "generated_at": "2026-05-30T20:29Z",
     "merge_first": null,
     "summary": {
-      "open_prs": 3,
+      "open_prs": 0,
       "ci_green": 0,
       "merge_approved": 0,
       "gate_ready_labeled": 0
     },
     "recommended_merge_order": [],
-    "all_open": [
-      {
-        "repo": "benchmarks",
-        "number": 251,
-        "title": "chore(ci): ci_maintainer digest 1780170449021 — org CI gate green",
-        "url": "https://github.com/li-langverse/benchmarks/pull/251",
-        "base": "main",
-        "ci": "fail",
-        "draft": false,
-        "labels": [
-          "agent:ci_maintainer",
-          "ecosystem-ci",
-          "li-swarm"
-        ],
-        "merge_approved": false,
-        "gate_ready_with_approval": false,
-        "gate_blockers_if_approved": [
-          "merge_approved_label: missing label `merge-approved` (reviewer adds after standards pass)",
-          "ci_green: CI status is `fail` and no fresh local-ci pass — run: python3 scripts/local-ci-sweep.py --repo benchmarks --pr 251"
-        ],
-        "priority_score": 120
-      },
-      {
-        "repo": "benchmarks",
-        "number": 252,
-        "title": "docs: docs_maintainer digest run 1780170457780",
-        "url": "https://github.com/li-langverse/benchmarks/pull/252",
-        "base": "main",
-        "ci": "fail",
-        "draft": false,
-        "labels": [],
-        "merge_approved": false,
-        "gate_ready_with_approval": false,
-        "gate_blockers_if_approved": [
-          "merge_approved_label: missing label `merge-approved` (reviewer adds after standards pass)",
-          "ci_green: CI status is `fail` and no fresh local-ci pass — run: python3 scripts/local-ci-sweep.py --repo benchmarks --pr 252"
-        ],
-        "priority_score": 120
-      },
-      {
-        "repo": "lic",
-        "number": 568,
-        "title": "docs: open PH tracker + ui_ux_quality handoff refresh",
-        "url": "https://github.com/li-langverse/lic/pull/568",
-        "base": "main",
-        "ci": "fail",
-        "draft": false,
-        "labels": [],
-        "merge_approved": false,
-        "gate_ready_with_approval": false,
-        "gate_blockers_if_approved": [
-          "merge_approved_label: missing label `merge-approved` (reviewer adds after standards pass)",
-          "ci_green: CI status is `fail` and no fresh local-ci pass — run: python3 scripts/local-ci-sweep.py --repo lic --pr 568"
-        ],
-        "priority_score": 130
-      }
-    ],
+    "all_open": [],
     "plan_warnings": []
   },
   "pr_branch_hygiene": {
@@ -5891,12 +5731,12 @@
     ]
   },
   "ci_bug_triage": {
-    "generated_at": "2026-05-30T16:08Z",
+    "generated_at": "2026-05-30T20:22Z",
     "summary": {
       "local_ci_failures": 1,
       "bug_issues": 0,
-      "gha_failing_prs": 0,
-      "work_queue_size": 1
+      "gha_failing_prs": 1,
+      "work_queue_size": 2
     },
     "local_ci_failures": [
       {
@@ -5910,7 +5750,16 @@
       }
     ],
     "bug_issues": [],
-    "gha_failing_prs": [],
+    "gha_failing_prs": [
+      {
+        "kind": "pr_ci",
+        "repo": "lic",
+        "number": 573,
+        "url": "https://github.com/li-langverse/lic/pull/573",
+        "title": "chore(lic): workspace sweep fallback",
+        "reason": "GitHub Actions checks failing"
+      }
+    ],
     "work_queue": [
       {
         "kind": "local_ci",
@@ -5920,12 +5769,20 @@
         "exit_code": 1,
         "log_excerpt": "",
         "reason": "local-ci run failed"
+      },
+      {
+        "kind": "pr_ci",
+        "repo": "lic",
+        "number": 573,
+        "url": "https://github.com/li-langverse/lic/pull/573",
+        "title": "chore(lic): workspace sweep fallback",
+        "reason": "GitHub Actions checks failing"
       }
     ]
   },
   "security_cwe_audit": null,
   "cwe_feed_delta": {
-    "generated_at": "2026-05-30T19:57Z",
+    "generated_at": "2026-05-30T20:30Z",
     "new_cwes": [],
     "missing_in_catalog": [
       "CWE-79",
@@ -6012,7 +5869,7 @@
     ]
   },
   "workspace_dirty_sweep": {
-    "generated_at": "2026-05-30T19:57Z",
+    "generated_at": "2026-05-30T20:30Z",
     "ecosystem_root": "/home/s4il0r/Documents/Cursor/li-langverse",
     "dirty_count": 2,
     "dirty_repos": [
@@ -6020,12 +5877,16 @@
         "path": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
         "repo": "lic",
         "org": "li-langverse",
-        "branch": "cursor/swarm-observer-plan-loop",
-        "changed_files": 5,
+        "branch": "chore/workspace-sweep-1780171200",
+        "changed_files": 9,
         "safe_files": [
           "enchmarks/tier5_http/third_party/nginx",
           "data/goal-directed-agents/snapshot.json",
           "data/goal-directed-agents/watch.log",
+          "data/studio-ui-ux-plan-loop/latest-bench.json",
+          "data/studio-ui-ux-plan-loop/latest-capture.json",
+          "data/studio-ui-ux-plan-loop/latest-ui-audit.json",
+          "data/studio-ui-ux-plan-loop/latest-ux-audit.json",
           "data/swarm-gap-registry/registry.yaml",
           "data/workspaces/li-langverse/lic/code-implementer-wrk-soak/repo"
         ],
@@ -6037,11 +5898,19 @@
         "path": "/home/s4il0r/Documents/Cursor/li-langverse/benchmarks",
         "repo": "benchmarks",
         "org": "li-langverse",
-        "branch": "chore/agent-tui_ui_tester-1780170457820-digest",
-        "changed_files": 2,
+        "branch": "chore/agent-docs_ui_tester-proactive-20260530T2023Z-digest",
+        "changed_files": 10,
         "safe_files": [
-          "ata/latest/local-ci-results.json",
-          "data/runs/docs_maintainer-1780170457780.md"
+          "ata/latest-docs-ui-run/artifacts/lic-docs-live/live-summary.json",
+          "data/latest-docs-ui-run/artifacts/lic-docs/capture-summary.json",
+          "data/latest-docs-ui-run/artifacts/lic-docs/hello-world-desktop.png",
+          "data/latest-docs-ui-run/artifacts/lic-docs/home-desktop.png",
+          "data/latest-docs-ui-run/artifacts/lic-docs/home-mobile.png",
+          "data/latest-docs-ui-run/artifacts/lic-docs/provability-gaps-desktop.png",
+          "data/latest-gui-ui-run/ui-audit.json",
+          "data/latest/local-ci-results.json",
+          "data/latest/ui-audit.json",
+          "data/latest/ui-audit-preflight.json"
         ],
         "test_commands": []
       }
@@ -6056,13 +5925,13 @@
         "profile": "workflows",
         "ok": false,
         "exit_code": 1,
-        "started_at": "2026-05-30T19:52:11Z",
-        "finished_at": "2026-05-30T19:54:49Z",
-        "summary": "── li-tests ─────────────────────────────   ✕ 2 failed  · 253 passed ==> FAIL profile=lic-host (136s) exit=1 "
+        "started_at": "2026-05-30T20:26:26Z",
+        "finished_at": "2026-05-30T20:29:03Z",
+        "summary": "── li-tests ─────────────────────────────   ✕ 2 failed  · 253 passed ==> FAIL profile=lic-host (151s) exit=1 "
       }
     ],
-    "generated_at": "2026-05-30T19:54:49Z",
-    "sweep_at": "2026-05-30T19:54Z"
+    "generated_at": "2026-05-30T20:29:03Z",
+    "sweep_at": "2026-05-30T20:29Z"
   },
   "recommended_agents": [
     {
@@ -6096,7 +5965,7 @@
     },
     {
       "agent": "bug_fixer",
-      "reason": "1 CI/bug item(s) in work queue (local-ci + issues + GHA red)"
+      "reason": "2 CI/bug item(s) in work queue (local-ci + issues + GHA red)"
     },
     {
       "agent": "code_implementer",
@@ -6426,7 +6295,7 @@
   "agent_incomplete_runs": [],
   "agent_pr_deliverable_failures": [],
   "org_roadmap": {
-    "loaded_at": "2026-05-30T19:57Z",
+    "loaded_at": "2026-05-30T20:30Z",
     "vision_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/vision-and-roadmap.md",
     "engineering_standards_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/engineering-standards.md",
     "master_plan_url": "https://github.com/li-langverse/lic/blob/main/docs/superpowers/plans/2026-05-14-li-master-plan.md",
@@ -6554,6 +6423,14 @@
         "reason": "local-ci run failed"
       },
       {
+        "kind": "pr_ci",
+        "repo": "lic",
+        "number": 573,
+        "url": "https://github.com/li-langverse/lic/pull/573",
+        "title": "chore(lic): workspace sweep fallback",
+        "reason": "GitHub Actions checks failing"
+      },
+      {
         "kind": "std_gap",
         "repo": "lic",
         "module": "std.io",
@@ -6618,12 +6495,6 @@
         "title": "Implement v1 scaffold for goal robotics_systems",
         "ph_id": "robotics_systems",
         "repo": "lic"
-      },
-      {
-        "kind": "swarm_handoff",
-        "reason": "handoff:472cbfa9-912c-4a5b-9b58-5e29abf3da7e",
-        "title": "Cycle complete for goal provability_holes",
-        "ph_id": "provability_holes"
       }
     ],
     "sources": [
@@ -6863,6 +6734,6 @@
     "missing_north_star_fit": [],
     "invalid_north_star_fit": []
   },
-  "swarm_enriched_at": "2026-05-30T19:57:08.477Z",
-  "swarm_recommendations_merged_at": "2026-05-30T19:57:08.477Z"
+  "swarm_enriched_at": "2026-05-30T20:30:30.873Z",
+  "swarm_recommendations_merged_at": "2026-05-30T20:30:30.873Z"
 }
