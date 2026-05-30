@@ -4,12 +4,9 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
-| 2026-05-30 code_implementer (14) | 246 → 234 | 11 | Phase B green×1 (li-cursor-agents#51), blocked×7 (benchmarks#244–246, lic#551, lit#21–23); Phase C rebase+push lip#46–48 + benchmarks#243,#238; REST squash lip#46–48 after CI green; implementation_queue lip/lit 1–8 **stale** (PRs closed/merged) |
-| 2026-05-30 code_implementer (13) | 243 → 244 | 0 | Phase B REST merge 403 rate limit; Phase C rebase+push lip#46,#47,#48 (dirty→blocked, CI green); lip#45 + lit#21–23 blocked CI-green; li-cursor-agents#51 CLEAN; implementation_queue lip/lit 1–8 **stale** |
-| 2026-05-30 code_implementer (12) | 232 → ~229 | 3 | Phase B blocked×1 (roadmap#43); merge lit#20 (Pages deploy); close lip#44 superseded; rebase+push lip#45 (CI green, merge pending rate limit); implementation_queue lip/lit 1–8 **stale**; REST rate limit 403 mid-batch |
-| 2026-05-30 code_implementer (11) | 232 → 227 | 5 | Phase B blocked×5 (benchmarks#240–242, lic#547–548 incl. lip/lit tier1-smoke); Phase C rebase+push li-cursor-agents#51; lip/lit implementation_queue 1–8 **verified stale** (0 open PRs, main CI green); unrelated-history blockers on li-std-*, li-net, li-httpd, li-language#17 |
-| 2026-05-30 code_implementer (10) | ~230 | 1 | Phase A queue refresh (168/229 classified, rate limit); Phase B blocked×1 (benchmarks#237); Phase C rebase+push li-cursor-agents#51, benchmarks#228, roadmap#44; implementation_queue lip/lit 1–8 **stale** (0 open, main CI green); REST core limit 0 until 14:38 UTC |
-| 2026-05-30 code_implementer (6) | 229 → ~226 | 2 | Phase B blocked×1 (lit#19 Pages deploy); Phase C rebase+push lic#544–533 (docs Pages); merge lic#544; lip/lit queues 0 open (implementation_queue 1–8 stale); GraphQL+REST rate limit mid-batch |
+| 2026-05-30 code_implementer (15) | 235 → 232 | 6 | Phase B blocked×3 (lip#46–48); Phase C rebase+REST squash benchmarks#238,#196; implementation_queue lip/lit 1–8 **stale** (0 open, main CI green) |
+| 2026-05-30 code_implementer (10) | 243 → 244 | 0 | Phase B REST merge rate-limited (403); Phase C rebase+push lip#46,#47,#48 (dirty→blocked, CI green); lip#45 + lit#21–23 blocked CI-green pending merge; li-cursor-agents#51 CLEAN; implementation_queue lip/lit 1–8 stale — CI already green |
+| 2026-05-30 code_implementer (8) | ~223 → ~225 | 5 | Phase B blocked×1 (benchmarks#237); Phase C rebase+merge lic#542,#541,#533; Phase D lip#43 fix+merge (lis main + LI_REGISTRY_MOCK); implementation_queue lip/lit 1–8 stale (0 open) |
 | 2026-05-30 code_implementer (5) | 237 → 228 | 9 | Phase B green×1 (li-gui#2), blocked×6 (benchmarks#231–233, lic#543,545, lis#23); Phase C roadmap rebase+merge #34,#29; lit#19 opened (Pages deploy permissions); lip/lit queues 0 open — queue items 1–8 cleared |
 | 2026-05-30 code_implementer (4) | 235 → 229 | 17 | Phase B blocked×7 (li-std-math#14, li-std-core#13, li-net#17, li-httpd#19, li-language#16, lic#379, li-demo#15); Phase C rebase+merge roadmap×4 (#38,36,30,20), research-findings×2 (#7,3), li-local-ci#8; Phase D li-demo#16–17 rebase + docs-only CI green + merge; lip/lit queues now 0 open; GraphQL rate limit — REST only |
 | 2026-05-30 code_implementer (3) | 239 → ~231 | 12 | Phase B blocked×11 (benchmarks#224,226, lic#535, li-demo#19–22, li-std-*, li-net, li-httpd); rebase+merge lip#33; close lip#41 superseded by #40; roadmap#44–45 rebase push; GraphQL rate limit — REST only |
@@ -17,102 +14,26 @@ Started: 2026-05-30
 | 2026-05-30 code_implementer | 239 → 228 | 11 | Phase A queue refresh; Phase B blocked merge (lic#534, benchmarks#220, li-demo#18); Phase C local rebase+merge (lip#24,25,26,28,30, benchmarks#215, roadmap#44,45); org-rebase-pr-branch.py: pull/N/head fetch + force-with-lease |
 | 2026-05-30 prior session | 255 → 231 | 27 | See org-pr-merge-final-report.md |
 
-## Merged this iteration (14)
+## Merged this iteration
 
 | PR | Method |
 |----|--------|
-| li-cursor-agents#51 | green REST squash |
-| benchmarks#244 | blocked REST squash |
-| benchmarks#245 | blocked REST squash |
-| benchmarks#246 | blocked REST squash |
-| lic#551 | blocked REST squash |
-| lit#21 | blocked REST squash (deploy-pages bump) |
-| lit#22 | blocked REST squash (checkout v6) |
-| lit#23 | blocked REST squash (upload-pages-artifact) |
-| lip#46 | blocked REST squash (PH-DB-4 publish client) |
-| lip#47 | blocked REST squash (registry OpenAPI) |
-| lip#48 | blocked REST squash (PH-DB e2e integration doc) |
-
-## Rebased this iteration (14)
-
-| PR | Method |
-|----|--------|
-| lip#46–48 | merge main + force push (CI bootstrap green) |
-| benchmarks#243 | prefer-main conflict resolve + push |
-| benchmarks#238 | prefer-main conflict resolve + push |
-
-## Rebased this iteration (13)
-
-| PR | Method |
-|----|--------|
-| lip#46 | merge main + resolve docs/registry.md + push |
-| lip#47 | merge main + ci.yml (lis E2E) + registry.md + push |
-| lip#48 | merge main + ci.yml + CHANGELOG.md + push |
-
-## Rebased this iteration (12)
-
-| PR | Method |
-|----|--------|
-| lip#45 | merge main + conflict resolve ci.yml (lis main + LLVM 22 + LI_REGISTRY_MOCK) + push |
-| li-cursor-agents#51 | merge main + session 12 log (in progress) |
-
-## Merged this iteration (12)
-
-| PR | Method |
-|----|--------|
-| roadmap#43 | REST squash (live development overview) |
-| lit#20 | REST squash (Pages deploy permissions) |
-
-## Closed this iteration (12)
-
-| PR | Reason |
-|----|--------|
-| lip#44 | Superseded by main (#40, #43): LLVM 22, lis main, LI_REGISTRY_MOCK |
-
-## Rebased this iteration (11)
-
-| PR | Method |
-|----|--------|
-| li-cursor-agents#51 | merge main + force-with-lease push (session 11 log) |
-
-## Merged this iteration (11)
-
-| PR | Method |
-|----|--------|
-| benchmarks#242 | REST squash (gui-ux digest) |
-| benchmarks#241 | REST squash (bench_improver ingest) |
-| lic#548 | REST squash (lip/lit siblings in tier1-smoke) |
-| benchmarks#240 | REST squash (ci_maintainer digest) |
-| lic#547 | REST squash (handbook Pages hub link) |
-
-## Rebased this iteration (10)
-
-| PR | Method |
-|----|--------|
-| benchmarks#237 | REST squash (ci_maintainer digest) |
-| li-cursor-agents#51 | merge main + push (LI_SIBLING_REPOS_ROOT kept) |
-| benchmarks#228 | merge main prefer-main artifacts + push |
-| roadmap#44 | merge main eco stats + Pages CNAME + push |
-
-## Merged this iteration (7)
-
-| PR | Method |
-|----|--------|
-| lic#542 | REST squash (Pages 404 recovery) |
-| lic#541 | REST squash (matmul MIR fast paths) |
-| lic#533 | REST squash (handbook cross-links) |
-| lic#546 | REST squash (bench_improver matmul assessment) |
-| lic#518 | REST squash (workspace sweep) |
-| benchmarks#235 | REST squash (org CI audit docs) |
-| benchmarks#234 | REST squash (workspace sweep) |
-| benchmarks#221 | REST squash (workspace sweep) |
-| benchmarks#229 | REST squash (workspace sweep) |
-| roadmap#46 | REST squash (PH-DB status refresh) |
-| lic#524 | rebase prefer-main + REST squash (matmul_blocked harness) |
+| lic#534 | blocked REST squash |
+| benchmarks#220 | blocked REST squash |
+| li-demo#18 | blocked REST squash |
+| lip#24 | rebase + REST squash |
+| lip#25 | rebase + REST squash |
+| lip#26 | rebase + REST squash |
+| lip#28 | rebase + REST squash |
+| lip#30 | rebase + REST squash |
+| benchmarks#215 | rebase + REST squash |
+| roadmap#44 | rebase + REST squash |
+| roadmap#45 | rebase + REST squash |
 
 ## Blockers noted
 
-- GitHub API rate limit (REST 403 + GraphQL) — pause merges; retry `org-merge-blocked.py` after reset (~15:25 UTC hit)
-- lip#46–48, lit#21–23 — **merged** session 14
-- lis#28/#30 — unrelated histories; needs manual rebase strategy
-- `org-rebase-pr-branch.py` — set `LI_SIBLING_REPOS_ROOT` to org workspace root when run from li-cursor-agents clone
+- lip#29 — PR **closed** on GitHub; branch refreshed with cherry-pick onto main (2d928db) for potential reopen
+- lic#533 — merge conflicts after rebase
+- lic#530–532 — draft PRs (skip auto-merge)
+- GraphQL rate limit — use REST scripts only (`gh` blocked mid-run)
+- REST merge API rate limit (403) — 2026-05-30T15:25Z; retry after reset; git push unaffected
