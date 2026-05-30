@@ -99,6 +99,19 @@
 
 **Blockers:** roadmap#37 — unrelated histories.
 
+## Session 17 (2026-05-30 code_implementer)
+
+| PR | Method |
+|----|--------|
+| li-cursor-agents#54 | REST squash (green clean — sprint log) |
+| benchmarks#250 | rebase prefer-main + REST squash (workspace sweep) |
+
+**Rebased (CI pending/failing):** lic#373 (agent-kit sync), lic#376 (studio wave3), lic#520 (composable studio import checks).
+
+**Verified stale:** implementation_queue lip/lit items 1–8 (0 open PRs; main CI green).
+
+**Open PR count:** 226 → 224.
+
 ## Session 15 (2026-05-30 code_implementer)
 
 | PR | Method |
