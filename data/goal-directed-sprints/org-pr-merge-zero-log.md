@@ -4,6 +4,7 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
+| 2026-05-30 code_implementer-78158740 | 3 → 1 | 1 | Phase B: REST squash benchmarks#256 (blocked CI-green); Phase C: rebase lic#590 (studio-ux-23, 6 CI fixes pushed); Phase E: close lic#591 (workspace_sweeper fallback); implementation_queue items 1–8 **stale** |
 | 2026-05-30 code_implementer-1780177232882 | 2 → 0 | 1 | Phase B: REST squash li-cursor-agents#81 (session 28 digest, CI green); Phase E: close lic#588 (workspace_sweeper fallback, lake-build/memory-linux failing after update-branch); **completion gate pass** |
 | 2026-05-30 code_implementer-76699416 | 2 → 0 | 1 | Phase B: REST squash li-cursor-agents#80 (session 27 digest, CI green); Phase E: close lic#587 (workspace_sweeper fallback, 611 commits / 59 files / emit.cpp+matmul regressions); **completion gate pass** |
 | 2026-05-30 code_implementer-1780175747261 | 3 → 0 | 2 | Phase B: merge li-cursor-agents#79 (session 26 digest); blocked merge lic#585 (PH-ML Wave 4, CI green); Phase E: close lic#584,#586 (workspace_sweeper fallbacks); **completion gate pass** |
