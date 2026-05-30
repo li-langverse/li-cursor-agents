@@ -78,12 +78,24 @@ dist_needs_rebuild() {
   [[ "$newest_src" -gt "$dist_mtime" ]]
 }
 
+run_tsc_build() {
+  local tsc_js="$ROOT/node_modules/typescript/lib/tsc.js"
+  if [[ ! -f "$tsc_js" ]]; then
+    echo "goal-directed-loop: installing typescript (ignore-scripts) for dist rebuild" >&2
+    npm install --prefix "$ROOT" typescript --ignore-scripts --no-fund --no-audit >/dev/null 2>&1 || true
+  fi
+  if [[ -f "$tsc_js" ]]; then
+    (cd "$ROOT" && node "$tsc_js" -p tsconfig.json)
+    return $?
+  fi
+  export PATH="$ROOT/node_modules/.bin:$PATH"
+  npm run build --prefix "$ROOT"
+}
+
 ensure_dist_built() {
   if dist_needs_rebuild; then
     echo "goal-directed-loop: rebuilding dist (gate/agent TypeScript newer than dist)"
-    export PATH="$ROOT/node_modules/.bin:$PATH"
-    npm ci --prefix "$ROOT" >/dev/null 2>&1 || true
-    if ! npm run build --prefix "$ROOT"; then
+    if ! run_tsc_build; then
       if [[ -f "$ROOT/dist/cli/goal-completion-gate.js" ]]; then
         echo "goal-directed-loop: WARN rebuild failed; using existing dist" >&2
       else
