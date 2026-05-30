@@ -66,6 +66,23 @@
 | li-httpd#15 | Same |
 | li-net#13 | Same |
 
+## Session 16 (2026-05-30 code_implementer)
+
+| PR | Method |
+|----|--------|
+| li-cursor-agents#53 | REST squash (rebased, CI green) |
+| roadmap#39 | rebase prefer-main + REST squash |
+| roadmap#44 | rebase prefer-main + REST squash |
+| benchmarks#247 | rebase prefer-main + REST squash |
+| benchmarks#228 | re-rebase + REST squash |
+| benchmarks#249 | re-rebase (×2) + REST squash |
+
+**Rebased (CI failing):** lic#520 (2 CI failures after prefer-main merge — bench-related).
+
+**Verified stale:** implementation_queue lip/lit items 1–8 (0 open PRs; main CI green).
+
+**Blockers:** roadmap#37 — unrelated histories.
+
 ## Session 15 (2026-05-30 code_implementer)
 
 | PR | Method |
