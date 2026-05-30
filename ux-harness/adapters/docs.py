@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from urllib.parse import urlparse
 
 from sota.rubric import min_rubric_score, rubric_failing
 from .base import TargetConfig
@@ -18,12 +19,42 @@ def _site_dir(target: TargetConfig, agents_root: Path) -> Path:
     return resolve_site_dir(agents_root, str(paths.get("site_dir", "../lic/site")))
 
 
+def _site_url_path_prefix(target: TargetConfig, agents_root: Path) -> str | None:
+    paths = target.raw.get("paths") or {}
+    mkdocs_config = paths.get("mkdocs_config")
+    if not mkdocs_config:
+        return None
+
+    cfg_path = resolve_site_dir(agents_root, str(mkdocs_config))
+    if not cfg_path.is_file():
+        return None
+
+    try:
+        text = cfg_path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return None
+
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line.startswith("site_url:"):
+            continue
+        value = line.split(":", 1)[1].strip().strip("'\"")
+        if not value:
+            return None
+        path = urlparse(value).path
+        if not path or path == "/":
+            return None
+        return path
+
+    return None
+
+
 def run_docs_ui(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
     if mock:
         return mock_ui_result(target, str(agents_root))
 
     site_dir = _site_dir(target, agents_root)
-    audit = audit_static_site(site_dir)
+    audit = audit_static_site(site_dir, site_url_path_prefix=_site_url_path_prefix(target, agents_root))
     base = {
         "target_id": target.id,
         "repo": target.repo,
@@ -54,7 +85,7 @@ def run_docs_ux(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
         return mock_ux_result(target, str(agents_root))
 
     site_dir = _site_dir(target, agents_root)
-    audit = audit_static_site(site_dir)
+    audit = audit_static_site(site_dir, site_url_path_prefix=_site_url_path_prefix(target, agents_root))
     journeys = target.raw.get("journeys") or []
     journey_results = [
         {

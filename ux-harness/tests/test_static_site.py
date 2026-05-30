@@ -32,6 +32,35 @@ class StaticSiteTests(unittest.TestCase):
             self.assertTrue(audit["built"])
             self.assertEqual(audit["broken_links"], 1)
 
+    def test_unquoted_href_is_checked(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "index.html").write_text(
+                "<a href=missing.html>bad</a>",
+                encoding="utf-8",
+            )
+            audit = audit_static_site(root)
+            self.assertTrue(audit["built"])
+            self.assertEqual(audit["links_checked"], 1)
+            self.assertEqual(audit["broken_links"], 1)
+
+    def test_site_url_prefix_is_normalized(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "index.html").write_text(
+                '<a href="/li-language/ecosystem/strict-by-default/">ok</a>',
+                encoding="utf-8",
+            )
+            (root / "ecosystem" / "strict-by-default").mkdir(parents=True)
+            (root / "ecosystem" / "strict-by-default" / "index.html").write_text(
+                "<h1>ok</h1>",
+                encoding="utf-8",
+            )
+            audit = audit_static_site(root, site_url_path_prefix="/li-language/")
+            self.assertTrue(audit["built"])
+            self.assertEqual(audit["links_checked"], 1)
+            self.assertEqual(audit["broken_links"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()
