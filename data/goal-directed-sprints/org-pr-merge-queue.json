@@ -1,14 +1,36 @@
 {
   "report": {
-    "total": 0,
-    "classified": 0,
-    "green_clean": 0,
+    "total": 2,
+    "classified": 2,
+    "green_clean": 1,
     "blocked_ci_ok": 0,
-    "dirty": 0,
+    "dirty": 1,
     "ci_not_ok": 0
   },
-  "green": [],
+  "green": [
+    {
+      "repo": "li-cursor-agents",
+      "number": 91,
+      "title": "docs(sprint): org PR merge session 36 \u2014 zero open PRs",
+      "mergeable": true,
+      "mergeable_state": "clean",
+      "draft": false,
+      "ci": "ok",
+      "head": "0175bdd"
+    }
+  ],
   "blocked": [],
-  "dirty": [],
+  "dirty": [
+    {
+      "repo": "lic",
+      "number": 605,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "5ae7b2f"
+    }
+  ],
   "ci_not_ok": []
 }
