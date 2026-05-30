@@ -8,7 +8,7 @@
 | Metric | Count |
 |--------|------:|
 | Starting open PRs | 255 |
-| Ending open PRs (search API) | **0** (2026-05-30 code_implementer-1780170745209 completion gate) |
+| Ending open PRs (search API) | **0** (2026-05-30 code_implementer-1780172370568 completion gate) |
 | Ending open PRs (classified queue) | **0** |
 | PRs squash-merged this session | **30** (prior sessions: 27 + 22) |
 | PRs fixed locally then merged | **10** |
@@ -83,6 +83,16 @@
 | lic#567 | rebase prefer-main + submodule fix + force push + REST squash (blocked CI-green) |
 
 **Open PR count:** 2 → **0** (completion gate exit 0).
+
+## Session 22 (2026-05-30 code_implementer-1780172370568)
+
+| PR | Method |
+|----|--------|
+| lic#573 | rebase prefer-main (`org-rebase-pr-branch.py`); CI failed; **closed** (workspace_sweeper safety branch — not merge-ready) |
+
+**Open PR count:** 1 → **0** (search API; completion gate exit 0).
+
+**implementation_queue:** lic/lis/li-httpd CI items **stale** (0 open PRs; no new CI fix PR required this pass).
 
 ## Session 18 (2026-05-30 code_implementer)
 
