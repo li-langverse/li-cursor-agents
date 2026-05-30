@@ -131,6 +131,17 @@
 
 **implementation_queue:** lic/lis/li-httpd CI items **stale** (queue references closed PRs; 0 open PRs).
 
+## Session 29 (2026-05-30 code_implementer-1780177232882)
+
+| PR | Method |
+|----|--------|
+| li-cursor-agents#81 | REST squash merge (session 28 sprint digest; CI green) |
+| lic#588 | **closed** (workspace_sweeper fallback; `update-branch` then `lake-build` + `memory-linux` failed; same disposition as #579–#586) |
+
+**Open PR count:** 2 → **0** (search API; `org-pr-merge-completion-gate.sh` exit 0).
+
+**implementation_queue:** lic `local_ci` (#439) + `pr_ci` (#552, etc.) **stale** (0 open PRs; briefing references closed PRs).
+
 ## Session 26 (2026-05-30 code_implementer-1780175279050)
 
 | PR | Method |
