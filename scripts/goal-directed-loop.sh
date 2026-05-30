@@ -112,6 +112,17 @@ process.stdout.write(gaps.join('\n'));
 " 2>/dev/null >"$LAST_GAPS_FILE" || true
 }
 
+sprint_pr_still_open() {
+  local num="${LI_GOAL_LOOP_SPRINT_PR:-}"
+  [[ -z "$num" || -z "$WORKFLOW_REPO" ]] && return 1
+  if ! command -v gh >/dev/null 2>&1; then
+    return 1
+  fi
+  local state
+  state="$(gh pr view "$num" --repo "li-langverse/$WORKFLOW_REPO" --json state -q .state 2>/dev/null || true)"
+  [[ "$state" == "OPEN" ]]
+}
+
 gh_open_pr_count() {
   local repo_slug="$1"
   if ! command -v gh >/dev/null 2>&1; then
@@ -209,7 +220,11 @@ EOF
   record_gaps_from_run
 
   if [[ "$code" -eq 0 ]]; then
-    if [[ "$WHILE_PR_OPEN" == "1" && -n "$WORKFLOW_REPO" ]]; then
+    if sprint_pr_still_open; then
+      echo "goal-directed-loop: sprint PR #${LI_GOAL_LOOP_SPRINT_PR} still open — continuing (babysit)"
+      code=2
+    fi
+    if [[ "$code" -eq 0 && "$WHILE_PR_OPEN" == "1" && -n "$WORKFLOW_REPO" ]]; then
       open_n="$(gh_open_pr_count "$WORKFLOW_REPO")"
       if [[ "$open_n" -gt 0 ]]; then
         echo "goal-directed-loop: $open_n open PR(s) on li-langverse/$WORKFLOW_REPO â€” continuing (babysit)"
@@ -225,8 +240,13 @@ EOF
   fi
 
   if [[ "$code" -eq 0 ]]; then
-    echo "goal-directed-loop: deliverable complete (exit 0)"
-    exit 0
+    if [[ -n "$UNTIL_LOCAL" ]] && ! goal_loop_past_deadline; then
+      echo "goal-directed-loop: deliverable ok — continuing until local ${UNTIL_LOCAL} ($(TZ="$GOAL_LOOP_TZ" date -Iseconds 2>/dev/null || date -Iseconds))"
+      code=2
+    else
+      echo "goal-directed-loop: deliverable complete (exit 0)"
+      exit 0
+    fi
   fi
 
   if [[ "$code" -eq 2 ]]; then
