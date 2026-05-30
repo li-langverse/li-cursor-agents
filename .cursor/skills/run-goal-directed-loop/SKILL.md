@@ -69,6 +69,21 @@ Optional bounds can combine: `--max 50 --until-local 08:00`.
 
 `-Max 0` = no iteration cap (completion only). Set `-Max 12` to cap iterations.
 
+
+## Live gate updates (no restart needed)
+
+Each gate check re-reads the goal markdown from disk:
+
+- Edits to `## Progress gate` / `## Completion gate` bash blocks apply on the **next** iteration.
+- Status table `| **DONE** |` rows are re-evaluated every check.
+- External script paths in the gate block are re-read when referenced.
+
+The loop **rebuilds `dist/` automatically** when any `src/**/*.ts` is newer than
+`dist/cli/goal-completion-gate.js` (including `completion-gate.ts` logic changes).
+
+**Restart required only for** edits to `scripts/goal-directed-loop.sh` itself — a running
+bash process cannot reload its own script (you will see a warning each iteration until restart).
+
 ## Env
 
 | Variable | Purpose |

@@ -26,6 +26,17 @@ UNTIL_LOCAL="${LI_GOAL_LOOP_UNTIL_LOCAL:-}"
 GOAL_LOOP_TZ="${LI_GOAL_LOOP_TZ:-Europe/Berlin}"
 SLEEP_SEC="${LI_GOAL_LOOP_SLEEP_SEC:-90}"
 LAST_GAPS_FILE="${LI_GOAL_LOOP_GAPS_FILE:-$ROOT/data/goal-directed-loop-last-gaps.txt}"
+LOOP_SCRIPT="$ROOT/scripts/goal-directed-loop.sh"
+LOOP_SCRIPT_MTIME="$(stat -c %Y "$LOOP_SCRIPT" 2>/dev/null || stat -f %m "$LOOP_SCRIPT" 2>/dev/null || echo 0)"
+
+warn_if_loop_script_changed() {
+  local now
+  now="$(stat -c %Y "$LOOP_SCRIPT" 2>/dev/null || stat -f %m "$LOOP_SCRIPT" 2>/dev/null || echo 0)"
+  if [[ "$now" != "$LOOP_SCRIPT_MTIME" && "$now" != "0" ]]; then
+    echo "goal-directed-loop: WARNING script changed on disk — restart this process to pick up loop.sh edits" >&2
+  fi
+}
+
 DEADLINE_TS=""
 
 while [[ $# -gt 0 ]]; do
@@ -54,10 +65,28 @@ if [[ -z "$GOAL_FILE" && -z "$GOAL_INLINE" && -z "${LI_AGENT_GOAL:-}" && -z "${L
   exit 1
 fi
 
-if [[ ! -f "$ROOT/dist/cli/run-agent.js" || ! -f "$ROOT/dist/cli/goal-completion-gate.js" ]]; then
-  npm ci --prefix "$ROOT" >/dev/null 2>&1 || true
-  npm run build --prefix "$ROOT"
-fi
+dist_needs_rebuild() {
+  local dist_gate="$ROOT/dist/cli/goal-completion-gate.js"
+  local dist_agent="$ROOT/dist/cli/run-agent.js"
+  [[ ! -f "$dist_gate" || ! -f "$dist_agent" ]] && return 0
+  local newest_src=0 st dist_mtime
+  while IFS= read -r -d '' f; do
+    st=$(stat -c %Y "$f" 2>/dev/null || stat -f %m "$f" 2>/dev/null || echo 0)
+    [[ "$st" -gt "$newest_src" ]] && newest_src=$st
+  done < <(find "$ROOT/src" -name '*.ts' -print0 2>/dev/null)
+  dist_mtime=$(stat -c %Y "$dist_gate" 2>/dev/null || stat -f %m "$dist_gate" 2>/dev/null || echo 0)
+  [[ "$newest_src" -gt "$dist_mtime" ]]
+}
+
+ensure_dist_built() {
+  if dist_needs_rebuild; then
+    echo "goal-directed-loop: rebuilding dist (gate/agent TypeScript newer than dist)"
+    npm ci --prefix "$ROOT" >/dev/null 2>&1 || true
+    npm run build --prefix "$ROOT"
+  fi
+}
+
+ensure_dist_built
 
 if [[ -z "$WORKFLOW_REPO" ]]; then
   GOAL_FILE="$GOAL_FILE" GOAL_INLINE="$GOAL_INLINE" WORKFLOW_REPO="$(
@@ -99,10 +128,14 @@ resolve_goal_file_for_gate() {
 GATE_GOAL_FILE="$(resolve_goal_file_for_gate)"
 
 gate_status() {
-  if [[ -z "$GATE_GOAL_FILE" || ! -f "$GATE_GOAL_FILE" ]]; then
+  ensure_dist_built
+  local goal_path
+  goal_path="$(resolve_goal_file_for_gate)"
+  if [[ -z "$goal_path" || ! -f "$goal_path" ]]; then
     echo "goal-directed-loop: no goal file for completion gate" >&2
     return 1
   fi
+  GATE_GOAL_FILE="$goal_path"
   node "$ROOT/dist/cli/goal-completion-gate.js" --goal-file "$GATE_GOAL_FILE" --cwd "$CWD"
 }
 
@@ -170,6 +203,7 @@ while :; do
   if gate_status; then stop_success; fi
   if past_deadline; then stop_bounded "deadline ${UNTIL_LOCAL} reached"; fi
 
+  warn_if_loop_script_changed
   iter=$((iter + 1))
   echo "==> iteration $iter"
 
