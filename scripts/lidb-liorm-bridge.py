@@ -95,8 +95,8 @@ def cmd_upsert_agent_run(payload_json: str) -> dict[str, Any]:
 
     # Native embed: DELETE not supported yet — upsert via id replace (read-then-skip if present).
     existing = execute_sql(
-        "SELECT id FROM agent_runs WHERE id = ? OR run_id = ? LIMIT 1",
-        [run_id, run_id],
+        "SELECT id FROM agent_runs WHERE id = ?",
+        [run_id],
     )
     if not existing:
         execute_sql(

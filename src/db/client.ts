@@ -5,19 +5,19 @@ import { normalizeSupabaseApiUrl } from "./supabase-url.js";
 let client: SupabaseClient | null = null;
 let testClientOverride: SupabaseClient | null = null;
 
-/** Control-plane persistence backend. Default: supabase. */
+/** Control-plane persistence backend. Default: lidb (native embed). */
 export type ControlPlaneStore = "supabase" | "disk" | "lidb";
 
 /**
  * Which database backs the control plane.
- * - `LI_CONTROL_PLANE_STORE=supabase|disk|lidb` (default supabase)
+ * - `LI_CONTROL_PLANE_STORE=supabase|disk|lidb` (default lidb)
  * - Legacy: `LI_STACK_SKIP_SUPABASE=1` → disk
  */
 export function configuredStore(): ControlPlaneStore {
   const raw = process.env.LI_CONTROL_PLANE_STORE?.trim().toLowerCase();
   if (raw === "disk" || raw === "supabase" || raw === "lidb") return raw;
   if (process.env.LI_STACK_SKIP_SUPABASE === "1") return "disk";
-  return "supabase";
+  return "lidb";
 }
 
 export function useSupabaseStore(): boolean {
@@ -82,7 +82,7 @@ export function assertStoreReady(): void {
   if (!useSupabaseStore()) return;
   if (dbEnabled()) return;
   throw new Error(
-    "LI_CONTROL_PLANE_STORE=supabase (default) but Supabase is not configured. " +
+    "LI_CONTROL_PLANE_STORE=supabase but Supabase is not configured. " +
       "Run: npm run db:ensure — or set SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY in .env. " +
       "Use disk instead: LI_CONTROL_PLANE_STORE=disk",
   );
