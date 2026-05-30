@@ -8,7 +8,7 @@
 | Metric | Count |
 |--------|------:|
 | Starting open PRs | 255 |
-| Ending open PRs (search API) | **0** (2026-05-30 code_implementer-76699416 completion gate) |
+| Ending open PRs (search API) | **0** (2026-05-31 code_implementer-1780180785521 completion gate) |
 | Ending open PRs (classified queue) | **0** |
 | PRs squash-merged this session | **30** (prior sessions: 27 + 22) |
 | PRs fixed locally then merged | **10** |
@@ -107,17 +107,6 @@
 
 **implementation_queue:** lic/lis/li-httpd CI items **stale** (referenced PRs closed or merged; 0 open PRs).
 
-## Session 28 (2026-05-30 code_implementer-76699416)
-
-| PR | Method |
-|----|--------|
-| li-cursor-agents#80 | REST squash merge (session 27 sprint digest; CI green: test-mock-agents, lidb-engine-e2e) |
-| lic#587 | **closed** (workspace_sweeper fallback, 611 commits / 59 files, stale dirty workspace including `emit.cpp` and matmul benchmarks; same disposition as #579–#583) |
-
-**Open PR count:** 2 → **0** (search API; completion gate exit 0).
-
-**implementation_queue:** lic `local_ci` + `pr_ci` items **stale** (lic#587 closed; 0 open PRs; main CI green).
-
 ## Session 27 (2026-05-30 code_implementer-1780175747261)
 
 | PR | Method |
@@ -130,17 +119,6 @@
 **Open PR count:** 3 → **0** (search API; completion gate exit 0).
 
 **implementation_queue:** lic/lis/li-httpd CI items **stale** (queue references closed PRs; 0 open PRs).
-
-## Session 29 (2026-05-30 code_implementer-1780177232882)
-
-| PR | Method |
-|----|--------|
-| li-cursor-agents#81 | REST squash merge (session 28 sprint digest; CI green) |
-| lic#588 | **closed** (workspace_sweeper fallback; `update-branch` then `lake-build` + `memory-linux` failed; same disposition as #579–#586) |
-
-**Open PR count:** 2 → **0** (search API; `org-pr-merge-completion-gate.sh` exit 0).
-
-**implementation_queue:** lic `local_ci` (#439) + `pr_ci` (#552, etc.) **stale** (0 open PRs; briefing references closed PRs).
 
 ## Session 26 (2026-05-30 code_implementer-1780175279050)
 
@@ -223,6 +201,18 @@
 **Verified stale:** implementation_queue lip/lit items 1–8 (all PRs closed; `lip`/`lit` main CI green).
 
 **Blockers:** `lis#30`, `li-std-math#12`, `li-std-core#11` — unrelated histories on rebase; need manual cherry-pick or close-if-superseded (Phase E).
+
+## Session 28 (2026-05-31 code_implementer-1780180785521)
+
+| PR | Method |
+|----|--------|
+| lic#590 | blocked REST squash (feat studio-ui native agent stream tick/cancel) |
+
+**Closed (Phase E):** lic#593 (139-file workspace sweep, regressions), benchmarks#257 (timestamp-only generated artifact).
+
+**Open PR count:** 3 → **0** (`org-pr-open-count.py --require-zero` exit 0).
+
+**Note:** implementation_queue items 1–8 (lic/lis/li-httpd CI) remain **stale** — those PRs were merged/closed in prior sessions.
 
 ## Session 7 (2026-05-30 code_implementer)
 

@@ -4,9 +4,8 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
-| 2026-05-30 code_implementer-78158740 | 3 → 1 | 1 | Phase B: REST squash benchmarks#256 (blocked CI-green); Phase C: rebase lic#590 (studio-ux-23, 6 CI fixes pushed); Phase E: close lic#591 (workspace_sweeper fallback); implementation_queue items 1–8 **stale** |
-| 2026-05-30 code_implementer-1780177232882 | 2 → 0 | 1 | Phase B: REST squash li-cursor-agents#81 (session 28 digest, CI green); Phase E: close lic#588 (workspace_sweeper fallback, lake-build/memory-linux failing after update-branch); **completion gate pass** |
-| 2026-05-30 code_implementer-76699416 | 2 → 0 | 1 | Phase B: REST squash li-cursor-agents#80 (session 27 digest, CI green); Phase E: close lic#587 (workspace_sweeper fallback, 611 commits / 59 files / emit.cpp+matmul regressions); **completion gate pass** |
+| 2026-05-31 code_implementer-1780180785521 | 3 → 0 | 1+2 closed | Phase B: REST squash lic#590 (studio-ux-23, blocked CI-green); Phase E: close lic#593 (139-file workspace sweep, no shippable diff), benchmarks#257 (timestamp-only artifact); **completion gate pass** |
+| 2026-05-31 code_implementer-1780180207457 | 8 → 4 | 5 | Phase D: lic#590 push eb3b4427 (VC ensures + int/float composable CI); Phase B: merge li-cursor-agents#83, blocked×4 li-std-math#15–18; open: lic#590 CI pending, lic#593, benchmarks#257 |
 | 2026-05-30 code_implementer-1780175747261 | 3 → 0 | 2 | Phase B: merge li-cursor-agents#79 (session 26 digest); blocked merge lic#585 (PH-ML Wave 4, CI green); Phase E: close lic#584,#586 (workspace_sweeper fallbacks); **completion gate pass** |
 | 2026-05-30 code_implementer-1780175279050 | 2 → 0 | 1 | Phase B: REST squash li-cursor-agents#78 (session 25 digest, CI green); Phase E: close lic#583 (workspace_sweeper fallback, 59 files / emit.cpp+matmul regressions); **completion gate pass** |
 | 2026-05-30 code_implementer-1780174681333 | 2 → 0 | 1 | Phase C: rebase+merge li-cursor-agents#77 (session 24 digest, prefer-main); Phase E: close lic#581,#582 (workspace_sweeper fallbacks); **completion gate pass** |
@@ -27,6 +26,19 @@ Started: 2026-05-30
 | 2026-05-30 code_implementer | 239 → 228 | 11 | Phase A queue refresh; Phase B blocked merge (lic#534, benchmarks#220, li-demo#18); Phase C local rebase+merge (lip#24,25,26,28,30, benchmarks#215, roadmap#44,45); org-rebase-pr-branch.py: pull/N/head fetch + force-with-lease |
 | 2026-05-30 prior session | 255 → 231 | 27 | See org-pr-merge-final-report.md |
 
+## Merged this iteration (1780180785521)
+
+| PR | Method |
+|----|--------|
+| lic#590 | blocked CI-green REST squash (studio-ux-23 native agent stream) |
+
+## Closed without merge (1780180785521)
+
+| PR | Reason |
+|----|--------|
+| lic#593 | workspace_sweeper fallback — 139 files, +37k/-4k lines, regressions vs main |
+| benchmarks#257 | workspace_sweeper fallback — only `org-new-repos-discovery.json` timestamp vs main |
+
 ## Merged this iteration
 
 | PR | Method |
@@ -41,6 +53,7 @@ Started: 2026-05-30
 
 | PR | Fix |
 |----|-----|
+| lic#590 | `packages/li-ui/src/lib.li`: weaken `studio_agent_bench_native` ensures; `studio_agent_step_as_float`; fixes `import_ui_studio_shell`, `import_gui_viewport_panel_switch`, `import_gui_studio_keyboard` (eb3b4427) |
 | lic#520 | Restore `li_parallel_for_i64` in `emit.cpp` (regression from bench_improver refactor) |
 
 ## Blockers noted
