@@ -1,25 +1,98 @@
 {
   "report": {
-    "total": 1,
-    "classified": 1,
-    "green_clean": 0,
-    "blocked_ci_ok": 0,
-    "dirty": 0,
-    "ci_not_ok": 1
+    "total": 8,
+    "classified": 8,
+    "green_clean": 1,
+    "blocked_ci_ok": 4,
+    "dirty": 1,
+    "ci_not_ok": 2
   },
-  "green": [],
-  "blocked": [],
-  "dirty": [],
-  "ci_not_ok": [
+  "green": [
     {
       "repo": "li-cursor-agents",
-      "number": 79,
-      "title": "chore(sprint): session 26 digest \u2014 zero open PRs gate",
+      "number": 83,
+      "title": "chore(sprint): org-pr-merge-zero log session 78158740",
       "mergeable": true,
-      "mergeable_state": "unstable",
+      "mergeable_state": "clean",
+      "draft": false,
+      "ci": "ok",
+      "head": "fd42dfe"
+    }
+  ],
+  "blocked": [
+    {
+      "repo": "li-std-math",
+      "number": 18,
+      "title": "chore(deps): bump actions/checkout from 4 to 6",
+      "mergeable": true,
+      "mergeable_state": "blocked",
+      "draft": false,
+      "ci": "ok",
+      "head": "478501b"
+    },
+    {
+      "repo": "li-std-math",
+      "number": 17,
+      "title": "chore(deps): bump dorny/paths-filter from 3 to 4",
+      "mergeable": true,
+      "mergeable_state": "blocked",
+      "draft": false,
+      "ci": "ok",
+      "head": "765eb9f"
+    },
+    {
+      "repo": "li-std-math",
+      "number": 16,
+      "title": "chore(deps): bump actions/upload-pages-artifact from 3 to 5",
+      "mergeable": true,
+      "mergeable_state": "blocked",
+      "draft": false,
+      "ci": "ok",
+      "head": "301290d"
+    },
+    {
+      "repo": "li-std-math",
+      "number": 15,
+      "title": "chore(deps): bump actions/deploy-pages from 4 to 5",
+      "mergeable": true,
+      "mergeable_state": "blocked",
+      "draft": false,
+      "ci": "ok",
+      "head": "7a91ab8"
+    }
+  ],
+  "dirty": [
+    {
+      "repo": "benchmarks",
+      "number": 257,
+      "title": "chore(benchmarks): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "45ec92a"
+    }
+  ],
+  "ci_not_ok": [
+    {
+      "repo": "lic",
+      "number": 593,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": true,
+      "mergeable_state": "behind",
+      "draft": false,
+      "ci": "failure",
+      "head": "8bc46f2"
+    },
+    {
+      "repo": "lic",
+      "number": 590,
+      "title": "feat(studio-ui): native agent stream tick/cancel on shell (studio-ux-23)",
+      "mergeable": true,
+      "mergeable_state": "blocked",
       "draft": false,
       "ci": "pending",
-      "head": "bc2ffb5"
+      "head": "eb3b442"
     }
   ]
 }

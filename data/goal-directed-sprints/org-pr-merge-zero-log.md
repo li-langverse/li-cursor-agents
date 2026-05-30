@@ -4,6 +4,7 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
+| 2026-05-31 code_implementer-1780180207457 | 8 → 4 | 5 | Phase D: lic#590 push eb3b4427 (VC ensures + int/float composable CI); Phase B: merge li-cursor-agents#83, blocked×4 li-std-math#15–18; open: lic#590 CI pending, lic#593, benchmarks#257 |
 | 2026-05-30 code_implementer-1780175747261 | 3 → 0 | 2 | Phase B: merge li-cursor-agents#79 (session 26 digest); blocked merge lic#585 (PH-ML Wave 4, CI green); Phase E: close lic#584,#586 (workspace_sweeper fallbacks); **completion gate pass** |
 | 2026-05-30 code_implementer-1780175279050 | 2 → 0 | 1 | Phase B: REST squash li-cursor-agents#78 (session 25 digest, CI green); Phase E: close lic#583 (workspace_sweeper fallback, 59 files / emit.cpp+matmul regressions); **completion gate pass** |
 | 2026-05-30 code_implementer-1780174681333 | 2 → 0 | 1 | Phase C: rebase+merge li-cursor-agents#77 (session 24 digest, prefer-main); Phase E: close lic#581,#582 (workspace_sweeper fallbacks); **completion gate pass** |
@@ -38,6 +39,7 @@ Started: 2026-05-30
 
 | PR | Fix |
 |----|-----|
+| lic#590 | `packages/li-ui/src/lib.li`: weaken `studio_agent_bench_native` ensures; `studio_agent_step_as_float`; fixes `import_ui_studio_shell`, `import_gui_viewport_panel_switch`, `import_gui_studio_keyboard` (eb3b4427) |
 | lic#520 | Restore `li_parallel_for_i64` in `emit.cpp` (regression from bench_improver refactor) |
 
 ## Blockers noted
