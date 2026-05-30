@@ -8,7 +8,7 @@
 | Metric | Count |
 |--------|------:|
 | Starting open PRs | 255 |
-| Ending open PRs (search API) | **232** |
+| Ending open PRs (search API) | **0** (session 20 completion gate) |
 | Ending open PRs (classified queue) | ~234 |
 | PRs squash-merged this session | **20** (prior session: 27) |
 | PRs fixed locally then merged | **10** |
@@ -65,6 +65,15 @@
 | li-std-core#9 | Same |
 | li-httpd#15 | Same |
 | li-net#13 | Same |
+
+## Session 20 (2026-05-30 code_implementer)
+
+| PR | Method |
+|----|--------|
+| li-cursor-agents#70 | REST squash (green clean — session 19 log) |
+| lidb#24 | Phase D CI fix (`test_liq_readme_spec_examples.py` seed params) + REST squash |
+
+**Open PR count:** 4 → 2 (lic#566 dirty workspace sweep, li-cursor-agents#69 rebase unstable).
 
 ## Session 18 (2026-05-30 code_implementer)
 
