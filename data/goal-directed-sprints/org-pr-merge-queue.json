@@ -1,0 +1,2088 @@
+{
+  "report": {
+    "total": 224,
+    "classified": 224,
+    "green_clean": 2,
+    "blocked_ci_ok": 3,
+    "dirty": 148,
+    "ci_not_ok": 54
+  },
+  "green": [
+    {
+      "repo": "li-cursor-agents",
+      "number": 56,
+      "title": "chore(org-merge): session 18 \u2014 merge 4 PRs, org toolkit scripts",
+      "mergeable": true,
+      "mergeable_state": "clean",
+      "draft": false,
+      "ci": "ok",
+      "head": "8a9aa4a"
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 55,
+      "title": "docs(org-merge): session 17 sprint log \u2014 2 PRs merged",
+      "mergeable": true,
+      "mergeable_state": "clean",
+      "draft": false,
+      "ci": "ok",
+      "head": "19a006e"
+    }
+  ],
+  "blocked": [
+    {
+      "repo": "benchmarks",
+      "number": 248,
+      "title": "chore(benchmarks): pr_branch_opener proactive digest 1780153770649",
+      "mergeable": true,
+      "mergeable_state": "blocked",
+      "draft": false,
+      "ci": "ok",
+      "head": "4f727e1"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 227,
+      "title": "chore(benchmarks): workspace sweep \u2014 ingest/dashboard scripts",
+      "mergeable": true,
+      "mergeable_state": "blocked",
+      "draft": false,
+      "ci": "ok",
+      "head": "77b369c"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 225,
+      "title": "docs(bench): bench_improver proactive sweep digest 1780140538756",
+      "mergeable": true,
+      "mergeable_state": "blocked",
+      "draft": false,
+      "ci": "ok",
+      "head": "157a01a"
+    }
+  ],
+  "dirty": [
+    {
+      "repo": "li-language",
+      "number": 21,
+      "title": "chore(li-language): sync branch feat/phase-2f-discharge-corpus",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "d1c5a91"
+    },
+    {
+      "repo": "li-language",
+      "number": 20,
+      "title": "chore(li-language): sync branch feat/hpc-competitive-intelligence",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "d3a92a7"
+    },
+    {
+      "repo": "li-language",
+      "number": 19,
+      "title": "chore(li-language): sync branch feat/composable-by-default",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "460a948"
+    },
+    {
+      "repo": "li-language",
+      "number": 18,
+      "title": "chore(li-language): sync branch fix/ci-dev-pr3-sync",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "3dc82c6"
+    },
+    {
+      "repo": "li-language",
+      "number": 17,
+      "title": "chore(li-language): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "5e1f6fe"
+    },
+    {
+      "repo": "li-language",
+      "number": 15,
+      "title": "chore(li-language): sync branch feat/tier2-physics-suite-expansion",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "ddf4ccb"
+    },
+    {
+      "repo": "li-std-math",
+      "number": 12,
+      "title": "docs(li-std-math): GitHub Pages handbook landing",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "8cd35d8"
+    },
+    {
+      "repo": "li-std-core",
+      "number": 11,
+      "title": "docs(li-std-core): GitHub Pages handbook landing",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "ea34142"
+    },
+    {
+      "repo": "li-httpd",
+      "number": 17,
+      "title": "docs(li-httpd): GitHub Pages handbook landing",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "34600d6"
+    },
+    {
+      "repo": "li-net",
+      "number": 15,
+      "title": "docs(li-net): GitHub Pages handbook landing",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "aa6e1ad"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 219,
+      "title": "docs(bench): bench_improver proactive digest 1780136668286",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "06cf8e8"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 218,
+      "title": "chore(benchmarks): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "5b75e4a"
+    },
+    {
+      "repo": "lic",
+      "number": 529,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "e4f5b05"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 217,
+      "title": "chore(benchmarks): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "909674d"
+    },
+    {
+      "repo": "lic",
+      "number": 528,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "14d1ed1"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 216,
+      "title": "docs(agent-kit): rollout digest agent-kit-1780134265177",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "8f75a0e"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 214,
+      "title": "chore(benchmarks): agent autoresearch digest 1780124755372",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "d8eb3f0"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 213,
+      "title": "chore(benchmarks): agent-kit maintainer digest 1780124464879",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "d595a6b"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 212,
+      "title": "chore(benchmarks): agent autoresearch digest 1780094804882",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "432f6a6"
+    },
+    {
+      "repo": "lic",
+      "number": 520,
+      "title": "perf(7e): tier-1 matmul blocked emit \u2014 clear horner dashboard red",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "b8333c0"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 208,
+      "title": "docs(bench): bench_improver digest \u2014 tier-1 matmul greens",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "a693d12"
+    },
+    {
+      "repo": "lic",
+      "number": 517,
+      "title": "feat(7d): Studio GPU decorators + multi-backend LKIR driver",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "c47ace9"
+    },
+    {
+      "repo": "lis",
+      "number": 30,
+      "title": "chore(lis): sync branch feat/ph-db-4-registry-routes",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "7eb5460"
+    },
+    {
+      "repo": "lis",
+      "number": 29,
+      "title": "chore(lis): sync branch feat/ph-db-4-lidb-liorm-wire",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "5e4f28e"
+    },
+    {
+      "repo": "lis",
+      "number": 28,
+      "title": "chore(lis): sync branch feat/ph-db-3-lis-bundle-stub",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "a3f2837"
+    },
+    {
+      "repo": "lis",
+      "number": 27,
+      "title": "chore(lis): sync branch cursor/wp-h-ph-db-containers",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "5f645f1"
+    },
+    {
+      "repo": "lis",
+      "number": 26,
+      "title": "chore(lis): sync branch cursor/wp-g-ph-db-ci",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "eb238d8"
+    },
+    {
+      "repo": "lis",
+      "number": 25,
+      "title": "chore(lis): sync branch cursor/wp-b-ph-db-3-lis-db",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "ceac11e"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 207,
+      "title": "docs(ci_maintainer): proactive org CI audit digest at 08:41Z",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "0ea561c"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 206,
+      "title": "chore(benchmarks): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "c990cb7"
+    },
+    {
+      "repo": "lic",
+      "number": 516,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "ae8f500"
+    },
+    {
+      "repo": "lic",
+      "number": 514,
+      "title": "chore(lic): bench improver agent run 55869194",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "f07d0d7"
+    },
+    {
+      "repo": "lic",
+      "number": 503,
+      "title": "bench(lic): tier-1 matmul improver \u2014 PH-5b/7e",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "a29cc67"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 205,
+      "title": "chore(benchmarks): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "c1ba662"
+    },
+    {
+      "repo": "lic",
+      "number": 502,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "b53f579"
+    },
+    {
+      "repo": "lic",
+      "number": 499,
+      "title": "fix(bench): restore tier-1 matmul MIR fast paths (PH-5b, PH-7e)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "8dff5b8"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 204,
+      "title": "docs(agent-kit): rollout digest v1.3.5 org sync",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "c4f70e1"
+    },
+    {
+      "repo": "lic",
+      "number": 497,
+      "title": "chore(lic): workspace sweep \u2014 agent state and matmul bench deltas",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "006d5ef"
+    },
+    {
+      "repo": "lic",
+      "number": 496,
+      "title": "feat(PH-CAD): li-cad types-only slice (cad_fundamentals)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "b323b7f"
+    },
+    {
+      "repo": "lic",
+      "number": 493,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "4eb0e93"
+    },
+    {
+      "repo": "lic",
+      "number": 491,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "31da7d9"
+    },
+    {
+      "repo": "lic",
+      "number": 490,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "63e376c"
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 41,
+      "title": "ux-harness: parse unquoted hrefs + normalize MkDocs site_url prefix",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "2f8e4b0"
+    },
+    {
+      "repo": "lic",
+      "number": 489,
+      "title": "feat(httpd): gap-phase2 perf wrk soak + streaming timing vs nginx",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "24d9e06"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 201,
+      "title": "Org cleanup: repo boundaries, remove proof-library from benchmarks",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "420ee51"
+    },
+    {
+      "repo": "lic",
+      "number": 488,
+      "title": "test(provability): P-linalg mat2 loop open VC + verify_ok tier guards",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "404cf41"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 197,
+      "title": "docs(autoresearch): proactive sweep v7 digest (run 1780115445230)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "02934c6"
+    },
+    {
+      "repo": "lic",
+      "number": 486,
+      "title": "feat(studio-ui): proactive sweep + wave-2 plan (studio-ux-13)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "55a54a9"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 194,
+      "title": "chore(benchmarks): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "1fcf12c"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 193,
+      "title": "docs(swarm): agent_kit_maintainer rollout digest 1780113525891",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "59ab0b0"
+    },
+    {
+      "repo": "lic",
+      "number": 482,
+      "title": "docs(lic): plan cross-links and satellite handbook template",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "1ee7b15"
+    },
+    {
+      "repo": "lic",
+      "number": 481,
+      "title": "docs(lic): plan cross-links and provability-gaps dedup",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "043b7a9"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 188,
+      "title": "chore(benchmarks): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "677a2d1"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 187,
+      "title": "docs(swarm): docs_maintainer digest 1780109879421",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "603c8f1"
+    },
+    {
+      "repo": "lic",
+      "number": 480,
+      "title": "docs(lic): plan cross-links and provability-gaps dedup",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "7480b38"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 185,
+      "title": "chore(benchmarks): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "c1daf35"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 180,
+      "title": "chore(benchmarks): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "b82c222"
+    },
+    {
+      "repo": "lic",
+      "number": 475,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "d3bf3d8"
+    },
+    {
+      "repo": "lis",
+      "number": 22,
+      "title": "chore(lis): docs maintainer \u2014 live pages sync (20260530)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "8f653da"
+    },
+    {
+      "repo": "lic",
+      "number": 469,
+      "title": "perf(codegen): tier-1 matmul vector FMA \u2014 bench improver pass",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "c7f6d97"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 177,
+      "title": "chore(benchmarks): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "ab8a6da"
+    },
+    {
+      "repo": "lic",
+      "number": 468,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "8a47cfd"
+    },
+    {
+      "repo": "li-language",
+      "number": 13,
+      "title": "feat(li-language): goal scaffold v1 docs",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "e8fbbe8"
+    },
+    {
+      "repo": "roadmap",
+      "number": 37,
+      "title": "feat(roadmap): org CI branch protection",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "cc8e236"
+    },
+    {
+      "repo": "lis",
+      "number": 21,
+      "title": "feat(lis): production registry docs",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "3b518f8"
+    },
+    {
+      "repo": "lic",
+      "number": 467,
+      "title": "chore(lic): workspace sweep \u2014 httpd plan loop + agent snapshots",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "3ddad19"
+    },
+    {
+      "repo": "lic",
+      "number": 457,
+      "title": "chore(lic): agent autoresearch deliverable",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "227a818"
+    },
+    {
+      "repo": "lic",
+      "number": 456,
+      "title": "chore(lic): agent autoresearch deliverable",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "21eb58a"
+    },
+    {
+      "repo": "lic",
+      "number": 455,
+      "title": "chore(lic): agent autoresearch deliverable",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "9b450f7"
+    },
+    {
+      "repo": "lis",
+      "number": 20,
+      "title": "feat(PH-DB): lis db supervisor and control-plane hosting profile",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "d6f533a"
+    },
+    {
+      "repo": "li-language",
+      "number": 12,
+      "title": "feat(errors): error codes, handbook, control-flow slice (Vision-LLM)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "c93c50a"
+    },
+    {
+      "repo": "roadmap",
+      "number": 35,
+      "title": "docs(vision): north star for HPC, scientific computing, and AI",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "23ca160"
+    },
+    {
+      "repo": "roadmap",
+      "number": 33,
+      "title": "feat(roadmap): lidb native plan",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "bcf80cd"
+    },
+    {
+      "repo": "roadmap",
+      "number": 32,
+      "title": "feat(roadmap): PH-DB roadmap gaps",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "d1c58b4"
+    },
+    {
+      "repo": "lic",
+      "number": 447,
+      "title": "docs(plan): governance/lip/Vision-LLM provability cross-links",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "1bd37c0"
+    },
+    {
+      "repo": "lic",
+      "number": 446,
+      "title": "perf(tier1): matmul @ lowering + prezeroed C for dashboard reds",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "c0056ab"
+    },
+    {
+      "repo": "lic",
+      "number": 438,
+      "title": "docs(numerics): autoresearch proactive sweep study (2026-05-29)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "bff8f4d"
+    },
+    {
+      "repo": "lic",
+      "number": 437,
+      "title": "perf(7e): tier-1 matmul naive + blocked \u22641.2\u00d7 cpp",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "768b5ac"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 156,
+      "title": "chore(benchmarks): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "b3e9abe"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 154,
+      "title": "docs(swarm): docs_maintainer digest 1780087607383",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "40feb29"
+    },
+    {
+      "repo": "lic",
+      "number": 435,
+      "title": "perf(tier1): matmul_naive @ lowering + blocked GEMM codegen",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "12d775b"
+    },
+    {
+      "repo": "lic",
+      "number": 434,
+      "title": "perf(lic): horner DCE bench improver (PH-7e)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "98d3cf3"
+    },
+    {
+      "repo": "lic",
+      "number": 433,
+      "title": "perf(lic): bench_improver matmul/horner tier-1 (PH-5b/7e)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "2982f08"
+    },
+    {
+      "repo": "lic",
+      "number": 432,
+      "title": "docs(plan): PH-7e tier-1 red reconciliation (#424)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": true,
+      "ci": "ok",
+      "head": "dd0f8cb"
+    },
+    {
+      "repo": "lic",
+      "number": 427,
+      "title": "perf(tier1): matmul_naive MIR hook + blocked SIMD/FMA",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "02ba358"
+    },
+    {
+      "repo": "lic",
+      "number": 421,
+      "title": "docs(ecosystem): live handbook pages for eight org packages",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "a463080"
+    },
+    {
+      "repo": "lic",
+      "number": 420,
+      "title": "perf(7e): matmul_naive \u22641.2\u00d7 cpp via ArrayMatMul2DF64 @ lowering",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "e96cfd0"
+    },
+    {
+      "repo": "lic",
+      "number": 419,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "773ef9c"
+    },
+    {
+      "repo": "lic",
+      "number": 418,
+      "title": "perf(7e): matmul_naive hot path via C = A @ B (ArrayMatMul2DF64)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "5b504ea"
+    },
+    {
+      "repo": "lic",
+      "number": 417,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "9cac74b"
+    },
+    {
+      "repo": "lic",
+      "number": 416,
+      "title": "feat(sim): md_neighbor_cell_list smoke (algo 105, sim-p1-md-neighbor-cell)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "178809b"
+    },
+    {
+      "repo": "lic",
+      "number": 415,
+      "title": "feat(lic): Vision-LLM agent diagnostics",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "c93c50a"
+    },
+    {
+      "repo": "lic",
+      "number": 414,
+      "title": "chore(lic): agent bug fixer 68445695",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "e400db1"
+    },
+    {
+      "repo": "lic",
+      "number": 413,
+      "title": "chore(lic): bench improver horner honesty",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "1c53e00"
+    },
+    {
+      "repo": "lic",
+      "number": 412,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "80592d4"
+    },
+    {
+      "repo": "lic",
+      "number": 411,
+      "title": "World Studio master plan loop (W2: PBR-lite wgpu draw list)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "d84a941"
+    },
+    {
+      "repo": "lic",
+      "number": 410,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "2ab7975"
+    },
+    {
+      "repo": "lic",
+      "number": 409,
+      "title": "perf(tier1): matmul 512\u00b2 BSS globals + bench improver study",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "36d8743"
+    },
+    {
+      "repo": "lic",
+      "number": 408,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "54c55d6"
+    },
+    {
+      "repo": "lic",
+      "number": 407,
+      "title": "perf(7e): blocked matmul FMA vec4 + tier-1 bench evidence",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "52bb2d9"
+    },
+    {
+      "repo": "lic",
+      "number": 406,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "84c17ba"
+    },
+    {
+      "repo": "lic",
+      "number": 405,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "b2f3fb5"
+    },
+    {
+      "repo": "lic",
+      "number": 402,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "9a0cc24"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 141,
+      "title": "docs(bench): bench_improver digest 1780067501090",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "9b4dfd9"
+    },
+    {
+      "repo": "lic",
+      "number": 401,
+      "title": "perf(7e): fuse tier-1 matmul_blocked pure-Li kernel (init+GEMM+sink)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "bb911ba"
+    },
+    {
+      "repo": "lic",
+      "number": 400,
+      "title": "docs: live documentation map and phase-plan cross-links",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "7db83da"
+    },
+    {
+      "repo": "lic",
+      "number": 397,
+      "title": "perf(7e): fuse tier-1 matmul_blocked pure-Li kernel (\u22641.2\u00d7 cpp)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "4139bd9"
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 35,
+      "title": "chore(li-cursor-agents): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "2e4ca45"
+    },
+    {
+      "repo": "lic",
+      "number": 396,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "49b6d96"
+    },
+    {
+      "repo": "lic",
+      "number": 395,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "77760e6"
+    },
+    {
+      "repo": "lic",
+      "number": 393,
+      "title": "feat(studio-ui): PH-UX panel switch gate + proactive UX sweep",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "31e88ae"
+    },
+    {
+      "repo": "lic",
+      "number": 392,
+      "title": "docs(ecosystem): org-repo handbooks + phase-plan cross-links",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "113adef"
+    },
+    {
+      "repo": "lic",
+      "number": 390,
+      "title": "research(provability): G-par disjoint_row policy soundness gap",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "60a246f"
+    },
+    {
+      "repo": "lic",
+      "number": 389,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "6386016"
+    },
+    {
+      "repo": "lic",
+      "number": 388,
+      "title": "fix(bench): unblock horner_pure_li tier-1 verify (autoresearch sweep)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "6701cb8"
+    },
+    {
+      "repo": "lic",
+      "number": 384,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "e6945a3"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 137,
+      "title": "docs(plan): PH-IO-7 summary parity gate (#53)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": true,
+      "ci": "ok",
+      "head": "bddcced"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 135,
+      "title": "docs(plan): LIC_ROOT agent preflight honesty (#20, #25, #28, #29, #54)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": true,
+      "ci": "ok",
+      "head": "e71246d"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 133,
+      "title": "docs(swarm): package architect placements (5 handoffs)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "c4f1e01"
+    },
+    {
+      "repo": "lic",
+      "number": 380,
+      "title": "perf(codegen): matmul_blocked FMA + 8-wide SIMD toward 1.2\u00d7 cpp",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "610a107"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 132,
+      "title": "fix(ci): macOS nightly tier-1/2 core profile",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "93bf0a9"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 131,
+      "title": "chore: local Linux bench refresh (RTX 3060) + GPU honesty snapshot",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "58d6641"
+    },
+    {
+      "repo": "lic",
+      "number": 377,
+      "title": "chore(lic): workspace sweep \u2014 studio wgpu readback + capture",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "7a8793e"
+    },
+    {
+      "repo": "lic",
+      "number": 375,
+      "title": "feat(studio): Li PPM capture + lillm matmul hint (wave 2)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "33b478e"
+    },
+    {
+      "repo": "lic",
+      "number": 374,
+      "title": "feat(studio-ai): wave 1 agentic MCP + lillm bridge",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "27b2f26"
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 28,
+      "title": "chore(li-cursor-agents): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "cd2a52f"
+    },
+    {
+      "repo": "lic",
+      "number": 369,
+      "title": "chore(agent-kit): sync 1.3.5 stub-then-implement rule",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "82006ef"
+    },
+    {
+      "repo": "lic",
+      "number": 367,
+      "title": "feat(PH-ML): Waves 1-3 CPU ML, LKIR/GPU pilot, RL Studio",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "fd6e7ec"
+    },
+    {
+      "repo": "lic",
+      "number": 365,
+      "title": "feat(lig): add Vulkan SPIR-V backend target",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": true,
+      "ci": "no_checks",
+      "head": "4820205"
+    },
+    {
+      "repo": "lic",
+      "number": 364,
+      "title": "feat(bench): add lig GPU suite snapshot",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": true,
+      "ci": "failure",
+      "head": "a2cfc3c"
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 26,
+      "title": "chore: support named Cursor worker directories",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": true,
+      "ci": "no_checks",
+      "head": "e0f8ef2"
+    },
+    {
+      "repo": "research-findings",
+      "number": 5,
+      "title": "docs(whitepaper): robotics SOTA survey",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "b1b8cc3"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 128,
+      "title": "chore: refresh dashboard data + remove tier cards for category-only layout",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": true,
+      "ci": "ok",
+      "head": "e5f4344"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 123,
+      "title": "feat(bench): parallel tier-1/2 runs via BENCH_JOBS",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": true,
+      "ci": "ok",
+      "head": "06c6320"
+    },
+    {
+      "repo": "research-findings",
+      "number": 4,
+      "title": "docs(whitepaper): chem-r0 QM SOTA survey (chem_sim_algorithms)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "65e2e70"
+    },
+    {
+      "repo": "research-findings",
+      "number": 2,
+      "title": "docs(research): offensive security SOTA whitepaper",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "9cd5b20"
+    },
+    {
+      "repo": "roadmap",
+      "number": 26,
+      "title": "docs(ecosystem): vision implementation status snapshot 2026-05-27",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": true,
+      "ci": "ok",
+      "head": "186b101"
+    },
+    {
+      "repo": "lidb",
+      "number": 19,
+      "title": "feat(tier-db): tier_db CSV smoke harness (WP-DB)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "27b1f9f"
+    },
+    {
+      "repo": "roadmap",
+      "number": 21,
+      "title": "docs(ecosystem): httpd mirror canonical decision (WP-B4)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "7c9902f"
+    },
+    {
+      "repo": "lidb",
+      "number": 14,
+      "title": "chore(docs): GitHub description SEO (WP-A4)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "fe30965"
+    },
+    {
+      "repo": "roadmap",
+      "number": 19,
+      "title": "docs(ecosystem): point compiler to lic (WP-A5)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "8306917"
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 20,
+      "title": "feat(PH-DB-10): lidb ControlPlaneStore stub + persist hooks",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "9b306a0"
+    },
+    {
+      "repo": "lidb",
+      "number": 6,
+      "title": "chore(agent-kit): adopt roadmap cursor policy (1.3.3)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "bc1c790"
+    },
+    {
+      "repo": "studio",
+      "number": 13,
+      "title": "feat(demo): Wave 2 reel motion frames + studio-ux-19 refresh",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "3cb18d7"
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 19,
+      "title": "docs(PH-DB-10): checkbox audit (dedupe lic #184)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "52f4d0f"
+    },
+    {
+      "repo": "ui",
+      "number": 8,
+      "title": "docs: li-def-not-proc agent rule and README syntax",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "25af1a6"
+    },
+    {
+      "repo": "studio",
+      "number": 10,
+      "title": "docs: li-def-not-proc agent rule and README syntax",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "bc93e8e"
+    },
+    {
+      "repo": "li-httpd",
+      "number": 10,
+      "title": "feat(li-net-httpd): plan-loop split from lic/cursor/httpd-plan-continue",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "70762cf"
+    }
+  ],
+  "ci_not_ok": [
+    {
+      "repo": "li-cursor-agents",
+      "number": 57,
+      "title": "docs(org-merge): session 19 \u2014 lip/lit queue cleared, close lis#16",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "pending",
+      "head": "140baa6"
+    },
+    {
+      "repo": "lic",
+      "number": 552,
+      "title": "bench_improver: tier-1 matmul_blocked static workspace (\u22641.2\u00d7 path)",
+      "mergeable": true,
+      "mergeable_state": "behind",
+      "draft": false,
+      "ci": "failure",
+      "head": "79d8674"
+    },
+    {
+      "repo": "li-language",
+      "number": 21,
+      "title": "chore(li-language): sync branch feat/phase-2f-discharge-corpus",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "d1c5a91"
+    },
+    {
+      "repo": "li-language",
+      "number": 18,
+      "title": "chore(li-language): sync branch fix/ci-dev-pr3-sync",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "3dc82c6"
+    },
+    {
+      "repo": "lic",
+      "number": 550,
+      "title": "fix(bench): revert matmul_blocked tile harness; fix verify TimingStats",
+      "mergeable": true,
+      "mergeable_state": "behind",
+      "draft": false,
+      "ci": "failure",
+      "head": "e99ade9"
+    },
+    {
+      "repo": "lic",
+      "number": 537,
+      "title": "docs(plan): PH-Pkg governance exit gates (#476)",
+      "mergeable": true,
+      "mergeable_state": "behind",
+      "draft": true,
+      "ci": "failure",
+      "head": "bafac38"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 222,
+      "title": "chore(docs): org handbook Pages enable script + digest",
+      "mergeable": true,
+      "mergeable_state": "blocked",
+      "draft": false,
+      "ci": "failure",
+      "head": "b73e64d"
+    },
+    {
+      "repo": "li-language",
+      "number": 15,
+      "title": "chore(li-language): sync branch feat/tier2-physics-suite-expansion",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "ddf4ccb"
+    },
+    {
+      "repo": "lic",
+      "number": 529,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "e4f5b05"
+    },
+    {
+      "repo": "lic",
+      "number": 528,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "14d1ed1"
+    },
+    {
+      "repo": "lic",
+      "number": 520,
+      "title": "perf(7e): tier-1 matmul blocked emit \u2014 clear horner dashboard red",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "b8333c0"
+    },
+    {
+      "repo": "lic",
+      "number": 517,
+      "title": "feat(7d): Studio GPU decorators + multi-backend LKIR driver",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "c47ace9"
+    },
+    {
+      "repo": "lis",
+      "number": 29,
+      "title": "chore(lis): sync branch feat/ph-db-4-lidb-liorm-wire",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "5e4f28e"
+    },
+    {
+      "repo": "lic",
+      "number": 499,
+      "title": "fix(bench): restore tier-1 matmul MIR fast paths (PH-5b, PH-7e)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "8dff5b8"
+    },
+    {
+      "repo": "lic",
+      "number": 486,
+      "title": "feat(studio-ui): proactive sweep + wave-2 plan (studio-ux-13)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "55a54a9"
+    },
+    {
+      "repo": "lic",
+      "number": 435,
+      "title": "perf(tier1): matmul_naive @ lowering + blocked GEMM codegen",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "12d775b"
+    },
+    {
+      "repo": "lic",
+      "number": 434,
+      "title": "perf(lic): horner DCE bench improver (PH-7e)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "98d3cf3"
+    },
+    {
+      "repo": "lic",
+      "number": 433,
+      "title": "perf(lic): bench_improver matmul/horner tier-1 (PH-5b/7e)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "2982f08"
+    },
+    {
+      "repo": "lic",
+      "number": 430,
+      "title": "docs(plan): PH-8p-a parallel test orchestration (#428)",
+      "mergeable": true,
+      "mergeable_state": "behind",
+      "draft": true,
+      "ci": "failure",
+      "head": "a396d2e"
+    },
+    {
+      "repo": "lic",
+      "number": 427,
+      "title": "perf(tier1): matmul_naive MIR hook + blocked SIMD/FMA",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "02ba358"
+    },
+    {
+      "repo": "lic",
+      "number": 419,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "773ef9c"
+    },
+    {
+      "repo": "lic",
+      "number": 418,
+      "title": "perf(7e): matmul_naive hot path via C = A @ B (ArrayMatMul2DF64)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "5b504ea"
+    },
+    {
+      "repo": "lic",
+      "number": 413,
+      "title": "chore(lic): bench improver horner honesty",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "1c53e00"
+    },
+    {
+      "repo": "lic",
+      "number": 378,
+      "title": "chore: point org benchmarks to benchmarks repo for tier-1/2 harness",
+      "mergeable": true,
+      "mergeable_state": "behind",
+      "draft": false,
+      "ci": "failure",
+      "head": "6b7cb3a"
+    },
+    {
+      "repo": "lic",
+      "number": 375,
+      "title": "feat(studio): Li PPM capture + lillm matmul hint (wave 2)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "33b478e"
+    },
+    {
+      "repo": "lic",
+      "number": 374,
+      "title": "feat(studio-ai): wave 1 agentic MCP + lillm bridge",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "27b2f26"
+    },
+    {
+      "repo": "lic",
+      "number": 373,
+      "title": "chore(agent-kit): sync 1.3.5 for lic-studio-ui worktree",
+      "mergeable": true,
+      "mergeable_state": "behind",
+      "draft": false,
+      "ci": "failure",
+      "head": "db7bda4"
+    },
+    {
+      "repo": "lic",
+      "number": 364,
+      "title": "feat(bench): add lig GPU suite snapshot",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": true,
+      "ci": "failure",
+      "head": "a2cfc3c"
+    },
+    {
+      "repo": "world",
+      "number": 7,
+      "title": "chore(deps): bump actions/checkout from 4 to 6",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "failure",
+      "head": "5cec46f"
+    },
+    {
+      "repo": "research-findings",
+      "number": 5,
+      "title": "docs(whitepaper): robotics SOTA survey",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "b1b8cc3"
+    },
+    {
+      "repo": "ui",
+      "number": 11,
+      "title": "chore(deps): bump actions/checkout from 4 to 6",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "failure",
+      "head": "d04425a"
+    },
+    {
+      "repo": "research-findings",
+      "number": 4,
+      "title": "docs(whitepaper): chem-r0 QM SOTA survey (chem_sim_algorithms)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "65e2e70"
+    },
+    {
+      "repo": "research-findings",
+      "number": 2,
+      "title": "docs(research): offensive security SOTA whitepaper",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "9cd5b20"
+    },
+    {
+      "repo": "world",
+      "number": 6,
+      "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "failure",
+      "head": "ce8a208"
+    },
+    {
+      "repo": "ui",
+      "number": 10,
+      "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "failure",
+      "head": "b72983b"
+    },
+    {
+      "repo": "studio.ai",
+      "number": 5,
+      "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "failure",
+      "head": "26f03bc"
+    },
+    {
+      "repo": "studio",
+      "number": 16,
+      "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "failure",
+      "head": "d7f3608"
+    },
+    {
+      "repo": "store.realtime",
+      "number": 2,
+      "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "failure",
+      "head": "c6ddabb"
+    },
+    {
+      "repo": "sim.robotics",
+      "number": 2,
+      "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "failure",
+      "head": "27ee3eb"
+    },
+    {
+      "repo": "sim.drug_design",
+      "number": 2,
+      "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "failure",
+      "head": "c7682cf"
+    },
+    {
+      "repo": "sim.automotive",
+      "number": 2,
+      "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "failure",
+      "head": "4fe537e"
+    },
+    {
+      "repo": "sim.additive",
+      "number": 2,
+      "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "failure",
+      "head": "f0156b7"
+    },
+    {
+      "repo": "sim",
+      "number": 7,
+      "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "failure",
+      "head": "ac87022"
+    },
+    {
+      "repo": "render",
+      "number": 9,
+      "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "failure",
+      "head": "5396cda"
+    },
+    {
+      "repo": "physics.runtime",
+      "number": 2,
+      "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "failure",
+      "head": "103cf39"
+    },
+    {
+      "repo": "physics.custom",
+      "number": 2,
+      "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "failure",
+      "head": "e0a702d"
+    },
+    {
+      "repo": "net.httpd",
+      "number": 2,
+      "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "failure",
+      "head": "9d6d987"
+    },
+    {
+      "repo": "mmo",
+      "number": 2,
+      "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "failure",
+      "head": "b1e4836"
+    },
+    {
+      "repo": "lidb",
+      "number": 19,
+      "title": "feat(tier-db): tier_db CSV smoke harness (WP-DB)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "27b1f9f"
+    },
+    {
+      "repo": "studio",
+      "number": 15,
+      "title": "feat(sync): studio parity with lic main @ 7c0c373",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "failure",
+      "head": "69acc32"
+    },
+    {
+      "repo": "studio",
+      "number": 14,
+      "title": "chore: refresh studio-x-demo after Wave 2 merge",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "failure",
+      "head": "86a1711"
+    },
+    {
+      "repo": "ui",
+      "number": 8,
+      "title": "docs: li-def-not-proc agent rule and README syntax",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "25af1a6"
+    },
+    {
+      "repo": "studio",
+      "number": 10,
+      "title": "docs: li-def-not-proc agent rule and README syntax",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "bc93e8e"
+    },
+    {
+      "repo": "li-httpd",
+      "number": 10,
+      "title": "feat(li-net-httpd): plan-loop split from lic/cursor/httpd-plan-continue",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "failure",
+      "head": "70762cf"
+    }
+  ]
+}
