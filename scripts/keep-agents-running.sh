@@ -17,8 +17,11 @@ echo "==> Using NODE_BIN=$NODE_BIN ($("$NODE_BIN" -v))"
 ENV_FILE="${LI_CURSOR_ENV_FILE:-$HOME/Documents/Cursor/.env}"
 if [[ -f "$ROOT/.env" ]]; then set -a; source "$ROOT/.env"; set +a; fi
 li_resolve_env_paths "$ROOT"
-if [[ -f "$ENV_FILE" ]]; then set -a; source "$ENV_FILE"; set +a; fi
-elif [[ -f "$LI_GITHUB_ENV" ]]; then set -a; source "$LI_GITHUB_ENV"; set +a; fi
+if [[ -f "$ENV_FILE" ]]; then
+  set -a; source "$ENV_FILE"; set +a
+elif [[ -f "$LI_GITHUB_ENV" ]]; then
+  set -a; source "$LI_GITHUB_ENV"; set +a
+fi
 export GH_TOKEN GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
 # Production stack uses Cursor SDK; tests set CURSOR_MOCK=1 explicitly.
 unset CURSOR_MOCK
