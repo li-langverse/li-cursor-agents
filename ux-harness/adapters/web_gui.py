@@ -1,6 +1,7 @@
 """Web GUI adapter (dashboard, gui_gen) — Playwright path reserved for extended CI."""
 from __future__ import annotations
 
+import os
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -9,6 +10,14 @@ from .base import TargetConfig
 from .mock_data import mock_ui_result, mock_ux_result
 
 
+
+
+def _probe_url_for_target(target: TargetConfig) -> str:
+    url = _probe_url_for_target(target)
+    if target.id == "agents-dashboard":
+        port = os.environ.get("LI_PLAYWRIGHT_UI_PORT", "3099")
+        return f"http://127.0.0.1:{port}"
+    return url
 def _probe_url(url: str, timeout: float = 2.0) -> bool:
     try:
         with urllib.request.urlopen(url, timeout=timeout) as resp:
@@ -20,7 +29,7 @@ def _probe_url(url: str, timeout: float = 2.0) -> bool:
 def run_web_gui_ui(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
     if mock:
         return mock_ui_result(target, str(agents_root))
-    url = str(target.raw.get("url") or "")
+    url = _probe_url_for_target(target)
     fixture = target.raw.get("fixture")
     base = {
         "target_id": target.id,
