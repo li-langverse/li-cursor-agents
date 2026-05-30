@@ -1,14 +1,46 @@
 {
   "report": {
-    "total": 0,
-    "classified": 0,
+    "total": 3,
+    "classified": 3,
     "green_clean": 0,
-    "blocked_ci_ok": 0,
-    "dirty": 0,
+    "blocked_ci_ok": 2,
+    "dirty": 1,
     "ci_not_ok": 0
   },
   "green": [],
-  "blocked": [],
-  "dirty": [],
+  "blocked": [
+    {
+      "repo": "lic",
+      "number": 568,
+      "title": "docs: open PH tracker + ui_ux_quality handoff refresh",
+      "mergeable": true,
+      "mergeable_state": "blocked",
+      "draft": false,
+      "ci": "ok",
+      "head": "28a4a95"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 251,
+      "title": "chore(ci): ci_maintainer digest 1780170449021 \u2014 org CI gate green",
+      "mergeable": true,
+      "mergeable_state": "blocked",
+      "draft": false,
+      "ci": "ok",
+      "head": "bfed08c"
+    }
+  ],
+  "dirty": [
+    {
+      "repo": "lic",
+      "number": 571,
+      "title": "chore(lic): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "374bd62"
+    }
+  ],
   "ci_not_ok": []
 }
