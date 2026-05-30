@@ -7,7 +7,7 @@ from pathlib import Path
 from sota.rubric import min_rubric_score, rubric_failing
 from .base import TargetConfig
 from .mock_data import mock_ui_result, mock_ux_result
-from .static_site import audit_static_site, resolve_site_dir
+from .static_site import audit_static_site, resolve_site_dir, site_url_path_prefix
 
 
 def _site_dir(target: TargetConfig, agents_root: Path) -> Path:
@@ -18,12 +18,29 @@ def _site_dir(target: TargetConfig, agents_root: Path) -> Path:
     return resolve_site_dir(agents_root, str(paths.get("site_dir", "../lic/site")))
 
 
+def _mkdocs_config(target: TargetConfig, agents_root: Path) -> Path | None:
+    paths = target.raw.get("paths") or {}
+    rel = paths.get("mkdocs_config")
+    if not rel:
+        return None
+    p = Path(str(rel))
+    if not p.is_absolute():
+        p = (agents_root / p).resolve()
+    return p if p.is_file() else None
+
+
+def _audit_docs_site(target: TargetConfig, agents_root: Path) -> dict:
+    site_dir = _site_dir(target, agents_root)
+    mkdocs = _mkdocs_config(target, agents_root)
+    prefix = site_url_path_prefix(site_dir, mkdocs)
+    return audit_static_site(site_dir, site_prefix=prefix, mkdocs_config=mkdocs)
+
+
 def run_docs_ui(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
     if mock:
         return mock_ui_result(target, str(agents_root))
 
-    site_dir = _site_dir(target, agents_root)
-    audit = audit_static_site(site_dir)
+    audit = _audit_docs_site(target, agents_root)
     base = {
         "target_id": target.id,
         "repo": target.repo,
@@ -53,8 +70,7 @@ def run_docs_ux(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
     if mock:
         return mock_ux_result(target, str(agents_root))
 
-    site_dir = _site_dir(target, agents_root)
-    audit = audit_static_site(site_dir)
+    audit = _audit_docs_site(target, agents_root)
     journeys = target.raw.get("journeys") or []
     journey_results = [
         {
