@@ -17,15 +17,18 @@
   },
   "implement_goal_last_run_at": {
     "httpd_parity": "2026-05-30T00:53:49.440Z",
-    "sim_algorithms": "2026-05-30T01:01:42.486Z"
+    "sim_algorithms": "2026-05-30T01:01:42.486Z",
+    "compiler_studio": "2026-05-30T01:07:33.645Z"
   },
   "implement_goal_last_gate_pass": {
     "httpd_parity": false,
-    "sim_algorithms": false
+    "sim_algorithms": false,
+    "compiler_studio": false
   },
   "implement_goal_last_gate_at": {
     "httpd_parity": "2026-05-30T00:53:49.440Z",
-    "sim_algorithms": "2026-05-30T01:01:42.486Z"
+    "sim_algorithms": "2026-05-30T01:01:42.486Z",
+    "compiler_studio": "2026-05-30T01:07:33.645Z"
   },
   "last_research_tick_at": "2026-05-29T23:05:48.793Z",
   "proactive_last_run_at": {
@@ -50,6 +53,6 @@
     "ci_maintainer": "2026-05-29T23:26:25.316Z",
     "docs_maintainer": "2026-05-29T22:40:17.980Z"
   },
-  "last_implement_tick_at": "2026-05-30T01:01:42.487Z",
+  "last_implement_tick_at": "2026-05-30T01:07:33.645Z",
   "last_maintenance_tick_at": "2026-05-30T01:03:51.276Z"
 }
