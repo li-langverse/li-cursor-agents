@@ -8,7 +8,7 @@
 | Metric | Count |
 |--------|------:|
 | Starting open PRs | 255 |
-| Ending open PRs (search API) | **0** (2026-05-31 code_implementer-1780182643286 completion gate) |
+| Ending open PRs (search API) | **0** (2026-05-31 code_implementer-83175237 completion gate) |
 | Ending open PRs (classified queue) | **0** |
 | PRs squash-merged this session | **30** (prior sessions: 27 + 22) |
 | PRs fixed locally then merged | **10** |
@@ -120,6 +120,16 @@
 
 **implementation_queue:** lic/lis/li-httpd CI items **stale** (queue references closed PRs; 0 open PRs).
 
+
+## Session 35 (2026-05-31 code_implementer-83175237)
+
+**Closed (Phase E):** lic#601 (workspace_sweeper fallback re-opened post-#599 — 664 commits, 61 files, +38k/-879 lines, merge conflicts with main, emit.cpp/matmul regressions vs main; branch `chore/workspace-sweep-1780171200` preserved).
+
+**Open PR count:** 1 → **0** (`org-pr-open-count.py --require-zero` exit 0; `org-pr-merge-completion-gate.sh` exit 0).
+
+**Handoffs:** `cad_fundamentals` skipped (`package_placement: null`).
+
+**implementation_queue:** lic/lis/li-httpd CI items **stale** (0 open PRs; briefing references closed PRs).
 
 ## Session 34 (2026-05-31 code_implementer-1780182643286)
 
