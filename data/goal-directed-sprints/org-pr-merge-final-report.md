@@ -8,9 +8,9 @@
 | Metric | Count |
 |--------|------:|
 | Starting open PRs | 255 |
-| Ending open PRs (search API) | **0** (session 20 completion gate) |
-| Ending open PRs (classified queue) | ~234 |
-| PRs squash-merged this session | **20** (prior session: 27) |
+| Ending open PRs (search API) | **0** (session 21 completion gate) |
+| Ending open PRs (classified queue) | **0** |
+| PRs squash-merged this session | **22** (prior session: 27) |
 | PRs fixed locally then merged | **10** |
 
 > Search API and full classification differ slightly due to index lag and PRs opened/closed during the run.
@@ -74,6 +74,15 @@
 | lidb#24 | Phase D CI fix (`test_liq_readme_spec_examples.py` seed params) + REST squash |
 
 **Open PR count:** 4 → 2 (lic#566 dirty workspace sweep, li-cursor-agents#69 rebase unstable).
+
+## Session 21 (2026-05-30 code_implementer)
+
+| PR | Method |
+|----|--------|
+| li-cursor-agents#71 | rebase prefer-main (`org-rebase-pr-branch.py`) + REST squash (CI green: test-mock-agents, lidb-engine-e2e) |
+| lic#567 | rebase prefer-main + submodule fix + force push + REST squash (blocked CI-green) |
+
+**Open PR count:** 2 → **0** (completion gate exit 0).
 
 ## Session 18 (2026-05-30 code_implementer)
 
