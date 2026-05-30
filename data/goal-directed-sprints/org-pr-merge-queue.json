@@ -3,12 +3,23 @@
     "total": 219,
     "classified": 219,
     "green_clean": 0,
-    "blocked_ci_ok": 0,
-    "dirty": 160,
-    "ci_not_ok": 52
+    "blocked_ci_ok": 1,
+    "dirty": 161,
+    "ci_not_ok": 54
   },
   "green": [],
-  "blocked": [],
+  "blocked": [
+    {
+      "repo": "benchmarks",
+      "number": 201,
+      "title": "Org cleanup: repo boundaries, remove proof-library from benchmarks",
+      "mergeable": true,
+      "mergeable_state": "blocked",
+      "draft": false,
+      "ci": "ok",
+      "head": "5f56b05"
+    }
+  ],
   "dirty": [
     {
       "repo": "li-language",
@@ -431,6 +442,16 @@
       "head": "63e376c"
     },
     {
+      "repo": "li-cursor-agents",
+      "number": 41,
+      "title": "ux-harness: parse unquoted hrefs + normalize MkDocs site_url prefix",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "2f8e4b0"
+    },
+    {
       "repo": "lic",
       "number": 489,
       "title": "feat(httpd): gap-phase2 perf wrk soak + streaming timing vs nginx",
@@ -439,16 +460,6 @@
       "draft": false,
       "ci": "no_checks",
       "head": "24d9e06"
-    },
-    {
-      "repo": "benchmarks",
-      "number": 201,
-      "title": "Org cleanup: repo boundaries, remove proof-library from benchmarks",
-      "mergeable": false,
-      "mergeable_state": "dirty",
-      "draft": false,
-      "ci": "ok",
-      "head": "420ee51"
     },
     {
       "repo": "lic",
@@ -599,6 +610,16 @@
       "draft": false,
       "ci": "ok",
       "head": "c7f6d97"
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 39,
+      "title": "chore(li-cursor-agents): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "573ea81"
     },
     {
       "repo": "benchmarks",
@@ -1258,7 +1279,7 @@
       "mergeable_state": "dirty",
       "draft": false,
       "ci": "no_checks",
-      "head": "97fc7b1"
+      "head": "cfbd3ad"
     },
     {
       "repo": "lic",
@@ -1612,6 +1633,26 @@
     }
   ],
   "ci_not_ok": [
+    {
+      "repo": "li-cursor-agents",
+      "number": 58,
+      "title": "docs(org-merge): session 19 Phase C \u2014 5 baseline PRs merged",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "pending",
+      "head": "055943c"
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 57,
+      "title": "docs(org-merge): session 19 \u2014 lip/lit queue cleared, close lis#16",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "pending",
+      "head": "26dc8a6"
+    },
     {
       "repo": "lic",
       "number": 552,
