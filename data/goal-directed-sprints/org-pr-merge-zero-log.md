@@ -174,3 +174,5 @@ Added `scripts/org-close-superseded-prs.py` for repeatable Phase E sweeps.
 - lic#530–532 — draft PRs (skip auto-merge)
 - GraphQL rate limit — use REST scripts only (`gh` blocked mid-run)
 - REST merge API rate limit (403) — 2026-05-30T15:25Z; retry after reset; git push unaffected
+
+| 2026-05-30 agent | 54 -> 1 | 53+ | Phase E superseded close (28+21+4); lidb stack PR #24 opened; closed #6,#14,#19,#20; scripts: org-rerun-stale-ci, org-stack-merge, org-list-queue |
