@@ -8,7 +8,7 @@
 | Metric | Count |
 |--------|------:|
 | Starting open PRs | 255 |
-| Ending open PRs (search API) | **0** (2026-05-30 code_implementer-1780175279050 completion gate) |
+| Ending open PRs (search API) | **0** (2026-05-31 code_implementer-1780180785521 completion gate) |
 | Ending open PRs (classified queue) | **0** |
 | PRs squash-merged this session | **30** (prior sessions: 27 + 22) |
 | PRs fixed locally then merged | **10** |
@@ -201,6 +201,18 @@
 **Verified stale:** implementation_queue lip/lit items 1–8 (all PRs closed; `lip`/`lit` main CI green).
 
 **Blockers:** `lis#30`, `li-std-math#12`, `li-std-core#11` — unrelated histories on rebase; need manual cherry-pick or close-if-superseded (Phase E).
+
+## Session 28 (2026-05-31 code_implementer-1780180785521)
+
+| PR | Method |
+|----|--------|
+| lic#590 | blocked REST squash (feat studio-ui native agent stream tick/cancel) |
+
+**Closed (Phase E):** lic#593 (139-file workspace sweep, regressions), benchmarks#257 (timestamp-only generated artifact).
+
+**Open PR count:** 3 → **0** (`org-pr-open-count.py --require-zero` exit 0).
+
+**Note:** implementation_queue items 1–8 (lic/lis/li-httpd CI) remain **stale** — those PRs were merged/closed in prior sessions.
 
 ## Session 7 (2026-05-30 code_implementer)
 
