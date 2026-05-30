@@ -8,7 +8,7 @@
 | Metric | Count |
 |--------|------:|
 | Starting open PRs | 255 |
-| Ending open PRs (search API) | **0** (2026-05-30 code_implementer-1780173761128 completion gate) |
+| Ending open PRs (search API) | **0** (2026-05-30 code_implementer-74224873 completion gate) |
 | Ending open PRs (classified queue) | **0** |
 | PRs squash-merged this session | **30** (prior sessions: 27 + 22) |
 | PRs fixed locally then merged | **10** |
@@ -84,16 +84,16 @@
 
 **Open PR count:** 2 → **0** (completion gate exit 0).
 
-## Session 23 (2026-05-30 code_implementer-1780173761128)
+## Session 24 (2026-05-30 code_implementer-74224873)
 
 | PR | Method |
 |----|--------|
-| li-cursor-agents#75 | REST squash merge (session 22 final digest; CI green — merged before this pass) |
-| lic#579 | **closed** (workspace_sweeper fallback, 592 commits, CI failing build/lake/memory; branch preserved) |
+| li-cursor-agents#76 | REST squash merge (session 23 sprint digest; CI green: test-mock-agents, lidb-engine-e2e) |
+| lic#580 | **closed** (workspace_sweeper fallback, 65 files / stale compiler state regresses matmul codegen vs main; same disposition as #579) |
 
-**Open PR count:** 1 → **0** (search API; completion gate exit 0).
+**Open PR count:** 2 → **0** (search API; completion gate exit 0).
 
-**implementation_queue:** lic/lis/li-httpd CI items **stale** (0 open PRs; no new CI fix PR required this pass).
+**implementation_queue:** lic/lis/li-httpd CI items **stale** (0 open PRs; main CI green).
 
 ## Session 22 (2026-05-30 code_implementer-1780172370568)
 
