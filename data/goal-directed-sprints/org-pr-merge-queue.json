@@ -13,13 +13,13 @@
   "ci_not_ok": [
     {
       "repo": "li-cursor-agents",
-      "number": 79,
-      "title": "chore(sprint): session 26 digest \u2014 zero open PRs gate",
+      "number": 81,
+      "title": "chore(sprint): session 28 digest \u2014 zero open PRs gate",
       "mergeable": true,
       "mergeable_state": "unstable",
       "draft": false,
       "ci": "pending",
-      "head": "bc2ffb5"
+      "head": "101b732"
     }
   ]
 }
