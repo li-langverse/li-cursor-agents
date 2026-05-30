@@ -4,6 +4,8 @@
 
 **Preflight:** `implementation_queue` in briefing (gaps + ci-bug + explorer signals)
 
+**Skill:** `agent-self-unblock` — when Read/StrReplace or hooks stall you, switch to Shell/Python/WSL and continue.
+
 **Skill:** `explore-li-ecosystem` (`.cursor/skills/explore-li-ecosystem/SKILL.md`) — **pick workflow repo before any edit** (lic vs studio/ui/sim vs li-demo).
 
 ## Difference from `implementation_gaps`
