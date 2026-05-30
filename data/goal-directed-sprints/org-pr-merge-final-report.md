@@ -127,7 +127,7 @@
 |----|--------|
 | li-cursor-agents#86 | REST squash merge (session 33 sprint digest; CI green) |
 
-**Closed (Phase E):** benchmarks#258 (70-file workspace sweep fallback, 119 commits, merge conflicts), lic#596 (61-file workspace sweep, +37k lines, stale emit.cpp/matmul state).
+**Closed (Phase E):** benchmarks#258 (70-file workspace sweep fallback, 119 commits, merge conflicts), lic#596 (61-file workspace sweep, +37k lines, stale emit.cpp/matmul state), lic#597 (duplicate workspace_sweeper opened during gate verification; closed post-#86 merge).
 
 **Open PR count:** 3 → **0** (`org-pr-open-count.py --require-zero` exit 0).
 
