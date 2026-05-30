@@ -8,9 +8,9 @@
 | Metric | Count |
 |--------|------:|
 | Starting open PRs | 255 |
-| Ending open PRs (search API) | **0** (session 21 completion gate) |
+| Ending open PRs (search API) | **0** (2026-05-30 code_implementer-1780170745209 completion gate) |
 | Ending open PRs (classified queue) | **0** |
-| PRs squash-merged this session | **22** (prior session: 27) |
+| PRs squash-merged this session | **30** (prior sessions: 27 + 22) |
 | PRs fixed locally then merged | **10** |
 
 > Search API and full classification differ slightly due to index lag and PRs opened/closed during the run.
