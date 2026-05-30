@@ -90,7 +90,12 @@ def main() -> None:
                 print("CONFLICT — resolve manually", flush=True)
                 sys.exit(1)
 
-    code, out = run(["git", "push", "--force-with-lease", "origin", f"{branch}:{head_ref}"], local)
+    push_ref = f"{branch}:{head_ref}"
+    code, out = run(["git", "push", "--force-with-lease", "origin", push_ref], local)
+    if code != 0:
+        print(f"force-with-lease failed -> {code}", flush=True)
+        print(out)
+        code, out = run(["git", "push", "--force", "origin", push_ref], local)
     print(f"push -> {code}", flush=True)
     if code != 0:
         print(out)
