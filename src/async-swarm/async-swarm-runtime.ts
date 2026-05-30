@@ -24,6 +24,10 @@ import {
 } from "../worker/heartbeat-loop.js";
 import { proactiveAllPoolWorkersEnabled } from "../control-plane/proactive-agent-work.js";
 import { workerConsole } from "../worker/worker-console.js";
+import {
+  startSwarmCiWorkerLoop,
+  stopSwarmCiWorkerLoop,
+} from "../org-prs/swarm-ci-worker-loop.js";
 
 export { isAsyncSwarmRunning, asyncSwarmSnapshot } from "./async-swarm-state.js";
 
@@ -50,6 +54,7 @@ export async function startAsyncSwarm(options?: {
   const maintenance = startMaintenanceLaneLoop({ mock });
   const observer = startObserverLaneLoop();
   const workers = startAgentWorkerPool({ mock });
+  const ciWorker = startSwarmCiWorkerLoop();
 
   setAsyncSwarmRunning(true);
   startWorkerHeartbeatLoop();
@@ -67,6 +72,7 @@ export async function startAsyncSwarm(options?: {
     maintenance.message,
     observer.message,
     workers.message,
+    ciWorker.message,
   ].join("; ");
 
   pushSupervisorActivity("info", message, { mode: "async_swarm", mock });
@@ -94,12 +100,13 @@ export async function stopAsyncSwarm(): Promise<{ stopped: boolean; message: str
   stopMaintenanceLaneLoop();
   stopObserverLaneLoop();
   const workers = stopAgentWorkerPool();
+  const ciWorker = stopSwarmCiWorkerLoop();
 
   setAsyncSwarmRunning(false);
   stopWorkerHeartbeatLoop();
   await flushWorkerHeartbeat();
 
-  const message = `Async swarm stopped; ${workers.message}`;
+  const message = `Async swarm stopped; ${workers.message}; ${ciWorker.message}`;
   pushSupervisorActivity("info", message, { mode: "async_swarm" });
   agentLog("async-swarm", "info", message);
 

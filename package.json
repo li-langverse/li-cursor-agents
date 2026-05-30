@@ -83,7 +83,8 @@
     "ci": "npm run build && CURSOR_MOCK=1 npm test && node dist/cli/run-agent.js --agent orchestrator --mock --dry-run && node dist/cli/supervisor.js --once --mock",
     "ci:local": "bash ../li-local-ci/bin/li-local-ci run li-cursor-agents-host --repo .",
     "ci:local:docker": "bash ../li-local-ci/bin/li-local-ci run li-cursor-agents --repo .",
-    "ci:local:quick": "bash ../li-local-ci/bin/li-local-ci run li-cursor-agents-quick --repo ."
+    "ci:local:quick": "bash ../li-local-ci/bin/li-local-ci run li-cursor-agents-quick --repo .",
+    "agents:swarm-ci-worker": "npm run build && node dist/cli/swarm-ci-worker.js start"
   },
   "engines": {
     "node": ">=24"
