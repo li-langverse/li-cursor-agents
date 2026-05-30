@@ -8,7 +8,7 @@
 | Metric | Count |
 |--------|------:|
 | Starting open PRs | 255 |
-| Ending open PRs (search API) | **0** (2026-05-31 code_implementer-1780180785521 completion gate) |
+| Ending open PRs (search API) | **0** (2026-05-30 code_implementer-81185735 completion gate) |
 | Ending open PRs (classified queue) | **0** |
 | PRs squash-merged this session | **30** (prior sessions: 27 + 22) |
 | PRs fixed locally then merged | **10** |
@@ -119,6 +119,19 @@
 **Open PR count:** 3 → **0** (search API; completion gate exit 0).
 
 **implementation_queue:** lic/lis/li-httpd CI items **stale** (queue references closed PRs; 0 open PRs).
+
+
+## Session 31 (2026-05-30 code_implementer-81185735)
+
+| PR | Method |
+|----|--------|
+| li-cursor-agents#84 | rebase prefer-main (`org-rebase-pr-branch.py`) + REST squash (CI green: test-mock-agents, lidb-engine-e2e) |
+| lic#594 | **closed** (workspace_sweeper fallback, 100 commits / 61 files, stale dirty workspace including `emit.cpp` and matmul benchmarks; same disposition as #579–#588) |
+
+**Open PR count:** 2 → **0** (search API; `org-pr-merge-completion-gate.sh` exit 0).
+
+**implementation_queue:** lic `local_ci` + `pr_ci` + lis/li-httpd items **stale** (0 open PRs; briefing references closed PRs; main CI green).
+
 
 ## Session 26 (2026-05-30 code_implementer-1780175279050)
 
