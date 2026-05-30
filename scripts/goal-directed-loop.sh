@@ -107,7 +107,15 @@ ensure_dist_built() {
 }
 
 ensure_dist_built
+ensure_native_modules() {
+  if [[ -f "$ROOT/scripts/ensure-native-modules.sh" ]]; then
+    bash "$ROOT/scripts/ensure-native-modules.sh" || {
+      echo "goal-directed-loop: WARN ensure-native-modules failed (sqlite3 may break SDK runs)" >&2
+    }
+  fi
+}
 
+ensure_native_modules
 if [[ -z "$WORKFLOW_REPO" ]]; then
   GOAL_FILE="$GOAL_FILE" GOAL_INLINE="$GOAL_INLINE" WORKFLOW_REPO="$(
     cd "$ROOT" && node --input-type=module -e "
