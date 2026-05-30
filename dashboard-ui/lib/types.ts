@@ -28,6 +28,7 @@ export interface RuntimePayload {
   agent_backend?: string;
   sdk_max_concurrent?: number;
   sdk_sessions_active?: number;
+  sdk_slots_in_use?: number;
   stopped_agents?: string[];
   current_supervisor_agent?: string | null;
   supervisor_loop_running?: boolean;

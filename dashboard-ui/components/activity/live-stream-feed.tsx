@@ -74,10 +74,14 @@ export function LiveStreamFeed({ detail }: { detail: RunDetail }) {
           <ul className="simple-list">
             {toolSteps.slice(-12).map((s, i) => {
               const m = s.message ?? {};
-              const path = m.args?.path ?? m.args?.command ?? m.type;
+              const args =
+                m.args && typeof m.args === "object"
+                  ? (m.args as { path?: string; command?: string })
+                  : undefined;
+              const path = args?.path ?? args?.command ?? (m as { type?: string }).type;
               return (
                 <li key={i}>
-                  <code>{m.type}</code> {String(path).slice(0, 140)}
+                  <code>{(m as { type?: string }).type ?? "tool"}</code> {String(path ?? "").slice(0, 140)}
                 </li>
               );
             })}
