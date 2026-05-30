@@ -1,0 +1,5 @@
+v=1
+exit=0
+content=f39b6a72353153ca
+---
+{"version":1,"schema":"diagnostic-v1","tool":"lic","command":"check","ok":true,"diagnostics":[{"severity":"warning","file":"/mnt/c/Users/Julian/Documents/Programming/li/lic/packages/li-sim-robotics/src/lib.li","line":1,"column":1,"offset":0,"code":"W0401","message":"unused import `sim`","fix_hint":"remove the import or reference it explicitly"}]}
