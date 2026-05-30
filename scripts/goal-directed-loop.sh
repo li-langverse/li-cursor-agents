@@ -164,6 +164,12 @@ goal_loop_past_deadline() {
   return 1
 }
 
+world_studio_plan_pending() {
+  local plan="$CWD/docs/superpowers/plans/2026-05-29-world-studio-master-plan-loop.md"
+  [[ -f "$plan" ]] || return 1
+  grep -qE '^\s+status: pending' "$plan" 2>/dev/null
+}
+
 audit_p0_remaining() {
   local audit="$CWD/scripts/audit-dashboard-gaps.py"
   [[ -f "$audit" ]] || return 1
@@ -234,6 +240,12 @@ EOF
     if [[ "$code" -eq 0 && "$WORKFLOW_REPO" == "benchmarks" && -f "$CWD/scripts/audit-dashboard-gaps.py" ]]; then
       if audit_p0_remaining; then
         echo "goal-directed-loop: audit-dashboard-gaps P0 still failing â€” continuing"
+        code=2
+      fi
+    fi
+    if [[ "$code" -eq 0 && "$AGENT" == "world_studio_builder" ]]; then
+      if world_studio_plan_pending; then
+        echo "goal-directed-loop: world studio plan todos still pending — continuing"
         code=2
       fi
     fi
