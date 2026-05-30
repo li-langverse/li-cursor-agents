@@ -66,6 +66,22 @@
 | li-httpd#15 | Same |
 | li-net#13 | Same |
 
+## Session 18 (2026-05-30 code_implementer)
+
+| PR | Method |
+|----|--------|
+| li-cursor-agents#54 | REST squash (green clean — sprint log) |
+| li-cursor-agents#51 | rebase prefer-main + REST squash (org-rebase script) |
+| lic#376 | rebase onto main + REST squash (studio wave3 — CI green) |
+
+**Rebased (CI pending/failing):** lic#373 (agent-kit sync — build-and-test git 128), lic#520 (matmul blocked — build-and-test git 128), benchmarks#211, lic#497 (dirty conflicts, prefer-main push).
+
+**Added:** org-merge toolkit scripts to `li-cursor-agents/scripts/` (progress gate).
+
+**Verified stale:** implementation_queue lip/lit items 1–8 (0 open PRs; main CI green).
+
+**Open PR count:** 225 → 224.
+
 ## Session 16 (2026-05-30 code_implementer)
 
 | PR | Method |
@@ -82,6 +98,19 @@
 **Verified stale:** implementation_queue lip/lit items 1–8 (0 open PRs; main CI green).
 
 **Blockers:** roadmap#37 — unrelated histories.
+
+## Session 17 (2026-05-30 code_implementer)
+
+| PR | Method |
+|----|--------|
+| li-cursor-agents#54 | REST squash (green clean — sprint log) |
+| benchmarks#250 | rebase prefer-main + REST squash (workspace sweep) |
+
+**Rebased (CI pending/failing):** lic#373 (agent-kit sync), lic#376 (studio wave3), lic#520 (composable studio import checks).
+
+**Verified stale:** implementation_queue lip/lit items 1–8 (0 open PRs; main CI green).
+
+**Open PR count:** 226 → 224.
 
 ## Session 15 (2026-05-30 code_implementer)
 
