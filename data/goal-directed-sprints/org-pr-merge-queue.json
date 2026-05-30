@@ -1,14 +1,25 @@
 {
   "report": {
-    "total": 0,
-    "classified": 0,
+    "total": 1,
+    "classified": 1,
     "green_clean": 0,
-    "blocked_ci_ok": 0,
+    "blocked_ci_ok": 1,
     "dirty": 0,
     "ci_not_ok": 0
   },
   "green": [],
-  "blocked": [],
+  "blocked": [
+    {
+      "repo": "lic",
+      "number": 589,
+      "title": "docs: audit HEAD vs stale Pages + GUI handoff rerun caveat",
+      "mergeable": true,
+      "mergeable_state": "blocked",
+      "draft": false,
+      "ci": "ok",
+      "head": "ceda6da"
+    }
+  ],
   "dirty": [],
   "ci_not_ok": []
 }

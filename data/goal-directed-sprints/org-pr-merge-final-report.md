@@ -136,7 +136,9 @@
 | PR | Method |
 |----|--------|
 | li-cursor-agents#81 | REST squash merge (session 28 sprint digest; CI green) |
+| li-cursor-agents#82 | REST squash merge (session 29 sprint digest; CI green after rebase onto main) |
 | lic#588 | **closed** (workspace_sweeper fallback; `update-branch` then `lake-build` + `memory-linux` failed; same disposition as #579–#586) |
+| lic#589 | blocked REST squash merge (docs maintainer audit HEAD vs Pages; CI green) |
 
 **Open PR count:** 2 → **0** (search API; `org-pr-merge-completion-gate.sh` exit 0).
 
