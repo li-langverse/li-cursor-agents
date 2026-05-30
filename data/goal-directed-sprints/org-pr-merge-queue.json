@@ -2,12 +2,23 @@
   "report": {
     "total": 3,
     "classified": 3,
-    "green_clean": 0,
+    "green_clean": 1,
     "blocked_ci_ok": 0,
-    "dirty": 2,
+    "dirty": 1,
     "ci_not_ok": 1
   },
-  "green": [],
+  "green": [
+    {
+      "repo": "lidb",
+      "number": 24,
+      "title": "chore(org-merge): lidb tier_db CSV + stack (replaces #6,#14,#19,#20)",
+      "mergeable": true,
+      "mergeable_state": "clean",
+      "draft": false,
+      "ci": "ok",
+      "head": "dea878e"
+    }
+  ],
   "blocked": [],
   "dirty": [
     {
@@ -18,29 +29,19 @@
       "mergeable_state": "dirty",
       "draft": false,
       "ci": "no_checks",
-      "head": "3410337"
-    },
-    {
-      "repo": "li-cursor-agents",
-      "number": 69,
-      "title": "chore(li-cursor-agents): workspace sweep fallback",
-      "mergeable": false,
-      "mergeable_state": "dirty",
-      "draft": false,
-      "ci": "no_checks",
-      "head": "3e7249c"
+      "head": "6857538"
     }
   ],
   "ci_not_ok": [
     {
-      "repo": "lidb",
-      "number": 24,
-      "title": "chore(org-merge): lidb tier_db CSV + stack (replaces #6,#14,#19,#20)",
+      "repo": "li-cursor-agents",
+      "number": 69,
+      "title": "chore(li-cursor-agents): workspace sweep fallback",
       "mergeable": true,
       "mergeable_state": "unstable",
       "draft": false,
-      "ci": "pending",
-      "head": "d9ce783"
+      "ci": "failure",
+      "head": "cc2df4b"
     }
   ]
 }
