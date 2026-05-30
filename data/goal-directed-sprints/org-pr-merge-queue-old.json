@@ -1,10 +1,10 @@
 {
   "report": {
-    "total": 50,
-    "classified": 50,
+    "total": 49,
+    "classified": 49,
     "green_clean": 0,
     "blocked_ci_ok": 0,
-    "dirty": 4,
+    "dirty": 3,
     "ci_not_ok": 22,
     "subset": "old",
     "baseline_size": 25,
@@ -14,16 +14,6 @@
   "green": [],
   "blocked": [],
   "dirty": [
-    {
-      "repo": "lic",
-      "number": 556,
-      "title": "chore(lic): workspace sweep fallback",
-      "mergeable": false,
-      "mergeable_state": "dirty",
-      "draft": false,
-      "ci": "no_checks",
-      "head": "c674e39"
-    },
     {
       "repo": "lidb",
       "number": 19,
@@ -63,7 +53,7 @@
       "mergeable": true,
       "mergeable_state": "blocked",
       "draft": false,
-      "ci": "pending",
+      "ci": "failure",
       "head": "1a96c7e"
     },
     {
@@ -74,7 +64,7 @@
       "mergeable_state": "blocked",
       "draft": false,
       "ci": "failure",
-      "head": "adef6ef"
+      "head": "ccecfd3"
     },
     {
       "repo": "lic",
