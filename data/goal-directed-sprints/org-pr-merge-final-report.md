@@ -8,7 +8,7 @@
 | Metric | Count |
 |--------|------:|
 | Starting open PRs | 255 |
-| Ending open PRs (search API) | **0** (2026-05-30 code_implementer-1780174681333 completion gate) |
+| Ending open PRs (search API) | **0** (2026-05-30 code_implementer-1780175279050 completion gate) |
 | Ending open PRs (classified queue) | **0** |
 | PRs squash-merged this session | **30** (prior sessions: 27 + 22) |
 | PRs fixed locally then merged | **10** |
@@ -106,6 +106,17 @@
 **Open PR count:** 2 → **0** (search API; completion gate exit 0).
 
 **implementation_queue:** lic/lis/li-httpd CI items **stale** (referenced PRs closed or merged; 0 open PRs).
+
+## Session 26 (2026-05-30 code_implementer-1780175279050)
+
+| PR | Method |
+|----|--------|
+| li-cursor-agents#78 | REST squash merge (session 25 sprint digest; CI green) |
+| lic#583 | **closed** (workspace_sweeper fallback, 59 files, stale dirty workspace including `emit.cpp` and matmul benchmarks; same disposition as #579–#582) |
+
+**Open PR count:** 2 → **0** (search API; completion gate exit 0).
+
+**implementation_queue:** lic `local_ci` + `pr_ci` items **stale** (lic#583 closed; 0 open PRs; main CI green).
 
 ## Session 22 (2026-05-30 code_implementer-1780172370568)
 
