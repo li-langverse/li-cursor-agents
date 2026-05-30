@@ -4,6 +4,23 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
+| 2026-05-30 code_implementer (22) | 215 → ~212 | 3 | Phase A queue refresh (215 classified, 156 dirty); Phase B REST squash benchmarks#201; Phase C rebase+merge benchmarks#197,#194 (prefer-main); implementation_queue lip/lit 1–8 **stale** (0 open, main CI green) |
+
+## Merged this iteration (session 22)
+
+| PR | Method |
+|----|--------|
+| benchmarks#201 | blocked CI-green REST squash |
+| benchmarks#197 | rebase prefer-main + REST squash |
+| benchmarks#194 | rebase prefer-main (×2) + REST squash |
+
+## Rebased this iteration (session 22)
+
+| PR | Result |
+|----|--------|
+| benchmarks#197 | dirty → blocked → merged |
+| benchmarks#194 | dirty → blocked → merged (second rebase after #201/#197 landed) |
+
 | 2026-05-30 code_implementer (21) | 220 → 214 | 5 | Phase B blocked benchmarks#201; Phase D fix+merge world#8, ui#12 (ci-install-llvm.sh), world#6, ui#10; close superseded world#7, ui#11; implementation_queue lip/lit 1–8 **stale** (0 open, main CI green) |
 | 2026-05-30 code_implementer (20) | 220 → 219 | 4 | Phase B merge-green li-cursor-agents#59 + blocked benchmarks#248,#227,#225; Phase C rebase+push benchmarks#201, li-cursor-agents#57,#58, benchmarks#222 (CI pending); lis#30 unrelated histories blocker; implementation_queue lip/lit 1–8 **stale** (0 open, main CI green) |
 | 2026-05-30 code_implementer (19) | 225 → 220 | 5 | Phase A queue refresh (225 classified); Phase B merge-green li-cursor-agents#55 + blocked benchmarks#248,#227,#225; REST squash li-cursor-agents#56 after rebase; Phase C rebase+push benchmarks#222 (CI re-run); implementation_queue lip/lit 1–8 **stale** (0 open, main CI green) |
