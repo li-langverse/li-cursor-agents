@@ -1,0 +1,25 @@
+---
+description: li-cursor-agents owns SDK runner — not product code from sibling repos
+alwaysApply: true
+---
+
+# Repo boundaries (li-cursor-agents)
+
+This repo runs **Cursor SDK agents** for the li-langverse org.
+
+## Owns
+
+- Agent definitions, prompts, `npm` runner, dashboard-ui for agent status
+- `data/runs/` agent run logs and digests
+- `data/workspaces/` ephemeral git clones (gitignored)
+
+## Never add here
+
+- Compiler changes → **lic**
+- Benchmark catalog/ingest → **benchmarks**
+- Proof UI → **proof-library**
+- Permanent copies of sibling repo source — use workspaces, then prune
+
+## Workspaces
+
+`data/workspaces/` holds short-lived clones for PR workflows. Safe to delete locally (`npm run workspace:prune` or `rm -rf data/workspaces/`).
