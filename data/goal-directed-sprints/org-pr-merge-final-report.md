@@ -88,7 +88,10 @@
 
 | PR | Method |
 |----|--------|
-| lic#573 | rebase prefer-main (`org-rebase-pr-branch.py`); CI failed; **closed** (workspace_sweeper safety branch — not merge-ready) |
+| lic#573 | rebase prefer-main; CI failed; **closed** (workspace_sweeper) |
+| lic#577 | **closed** (duplicate workspace_sweeper opened during sprint) |
+| benchmarks#255 | rebase prefer-main; **closed** (workspace_sweeper, 101 commits) |
+| li-cursor-agents#74 | REST squash merge (sprint digest; CI green) |
 
 **Open PR count:** 1 → **0** (search API; completion gate exit 0).
 
