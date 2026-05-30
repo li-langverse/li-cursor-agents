@@ -1,25 +1,84 @@
 ---
 name: run-goal-directed-loop
 description: >-
-  Run markdown goal plans with a Completion gate and goal-directed-loop.sh until
-  the gate passes. Use for sprint goal files, phase status tables, and autonomous
-  code_implementer / bug_fixer loops without YAML plan-loop.py.
+  Autonomous plan implementation: write a markdown goal with phases and a
+  Completion gate, run goal-directed-loop.sh, loop until the gate passes.
+  Optional --max or --until-local bounds. Exit 0 only on completion.
 ---
 
-# Goal-directed loop (markdown plans)
+# Goal-directed loop
 
-Three steps:
+**High level:** write a plan → loop an SDK agent → stop when the plan is **fully** done.
 
-1. **Write the plan** — Markdown goal file with phased deliverables (`### Phase A` …), a **phase status table** (`| **A** | **DONE** |`), and a `## Completion gate` section containing a `bash` code block (repo verification commands).
-2. **Run the loop** — From `li-cursor-agents`:
+```mermaid
+flowchart LR
+  Plan[Markdown plan] --> Loop[goal-directed-loop.sh]
+  Loop --> Gate{Completion gate?}
+  Gate -->|no| Agent[run-agent]
+  Agent --> Loop
+  Gate -->|yes| Done[exit 0]
+  Loop -->|deadline or max| Stop[exit 1]
+```
 
-   ```bash
-   ./scripts/goal-directed-loop.sh --goal-file ../data/goal-directed-sprints/your-goal.md \
-     --agent code_implementer --workflow-repo lic --cwd ../lic --max 12
-   ```
+## 1. Write the plan (markdown)
 
-   Optional: `--until-local 08:00` for a morning deadline. Omit `--once` to loop (default cap 999 iterations).
+One goal file, e.g. `data/goal-directed-sprints/my-sprint.md`:
 
-3. **Stop when the gate passes** — `goal-completion-gate.js` runs the bash block and requires every phase row to be **DONE**. The loop exits 0 only then; deadline or `--max` without gate success exits 1.
+| Section | Purpose |
+|---------|---------|
+| `### Phase A` … | Ordered deliverables |
+| Status table | `\| **A** \| **DONE** \|` when a phase is finished |
+| `## Completion gate` | `bash` block — objective proof the whole plan is done |
 
-Env: `CURSOR_API_KEY`, `LI_GOAL_LOOP_STRICT_EXIT=1` (set by the loop), optional `BENCHMARKS_ROOT`.
+The agent updates the status table. The loop runs the gate script every iteration.
+
+## 2. Run the loop
+
+From `li-cursor-agents` (built: `npm run build`):
+
+```bash
+export CURSOR_API_KEY=...
+export BENCHMARKS_ROOT=../benchmarks   # optional preflight
+export LIC_ROOT=../lic
+
+./scripts/goal-directed-loop.sh \
+  --goal-file ../data/goal-directed-sprints/my-sprint.md \
+  --agent code_implementer \
+  --workflow-repo lic \
+  --cwd ../lic
+```
+
+## 3. Stop conditions
+
+| Outcome | Exit | When |
+|---------|------|------|
+| **Success** | `0` | `goal-completion-gate.js` passes (bash gate + all phases **DONE**) |
+| **Time box** | `1` | `--until-local 18:00` reached without completion |
+| **Iteration cap** | `1` | `--max N` reached without completion |
+| **Single shot** | `0` or `1` | `--once` — success only if gate passes after one agent run |
+
+**Default:** no `--max` → unlimited iterations until completion. Agent exit 0 alone **never** ends the loop successfully.
+
+Optional bounds can combine: `--max 50 --until-local 08:00`.
+
+## Launcher (Windows)
+
+```powershell
+.\scripts\start-goal-directed-sprints.ps1 -Sprint benchmarks-dashboard -Max 0 -UntilLocal "18:00"
+```
+
+`-Max 0` = no iteration cap (completion only). Set `-Max 12` to cap iterations.
+
+## Env
+
+| Variable | Purpose |
+|----------|---------|
+| `CURSOR_API_KEY` | Required for SDK runs |
+| `LI_GOAL_LOOP_STRICT_EXIT=1` | Set by loop — agent exit 2 when deliverable incomplete |
+| `LI_GOAL_COMPLETION_SCRIPT` | Override gate script path |
+| `LI_GOAL_LOOP_SLEEP_SEC` | Pause between iterations (default 90) |
+
+## Related
+
+- YAML todo plans + `plan-loop.py`: skill `run-goal-directed-plan-loop` (httpd overnight pattern)
+- Repo routing: skill `explore-li-ecosystem`

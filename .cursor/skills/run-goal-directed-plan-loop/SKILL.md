@@ -1,11 +1,14 @@
 ---
 name: run-goal-directed-plan-loop
 description: >-
-  Run autonomous goal-directed plan loops with li-cursor-agents and Cursor SDK
-  (code_implementer), push recovery, optional until-local-deadline batches, and
-  local Pages refresh. Use for overnight agent runs, httpd/ecosystem master plans,
-  plan-loop.py, bounded --max iterations, or continuing batches until 08:00.
+  YAML todo plan loops (httpd-plan-loop.py, overnight/until-deadline batches).
+  For markdown sprint goals with a Completion gate, use skill run-goal-directed-loop instead.
 ---
+
+> **Markdown plans** (single goal file, phased deliverables, `## Completion gate`):
+> use **`run-goal-directed-loop`** + `goal-directed-loop.sh`. Exit 0 only when the gate passes.
+>
+> **This skill** covers **YAML todo plans** driven by `*-plan-loop.py` (httpd, etc.).
 
 > **Markdown sprint plans (phase table + Completion gate):** use skill **`run-goal-directed-loop`** and `scripts/goal-directed-loop.sh` instead of YAML `plan-loop.py` when the goal is a single `.md` file.
 # Goal-directed plan loop (li-cursor-agents)
