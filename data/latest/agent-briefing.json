@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-30T00:51Z",
+  "generated_at": "2026-05-30T03:49Z",
   "role": "preflight_for_cursor_agents",
   "note": "Intelligence (web, review, gaps) runs in Cursor Automations — not in this file. plan_audit needs LIC_ROOT (sibling ../lic or CI lic@dev checkout); catalog path gaps skip path=unknown and catalog_lifecycle=planned.",
   "lic_root": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
@@ -80,7 +80,7 @@
     }
   },
   "issue_triage": {
-    "generated_at": "2026-05-30T00:50Z",
+    "generated_at": "2026-05-30T03:49Z",
     "vision_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/vision-and-roadmap.md",
     "skill": "plan-feature-from-issue (see .cursor/skills/)",
     "summary": {
@@ -135,18 +135,18 @@
     "recommended_actions": []
   },
   "issue_backlog_hygiene": {
-    "generated_at": "2026-05-30T00:41Z",
+    "generated_at": "2026-05-30T03:39Z",
     "live_scan": true,
     "skill": "issue_hygiene agent — see .cursor/automations/issue-hygiene-agent.md",
     "summary": {
       "repos_scanned": 6,
-      "open_issues": 118,
+      "open_issues": 120,
       "duplicate_clusters": 4,
       "duplicate_issues": 15,
       "stale_candidates": 0,
       "explorer_spam_repos": 2,
-      "close_candidates": 38,
-      "route_planner": 41,
+      "close_candidates": 37,
+      "route_planner": 47,
       "route_implementer": 0
     },
     "duplicate_clusters": [
@@ -278,7 +278,7 @@
     "explorer_spam": [
       {
         "repo": "lic",
-        "count": 17,
+        "count": 14,
         "sample_urls": [
           "https://github.com/li-langverse/lic/issues/129",
           "https://github.com/li-langverse/lic/issues/128",
@@ -287,7 +287,7 @@
           "https://github.com/li-langverse/lic/issues/117"
         ],
         "action": "merge_into_digest_issue",
-        "reason": "17 open explorer-finding issues — consolidate"
+        "reason": "14 open explorer-finding issues — consolidate"
       },
       {
         "repo": "benchmarks",
@@ -658,6 +658,76 @@
     "route_to_issue_planner": [
       {
         "repo": "lic",
+        "number": 478,
+        "title": "[master-plan-gap] sim runner: sim-p2-qm-dft-scf pending — supervisor off (algo_id=418)",
+        "url": "https://github.com/li-langverse/lic/issues/478",
+        "labels": [
+          "master-plan-gap",
+          "plan-needed"
+        ]
+      },
+      {
+        "repo": "lic",
+        "number": 477,
+        "title": "[master-plan-gap] PH-H httpd: gap-phase2-perf-wrk-soak + gap-phase2-streaming-wrk pending (supervisor stale)",
+        "url": "https://github.com/li-langverse/lic/issues/477",
+        "labels": [
+          "master-plan-gap",
+          "plan-needed"
+        ]
+      },
+      {
+        "repo": "lic",
+        "number": 476,
+        "title": "[plan-needed] PH-Pkg: ecosystem-governance sub-plan — 7 exit gates open (no runner loop)",
+        "url": "https://github.com/li-langverse/lic/issues/476",
+        "labels": [
+          "master-plan-gap",
+          "plan-needed"
+        ]
+      },
+      {
+        "repo": "lic",
+        "number": 473,
+        "title": "[master-plan-gap] lic/scripts: ship swarm-gap-ingest.py on main for plan_verifier",
+        "url": "https://github.com/li-langverse/lic/issues/473",
+        "labels": [
+          "master-plan-gap",
+          "plan-needed"
+        ]
+      },
+      {
+        "repo": "lic",
+        "number": 472,
+        "title": "[master-plan-gap] G-lean/PH-2i: P-linalg loop ≡ ensures sub-plan gate still open",
+        "url": "https://github.com/li-langverse/lic/issues/472",
+        "labels": [
+          "master-plan-gap",
+          "plan-needed"
+        ]
+      },
+      {
+        "repo": "lic",
+        "number": 471,
+        "title": "[master-plan-gap] swarm-gap-ingest: close plan_debt when todo.status=completed (not only state.completed_ids)",
+        "url": "https://github.com/li-langverse/lic/issues/471",
+        "labels": [
+          "master-plan-gap",
+          "plan-needed"
+        ]
+      },
+      {
+        "repo": "lic",
+        "number": 470,
+        "title": "[plan-needed] PH-02: check off phase-02-typechecker sub-plan exit gates — li-tests evidence exists",
+        "url": "https://github.com/li-langverse/lic/issues/470",
+        "labels": [
+          "master-plan-gap",
+          "plan-needed"
+        ]
+      },
+      {
+        "repo": "lic",
         "number": 464,
         "title": "[plan-needed] Vision-LLM: diagnostic manifest stub — ship gate open (master-plan:476)",
         "url": "https://github.com/li-langverse/lic/issues/464",
@@ -835,76 +905,6 @@
           "explorer-finding",
           "plan-needed"
         ]
-      },
-      {
-        "repo": "lic",
-        "number": 124,
-        "title": "[explorer-finding] OpenMP prescriptive vs descriptive divergent-branch rubric for competitive portable codegen (G-par, PH-7e)",
-        "url": "https://github.com/li-langverse/lic/issues/124",
-        "labels": [
-          "explorer-finding",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 117,
-        "title": "[explorer-finding] PETSc 3.25 PCBJKOKKOS device-native Jacobi — implicit PDE preconditioner rubric (G-math)",
-        "url": "https://github.com/li-langverse/lic/issues/117",
-        "labels": [
-          "explorer-finding",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 116,
-        "title": "[explorer-finding] Kokkos OpenMPTarget backend checklist vs Li std/execution offload (G-par, PH-7e)",
-        "url": "https://github.com/li-langverse/lic/issues/116",
-        "labels": [
-          "explorer-finding",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 113,
-        "title": "[explorer-finding] Chapel 2.8 HPC portability rubric vs Li std/execution (G-par, G-ai)",
-        "url": "https://github.com/li-langverse/lic/issues/113",
-        "labels": [
-          "explorer-finding",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 112,
-        "title": "[explorer-finding] HPX-style async futures vs Li tier-2 game physics scheduling (G-par)",
-        "url": "https://github.com/li-langverse/lic/issues/112",
-        "labels": [
-          "explorer-finding",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 110,
-        "title": "[explorer-finding] Kokkos 4.6 Views + execution-space semantics for Li tier-2 memory model (G-par, PH-7e)",
-        "url": "https://github.com/li-langverse/lic/issues/110",
-        "labels": [
-          "explorer-finding",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 109,
-        "title": "[explorer-finding] RAJA execution policies vs Li std/execution decorators — ICS 2025 portability rubric (G-par, PH-7e)",
-        "url": "https://github.com/li-langverse/lic/issues/109",
-        "labels": [
-          "explorer-finding",
-          "plan-needed"
-        ]
       }
     ],
     "route_to_code_implementer": [],
@@ -925,27 +925,27 @@
       {
         "priority": "P1",
         "action": "Hand off to issue_planner (plan-needed / ecosystem-gap)",
-        "count": 41
+        "count": 47
       }
     ]
   },
   "plan_completion_audit": {
-    "generated_at": "2026-05-30T00:41Z",
+    "generated_at": "2026-05-30T03:44Z",
     "roots": {
-      "lic": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
+      "lic": "../lic",
       "lis": "/home/s4il0r/Documents/Cursor/li-langverse/lis",
       "benchmarks": "/home/s4il0r/Documents/Cursor/li-langverse/benchmarks",
       "roadmap": "/home/s4il0r/Documents/Cursor/li-langverse/roadmap"
     },
     "summary": {
       "open_tracker_items": 5,
-      "open_plan_checkboxes": 40,
-      "plan_checkboxes_suppressed": 10,
-      "stale_spec_checklists": 0,
-      "provability_partial": 14,
+      "open_plan_checkboxes": 26,
+      "plan_checkboxes_suppressed": 20,
+      "stale_spec_checklists": 9,
+      "provability_partial": 13,
       "provability_missing": 4,
-      "catalog_gaps": 0,
-      "total_findings": 64,
+      "catalog_gaps": 117,
+      "total_findings": 166,
       "tracker_phases_complete": 31
     },
     "master_plan_open": [
@@ -966,7 +966,7 @@
       },
       {
         "source": "lic:master_plan",
-        "item": "Phase 8p — Parallel compile + CI throughput — **partial (8p-a/b/c/d):** 8p-a parallel `run_all` + isolated `LI_BUILD_DIR` ([#186](https://github.com/li-langverse/lic/pull/186), [#200](https://github.com/li-langverse/lic/pull/200)); 8p-c/...",
+        "item": "Phase 8p — Parallel compile + CI throughput — **partial:** Ninja `-j` for C++ only; `lic --jobs` reserved not wired; `run_all.sh` / workspace sequential ([§ 8p](#phase-8p--parallel-compile--ci-throughput))",
         "phase_id": "8p"
       },
       {
@@ -977,8 +977,28 @@
     ],
     "plan_files_open": [
       {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "`fib.li` typechecks",
+        "kind": "plan_gate"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "All `bad_*.li` fail with expected errors",
+        "kind": "plan_gate"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "Borrow double-mut test fails cleanly",
+        "kind": "plan_gate"
+      },
+      {
         "source": "lic:plans/2026-05-14-phase-07-native-hpc.md",
         "item": "Tier 2 MD example uses `@cpu` `@parallel` `@vectorized` on `def` (elaborates to same MIR as keywords)",
+        "kind": "plan_gate"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-07-native-hpc.md",
+        "item": "Fuzz corpus includes `@` decorator stacks and reserved-name parse seeds",
         "kind": "plan_gate"
       },
       {
@@ -1008,7 +1028,42 @@
       },
       {
         "source": "lic:plans/2026-05-16-li-ecosystem-governance.md",
+        "item": "Confirm org access: `gh api orgs/li-langverse` (or org owner invites bot/users)",
+        "kind": "plan_gate"
+      },
+      {
+        "source": "lic:plans/2026-05-16-li-ecosystem-governance.md",
+        "item": "`docs/ecosystem/official-packages.md` with `PKG-` table (all repos under `li-langverse`)",
+        "kind": "plan_gate"
+      },
+      {
+        "source": "lic:plans/2026-05-16-li-ecosystem-governance.md",
         "item": "On execute: align `mkdocs.yml` `repo_url` / GitHub Pages with `li-langverse/li-language` when repo home moves",
+        "kind": "plan_gate"
+      },
+      {
+        "source": "lic:plans/2026-05-16-li-ecosystem-governance.md",
+        "item": "`docs/ecosystem/governance.md` user-facing summary (links here)",
+        "kind": "plan_gate"
+      },
+      {
+        "source": "lic:plans/2026-05-16-li-ecosystem-governance.md",
+        "item": "`scripts/templates/github-repo/` + `scripts/check-traceability.sh`",
+        "kind": "plan_gate"
+      },
+      {
+        "source": "lic:plans/2026-05-16-li-ecosystem-governance.md",
+        "item": "`create-li-package` skill: `--official` → org checklist",
+        "kind": "plan_gate"
+      },
+      {
+        "source": "lic:plans/2026-05-16-li-ecosystem-governance.md",
+        "item": "At least one example package `PUBLISH.md` with full traceability block in monorepo",
+        "kind": "plan_gate"
+      },
+      {
+        "source": "lic:plans/2026-05-16-li-math-linalg-surface.md",
+        "item": "**P-linalg** loop implementation ≡ closed-form `ensures` in Lean (**G-lean**)",
         "kind": "plan_gate"
       },
       {
@@ -1017,163 +1072,38 @@
         "kind": "plan_gate"
       },
       {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Reproduce and fix **6 pytest failures** on `main` (`scripts/run_tests.sh` in venv); document root cause in release note",
+        "source": "lic:plans/2026-05-16-li-package-scaffold.md",
+        "item": "`li-new-package` emits li.toml valid against lip § A3",
         "kind": "plan_gate"
       },
       {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Close gap: `liorm/embed_engine.py` uses `lidb_embed` only — no fallback paths",
+        "source": "lic:plans/2026-05-16-li-package-scaffold.md",
+        "item": "`create-li-package` skill committed (incl. `--official` + org checklist)",
         "kind": "plan_gate"
       },
       {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Wire `liorm.execute` for registry-min plans (`agent_runs.recent`, etc.) against live catalog",
+        "source": "lic:plans/2026-05-16-li-package-scaffold.md",
+        "item": "Guide + ecosystem overview + governance summary in mkdocs",
         "kind": "plan_gate"
       },
       {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Expand `tests/security/` from stub to failing-closed on injection/RawSqlCapability",
+        "source": "lic:plans/2026-05-16-li-package-scaffold.md",
+        "item": "`scripts/templates/github-repo/` for org repos",
         "kind": "plan_gate"
       },
       {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "CI: ensure `check_no_sqlite.sh`, smoke, pytest, security `run_all.sh` on every PR",
+        "source": "lic:plans/2026-05-16-li-package-scaffold.md",
+        "item": "`docs/ecosystem/official-packages.md` stub with `PKG-li-language`",
         "kind": "plan_gate"
       },
       {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Update `docs/pg-subset-v1.md` status table to match implemented surface",
+        "source": "lic:plans/2026-05-16-li-package-scaffold.md",
+        "item": "Smoke test in `scripts/ci.sh`",
         "kind": "plan_gate"
       },
       {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Implement CLI commands per handoff pseudo (`lis db start` loads profile, runs migrations, registers liq plans)",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Add `profiles/registry-min.toml` (verticals + pre-registered plans)",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "In-process embed: pass `&mut Engine` to `liorm::execute` — no TCP for registry-min unless profile says so",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "`lis db status` JSON/exit code for **li-cursor-agents** `assertStoreReady()` when `LI_DATA_DIR` set",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Document env contract in `lis` README; link from `lidb/docs/handoff-wp5-lis.md`",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Smoke script: start → migrate → status → stop on clean `LI_DATA_DIR`",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Implement `benchmarks/tier_db_registry/harness/registry_oltp_stub.py` → real driver (lidb embed + Postgres 15+)",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Sync DDL: `schema/registry-v1.sql` ↔ `lidb/migrations/001_registry.sql`",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Run scenarios: `registry_publish`, `registry_read_by_name`, `registry_read_latest`",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Emit `results/latest.csv` + JSON for ingest; set `status` from data (not hardcoded stub)",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Document `BENCH_DB_REGISTRY_THRESHOLD` (default 1.2) in tier README",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "CI: `ci` profile Postgres-only path until lidb ratio known; nightly optional full compare",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Diff **DB-R0-1**: `registry-v1.sql` vs lip OpenAPI fields → gap table in lidb or roadmap",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Add migrations for v2 central tables (beyond `001_registry.sql` if required)",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "lip: document/store OpenAPI fields that map to lidb catalog (no fake 8d v2 ship)",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "RLS policies (`002_rls_registry.sql`) design review for multi-tenant registry",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Traceability: update `lic` PH-DB plan cross-link when PH-DB-4 gate checklist exists",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Issue gate: label lip PRs **blocked-on-PH-DB-4** until schema merged",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Schema parity: diff `supabase/migrations/` vs lidb control-plane migration list (**DB-R0-4**)",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Implement `persistControlPlaneStateLidb` via liorm (remove no-op stub)",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Wire `runLiqQuery` to real liorm when `LI_LIDB_URL` or `LI_DATA_DIR` + `lis db`",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Remove `test.todo` rows in `lidb-control-plane.e2e.ts` as gates pass",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Backfill: extend `scripts/backfill-control-plane-db.mjs` for lidb import from disk cache",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Optional CI job: `LI_E2E_LIDB=1` (non-blocking until stable)",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "Update `.cursor/skills/explore-control-plane-db/SKILL.md` for liq MCP",
-        "kind": "plan_gate"
-      },
-      {
-        "source": "lic:plans/ph-db-battle-plan.md",
-        "item": "**DB-R0-1** Postgres-subset boundary table (registry DDL vs lip)",
+        "source": "lic:plans/2026-05-16-li-package-scaffold.md",
+        "item": "lip + governance + master plan cross-linked",
         "kind": "plan_gate"
       }
     ],
@@ -1206,6 +1136,141 @@
         ]
       },
       {
+        "source": "lic:plans/2026-05-14-benchmarks-and-simulations.md",
+        "item": "Li reference passes `verify.py` and **`lic build`**",
+        "reason": "tracker_phase_complete",
+        "kind": "suppressed",
+        "phases": [
+          "5b"
+        ]
+      },
+      {
+        "source": "lic:plans/2026-05-14-benchmarks-and-simulations.md",
+        "item": "Timing runs separated from verification runs",
+        "reason": "tracker_phase_complete",
+        "kind": "suppressed",
+        "phases": [
+          "5b"
+        ]
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-00-bootstrap.md",
+        "item": "`cmake --build build` succeeds",
+        "reason": "tracker_phase_complete",
+        "kind": "suppressed",
+        "phases": [
+          "0"
+        ]
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-00-bootstrap.md",
+        "item": "`./build/compiler/lic/lic smoke-llvm` succeeds",
+        "reason": "tracker_phase_complete",
+        "kind": "suppressed",
+        "phases": [
+          "0"
+        ]
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-00-bootstrap.md",
+        "item": "Master plan Phase 0 checkbox checked",
+        "reason": "tracker_phase_complete",
+        "kind": "suppressed",
+        "phases": [
+          "0"
+        ]
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "`lower_module(TypedModule) -> MirModule`",
+        "reason": "tracker_phase_complete",
+        "kind": "suppressed",
+        "phases": [
+          "3"
+        ]
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "One basic block per stmt chain; if/while create CFG edges",
+        "reason": "tracker_phase_complete",
+        "kind": "suppressed",
+        "phases": [
+          "3"
+        ]
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "Map MIR types to LLVM types (`array` → struct or stack array)",
+        "reason": "tracker_phase_complete",
+        "kind": "suppressed",
+        "phases": [
+          "3"
+        ]
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "Emit `main` calling user `main` if present",
+        "reason": "tracker_phase_complete",
+        "kind": "suppressed",
+        "phases": [
+          "3"
+        ]
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "Debug: `li_bounds_fail` call on dynamic index",
+        "reason": "tracker_phase_complete",
+        "kind": "suppressed",
+        "phases": [
+          "3"
+        ]
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "`lic build input.li -o out [--release]`",
+        "reason": "tracker_phase_complete",
+        "kind": "suppressed",
+        "phases": [
+          "3"
+        ]
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "Pipeline: parse → check → mir → llvm bitcode → `clang -o out`",
+        "reason": "tracker_phase_complete",
+        "kind": "suppressed",
+        "phases": [
+          "3"
+        ]
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "Link `runtime/li_rt.c`",
+        "reason": "tracker_phase_complete",
+        "kind": "suppressed",
+        "phases": [
+          "3"
+        ]
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "Deferred until Phase 4 provides `echo` — for Phase 3 use:",
+        "reason": "tracker_phase_complete",
+        "kind": "suppressed",
+        "phases": [
+          "3"
+        ]
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "`lic build examples/hello.li -o hello && ./hello; echo $?` → 0",
+        "reason": "tracker_phase_complete",
+        "kind": "suppressed",
+        "phases": [
+          "3"
+        ]
+      },
+      {
         "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
         "item": "insta snapshot of LLVM IR for `return 0` program",
         "reason": "tracker_phase_complete",
@@ -1215,61 +1280,71 @@
         ]
       },
       {
-        "source": "lic:plans/2026-05-14-phase-05-tetris.md",
-        "item": "`new_board() -> Board` all Empty",
+        "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+        "item": "`-O2` flag forwarded to clang in `--release`",
         "reason": "tracker_phase_complete",
         "kind": "suppressed",
         "phases": [
-          "5"
-        ]
-      },
-      {
-        "source": "lic:plans/2026-05-14-phase-05-tetris.md",
-        "item": "Tetromino shapes as `array[4, array[2, int]]` offsets per rotation",
-        "reason": "tracker_phase_complete",
-        "kind": "suppressed",
-        "phases": [
-          "5"
-        ]
-      },
-      {
-        "source": "lic:plans/2026-05-14-phase-05-tetris.md",
-        "item": "`can_place(board, piece, ox, oy) -> bool`",
-        "reason": "tracker_phase_complete",
-        "kind": "suppressed",
-        "phases": [
-          "5"
-        ]
-      },
-      {
-        "source": "lic:plans/2026-05-14-phase-05-tetris.md",
-        "item": "`lock_piece(board, piece, ox, oy)` mutates board",
-        "reason": "tracker_phase_complete",
-        "kind": "suppressed",
-        "phases": [
-          "5"
-        ]
-      },
-      {
-        "source": "lic:plans/2026-05-14-phase-05-tetris.md",
-        "item": "Left/Right/Down arrows, Up rotates, Space hard drop (L/R/Down in `main.li`; rotate + hard-drop not wired)",
-        "reason": "tracker_phase_complete",
-        "kind": "suppressed",
-        "phases": [
-          "5"
-        ]
-      },
-      {
-        "source": "lic:plans/2026-05-14-phase-05-tetris.md",
-        "item": "No leaks/crashes over 10-minute play session",
-        "reason": "tracker_phase_complete",
-        "kind": "suppressed",
-        "phases": [
-          "5"
+          "3"
         ]
       }
     ],
-    "stale_spec_checklists": [],
+    "stale_spec_checklists": [
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "`enum Type { Int, Uint, WrappingInt, Float64, Bool, Unit, String, Array { len: u64, elem: Box<Type> }, Option(Box<Type>), Enum(EnumId), Object(ObjectId), Proc { .. } }`",
+        "reason": "normative_implementation_checklist",
+        "kind": "stale_spec"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "`TypeCtx::define_type`, `lookup`, `define_proc`",
+        "reason": "normative_implementation_checklist",
+        "kind": "stale_spec"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "`check_module(&Module) -> Result<TypedModule, Vec<TypeError>>`",
+        "reason": "normative_implementation_checklist",
+        "kind": "stale_spec"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "Return typed wrapper nodes or side table `node_id → Type`",
+        "reason": "normative_implementation_checklist",
+        "kind": "stale_spec"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "Track `Owned | BorrowImm | BorrowMut` per local",
+        "reason": "normative_implementation_checklist",
+        "kind": "stale_spec"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "Reject: use after move, two `mut` borrows, mut while imm borrow live",
+        "reason": "normative_implementation_checklist",
+        "kind": "stale_spec"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "v1: no references in struct fields yet",
+        "reason": "normative_implementation_checklist",
+        "kind": "stale_spec"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "Tests assert compile error messages mention dimension / type mismatch",
+        "reason": "normative_implementation_checklist",
+        "kind": "stale_spec"
+      },
+      {
+        "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+        "item": "`lic check file.li` — parse + typecheck, exit 1 on errors",
+        "reason": "normative_implementation_checklist",
+        "kind": "stale_spec"
+      }
+    ],
     "provability_gaps": {
       "partial": [
         "**G-lean**",
@@ -1283,9 +1358,8 @@
         "**G-math-syn**",
         "**G-async**",
         "**G-net**",
-        "**G-narrow**",
-        "**G-proof-db**",
-        "**G-physics**"
+        "**G-trust**",
+        "**G-narrow**"
       ],
       "missing": [
         "**G-ann**",
@@ -1294,7 +1368,476 @@
         "**G-authz**"
       ]
     },
-    "catalog_gaps": [],
+    "catalog_gaps": [
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=cfd_fvm_face_flux path missing under lic root (lic): benchmarks/tier2_physics/cfd_fvm_face_flux"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=cfd_pimple path missing under lic root (lic): benchmarks/tier2_physics/cfd_pimple"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=cfd_piso path missing under lic root (lic): benchmarks/tier2_physics/cfd_piso"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=cfd_simple path missing under lic root (lic): benchmarks/tier2_physics/cfd_simple"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=cfd_turbulence_k_epsilon path missing under lic root (lic): benchmarks/tier2_physics/cfd_turbulence_k_epsilon"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=cfd_turbulence_k_omega_sst path missing under lic root (lic): benchmarks/tier2_physics/cfd_turbulence_k_omega_sst"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=fea_gauss_quadrature path missing under lic root (lic): benchmarks/tier2_physics/fea_gauss_quadrature"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=fea_linear_elasticity path missing under lic root (lic): benchmarks/tier2_physics/fea_linear_elasticity"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=fea_mesh_tri_tet path missing under lic root (lic): benchmarks/tier2_physics/fea_mesh_tri_tet"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=fea_solver_direct path missing under lic root (lic): benchmarks/tier2_physics/fea_solver_direct"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=fea_solver_iterative path missing under lic root (lic): benchmarks/tier2_physics/fea_solver_iterative"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=fea_stiffness_assembly path missing under lic root (lic): benchmarks/tier2_physics/fea_stiffness_assembly"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=nbody_barnes_hut path missing under lic root (lic): benchmarks/tier2_physics/nbody_barnes_hut"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=num_cg path missing under lic root (lic): benchmarks/tier1_micro/num_cg"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=num_cholesky path missing under lic root (lic): benchmarks/tier1_micro/num_cholesky"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=num_eig_symmetric path missing under lic root (lic): benchmarks/tier1_micro/num_eig_symmetric"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=num_fft_r2c path missing under lic root (lic): benchmarks/tier1_micro/num_fft_r2c"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=num_gmres path missing under lic root (lic): benchmarks/tier1_micro/num_gmres"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=num_integ_euler path missing under lic root (lic): benchmarks/tier1_micro/num_integ_euler"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=num_integ_rk4 path missing under lic root (lic): benchmarks/tier1_micro/num_integ_rk4"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=num_integ_semi_implicit path missing under lic root (lic): benchmarks/tier1_micro/num_integ_semi_implicit"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=num_integ_symplectic path missing under lic root (lic): benchmarks/tier1_micro/num_integ_symplectic"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=num_integ_verlet path missing under lic root (lic): benchmarks/tier1_micro/num_integ_verlet"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=num_opt_bfgs path missing under lic root (lic): benchmarks/tier1_micro/num_opt_bfgs"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=num_opt_line_search path missing under lic root (lic): benchmarks/tier1_micro/num_opt_line_search"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=num_quadrature_gauss path missing under lic root (lic): benchmarks/tier1_micro/num_quadrature_gauss"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=num_rng_pcg path missing under lic root (lic): benchmarks/tier1_micro/num_rng_pcg"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=num_root_newton path missing under lic root (lic): benchmarks/tier1_micro/num_root_newton"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=num_sparse_mv path missing under lic root (lic): benchmarks/tier1_micro/num_sparse_mv"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=stdlib_list_push_pop path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_list_push_pop"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=stdlib_dict_insert_lookup path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_dict_insert_lookup"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=stdlib_set_ops path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_set_ops"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=stdlib_sort_int path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_sort_int"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=stdlib_binary_search path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_binary_search"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=stdlib_heap_push_pop path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_heap_push_pop"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=stdlib_deque_rotate path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_deque_rotate"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=stdlib_hash_flood path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_hash_flood"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=auto_bicycle_model path missing under lic root (lic): benchmarks/tier2_physics/auto_bicycle_model"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=auto_dyn_rk4 path missing under lic root (lic): benchmarks/tier2_physics/auto_dyn_rk4"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=auto_sensor_raycast path missing under lic root (lic): benchmarks/tier2_physics/auto_sensor_raycast"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=bio_proteinmpnn path missing under lic root (lic): benchmarks/tier1_micro/num_sparse_mv"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=bio_rfdiffusion path missing under lic root (lic): benchmarks/tier1_micro/num_cg"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=bio_rosetta_energy path missing under lic root (lic): benchmarks/tier1_micro/num_gmres"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=bio_rotamer_packing path missing under lic root (lic): benchmarks/tier1_micro/num_cholesky"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=drug_docking_diffusion path missing under lic root (lic): benchmarks/tier1_micro/num_eig_symmetric"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=drug_docking_score_vina path missing under lic root (lic): benchmarks/tier1_micro/num_fft_r2c"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=drug_fep_alchemical path missing under lic root (lic): benchmarks/tier1_micro/num_rng_pcg"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=drug_litl_stages path missing under lic root (lic): benchmarks/tier1_micro/num_integ_euler"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=drug_ml_retrain_loop path missing under lic root (lic): benchmarks/tier1_micro/num_integ_rk4"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=md_barostat_parrinello_rahman path missing under lic root (lic): benchmarks/tier2_physics/md_barostat_parrinello_rahman"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=md_constraints_rattle path missing under lic root (lic): benchmarks/tier2_physics/md_constraints_rattle"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=md_constraints_shake path missing under lic root (lic): benchmarks/tier2_physics/md_constraints_shake"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=md_energy_drift path missing under lic root (lic): benchmarks/tier2_physics/md_energy_drift"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=md_init_fcc_mb path missing under lic root (lic): benchmarks/tier2_physics/md_init_fcc_mb"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=md_integrator_leapfrog path missing under lic root (lic): benchmarks/tier2_physics/md_integrator_leapfrog"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=md_integrator_verlet path missing under lic root (lic): benchmarks/tier2_physics/md_integrator_verlet"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=md_longrange_ewald path missing under lic root (lic): benchmarks/tier2_physics/md_longrange_ewald"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=md_longrange_pme path missing under lic root (lic): benchmarks/tier2_physics/md_longrange_pme"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=md_neighbor_cell_list path missing under lic root (lic): benchmarks/tier2_physics/md_neighbor_cell_list"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=md_neighbor_verlet_skin path missing under lic root (lic): benchmarks/tier2_physics/md_neighbor_verlet_skin"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=md_oracle_external path missing under lic root (lic): benchmarks/tier2_physics/md_oracle_external"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=md_thermostat_berendsen path missing under lic root (lic): benchmarks/tier2_physics/md_thermostat_berendsen"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=md_thermostat_nose_hoover path missing under lic root (lic): benchmarks/tier2_physics/md_thermostat_nose_hoover"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=pde_cfl_timestep path missing under lic root (lic): benchmarks/tier1_micro/num_integ_verlet"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=pde_heat_implicit_jacobi path missing under lic root (lic): benchmarks/tier1_micro/num_integ_symplectic"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_ase_calculator path missing under lic root (lic): benchmarks/tier2_physics/qm_ase_calculator"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_ccsd path missing under lic root (lic): benchmarks/tier2_physics/qm_ccsd"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_dft_grid_becke path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_grid_becke"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_dft_grid_lebedev path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_grid_lebedev"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_dft_hybrid_exchange path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_hybrid_exchange"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_dft_scf_energy path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_scf_energy"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_dft_xc_gga path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_xc_gga"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_dft_xc_lda path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_xc_lda"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_dft_xc_mgga path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_xc_mgga"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_dispersion_d3 path missing under lic root (lic): benchmarks/tier2_physics/qm_dispersion_d3"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_ecp path missing under lic root (lic): benchmarks/tier2_physics/qm_ecp"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_eri_density_fitting path missing under lic root (lic): benchmarks/tier2_physics/qm_eri_density_fitting"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_eri_os path missing under lic root (lic): benchmarks/tier2_physics/qm_eri_os"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_eri_screening path missing under lic root (lic): benchmarks/tier2_physics/qm_eri_screening"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_geom_opt_bfgs path missing under lic root (lic): benchmarks/tier2_physics/qm_geom_opt_bfgs"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_geom_opt_internal path missing under lic root (lic): benchmarks/tier2_physics/qm_geom_opt_internal"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_grad_analytical path missing under lic root (lic): benchmarks/tier2_physics/qm_grad_analytical"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_gto_eval path missing under lic root (lic): benchmarks/tier2_physics/qm_gto_eval"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_hf_canonical_ortho path missing under lic root (lic): benchmarks/tier2_physics/qm_hf_canonical_ortho"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_hf_diis path missing under lic root (lic): benchmarks/tier2_physics/qm_hf_diis"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_hf_fock_build path missing under lic root (lic): benchmarks/tier2_physics/qm_hf_fock_build"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_job_queue_io path missing under lic root (lic): benchmarks/tier2_physics/qm_job_queue_io"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_kinetic_integrals path missing under lic root (lic): benchmarks/tier2_physics/qm_kinetic_integrals"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_mp2 path missing under lic root (lic): benchmarks/tier2_physics/qm_mp2"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_nuclear_attraction path missing under lic root (lic): benchmarks/tier2_physics/qm_nuclear_attraction"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_overlap_integrals path missing under lic root (lic): benchmarks/tier2_physics/qm_overlap_integrals"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_property_dipole path missing under lic root (lic): benchmarks/tier2_physics/qm_property_dipole"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_property_freq path missing under lic root (lic): benchmarks/tier2_physics/qm_property_freq"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_scf_solver path missing under lic root (lic): benchmarks/tier2_physics/qm_scf_solver"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_tddft_casida path missing under lic root (lic): benchmarks/tier2_physics/qm_tddft_casida"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_tddft_rpa path missing under lic root (lic): benchmarks/tier2_physics/qm_tddft_rpa"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=qm_xtb_gfn path missing under lic root (lic): benchmarks/tier2_physics/qm_xtb_gfn"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=rigid_broadphase_bvh path missing under lic root (lic): benchmarks/tier2_physics/rigid_broadphase_bvh"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=rigid_broadphase_sap path missing under lic root (lic): benchmarks/tier2_physics/rigid_broadphase_sap"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=rigid_constraints path missing under lic root (lic): benchmarks/tier2_physics/rigid_constraints"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=rigid_contact_solver path missing under lic root (lic): benchmarks/tier2_physics/rigid_contact_solver"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=rigid_semi_implicit path missing under lic root (lic): benchmarks/tier2_physics/rigid_semi_implicit"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=robo_ik_jacobian path missing under lic root (lic): benchmarks/tier1_micro/num_integ_semi_implicit"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=robo_multibody_step path missing under lic root (lic): benchmarks/tier1_micro/num_root_newton"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=robo_plan_prm path missing under lic root (lic): benchmarks/tier1_micro/num_opt_bfgs"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=robo_plan_rrt path missing under lic root (lic): benchmarks/tier1_micro/num_opt_line_search"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=robo_traj_opt path missing under lic root (lic): benchmarks/tier1_micro/num_quadrature_gauss"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=am_export_gcode_3mf path missing under lic root (lic): benchmarks/tier2_physics/md_integrator_verlet"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=am_infill_grid_lines path missing under lic root (lic): benchmarks/tier2_physics/md_energy_drift"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=am_infill_gyroid path missing under lic root (lic): benchmarks/tier2_physics/md_oracle_external"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=am_offset_perimeters path missing under lic root (lic): benchmarks/tier2_physics/md_neighbor_cell_list"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=am_plane_mesh_intersect path missing under lic root (lic): benchmarks/tier2_physics/md_neighbor_verlet_skin"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=am_polygon_clip path missing under lic root (lic): benchmarks/tier2_physics/md_integrator_leapfrog"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=am_slice_layers path missing under lic root (lic): benchmarks/tier2_physics/md_thermostat_nose_hoover"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=am_support_tree path missing under lic root (lic): benchmarks/tier2_physics/md_thermostat_berendsen"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=am_thermal_warp path missing under lic root (lic): benchmarks/tier2_physics/md_barostat_parrinello_rahman"
+      },
+      {
+        "source": "benchmarks:catalog.toml",
+        "item": "catalog id=am_toolpath_arcs path missing under lic root (lic): benchmarks/tier2_physics/md_constraints_shake"
+      }
+    ],
     "implementation_signals": [
       {
         "source": "lic:physics",
@@ -1308,15 +1851,146 @@
         "count": 5
       },
       {
+        "priority": "P3",
+        "action": "Archive or check off stale implementation task lists in sub-plans (normative spec, not gates)",
+        "count": 9,
+        "files": [
+          "lic:plans/2026-05-14-phase-02-typechecker.md"
+        ]
+      },
+      {
         "priority": "P1",
         "action": "Update provability-gaps.md when closing compiler work",
-        "partial": 14,
+        "partial": 13,
         "missing": 4
+      },
+      {
+        "priority": "P2",
+        "action": "Implement lic benchmarks for catalog rows or remove catalog entry",
+        "benchmarks": [
+          "catalog id=cfd_fvm_face_flux path missing under lic root (lic): benchmarks/tier2_physics/cfd_fvm_face_flux",
+          "catalog id=cfd_pimple path missing under lic root (lic): benchmarks/tier2_physics/cfd_pimple",
+          "catalog id=cfd_piso path missing under lic root (lic): benchmarks/tier2_physics/cfd_piso",
+          "catalog id=cfd_simple path missing under lic root (lic): benchmarks/tier2_physics/cfd_simple",
+          "catalog id=cfd_turbulence_k_epsilon path missing under lic root (lic): benchmarks/tier2_physics/cfd_turbulence_k_epsilon",
+          "catalog id=cfd_turbulence_k_omega_sst path missing under lic root (lic): benchmarks/tier2_physics/cfd_turbulence_k_omega_sst",
+          "catalog id=fea_gauss_quadrature path missing under lic root (lic): benchmarks/tier2_physics/fea_gauss_quadrature",
+          "catalog id=fea_linear_elasticity path missing under lic root (lic): benchmarks/tier2_physics/fea_linear_elasticity",
+          "catalog id=fea_mesh_tri_tet path missing under lic root (lic): benchmarks/tier2_physics/fea_mesh_tri_tet",
+          "catalog id=fea_solver_direct path missing under lic root (lic): benchmarks/tier2_physics/fea_solver_direct",
+          "catalog id=fea_solver_iterative path missing under lic root (lic): benchmarks/tier2_physics/fea_solver_iterative",
+          "catalog id=fea_stiffness_assembly path missing under lic root (lic): benchmarks/tier2_physics/fea_stiffness_assembly",
+          "catalog id=nbody_barnes_hut path missing under lic root (lic): benchmarks/tier2_physics/nbody_barnes_hut",
+          "catalog id=num_cg path missing under lic root (lic): benchmarks/tier1_micro/num_cg",
+          "catalog id=num_cholesky path missing under lic root (lic): benchmarks/tier1_micro/num_cholesky",
+          "catalog id=num_eig_symmetric path missing under lic root (lic): benchmarks/tier1_micro/num_eig_symmetric",
+          "catalog id=num_fft_r2c path missing under lic root (lic): benchmarks/tier1_micro/num_fft_r2c",
+          "catalog id=num_gmres path missing under lic root (lic): benchmarks/tier1_micro/num_gmres",
+          "catalog id=num_integ_euler path missing under lic root (lic): benchmarks/tier1_micro/num_integ_euler",
+          "catalog id=num_integ_rk4 path missing under lic root (lic): benchmarks/tier1_micro/num_integ_rk4",
+          "catalog id=num_integ_semi_implicit path missing under lic root (lic): benchmarks/tier1_micro/num_integ_semi_implicit",
+          "catalog id=num_integ_symplectic path missing under lic root (lic): benchmarks/tier1_micro/num_integ_symplectic",
+          "catalog id=num_integ_verlet path missing under lic root (lic): benchmarks/tier1_micro/num_integ_verlet",
+          "catalog id=num_opt_bfgs path missing under lic root (lic): benchmarks/tier1_micro/num_opt_bfgs",
+          "catalog id=num_opt_line_search path missing under lic root (lic): benchmarks/tier1_micro/num_opt_line_search",
+          "catalog id=num_quadrature_gauss path missing under lic root (lic): benchmarks/tier1_micro/num_quadrature_gauss",
+          "catalog id=num_rng_pcg path missing under lic root (lic): benchmarks/tier1_micro/num_rng_pcg",
+          "catalog id=num_root_newton path missing under lic root (lic): benchmarks/tier1_micro/num_root_newton",
+          "catalog id=num_sparse_mv path missing under lic root (lic): benchmarks/tier1_micro/num_sparse_mv",
+          "catalog id=stdlib_list_push_pop path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_list_push_pop",
+          "catalog id=stdlib_dict_insert_lookup path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_dict_insert_lookup",
+          "catalog id=stdlib_set_ops path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_set_ops",
+          "catalog id=stdlib_sort_int path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_sort_int",
+          "catalog id=stdlib_binary_search path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_binary_search",
+          "catalog id=stdlib_heap_push_pop path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_heap_push_pop",
+          "catalog id=stdlib_deque_rotate path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_deque_rotate",
+          "catalog id=stdlib_hash_flood path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_hash_flood",
+          "catalog id=auto_bicycle_model path missing under lic root (lic): benchmarks/tier2_physics/auto_bicycle_model",
+          "catalog id=auto_dyn_rk4 path missing under lic root (lic): benchmarks/tier2_physics/auto_dyn_rk4",
+          "catalog id=auto_sensor_raycast path missing under lic root (lic): benchmarks/tier2_physics/auto_sensor_raycast",
+          "catalog id=bio_proteinmpnn path missing under lic root (lic): benchmarks/tier1_micro/num_sparse_mv",
+          "catalog id=bio_rfdiffusion path missing under lic root (lic): benchmarks/tier1_micro/num_cg",
+          "catalog id=bio_rosetta_energy path missing under lic root (lic): benchmarks/tier1_micro/num_gmres",
+          "catalog id=bio_rotamer_packing path missing under lic root (lic): benchmarks/tier1_micro/num_cholesky",
+          "catalog id=drug_docking_diffusion path missing under lic root (lic): benchmarks/tier1_micro/num_eig_symmetric",
+          "catalog id=drug_docking_score_vina path missing under lic root (lic): benchmarks/tier1_micro/num_fft_r2c",
+          "catalog id=drug_fep_alchemical path missing under lic root (lic): benchmarks/tier1_micro/num_rng_pcg",
+          "catalog id=drug_litl_stages path missing under lic root (lic): benchmarks/tier1_micro/num_integ_euler",
+          "catalog id=drug_ml_retrain_loop path missing under lic root (lic): benchmarks/tier1_micro/num_integ_rk4",
+          "catalog id=md_barostat_parrinello_rahman path missing under lic root (lic): benchmarks/tier2_physics/md_barostat_parrinello_rahman",
+          "catalog id=md_constraints_rattle path missing under lic root (lic): benchmarks/tier2_physics/md_constraints_rattle",
+          "catalog id=md_constraints_shake path missing under lic root (lic): benchmarks/tier2_physics/md_constraints_shake",
+          "catalog id=md_energy_drift path missing under lic root (lic): benchmarks/tier2_physics/md_energy_drift",
+          "catalog id=md_init_fcc_mb path missing under lic root (lic): benchmarks/tier2_physics/md_init_fcc_mb",
+          "catalog id=md_integrator_leapfrog path missing under lic root (lic): benchmarks/tier2_physics/md_integrator_leapfrog",
+          "catalog id=md_integrator_verlet path missing under lic root (lic): benchmarks/tier2_physics/md_integrator_verlet",
+          "catalog id=md_longrange_ewald path missing under lic root (lic): benchmarks/tier2_physics/md_longrange_ewald",
+          "catalog id=md_longrange_pme path missing under lic root (lic): benchmarks/tier2_physics/md_longrange_pme",
+          "catalog id=md_neighbor_cell_list path missing under lic root (lic): benchmarks/tier2_physics/md_neighbor_cell_list",
+          "catalog id=md_neighbor_verlet_skin path missing under lic root (lic): benchmarks/tier2_physics/md_neighbor_verlet_skin",
+          "catalog id=md_oracle_external path missing under lic root (lic): benchmarks/tier2_physics/md_oracle_external",
+          "catalog id=md_thermostat_berendsen path missing under lic root (lic): benchmarks/tier2_physics/md_thermostat_berendsen",
+          "catalog id=md_thermostat_nose_hoover path missing under lic root (lic): benchmarks/tier2_physics/md_thermostat_nose_hoover",
+          "catalog id=pde_cfl_timestep path missing under lic root (lic): benchmarks/tier1_micro/num_integ_verlet",
+          "catalog id=pde_heat_implicit_jacobi path missing under lic root (lic): benchmarks/tier1_micro/num_integ_symplectic",
+          "catalog id=qm_ase_calculator path missing under lic root (lic): benchmarks/tier2_physics/qm_ase_calculator",
+          "catalog id=qm_ccsd path missing under lic root (lic): benchmarks/tier2_physics/qm_ccsd",
+          "catalog id=qm_dft_grid_becke path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_grid_becke",
+          "catalog id=qm_dft_grid_lebedev path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_grid_lebedev",
+          "catalog id=qm_dft_hybrid_exchange path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_hybrid_exchange",
+          "catalog id=qm_dft_scf_energy path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_scf_energy",
+          "catalog id=qm_dft_xc_gga path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_xc_gga",
+          "catalog id=qm_dft_xc_lda path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_xc_lda",
+          "catalog id=qm_dft_xc_mgga path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_xc_mgga",
+          "catalog id=qm_dispersion_d3 path missing under lic root (lic): benchmarks/tier2_physics/qm_dispersion_d3",
+          "catalog id=qm_ecp path missing under lic root (lic): benchmarks/tier2_physics/qm_ecp",
+          "catalog id=qm_eri_density_fitting path missing under lic root (lic): benchmarks/tier2_physics/qm_eri_density_fitting",
+          "catalog id=qm_eri_os path missing under lic root (lic): benchmarks/tier2_physics/qm_eri_os",
+          "catalog id=qm_eri_screening path missing under lic root (lic): benchmarks/tier2_physics/qm_eri_screening",
+          "catalog id=qm_geom_opt_bfgs path missing under lic root (lic): benchmarks/tier2_physics/qm_geom_opt_bfgs",
+          "catalog id=qm_geom_opt_internal path missing under lic root (lic): benchmarks/tier2_physics/qm_geom_opt_internal",
+          "catalog id=qm_grad_analytical path missing under lic root (lic): benchmarks/tier2_physics/qm_grad_analytical",
+          "catalog id=qm_gto_eval path missing under lic root (lic): benchmarks/tier2_physics/qm_gto_eval",
+          "catalog id=qm_hf_canonical_ortho path missing under lic root (lic): benchmarks/tier2_physics/qm_hf_canonical_ortho",
+          "catalog id=qm_hf_diis path missing under lic root (lic): benchmarks/tier2_physics/qm_hf_diis",
+          "catalog id=qm_hf_fock_build path missing under lic root (lic): benchmarks/tier2_physics/qm_hf_fock_build",
+          "catalog id=qm_job_queue_io path missing under lic root (lic): benchmarks/tier2_physics/qm_job_queue_io",
+          "catalog id=qm_kinetic_integrals path missing under lic root (lic): benchmarks/tier2_physics/qm_kinetic_integrals",
+          "catalog id=qm_mp2 path missing under lic root (lic): benchmarks/tier2_physics/qm_mp2",
+          "catalog id=qm_nuclear_attraction path missing under lic root (lic): benchmarks/tier2_physics/qm_nuclear_attraction",
+          "catalog id=qm_overlap_integrals path missing under lic root (lic): benchmarks/tier2_physics/qm_overlap_integrals",
+          "catalog id=qm_property_dipole path missing under lic root (lic): benchmarks/tier2_physics/qm_property_dipole",
+          "catalog id=qm_property_freq path missing under lic root (lic): benchmarks/tier2_physics/qm_property_freq",
+          "catalog id=qm_scf_solver path missing under lic root (lic): benchmarks/tier2_physics/qm_scf_solver",
+          "catalog id=qm_tddft_casida path missing under lic root (lic): benchmarks/tier2_physics/qm_tddft_casida",
+          "catalog id=qm_tddft_rpa path missing under lic root (lic): benchmarks/tier2_physics/qm_tddft_rpa",
+          "catalog id=qm_xtb_gfn path missing under lic root (lic): benchmarks/tier2_physics/qm_xtb_gfn",
+          "catalog id=rigid_broadphase_bvh path missing under lic root (lic): benchmarks/tier2_physics/rigid_broadphase_bvh",
+          "catalog id=rigid_broadphase_sap path missing under lic root (lic): benchmarks/tier2_physics/rigid_broadphase_sap",
+          "catalog id=rigid_constraints path missing under lic root (lic): benchmarks/tier2_physics/rigid_constraints",
+          "catalog id=rigid_contact_solver path missing under lic root (lic): benchmarks/tier2_physics/rigid_contact_solver",
+          "catalog id=rigid_semi_implicit path missing under lic root (lic): benchmarks/tier2_physics/rigid_semi_implicit",
+          "catalog id=robo_ik_jacobian path missing under lic root (lic): benchmarks/tier1_micro/num_integ_semi_implicit",
+          "catalog id=robo_multibody_step path missing under lic root (lic): benchmarks/tier1_micro/num_root_newton",
+          "catalog id=robo_plan_prm path missing under lic root (lic): benchmarks/tier1_micro/num_opt_bfgs",
+          "catalog id=robo_plan_rrt path missing under lic root (lic): benchmarks/tier1_micro/num_opt_line_search",
+          "catalog id=robo_traj_opt path missing under lic root (lic): benchmarks/tier1_micro/num_quadrature_gauss",
+          "catalog id=am_export_gcode_3mf path missing under lic root (lic): benchmarks/tier2_physics/md_integrator_verlet",
+          "catalog id=am_infill_grid_lines path missing under lic root (lic): benchmarks/tier2_physics/md_energy_drift",
+          "catalog id=am_infill_gyroid path missing under lic root (lic): benchmarks/tier2_physics/md_oracle_external",
+          "catalog id=am_offset_perimeters path missing under lic root (lic): benchmarks/tier2_physics/md_neighbor_cell_list",
+          "catalog id=am_plane_mesh_intersect path missing under lic root (lic): benchmarks/tier2_physics/md_neighbor_verlet_skin",
+          "catalog id=am_polygon_clip path missing under lic root (lic): benchmarks/tier2_physics/md_integrator_leapfrog",
+          "catalog id=am_slice_layers path missing under lic root (lic): benchmarks/tier2_physics/md_thermostat_nose_hoover",
+          "catalog id=am_support_tree path missing under lic root (lic): benchmarks/tier2_physics/md_thermostat_berendsen",
+          "catalog id=am_thermal_warp path missing under lic root (lic): benchmarks/tier2_physics/md_barostat_parrinello_rahman",
+          "catalog id=am_toolpath_arcs path missing under lic root (lic): benchmarks/tier2_physics/md_constraints_shake"
+        ]
       }
     ]
   },
   "ecosystem_audit": {
-    "generated_at": "2026-05-30T00:51Z",
+    "generated_at": "2026-05-30T03:49Z",
     "vision": {
       "master_plan": "https://github.com/li-langverse/lic/blob/main/docs/superpowers/plans/2026-05-14-li-master-plan.md",
       "benchmark_goal": "Li ≤1.2× cpp (tier-1/2); beat HPC SOTA everywhere — PH-5b, PH-7e pure-Li codegen",
@@ -1466,22 +2140,22 @@
       ]
     },
     "plan_completion": {
-      "generated_at": "2026-05-30T00:41Z",
+      "generated_at": "2026-05-30T03:44Z",
       "roots": {
-        "lic": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
+        "lic": "../lic",
         "lis": "/home/s4il0r/Documents/Cursor/li-langverse/lis",
         "benchmarks": "/home/s4il0r/Documents/Cursor/li-langverse/benchmarks",
         "roadmap": "/home/s4il0r/Documents/Cursor/li-langverse/roadmap"
       },
       "summary": {
         "open_tracker_items": 5,
-        "open_plan_checkboxes": 40,
-        "plan_checkboxes_suppressed": 10,
-        "stale_spec_checklists": 0,
-        "provability_partial": 14,
+        "open_plan_checkboxes": 26,
+        "plan_checkboxes_suppressed": 20,
+        "stale_spec_checklists": 9,
+        "provability_partial": 13,
         "provability_missing": 4,
-        "catalog_gaps": 0,
-        "total_findings": 64,
+        "catalog_gaps": 117,
+        "total_findings": 166,
         "tracker_phases_complete": 31
       },
       "master_plan_open": [
@@ -1502,7 +2176,7 @@
         },
         {
           "source": "lic:master_plan",
-          "item": "Phase 8p — Parallel compile + CI throughput — **partial (8p-a/b/c/d):** 8p-a parallel `run_all` + isolated `LI_BUILD_DIR` ([#186](https://github.com/li-langverse/lic/pull/186), [#200](https://github.com/li-langverse/lic/pull/200)); 8p-c/...",
+          "item": "Phase 8p — Parallel compile + CI throughput — **partial:** Ninja `-j` for C++ only; `lic --jobs` reserved not wired; `run_all.sh` / workspace sequential ([§ 8p](#phase-8p--parallel-compile--ci-throughput))",
           "phase_id": "8p"
         },
         {
@@ -1513,8 +2187,28 @@
       ],
       "plan_files_open": [
         {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "`fib.li` typechecks",
+          "kind": "plan_gate"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "All `bad_*.li` fail with expected errors",
+          "kind": "plan_gate"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "Borrow double-mut test fails cleanly",
+          "kind": "plan_gate"
+        },
+        {
           "source": "lic:plans/2026-05-14-phase-07-native-hpc.md",
           "item": "Tier 2 MD example uses `@cpu` `@parallel` `@vectorized` on `def` (elaborates to same MIR as keywords)",
+          "kind": "plan_gate"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-07-native-hpc.md",
+          "item": "Fuzz corpus includes `@` decorator stacks and reserved-name parse seeds",
           "kind": "plan_gate"
         },
         {
@@ -1544,7 +2238,42 @@
         },
         {
           "source": "lic:plans/2026-05-16-li-ecosystem-governance.md",
+          "item": "Confirm org access: `gh api orgs/li-langverse` (or org owner invites bot/users)",
+          "kind": "plan_gate"
+        },
+        {
+          "source": "lic:plans/2026-05-16-li-ecosystem-governance.md",
+          "item": "`docs/ecosystem/official-packages.md` with `PKG-` table (all repos under `li-langverse`)",
+          "kind": "plan_gate"
+        },
+        {
+          "source": "lic:plans/2026-05-16-li-ecosystem-governance.md",
           "item": "On execute: align `mkdocs.yml` `repo_url` / GitHub Pages with `li-langverse/li-language` when repo home moves",
+          "kind": "plan_gate"
+        },
+        {
+          "source": "lic:plans/2026-05-16-li-ecosystem-governance.md",
+          "item": "`docs/ecosystem/governance.md` user-facing summary (links here)",
+          "kind": "plan_gate"
+        },
+        {
+          "source": "lic:plans/2026-05-16-li-ecosystem-governance.md",
+          "item": "`scripts/templates/github-repo/` + `scripts/check-traceability.sh`",
+          "kind": "plan_gate"
+        },
+        {
+          "source": "lic:plans/2026-05-16-li-ecosystem-governance.md",
+          "item": "`create-li-package` skill: `--official` → org checklist",
+          "kind": "plan_gate"
+        },
+        {
+          "source": "lic:plans/2026-05-16-li-ecosystem-governance.md",
+          "item": "At least one example package `PUBLISH.md` with full traceability block in monorepo",
+          "kind": "plan_gate"
+        },
+        {
+          "source": "lic:plans/2026-05-16-li-math-linalg-surface.md",
+          "item": "**P-linalg** loop implementation ≡ closed-form `ensures` in Lean (**G-lean**)",
           "kind": "plan_gate"
         },
         {
@@ -1553,163 +2282,38 @@
           "kind": "plan_gate"
         },
         {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Reproduce and fix **6 pytest failures** on `main` (`scripts/run_tests.sh` in venv); document root cause in release note",
+          "source": "lic:plans/2026-05-16-li-package-scaffold.md",
+          "item": "`li-new-package` emits li.toml valid against lip § A3",
           "kind": "plan_gate"
         },
         {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Close gap: `liorm/embed_engine.py` uses `lidb_embed` only — no fallback paths",
+          "source": "lic:plans/2026-05-16-li-package-scaffold.md",
+          "item": "`create-li-package` skill committed (incl. `--official` + org checklist)",
           "kind": "plan_gate"
         },
         {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Wire `liorm.execute` for registry-min plans (`agent_runs.recent`, etc.) against live catalog",
+          "source": "lic:plans/2026-05-16-li-package-scaffold.md",
+          "item": "Guide + ecosystem overview + governance summary in mkdocs",
           "kind": "plan_gate"
         },
         {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Expand `tests/security/` from stub to failing-closed on injection/RawSqlCapability",
+          "source": "lic:plans/2026-05-16-li-package-scaffold.md",
+          "item": "`scripts/templates/github-repo/` for org repos",
           "kind": "plan_gate"
         },
         {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "CI: ensure `check_no_sqlite.sh`, smoke, pytest, security `run_all.sh` on every PR",
+          "source": "lic:plans/2026-05-16-li-package-scaffold.md",
+          "item": "`docs/ecosystem/official-packages.md` stub with `PKG-li-language`",
           "kind": "plan_gate"
         },
         {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Update `docs/pg-subset-v1.md` status table to match implemented surface",
+          "source": "lic:plans/2026-05-16-li-package-scaffold.md",
+          "item": "Smoke test in `scripts/ci.sh`",
           "kind": "plan_gate"
         },
         {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Implement CLI commands per handoff pseudo (`lis db start` loads profile, runs migrations, registers liq plans)",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Add `profiles/registry-min.toml` (verticals + pre-registered plans)",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "In-process embed: pass `&mut Engine` to `liorm::execute` — no TCP for registry-min unless profile says so",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "`lis db status` JSON/exit code for **li-cursor-agents** `assertStoreReady()` when `LI_DATA_DIR` set",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Document env contract in `lis` README; link from `lidb/docs/handoff-wp5-lis.md`",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Smoke script: start → migrate → status → stop on clean `LI_DATA_DIR`",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Implement `benchmarks/tier_db_registry/harness/registry_oltp_stub.py` → real driver (lidb embed + Postgres 15+)",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Sync DDL: `schema/registry-v1.sql` ↔ `lidb/migrations/001_registry.sql`",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Run scenarios: `registry_publish`, `registry_read_by_name`, `registry_read_latest`",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Emit `results/latest.csv` + JSON for ingest; set `status` from data (not hardcoded stub)",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Document `BENCH_DB_REGISTRY_THRESHOLD` (default 1.2) in tier README",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "CI: `ci` profile Postgres-only path until lidb ratio known; nightly optional full compare",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Diff **DB-R0-1**: `registry-v1.sql` vs lip OpenAPI fields → gap table in lidb or roadmap",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Add migrations for v2 central tables (beyond `001_registry.sql` if required)",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "lip: document/store OpenAPI fields that map to lidb catalog (no fake 8d v2 ship)",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "RLS policies (`002_rls_registry.sql`) design review for multi-tenant registry",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Traceability: update `lic` PH-DB plan cross-link when PH-DB-4 gate checklist exists",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Issue gate: label lip PRs **blocked-on-PH-DB-4** until schema merged",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Schema parity: diff `supabase/migrations/` vs lidb control-plane migration list (**DB-R0-4**)",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Implement `persistControlPlaneStateLidb` via liorm (remove no-op stub)",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Wire `runLiqQuery` to real liorm when `LI_LIDB_URL` or `LI_DATA_DIR` + `lis db`",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Remove `test.todo` rows in `lidb-control-plane.e2e.ts` as gates pass",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Backfill: extend `scripts/backfill-control-plane-db.mjs` for lidb import from disk cache",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Optional CI job: `LI_E2E_LIDB=1` (non-blocking until stable)",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "Update `.cursor/skills/explore-control-plane-db/SKILL.md` for liq MCP",
-          "kind": "plan_gate"
-        },
-        {
-          "source": "lic:plans/ph-db-battle-plan.md",
-          "item": "**DB-R0-1** Postgres-subset boundary table (registry DDL vs lip)",
+          "source": "lic:plans/2026-05-16-li-package-scaffold.md",
+          "item": "lip + governance + master plan cross-linked",
           "kind": "plan_gate"
         }
       ],
@@ -1742,6 +2346,141 @@
           ]
         },
         {
+          "source": "lic:plans/2026-05-14-benchmarks-and-simulations.md",
+          "item": "Li reference passes `verify.py` and **`lic build`**",
+          "reason": "tracker_phase_complete",
+          "kind": "suppressed",
+          "phases": [
+            "5b"
+          ]
+        },
+        {
+          "source": "lic:plans/2026-05-14-benchmarks-and-simulations.md",
+          "item": "Timing runs separated from verification runs",
+          "reason": "tracker_phase_complete",
+          "kind": "suppressed",
+          "phases": [
+            "5b"
+          ]
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-00-bootstrap.md",
+          "item": "`cmake --build build` succeeds",
+          "reason": "tracker_phase_complete",
+          "kind": "suppressed",
+          "phases": [
+            "0"
+          ]
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-00-bootstrap.md",
+          "item": "`./build/compiler/lic/lic smoke-llvm` succeeds",
+          "reason": "tracker_phase_complete",
+          "kind": "suppressed",
+          "phases": [
+            "0"
+          ]
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-00-bootstrap.md",
+          "item": "Master plan Phase 0 checkbox checked",
+          "reason": "tracker_phase_complete",
+          "kind": "suppressed",
+          "phases": [
+            "0"
+          ]
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "`lower_module(TypedModule) -> MirModule`",
+          "reason": "tracker_phase_complete",
+          "kind": "suppressed",
+          "phases": [
+            "3"
+          ]
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "One basic block per stmt chain; if/while create CFG edges",
+          "reason": "tracker_phase_complete",
+          "kind": "suppressed",
+          "phases": [
+            "3"
+          ]
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "Map MIR types to LLVM types (`array` → struct or stack array)",
+          "reason": "tracker_phase_complete",
+          "kind": "suppressed",
+          "phases": [
+            "3"
+          ]
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "Emit `main` calling user `main` if present",
+          "reason": "tracker_phase_complete",
+          "kind": "suppressed",
+          "phases": [
+            "3"
+          ]
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "Debug: `li_bounds_fail` call on dynamic index",
+          "reason": "tracker_phase_complete",
+          "kind": "suppressed",
+          "phases": [
+            "3"
+          ]
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "`lic build input.li -o out [--release]`",
+          "reason": "tracker_phase_complete",
+          "kind": "suppressed",
+          "phases": [
+            "3"
+          ]
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "Pipeline: parse → check → mir → llvm bitcode → `clang -o out`",
+          "reason": "tracker_phase_complete",
+          "kind": "suppressed",
+          "phases": [
+            "3"
+          ]
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "Link `runtime/li_rt.c`",
+          "reason": "tracker_phase_complete",
+          "kind": "suppressed",
+          "phases": [
+            "3"
+          ]
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "Deferred until Phase 4 provides `echo` — for Phase 3 use:",
+          "reason": "tracker_phase_complete",
+          "kind": "suppressed",
+          "phases": [
+            "3"
+          ]
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "`lic build examples/hello.li -o hello && ./hello; echo $?` → 0",
+          "reason": "tracker_phase_complete",
+          "kind": "suppressed",
+          "phases": [
+            "3"
+          ]
+        },
+        {
           "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
           "item": "insta snapshot of LLVM IR for `return 0` program",
           "reason": "tracker_phase_complete",
@@ -1751,61 +2490,71 @@
           ]
         },
         {
-          "source": "lic:plans/2026-05-14-phase-05-tetris.md",
-          "item": "`new_board() -> Board` all Empty",
+          "source": "lic:plans/2026-05-14-phase-03-mir-codegen.md",
+          "item": "`-O2` flag forwarded to clang in `--release`",
           "reason": "tracker_phase_complete",
           "kind": "suppressed",
           "phases": [
-            "5"
-          ]
-        },
-        {
-          "source": "lic:plans/2026-05-14-phase-05-tetris.md",
-          "item": "Tetromino shapes as `array[4, array[2, int]]` offsets per rotation",
-          "reason": "tracker_phase_complete",
-          "kind": "suppressed",
-          "phases": [
-            "5"
-          ]
-        },
-        {
-          "source": "lic:plans/2026-05-14-phase-05-tetris.md",
-          "item": "`can_place(board, piece, ox, oy) -> bool`",
-          "reason": "tracker_phase_complete",
-          "kind": "suppressed",
-          "phases": [
-            "5"
-          ]
-        },
-        {
-          "source": "lic:plans/2026-05-14-phase-05-tetris.md",
-          "item": "`lock_piece(board, piece, ox, oy)` mutates board",
-          "reason": "tracker_phase_complete",
-          "kind": "suppressed",
-          "phases": [
-            "5"
-          ]
-        },
-        {
-          "source": "lic:plans/2026-05-14-phase-05-tetris.md",
-          "item": "Left/Right/Down arrows, Up rotates, Space hard drop (L/R/Down in `main.li`; rotate + hard-drop not wired)",
-          "reason": "tracker_phase_complete",
-          "kind": "suppressed",
-          "phases": [
-            "5"
-          ]
-        },
-        {
-          "source": "lic:plans/2026-05-14-phase-05-tetris.md",
-          "item": "No leaks/crashes over 10-minute play session",
-          "reason": "tracker_phase_complete",
-          "kind": "suppressed",
-          "phases": [
-            "5"
+            "3"
           ]
         }
       ],
-      "stale_spec_checklists": [],
+      "stale_spec_checklists": [
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "`enum Type { Int, Uint, WrappingInt, Float64, Bool, Unit, String, Array { len: u64, elem: Box<Type> }, Option(Box<Type>), Enum(EnumId), Object(ObjectId), Proc { .. } }`",
+          "reason": "normative_implementation_checklist",
+          "kind": "stale_spec"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "`TypeCtx::define_type`, `lookup`, `define_proc`",
+          "reason": "normative_implementation_checklist",
+          "kind": "stale_spec"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "`check_module(&Module) -> Result<TypedModule, Vec<TypeError>>`",
+          "reason": "normative_implementation_checklist",
+          "kind": "stale_spec"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "Return typed wrapper nodes or side table `node_id → Type`",
+          "reason": "normative_implementation_checklist",
+          "kind": "stale_spec"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "Track `Owned | BorrowImm | BorrowMut` per local",
+          "reason": "normative_implementation_checklist",
+          "kind": "stale_spec"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "Reject: use after move, two `mut` borrows, mut while imm borrow live",
+          "reason": "normative_implementation_checklist",
+          "kind": "stale_spec"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "v1: no references in struct fields yet",
+          "reason": "normative_implementation_checklist",
+          "kind": "stale_spec"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "Tests assert compile error messages mention dimension / type mismatch",
+          "reason": "normative_implementation_checklist",
+          "kind": "stale_spec"
+        },
+        {
+          "source": "lic:plans/2026-05-14-phase-02-typechecker.md",
+          "item": "`lic check file.li` — parse + typecheck, exit 1 on errors",
+          "reason": "normative_implementation_checklist",
+          "kind": "stale_spec"
+        }
+      ],
       "provability_gaps": {
         "partial": [
           "**G-lean**",
@@ -1819,9 +2568,8 @@
           "**G-math-syn**",
           "**G-async**",
           "**G-net**",
-          "**G-narrow**",
-          "**G-proof-db**",
-          "**G-physics**"
+          "**G-trust**",
+          "**G-narrow**"
         ],
         "missing": [
           "**G-ann**",
@@ -1830,7 +2578,476 @@
           "**G-authz**"
         ]
       },
-      "catalog_gaps": [],
+      "catalog_gaps": [
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=cfd_fvm_face_flux path missing under lic root (lic): benchmarks/tier2_physics/cfd_fvm_face_flux"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=cfd_pimple path missing under lic root (lic): benchmarks/tier2_physics/cfd_pimple"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=cfd_piso path missing under lic root (lic): benchmarks/tier2_physics/cfd_piso"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=cfd_simple path missing under lic root (lic): benchmarks/tier2_physics/cfd_simple"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=cfd_turbulence_k_epsilon path missing under lic root (lic): benchmarks/tier2_physics/cfd_turbulence_k_epsilon"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=cfd_turbulence_k_omega_sst path missing under lic root (lic): benchmarks/tier2_physics/cfd_turbulence_k_omega_sst"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=fea_gauss_quadrature path missing under lic root (lic): benchmarks/tier2_physics/fea_gauss_quadrature"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=fea_linear_elasticity path missing under lic root (lic): benchmarks/tier2_physics/fea_linear_elasticity"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=fea_mesh_tri_tet path missing under lic root (lic): benchmarks/tier2_physics/fea_mesh_tri_tet"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=fea_solver_direct path missing under lic root (lic): benchmarks/tier2_physics/fea_solver_direct"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=fea_solver_iterative path missing under lic root (lic): benchmarks/tier2_physics/fea_solver_iterative"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=fea_stiffness_assembly path missing under lic root (lic): benchmarks/tier2_physics/fea_stiffness_assembly"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=nbody_barnes_hut path missing under lic root (lic): benchmarks/tier2_physics/nbody_barnes_hut"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=num_cg path missing under lic root (lic): benchmarks/tier1_micro/num_cg"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=num_cholesky path missing under lic root (lic): benchmarks/tier1_micro/num_cholesky"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=num_eig_symmetric path missing under lic root (lic): benchmarks/tier1_micro/num_eig_symmetric"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=num_fft_r2c path missing under lic root (lic): benchmarks/tier1_micro/num_fft_r2c"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=num_gmres path missing under lic root (lic): benchmarks/tier1_micro/num_gmres"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=num_integ_euler path missing under lic root (lic): benchmarks/tier1_micro/num_integ_euler"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=num_integ_rk4 path missing under lic root (lic): benchmarks/tier1_micro/num_integ_rk4"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=num_integ_semi_implicit path missing under lic root (lic): benchmarks/tier1_micro/num_integ_semi_implicit"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=num_integ_symplectic path missing under lic root (lic): benchmarks/tier1_micro/num_integ_symplectic"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=num_integ_verlet path missing under lic root (lic): benchmarks/tier1_micro/num_integ_verlet"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=num_opt_bfgs path missing under lic root (lic): benchmarks/tier1_micro/num_opt_bfgs"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=num_opt_line_search path missing under lic root (lic): benchmarks/tier1_micro/num_opt_line_search"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=num_quadrature_gauss path missing under lic root (lic): benchmarks/tier1_micro/num_quadrature_gauss"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=num_rng_pcg path missing under lic root (lic): benchmarks/tier1_micro/num_rng_pcg"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=num_root_newton path missing under lic root (lic): benchmarks/tier1_micro/num_root_newton"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=num_sparse_mv path missing under lic root (lic): benchmarks/tier1_micro/num_sparse_mv"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=stdlib_list_push_pop path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_list_push_pop"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=stdlib_dict_insert_lookup path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_dict_insert_lookup"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=stdlib_set_ops path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_set_ops"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=stdlib_sort_int path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_sort_int"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=stdlib_binary_search path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_binary_search"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=stdlib_heap_push_pop path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_heap_push_pop"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=stdlib_deque_rotate path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_deque_rotate"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=stdlib_hash_flood path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_hash_flood"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=auto_bicycle_model path missing under lic root (lic): benchmarks/tier2_physics/auto_bicycle_model"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=auto_dyn_rk4 path missing under lic root (lic): benchmarks/tier2_physics/auto_dyn_rk4"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=auto_sensor_raycast path missing under lic root (lic): benchmarks/tier2_physics/auto_sensor_raycast"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=bio_proteinmpnn path missing under lic root (lic): benchmarks/tier1_micro/num_sparse_mv"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=bio_rfdiffusion path missing under lic root (lic): benchmarks/tier1_micro/num_cg"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=bio_rosetta_energy path missing under lic root (lic): benchmarks/tier1_micro/num_gmres"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=bio_rotamer_packing path missing under lic root (lic): benchmarks/tier1_micro/num_cholesky"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=drug_docking_diffusion path missing under lic root (lic): benchmarks/tier1_micro/num_eig_symmetric"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=drug_docking_score_vina path missing under lic root (lic): benchmarks/tier1_micro/num_fft_r2c"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=drug_fep_alchemical path missing under lic root (lic): benchmarks/tier1_micro/num_rng_pcg"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=drug_litl_stages path missing under lic root (lic): benchmarks/tier1_micro/num_integ_euler"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=drug_ml_retrain_loop path missing under lic root (lic): benchmarks/tier1_micro/num_integ_rk4"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=md_barostat_parrinello_rahman path missing under lic root (lic): benchmarks/tier2_physics/md_barostat_parrinello_rahman"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=md_constraints_rattle path missing under lic root (lic): benchmarks/tier2_physics/md_constraints_rattle"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=md_constraints_shake path missing under lic root (lic): benchmarks/tier2_physics/md_constraints_shake"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=md_energy_drift path missing under lic root (lic): benchmarks/tier2_physics/md_energy_drift"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=md_init_fcc_mb path missing under lic root (lic): benchmarks/tier2_physics/md_init_fcc_mb"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=md_integrator_leapfrog path missing under lic root (lic): benchmarks/tier2_physics/md_integrator_leapfrog"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=md_integrator_verlet path missing under lic root (lic): benchmarks/tier2_physics/md_integrator_verlet"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=md_longrange_ewald path missing under lic root (lic): benchmarks/tier2_physics/md_longrange_ewald"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=md_longrange_pme path missing under lic root (lic): benchmarks/tier2_physics/md_longrange_pme"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=md_neighbor_cell_list path missing under lic root (lic): benchmarks/tier2_physics/md_neighbor_cell_list"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=md_neighbor_verlet_skin path missing under lic root (lic): benchmarks/tier2_physics/md_neighbor_verlet_skin"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=md_oracle_external path missing under lic root (lic): benchmarks/tier2_physics/md_oracle_external"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=md_thermostat_berendsen path missing under lic root (lic): benchmarks/tier2_physics/md_thermostat_berendsen"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=md_thermostat_nose_hoover path missing under lic root (lic): benchmarks/tier2_physics/md_thermostat_nose_hoover"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=pde_cfl_timestep path missing under lic root (lic): benchmarks/tier1_micro/num_integ_verlet"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=pde_heat_implicit_jacobi path missing under lic root (lic): benchmarks/tier1_micro/num_integ_symplectic"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_ase_calculator path missing under lic root (lic): benchmarks/tier2_physics/qm_ase_calculator"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_ccsd path missing under lic root (lic): benchmarks/tier2_physics/qm_ccsd"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_dft_grid_becke path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_grid_becke"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_dft_grid_lebedev path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_grid_lebedev"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_dft_hybrid_exchange path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_hybrid_exchange"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_dft_scf_energy path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_scf_energy"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_dft_xc_gga path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_xc_gga"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_dft_xc_lda path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_xc_lda"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_dft_xc_mgga path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_xc_mgga"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_dispersion_d3 path missing under lic root (lic): benchmarks/tier2_physics/qm_dispersion_d3"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_ecp path missing under lic root (lic): benchmarks/tier2_physics/qm_ecp"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_eri_density_fitting path missing under lic root (lic): benchmarks/tier2_physics/qm_eri_density_fitting"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_eri_os path missing under lic root (lic): benchmarks/tier2_physics/qm_eri_os"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_eri_screening path missing under lic root (lic): benchmarks/tier2_physics/qm_eri_screening"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_geom_opt_bfgs path missing under lic root (lic): benchmarks/tier2_physics/qm_geom_opt_bfgs"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_geom_opt_internal path missing under lic root (lic): benchmarks/tier2_physics/qm_geom_opt_internal"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_grad_analytical path missing under lic root (lic): benchmarks/tier2_physics/qm_grad_analytical"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_gto_eval path missing under lic root (lic): benchmarks/tier2_physics/qm_gto_eval"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_hf_canonical_ortho path missing under lic root (lic): benchmarks/tier2_physics/qm_hf_canonical_ortho"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_hf_diis path missing under lic root (lic): benchmarks/tier2_physics/qm_hf_diis"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_hf_fock_build path missing under lic root (lic): benchmarks/tier2_physics/qm_hf_fock_build"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_job_queue_io path missing under lic root (lic): benchmarks/tier2_physics/qm_job_queue_io"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_kinetic_integrals path missing under lic root (lic): benchmarks/tier2_physics/qm_kinetic_integrals"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_mp2 path missing under lic root (lic): benchmarks/tier2_physics/qm_mp2"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_nuclear_attraction path missing under lic root (lic): benchmarks/tier2_physics/qm_nuclear_attraction"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_overlap_integrals path missing under lic root (lic): benchmarks/tier2_physics/qm_overlap_integrals"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_property_dipole path missing under lic root (lic): benchmarks/tier2_physics/qm_property_dipole"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_property_freq path missing under lic root (lic): benchmarks/tier2_physics/qm_property_freq"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_scf_solver path missing under lic root (lic): benchmarks/tier2_physics/qm_scf_solver"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_tddft_casida path missing under lic root (lic): benchmarks/tier2_physics/qm_tddft_casida"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_tddft_rpa path missing under lic root (lic): benchmarks/tier2_physics/qm_tddft_rpa"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=qm_xtb_gfn path missing under lic root (lic): benchmarks/tier2_physics/qm_xtb_gfn"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=rigid_broadphase_bvh path missing under lic root (lic): benchmarks/tier2_physics/rigid_broadphase_bvh"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=rigid_broadphase_sap path missing under lic root (lic): benchmarks/tier2_physics/rigid_broadphase_sap"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=rigid_constraints path missing under lic root (lic): benchmarks/tier2_physics/rigid_constraints"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=rigid_contact_solver path missing under lic root (lic): benchmarks/tier2_physics/rigid_contact_solver"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=rigid_semi_implicit path missing under lic root (lic): benchmarks/tier2_physics/rigid_semi_implicit"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=robo_ik_jacobian path missing under lic root (lic): benchmarks/tier1_micro/num_integ_semi_implicit"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=robo_multibody_step path missing under lic root (lic): benchmarks/tier1_micro/num_root_newton"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=robo_plan_prm path missing under lic root (lic): benchmarks/tier1_micro/num_opt_bfgs"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=robo_plan_rrt path missing under lic root (lic): benchmarks/tier1_micro/num_opt_line_search"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=robo_traj_opt path missing under lic root (lic): benchmarks/tier1_micro/num_quadrature_gauss"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=am_export_gcode_3mf path missing under lic root (lic): benchmarks/tier2_physics/md_integrator_verlet"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=am_infill_grid_lines path missing under lic root (lic): benchmarks/tier2_physics/md_energy_drift"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=am_infill_gyroid path missing under lic root (lic): benchmarks/tier2_physics/md_oracle_external"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=am_offset_perimeters path missing under lic root (lic): benchmarks/tier2_physics/md_neighbor_cell_list"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=am_plane_mesh_intersect path missing under lic root (lic): benchmarks/tier2_physics/md_neighbor_verlet_skin"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=am_polygon_clip path missing under lic root (lic): benchmarks/tier2_physics/md_integrator_leapfrog"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=am_slice_layers path missing under lic root (lic): benchmarks/tier2_physics/md_thermostat_nose_hoover"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=am_support_tree path missing under lic root (lic): benchmarks/tier2_physics/md_thermostat_berendsen"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=am_thermal_warp path missing under lic root (lic): benchmarks/tier2_physics/md_barostat_parrinello_rahman"
+        },
+        {
+          "source": "benchmarks:catalog.toml",
+          "item": "catalog id=am_toolpath_arcs path missing under lic root (lic): benchmarks/tier2_physics/md_constraints_shake"
+        }
+      ],
       "implementation_signals": [
         {
           "source": "lic:physics",
@@ -1844,10 +3061,141 @@
           "count": 5
         },
         {
+          "priority": "P3",
+          "action": "Archive or check off stale implementation task lists in sub-plans (normative spec, not gates)",
+          "count": 9,
+          "files": [
+            "lic:plans/2026-05-14-phase-02-typechecker.md"
+          ]
+        },
+        {
           "priority": "P1",
           "action": "Update provability-gaps.md when closing compiler work",
-          "partial": 14,
+          "partial": 13,
           "missing": 4
+        },
+        {
+          "priority": "P2",
+          "action": "Implement lic benchmarks for catalog rows or remove catalog entry",
+          "benchmarks": [
+            "catalog id=cfd_fvm_face_flux path missing under lic root (lic): benchmarks/tier2_physics/cfd_fvm_face_flux",
+            "catalog id=cfd_pimple path missing under lic root (lic): benchmarks/tier2_physics/cfd_pimple",
+            "catalog id=cfd_piso path missing under lic root (lic): benchmarks/tier2_physics/cfd_piso",
+            "catalog id=cfd_simple path missing under lic root (lic): benchmarks/tier2_physics/cfd_simple",
+            "catalog id=cfd_turbulence_k_epsilon path missing under lic root (lic): benchmarks/tier2_physics/cfd_turbulence_k_epsilon",
+            "catalog id=cfd_turbulence_k_omega_sst path missing under lic root (lic): benchmarks/tier2_physics/cfd_turbulence_k_omega_sst",
+            "catalog id=fea_gauss_quadrature path missing under lic root (lic): benchmarks/tier2_physics/fea_gauss_quadrature",
+            "catalog id=fea_linear_elasticity path missing under lic root (lic): benchmarks/tier2_physics/fea_linear_elasticity",
+            "catalog id=fea_mesh_tri_tet path missing under lic root (lic): benchmarks/tier2_physics/fea_mesh_tri_tet",
+            "catalog id=fea_solver_direct path missing under lic root (lic): benchmarks/tier2_physics/fea_solver_direct",
+            "catalog id=fea_solver_iterative path missing under lic root (lic): benchmarks/tier2_physics/fea_solver_iterative",
+            "catalog id=fea_stiffness_assembly path missing under lic root (lic): benchmarks/tier2_physics/fea_stiffness_assembly",
+            "catalog id=nbody_barnes_hut path missing under lic root (lic): benchmarks/tier2_physics/nbody_barnes_hut",
+            "catalog id=num_cg path missing under lic root (lic): benchmarks/tier1_micro/num_cg",
+            "catalog id=num_cholesky path missing under lic root (lic): benchmarks/tier1_micro/num_cholesky",
+            "catalog id=num_eig_symmetric path missing under lic root (lic): benchmarks/tier1_micro/num_eig_symmetric",
+            "catalog id=num_fft_r2c path missing under lic root (lic): benchmarks/tier1_micro/num_fft_r2c",
+            "catalog id=num_gmres path missing under lic root (lic): benchmarks/tier1_micro/num_gmres",
+            "catalog id=num_integ_euler path missing under lic root (lic): benchmarks/tier1_micro/num_integ_euler",
+            "catalog id=num_integ_rk4 path missing under lic root (lic): benchmarks/tier1_micro/num_integ_rk4",
+            "catalog id=num_integ_semi_implicit path missing under lic root (lic): benchmarks/tier1_micro/num_integ_semi_implicit",
+            "catalog id=num_integ_symplectic path missing under lic root (lic): benchmarks/tier1_micro/num_integ_symplectic",
+            "catalog id=num_integ_verlet path missing under lic root (lic): benchmarks/tier1_micro/num_integ_verlet",
+            "catalog id=num_opt_bfgs path missing under lic root (lic): benchmarks/tier1_micro/num_opt_bfgs",
+            "catalog id=num_opt_line_search path missing under lic root (lic): benchmarks/tier1_micro/num_opt_line_search",
+            "catalog id=num_quadrature_gauss path missing under lic root (lic): benchmarks/tier1_micro/num_quadrature_gauss",
+            "catalog id=num_rng_pcg path missing under lic root (lic): benchmarks/tier1_micro/num_rng_pcg",
+            "catalog id=num_root_newton path missing under lic root (lic): benchmarks/tier1_micro/num_root_newton",
+            "catalog id=num_sparse_mv path missing under lic root (lic): benchmarks/tier1_micro/num_sparse_mv",
+            "catalog id=stdlib_list_push_pop path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_list_push_pop",
+            "catalog id=stdlib_dict_insert_lookup path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_dict_insert_lookup",
+            "catalog id=stdlib_set_ops path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_set_ops",
+            "catalog id=stdlib_sort_int path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_sort_int",
+            "catalog id=stdlib_binary_search path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_binary_search",
+            "catalog id=stdlib_heap_push_pop path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_heap_push_pop",
+            "catalog id=stdlib_deque_rotate path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_deque_rotate",
+            "catalog id=stdlib_hash_flood path missing under lic root (lic): benchmarks/tier1_stdlib/stdlib_hash_flood",
+            "catalog id=auto_bicycle_model path missing under lic root (lic): benchmarks/tier2_physics/auto_bicycle_model",
+            "catalog id=auto_dyn_rk4 path missing under lic root (lic): benchmarks/tier2_physics/auto_dyn_rk4",
+            "catalog id=auto_sensor_raycast path missing under lic root (lic): benchmarks/tier2_physics/auto_sensor_raycast",
+            "catalog id=bio_proteinmpnn path missing under lic root (lic): benchmarks/tier1_micro/num_sparse_mv",
+            "catalog id=bio_rfdiffusion path missing under lic root (lic): benchmarks/tier1_micro/num_cg",
+            "catalog id=bio_rosetta_energy path missing under lic root (lic): benchmarks/tier1_micro/num_gmres",
+            "catalog id=bio_rotamer_packing path missing under lic root (lic): benchmarks/tier1_micro/num_cholesky",
+            "catalog id=drug_docking_diffusion path missing under lic root (lic): benchmarks/tier1_micro/num_eig_symmetric",
+            "catalog id=drug_docking_score_vina path missing under lic root (lic): benchmarks/tier1_micro/num_fft_r2c",
+            "catalog id=drug_fep_alchemical path missing under lic root (lic): benchmarks/tier1_micro/num_rng_pcg",
+            "catalog id=drug_litl_stages path missing under lic root (lic): benchmarks/tier1_micro/num_integ_euler",
+            "catalog id=drug_ml_retrain_loop path missing under lic root (lic): benchmarks/tier1_micro/num_integ_rk4",
+            "catalog id=md_barostat_parrinello_rahman path missing under lic root (lic): benchmarks/tier2_physics/md_barostat_parrinello_rahman",
+            "catalog id=md_constraints_rattle path missing under lic root (lic): benchmarks/tier2_physics/md_constraints_rattle",
+            "catalog id=md_constraints_shake path missing under lic root (lic): benchmarks/tier2_physics/md_constraints_shake",
+            "catalog id=md_energy_drift path missing under lic root (lic): benchmarks/tier2_physics/md_energy_drift",
+            "catalog id=md_init_fcc_mb path missing under lic root (lic): benchmarks/tier2_physics/md_init_fcc_mb",
+            "catalog id=md_integrator_leapfrog path missing under lic root (lic): benchmarks/tier2_physics/md_integrator_leapfrog",
+            "catalog id=md_integrator_verlet path missing under lic root (lic): benchmarks/tier2_physics/md_integrator_verlet",
+            "catalog id=md_longrange_ewald path missing under lic root (lic): benchmarks/tier2_physics/md_longrange_ewald",
+            "catalog id=md_longrange_pme path missing under lic root (lic): benchmarks/tier2_physics/md_longrange_pme",
+            "catalog id=md_neighbor_cell_list path missing under lic root (lic): benchmarks/tier2_physics/md_neighbor_cell_list",
+            "catalog id=md_neighbor_verlet_skin path missing under lic root (lic): benchmarks/tier2_physics/md_neighbor_verlet_skin",
+            "catalog id=md_oracle_external path missing under lic root (lic): benchmarks/tier2_physics/md_oracle_external",
+            "catalog id=md_thermostat_berendsen path missing under lic root (lic): benchmarks/tier2_physics/md_thermostat_berendsen",
+            "catalog id=md_thermostat_nose_hoover path missing under lic root (lic): benchmarks/tier2_physics/md_thermostat_nose_hoover",
+            "catalog id=pde_cfl_timestep path missing under lic root (lic): benchmarks/tier1_micro/num_integ_verlet",
+            "catalog id=pde_heat_implicit_jacobi path missing under lic root (lic): benchmarks/tier1_micro/num_integ_symplectic",
+            "catalog id=qm_ase_calculator path missing under lic root (lic): benchmarks/tier2_physics/qm_ase_calculator",
+            "catalog id=qm_ccsd path missing under lic root (lic): benchmarks/tier2_physics/qm_ccsd",
+            "catalog id=qm_dft_grid_becke path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_grid_becke",
+            "catalog id=qm_dft_grid_lebedev path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_grid_lebedev",
+            "catalog id=qm_dft_hybrid_exchange path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_hybrid_exchange",
+            "catalog id=qm_dft_scf_energy path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_scf_energy",
+            "catalog id=qm_dft_xc_gga path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_xc_gga",
+            "catalog id=qm_dft_xc_lda path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_xc_lda",
+            "catalog id=qm_dft_xc_mgga path missing under lic root (lic): benchmarks/tier2_physics/qm_dft_xc_mgga",
+            "catalog id=qm_dispersion_d3 path missing under lic root (lic): benchmarks/tier2_physics/qm_dispersion_d3",
+            "catalog id=qm_ecp path missing under lic root (lic): benchmarks/tier2_physics/qm_ecp",
+            "catalog id=qm_eri_density_fitting path missing under lic root (lic): benchmarks/tier2_physics/qm_eri_density_fitting",
+            "catalog id=qm_eri_os path missing under lic root (lic): benchmarks/tier2_physics/qm_eri_os",
+            "catalog id=qm_eri_screening path missing under lic root (lic): benchmarks/tier2_physics/qm_eri_screening",
+            "catalog id=qm_geom_opt_bfgs path missing under lic root (lic): benchmarks/tier2_physics/qm_geom_opt_bfgs",
+            "catalog id=qm_geom_opt_internal path missing under lic root (lic): benchmarks/tier2_physics/qm_geom_opt_internal",
+            "catalog id=qm_grad_analytical path missing under lic root (lic): benchmarks/tier2_physics/qm_grad_analytical",
+            "catalog id=qm_gto_eval path missing under lic root (lic): benchmarks/tier2_physics/qm_gto_eval",
+            "catalog id=qm_hf_canonical_ortho path missing under lic root (lic): benchmarks/tier2_physics/qm_hf_canonical_ortho",
+            "catalog id=qm_hf_diis path missing under lic root (lic): benchmarks/tier2_physics/qm_hf_diis",
+            "catalog id=qm_hf_fock_build path missing under lic root (lic): benchmarks/tier2_physics/qm_hf_fock_build",
+            "catalog id=qm_job_queue_io path missing under lic root (lic): benchmarks/tier2_physics/qm_job_queue_io",
+            "catalog id=qm_kinetic_integrals path missing under lic root (lic): benchmarks/tier2_physics/qm_kinetic_integrals",
+            "catalog id=qm_mp2 path missing under lic root (lic): benchmarks/tier2_physics/qm_mp2",
+            "catalog id=qm_nuclear_attraction path missing under lic root (lic): benchmarks/tier2_physics/qm_nuclear_attraction",
+            "catalog id=qm_overlap_integrals path missing under lic root (lic): benchmarks/tier2_physics/qm_overlap_integrals",
+            "catalog id=qm_property_dipole path missing under lic root (lic): benchmarks/tier2_physics/qm_property_dipole",
+            "catalog id=qm_property_freq path missing under lic root (lic): benchmarks/tier2_physics/qm_property_freq",
+            "catalog id=qm_scf_solver path missing under lic root (lic): benchmarks/tier2_physics/qm_scf_solver",
+            "catalog id=qm_tddft_casida path missing under lic root (lic): benchmarks/tier2_physics/qm_tddft_casida",
+            "catalog id=qm_tddft_rpa path missing under lic root (lic): benchmarks/tier2_physics/qm_tddft_rpa",
+            "catalog id=qm_xtb_gfn path missing under lic root (lic): benchmarks/tier2_physics/qm_xtb_gfn",
+            "catalog id=rigid_broadphase_bvh path missing under lic root (lic): benchmarks/tier2_physics/rigid_broadphase_bvh",
+            "catalog id=rigid_broadphase_sap path missing under lic root (lic): benchmarks/tier2_physics/rigid_broadphase_sap",
+            "catalog id=rigid_constraints path missing under lic root (lic): benchmarks/tier2_physics/rigid_constraints",
+            "catalog id=rigid_contact_solver path missing under lic root (lic): benchmarks/tier2_physics/rigid_contact_solver",
+            "catalog id=rigid_semi_implicit path missing under lic root (lic): benchmarks/tier2_physics/rigid_semi_implicit",
+            "catalog id=robo_ik_jacobian path missing under lic root (lic): benchmarks/tier1_micro/num_integ_semi_implicit",
+            "catalog id=robo_multibody_step path missing under lic root (lic): benchmarks/tier1_micro/num_root_newton",
+            "catalog id=robo_plan_prm path missing under lic root (lic): benchmarks/tier1_micro/num_opt_bfgs",
+            "catalog id=robo_plan_rrt path missing under lic root (lic): benchmarks/tier1_micro/num_opt_line_search",
+            "catalog id=robo_traj_opt path missing under lic root (lic): benchmarks/tier1_micro/num_quadrature_gauss",
+            "catalog id=am_export_gcode_3mf path missing under lic root (lic): benchmarks/tier2_physics/md_integrator_verlet",
+            "catalog id=am_infill_grid_lines path missing under lic root (lic): benchmarks/tier2_physics/md_energy_drift",
+            "catalog id=am_infill_gyroid path missing under lic root (lic): benchmarks/tier2_physics/md_oracle_external",
+            "catalog id=am_offset_perimeters path missing under lic root (lic): benchmarks/tier2_physics/md_neighbor_cell_list",
+            "catalog id=am_plane_mesh_intersect path missing under lic root (lic): benchmarks/tier2_physics/md_neighbor_verlet_skin",
+            "catalog id=am_polygon_clip path missing under lic root (lic): benchmarks/tier2_physics/md_integrator_leapfrog",
+            "catalog id=am_slice_layers path missing under lic root (lic): benchmarks/tier2_physics/md_thermostat_nose_hoover",
+            "catalog id=am_support_tree path missing under lic root (lic): benchmarks/tier2_physics/md_thermostat_berendsen",
+            "catalog id=am_thermal_warp path missing under lic root (lic): benchmarks/tier2_physics/md_barostat_parrinello_rahman",
+            "catalog id=am_toolpath_arcs path missing under lic root (lic): benchmarks/tier2_physics/md_constraints_shake"
+          ]
         }
       ]
     },
@@ -1904,23 +3252,20 @@
       {
         "priority": "P1",
         "action": "Plan completion debt — run plan-completion-audit automation",
-        "total_findings": 64,
+        "total_findings": 166,
         "master_open": 5
       }
     ]
   },
   "ecosystem_explorer": {
-    "generated_at": "2026-05-30T00:42Z",
-    "lic_root": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
+    "generated_at": "2026-05-30T03:44Z",
+    "lic_root": "../lic",
     "lic_present": true,
     "std_modules_on_disk": [
-      "std.algorithms.algorithms",
       "std.binary.binary",
       "std.bytes.bytes",
-      "std.collections.collections",
       "std.csv.csv",
       "std.execution.decorators",
-      "std.heap.heap",
       "std.io.io",
       "std.math.math",
       "std.math.numerics",
@@ -1998,17 +3343,13 @@
     "lic_packages": [
       "li-acme",
       "li-bytes",
-      "li-chem",
       "li-core",
       "li-crypto",
       "li-demo",
-      "li-gui",
       "li-http",
-      "li-llm",
       "li-log",
       "li-math",
       "li-math-numerics",
-      "li-ml",
       "li-net",
       "li-net-httpd",
       "li-physics-aero",
@@ -2024,23 +3365,13 @@
       "li-physics-runtime",
       "li-physics-weather",
       "li-prob",
-      "li-render",
       "li-rng",
       "li-scene",
       "li-schema",
       "li-sim",
-      "li-sim-additive",
-      "li-sim-automotive",
-      "li-sim-drug-design",
-      "li-sim-robotics",
       "li-sim-scientific",
-      "li-sim-viz",
-      "li-studio",
-      "li-studio-ai",
       "li-tls",
-      "li-ui",
-      "li-world",
-      "lig"
+      "li-ui"
     ],
     "physics_packages": [
       "li-physics-aero",
@@ -2477,7 +3808,7 @@
     ]
   },
   "org_ci_audit": {
-    "generated_at": "2026-05-30T00:51Z",
+    "generated_at": "2026-05-30T03:49Z",
     "org": "li-langverse",
     "required_workflow": "ci.yml",
     "default_branch_policy": "main",
@@ -2494,7 +3825,7 @@
     "lic_monorepo_hint": "Run lic/scripts/ensure-package-ci.sh before push-official-package-repo.sh"
   },
   "org_agent_kit_audit": {
-    "generated_at": "2026-05-30T00:51Z",
+    "generated_at": "2026-05-30T03:49Z",
     "org": "li-langverse",
     "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
     "roadmap_kit": "/home/s4il0r/Documents/Cursor/li-langverse/roadmap/agent-kit",
@@ -2617,8 +3948,8 @@
         "present_locally": true,
         "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
         "status": "drift",
-        "cursor_stamp": "1.3.3+12f1f4d190a4dd06",
-        "expected_stamp": "1.3.3+12f1f4d190a4dd06",
+        "cursor_stamp": "1.3.3+4c967a490601e84e",
+        "expected_stamp": "1.3.3+4c967a490601e84e",
         "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
         "missing_rules": [],
         "has_sync_script": true,
@@ -2773,8 +4104,8 @@
         "present_locally": true,
         "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
         "status": "drift",
-        "cursor_stamp": "1.3.3+12f1f4d190a4dd06",
-        "expected_stamp": "1.3.3+12f1f4d190a4dd06",
+        "cursor_stamp": "1.3.3+4c967a490601e84e",
+        "expected_stamp": "1.3.3+4c967a490601e84e",
         "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
         "missing_rules": [],
         "has_sync_script": true,
@@ -2836,7 +4167,7 @@
     ]
   },
   "merge_plan": {
-    "generated_at": "2026-05-30T00:51Z",
+    "generated_at": "2026-05-30T03:49Z",
     "vision_order": "package CI / mirrors → benchmarks → lic → lip/lit/lis → roadmap",
     "ordering_rules": [
       "Repo tier: mirrors/httpd → benchmarks → lic → lip/lit/lis → roadmap (roadmap last)",
@@ -2863,7 +4194,7 @@
     "warnings": []
   },
   "pr_program": {
-    "generated_at": "2026-05-30T00:49Z",
+    "generated_at": "2026-05-30T03:47Z",
     "merge_first": null,
     "summary": {
       "open_prs": 0,
@@ -2876,19 +4207,1332 @@
     "plan_warnings": []
   },
   "pr_branch_hygiene": {
-    "generated_at": "2026-05-29T23:59Z",
+    "generated_at": "2026-05-30T02:00Z",
     "org": "li-langverse",
     "summary": {
       "repos_scanned": 12,
-      "branches_needing_pr": 0,
+      "branches_needing_pr": 164,
       "prs_recommended_close": 0,
       "prs_safe_close_now": 0
     },
-    "branches_needing_pr": [],
+    "branches_needing_pr": [
+      {
+        "repo": "lic",
+        "branch": "bot/fuzz-corpus-25983189553",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `bot/fuzz-corpus-25983189553` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch bot/fuzz-corpus-25983189553"
+      },
+      {
+        "repo": "lic",
+        "branch": "bot/fuzz-corpus-26017813643",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `bot/fuzz-corpus-26017813643` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch bot/fuzz-corpus-26017813643"
+      },
+      {
+        "repo": "lic",
+        "branch": "bot/fuzz-corpus-26080724978",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `bot/fuzz-corpus-26080724978` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch bot/fuzz-corpus-26080724978"
+      },
+      {
+        "repo": "lic",
+        "branch": "bot/fuzz-corpus-26145881324",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `bot/fuzz-corpus-26145881324` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch bot/fuzz-corpus-26145881324"
+      },
+      {
+        "repo": "lic",
+        "branch": "bot/fuzz-corpus-26209911289",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `bot/fuzz-corpus-26209911289` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch bot/fuzz-corpus-26209911289"
+      },
+      {
+        "repo": "lic",
+        "branch": "bot/fuzz-corpus-26272533822",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `bot/fuzz-corpus-26272533822` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch bot/fuzz-corpus-26272533822"
+      },
+      {
+        "repo": "lic",
+        "branch": "bot/fuzz-corpus-26325164908",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `bot/fuzz-corpus-26325164908` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch bot/fuzz-corpus-26325164908"
+      },
+      {
+        "repo": "lic",
+        "branch": "bot/fuzz-corpus-26353962639",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `bot/fuzz-corpus-26353962639` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch bot/fuzz-corpus-26353962639"
+      },
+      {
+        "repo": "lic",
+        "branch": "bot/fuzz-corpus-26387873141",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `bot/fuzz-corpus-26387873141` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch bot/fuzz-corpus-26387873141"
+      },
+      {
+        "repo": "lic",
+        "branch": "bot/fuzz-corpus-26436457401",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `bot/fuzz-corpus-26436457401` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch bot/fuzz-corpus-26436457401"
+      },
+      {
+        "repo": "lic",
+        "branch": "bot/fuzz-corpus-26495740813",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `bot/fuzz-corpus-26495740813` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch bot/fuzz-corpus-26495740813"
+      },
+      {
+        "repo": "lic",
+        "branch": "bot/fuzz-corpus-26559158116",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `bot/fuzz-corpus-26559158116` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch bot/fuzz-corpus-26559158116"
+      },
+      {
+        "repo": "lic",
+        "branch": "bot/fuzz-corpus-26622519464",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `bot/fuzz-corpus-26622519464` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch bot/fuzz-corpus-26622519464"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-autoresearch-1780082345386",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-autoresearch-1780082345386` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-autoresearch-1780082345386"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-autoresearch-1780083426193",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-autoresearch-1780083426193` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-autoresearch-1780083426193"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-autoresearch-1780084678496",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-autoresearch-1780084678496` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-autoresearch-1780084678496"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-autoresearch-1780089636246-digest",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-autoresearch-1780089636246-digest` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-autoresearch-1780089636246-digest"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-autoresearch-1780094804882-digest",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-autoresearch-1780094804882-digest` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-autoresearch-1780094804882-digest"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-autoresearch-20260530",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-autoresearch-20260530` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-autoresearch-20260530"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-bench_improver-1779284446660",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-bench_improver-1779284446660` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-1779284446660"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-bench_improver-1779291587030",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-bench_improver-1779291587030` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-1779291587030"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-bench_improver-00222326",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-bench_improver-00222326` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-00222326"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-bench_improver-01256869",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-bench_improver-01256869` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-01256869"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-bench_improver-03329487",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-bench_improver-03329487` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-03329487"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-bench_improver-04258255",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-bench_improver-04258255` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-04258255"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-bench_improver-19883836",
+        "base": "main",
+        "ahead_by": 3,
+        "reason": "branch `chore/agent-bench_improver-19883836` is 3 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-19883836"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-bench_improver-41443459",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-bench_improver-41443459` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-41443459"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-bench_improver-42289450",
+        "base": "main",
+        "ahead_by": 2,
+        "reason": "branch `chore/agent-bench_improver-42289450` is 2 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-42289450"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-bench_improver-50434717",
+        "base": "main",
+        "ahead_by": 2,
+        "reason": "branch `chore/agent-bench_improver-50434717` is 2 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-50434717"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-bench_improver-55869194",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-bench_improver-55869194` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-55869194"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-bench_improver-58717209",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-bench_improver-58717209` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-58717209"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-bench_improver-65060558",
+        "base": "main",
+        "ahead_by": 2,
+        "reason": "branch `chore/agent-bench_improver-65060558` is 2 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-65060558"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-bench_improver-67501090",
+        "base": "main",
+        "ahead_by": 2,
+        "reason": "branch `chore/agent-bench_improver-67501090` is 2 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-67501090"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-bench_improver-69795048",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-bench_improver-69795048` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-69795048"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-bench_improver-71596693",
+        "base": "main",
+        "ahead_by": 2,
+        "reason": "branch `chore/agent-bench_improver-71596693` is 2 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-71596693"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-bench_improver-76589746",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-bench_improver-76589746` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-76589746"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-bench_improver-78024295",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-bench_improver-78024295` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-78024295"
+      },
+      {
+        "repo": "lic",
+        "branch": "chore/agent-bench_improver-79285634",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-bench_improver-79285634` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lic): sync branch chore/agent-bench_improver-79285634"
+      },
+      {
+        "repo": "lip",
+        "branch": "chore/agent-docs_maintainer-20260530",
+        "base": "main",
+        "ahead_by": 3,
+        "reason": "branch `chore/agent-docs_maintainer-20260530` is 3 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lip): sync branch chore/agent-docs_maintainer-20260530"
+      },
+      {
+        "repo": "lip",
+        "branch": "chore/agent-docs_maintainer-handbook-link",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-handbook-link` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lip): sync branch chore/agent-docs_maintainer-handbook-link"
+      },
+      {
+        "repo": "lip",
+        "branch": "chore/agent-kit-1.3.5-stub-rule",
+        "base": "main",
+        "ahead_by": 2,
+        "reason": "branch `chore/agent-kit-1.3.5-stub-rule` is 2 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lip): sync branch chore/agent-kit-1.3.5-stub-rule"
+      },
+      {
+        "repo": "lip",
+        "branch": "chore/agent-kit-sync-lip",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-kit-sync-lip` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lip): sync branch chore/agent-kit-sync-lip"
+      },
+      {
+        "repo": "lip",
+        "branch": "cursor/lip-git-install-lis-cli-3861",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `cursor/lip-git-install-lis-cli-3861` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lip): sync branch cursor/lip-git-install-lis-cli-3861"
+      },
+      {
+        "repo": "lip",
+        "branch": "cursor/sync-def-syntax-57b4",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `cursor/sync-def-syntax-57b4` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lip): sync branch cursor/sync-def-syntax-57b4"
+      },
+      {
+        "repo": "lip",
+        "branch": "feat/ph-db-4-lip-publish-client",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `feat/ph-db-4-lip-publish-client` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lip): sync branch feat/ph-db-4-lip-publish-client"
+      },
+      {
+        "repo": "lip",
+        "branch": "feat/ph-db-4-registry-e2e-automated",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `feat/ph-db-4-registry-e2e-automated` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lip): sync branch feat/ph-db-4-registry-e2e-automated"
+      },
+      {
+        "repo": "lip",
+        "branch": "feat/ph-db-4-registry-openapi",
+        "base": "main",
+        "ahead_by": 2,
+        "reason": "branch `feat/ph-db-4-registry-openapi` is 2 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lip): sync branch feat/ph-db-4-registry-openapi"
+      },
+      {
+        "repo": "lip",
+        "branch": "feat/ph-db-e2e-integration-doc",
+        "base": "main",
+        "ahead_by": 2,
+        "reason": "branch `feat/ph-db-e2e-integration-doc` is 2 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lip): sync branch feat/ph-db-e2e-integration-doc"
+      },
+      {
+        "repo": "lip",
+        "branch": "feat/production-registry-validate",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `feat/production-registry-validate` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lip): sync branch feat/production-registry-validate"
+      },
+      {
+        "repo": "lit",
+        "branch": "chore/agent-docs_maintainer-1780089273291",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-1780089273291` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lit): sync branch chore/agent-docs_maintainer-1780089273291"
+      },
+      {
+        "repo": "lit",
+        "branch": "chore/agent-docs_maintainer-20260530",
+        "base": "main",
+        "ahead_by": 3,
+        "reason": "branch `chore/agent-docs_maintainer-20260530` is 3 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lit): sync branch chore/agent-docs_maintainer-20260530"
+      },
+      {
+        "repo": "lit",
+        "branch": "chore/agent-kit-1.3.5-stub-rule",
+        "base": "main",
+        "ahead_by": 2,
+        "reason": "branch `chore/agent-kit-1.3.5-stub-rule` is 2 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lit): sync branch chore/agent-kit-1.3.5-stub-rule"
+      },
+      {
+        "repo": "lit",
+        "branch": "chore/agent-kit-sync-lit",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-kit-sync-lit` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lit): sync branch chore/agent-kit-sync-lit"
+      },
+      {
+        "repo": "lit",
+        "branch": "cursor/sync-def-syntax-57b4",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `cursor/sync-def-syntax-57b4` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lit): sync branch cursor/sync-def-syntax-57b4"
+      },
+      {
+        "repo": "lis",
+        "branch": "chore/agent-docs_maintainer-1780089273291",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-1780089273291` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lis): sync branch chore/agent-docs_maintainer-1780089273291"
+      },
+      {
+        "repo": "lis",
+        "branch": "chore/agent-docs_maintainer-20260530",
+        "base": "main",
+        "ahead_by": 3,
+        "reason": "branch `chore/agent-docs_maintainer-20260530` is 3 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lis): sync branch chore/agent-docs_maintainer-20260530"
+      },
+      {
+        "repo": "lis",
+        "branch": "chore/agent-kit-sync-lis",
+        "base": "main",
+        "ahead_by": 5,
+        "reason": "branch `chore/agent-kit-sync-lis` is 5 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lis): sync branch chore/agent-kit-sync-lis"
+      },
+      {
+        "repo": "lis",
+        "branch": "cursor/staging-majico-httpd-bridge-3861",
+        "base": "main",
+        "ahead_by": 3,
+        "reason": "branch `cursor/staging-majico-httpd-bridge-3861` is 3 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lis): sync branch cursor/staging-majico-httpd-bridge-3861"
+      },
+      {
+        "repo": "lis",
+        "branch": "cursor/wp-b-ph-db-3-lis-db",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `cursor/wp-b-ph-db-3-lis-db` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lis): sync branch cursor/wp-b-ph-db-3-lis-db"
+      },
+      {
+        "repo": "lis",
+        "branch": "cursor/wp-g-ph-db-ci",
+        "base": "main",
+        "ahead_by": 2,
+        "reason": "branch `cursor/wp-g-ph-db-ci` is 2 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lis): sync branch cursor/wp-g-ph-db-ci"
+      },
+      {
+        "repo": "lis",
+        "branch": "cursor/wp-h-ph-db-containers",
+        "base": "main",
+        "ahead_by": 2,
+        "reason": "branch `cursor/wp-h-ph-db-containers` is 2 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lis): sync branch cursor/wp-h-ph-db-containers"
+      },
+      {
+        "repo": "lis",
+        "branch": "cursor/wp-i-ph-db-lis-service",
+        "base": "main",
+        "ahead_by": 4,
+        "reason": "branch `cursor/wp-i-ph-db-lis-service` is 4 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lis): sync branch cursor/wp-i-ph-db-lis-service"
+      },
+      {
+        "repo": "lis",
+        "branch": "feat/ph-db-3-lis-bundle-stub",
+        "base": "main",
+        "ahead_by": 9,
+        "reason": "branch `feat/ph-db-3-lis-bundle-stub` is 9 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lis): sync branch feat/ph-db-3-lis-bundle-stub"
+      },
+      {
+        "repo": "lis",
+        "branch": "feat/ph-db-4-lidb-liorm-wire",
+        "base": "main",
+        "ahead_by": 12,
+        "reason": "branch `feat/ph-db-4-lidb-liorm-wire` is 12 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lis): sync branch feat/ph-db-4-lidb-liorm-wire"
+      },
+      {
+        "repo": "lis",
+        "branch": "feat/ph-db-4-registry-routes",
+        "base": "main",
+        "ahead_by": 7,
+        "reason": "branch `feat/ph-db-4-registry-routes` is 7 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lis): sync branch feat/ph-db-4-registry-routes"
+      },
+      {
+        "repo": "lis",
+        "branch": "feat/production-registry-docs",
+        "base": "main",
+        "ahead_by": 2,
+        "reason": "branch `feat/production-registry-docs` is 2 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(lis): sync branch feat/production-registry-docs"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "bot/nightly-summary-26507175087",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `bot/nightly-summary-26507175087` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch bot/nightly-summary-26507175087"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-autoresearch-1780082345386",
+        "base": "main",
+        "ahead_by": 10,
+        "reason": "branch `chore/agent-autoresearch-1780082345386` is 10 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-autoresearch-1780082345386"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-autoresearch-1780083426193",
+        "base": "main",
+        "ahead_by": 16,
+        "reason": "branch `chore/agent-autoresearch-1780083426193` is 16 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-autoresearch-1780083426193"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-autoresearch-1780084678496",
+        "base": "main",
+        "ahead_by": 26,
+        "reason": "branch `chore/agent-autoresearch-1780084678496` is 26 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-autoresearch-1780084678496"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-autoresearch-1780089636246-digest",
+        "base": "main",
+        "ahead_by": 36,
+        "reason": "branch `chore/agent-autoresearch-1780089636246-digest` is 36 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-autoresearch-1780089636246-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-autoresearch-1780094804882-digest",
+        "base": "main",
+        "ahead_by": 39,
+        "reason": "branch `chore/agent-autoresearch-1780094804882-digest` is 39 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-autoresearch-1780094804882-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-bench_improver-1780067501090-digest",
+        "base": "main",
+        "ahead_by": 67,
+        "reason": "branch `chore/agent-bench_improver-1780067501090-digest` is 67 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-bench_improver-1780067501090-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-bench_improver-1780102308278-digest",
+        "base": "main",
+        "ahead_by": 3,
+        "reason": "branch `chore/agent-bench_improver-1780102308278-digest` is 3 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-bench_improver-1780102308278-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-bug_fixer-72877590",
+        "base": "main",
+        "ahead_by": 3,
+        "reason": "branch `chore/agent-bug_fixer-72877590` is 3 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-bug_fixer-72877590"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-ci_maintainer-1780078740366-digest",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-ci_maintainer-1780078740366-digest` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-ci_maintainer-1780078740366-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-ci_maintainer-1780084632399",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-ci_maintainer-1780084632399` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-ci_maintainer-1780084632399"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-ci_maintainer-1780085588859",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-ci_maintainer-1780085588859` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-ci_maintainer-1780085588859"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-ci_maintainer-1780087568651-digest",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-ci_maintainer-1780087568651-digest` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-ci_maintainer-1780087568651-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-ci_maintainer-1780089266496-digest",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-ci_maintainer-1780089266496-digest` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-ci_maintainer-1780089266496-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-ci_maintainer-1780091486973",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-ci_maintainer-1780091486973` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-ci_maintainer-1780091486973"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-ci_maintainer-1780092578229-digest",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-ci_maintainer-1780092578229-digest` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-ci_maintainer-1780092578229-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-ci_maintainer-1780094509739-digest",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-ci_maintainer-1780094509739-digest` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-ci_maintainer-1780094509739-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-ci_maintainer-1780096611782-digest",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-ci_maintainer-1780096611782-digest` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-ci_maintainer-1780096611782-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-ci_maintainer-1780101265644-digest",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-ci_maintainer-1780101265644-digest` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-ci_maintainer-1780101265644-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-docs_maintainer-1780087607383-digest",
+        "base": "main",
+        "ahead_by": 27,
+        "reason": "branch `chore/agent-docs_maintainer-1780087607383-digest` is 27 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-docs_maintainer-1780087607383-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-docs_maintainer-1780089273291",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-1780089273291` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-docs_maintainer-1780089273291"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-docs_maintainer-1780089911801-digest",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-1780089911801-digest` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-docs_maintainer-1780089911801-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-docs_maintainer-1780091817122",
+        "base": "main",
+        "ahead_by": 3,
+        "reason": "branch `chore/agent-docs_maintainer-1780091817122` is 3 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-docs_maintainer-1780091817122"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-docs_maintainer-1780092584906-digest",
+        "base": "main",
+        "ahead_by": 5,
+        "reason": "branch `chore/agent-docs_maintainer-1780092584906-digest` is 5 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-docs_maintainer-1780092584906-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-docs_maintainer-1780094209488",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-1780094209488` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-docs_maintainer-1780094209488"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-docs_maintainer-20260530",
+        "base": "main",
+        "ahead_by": 8,
+        "reason": "branch `chore/agent-docs_maintainer-20260530` is 8 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-docs_maintainer-20260530"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-docs_maintainer-live-docs-audit",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-live-docs-audit` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-docs_maintainer-live-docs-audit"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-docs_maintainer-live-docs-audit-v2",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-live-docs-audit-v2` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-docs_maintainer-live-docs-audit-v2"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-docs_ux_tester-1780094509747-digest",
+        "base": "main",
+        "ahead_by": 38,
+        "reason": "branch `chore/agent-docs_ux_tester-1780094509747-digest` is 38 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-docs_ux_tester-1780094509747-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-docs_ux_tester-1780100000000-digest",
+        "base": "main",
+        "ahead_by": 21,
+        "reason": "branch `chore/agent-docs_ux_tester-1780100000000-digest` is 21 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-docs_ux_tester-1780100000000-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-docs_ux_tester-1780102681201-digest",
+        "base": "main",
+        "ahead_by": 13,
+        "reason": "branch `chore/agent-docs_ux_tester-1780102681201-digest` is 13 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-docs_ux_tester-1780102681201-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-docs_ux_tester-1780090214-digest",
+        "base": "main",
+        "ahead_by": 39,
+        "reason": "branch `chore/agent-docs_ux_tester-1780090214-digest` is 39 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-docs_ux_tester-1780090214-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-gap_explorer-2026-05-20",
+        "base": "main",
+        "ahead_by": 6,
+        "reason": "branch `chore/agent-gap_explorer-2026-05-20` is 6 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-gap_explorer-2026-05-20"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-gui_ui_tester-1780087568655-digest",
+        "base": "main",
+        "ahead_by": 34,
+        "reason": "branch `chore/agent-gui_ui_tester-1780087568655-digest` is 34 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-gui_ui_tester-1780087568655-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-gui_ui_tester-1780094509743-digest",
+        "base": "main",
+        "ahead_by": 35,
+        "reason": "branch `chore/agent-gui_ui_tester-1780094509743-digest` is 35 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-gui_ui_tester-1780094509743-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-gui_ui_tester-1780098567581-digest",
+        "base": "main",
+        "ahead_by": 11,
+        "reason": "branch `chore/agent-gui_ui_tester-1780098567581-digest` is 11 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-gui_ui_tester-1780098567581-digest"
+      },
+      {
+        "repo": "benchmarks",
+        "branch": "chore/agent-gui_ui_tester-1780104266691-digest",
+        "base": "main",
+        "ahead_by": 18,
+        "reason": "branch `chore/agent-gui_ui_tester-1780104266691-digest` is 18 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(benchmarks): sync branch chore/agent-gui_ui_tester-1780104266691-digest"
+      },
+      {
+        "repo": "roadmap",
+        "branch": "chore/agent-docs_maintainer-20260530",
+        "base": "main",
+        "ahead_by": 2,
+        "reason": "branch `chore/agent-docs_maintainer-20260530` is 2 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(roadmap): sync branch chore/agent-docs_maintainer-20260530"
+      },
+      {
+        "repo": "roadmap",
+        "branch": "chore/agent-kit-1.3.3-roadmap",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-kit-1.3.3-roadmap` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(roadmap): sync branch chore/agent-kit-1.3.3-roadmap"
+      },
+      {
+        "repo": "roadmap",
+        "branch": "chore/agent-kit-1.3.3-wp-a1",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-kit-1.3.3-wp-a1` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(roadmap): sync branch chore/agent-kit-1.3.3-wp-a1"
+      },
+      {
+        "repo": "roadmap",
+        "branch": "chore/agent-kit-sync-roadmap",
+        "base": "main",
+        "ahead_by": 3,
+        "reason": "branch `chore/agent-kit-sync-roadmap` is 3 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(roadmap): sync branch chore/agent-kit-sync-roadmap"
+      },
+      {
+        "repo": "roadmap",
+        "branch": "chore/ph-db-status-refresh",
+        "base": "main",
+        "ahead_by": 2,
+        "reason": "branch `chore/ph-db-status-refresh` is 2 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(roadmap): sync branch chore/ph-db-status-refresh"
+      },
+      {
+        "repo": "roadmap",
+        "branch": "cursor/agent-kit-local-ci-skill-54aa",
+        "base": "main",
+        "ahead_by": 4,
+        "reason": "branch `cursor/agent-kit-local-ci-skill-54aa` is 4 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(roadmap): sync branch cursor/agent-kit-local-ci-skill-54aa"
+      },
+      {
+        "repo": "roadmap",
+        "branch": "cursor/fix-refresh-workflow-c81e",
+        "base": "main",
+        "ahead_by": 2,
+        "reason": "branch `cursor/fix-refresh-workflow-c81e` is 2 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(roadmap): sync branch cursor/fix-refresh-workflow-c81e"
+      },
+      {
+        "repo": "roadmap",
+        "branch": "cursor/org-wide-li-only-5b3a",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `cursor/org-wide-li-only-5b3a` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(roadmap): sync branch cursor/org-wide-li-only-5b3a"
+      },
+      {
+        "repo": "roadmap",
+        "branch": "cursor/vision-status-2026-05-27-ce9b",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `cursor/vision-status-2026-05-27-ce9b` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(roadmap): sync branch cursor/vision-status-2026-05-27-ce9b"
+      },
+      {
+        "repo": "roadmap",
+        "branch": "docs/httpd-canonical-wp-b4",
+        "base": "main",
+        "ahead_by": 2,
+        "reason": "branch `docs/httpd-canonical-wp-b4` is 2 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(roadmap): sync branch docs/httpd-canonical-wp-b4"
+      },
+      {
+        "repo": "roadmap",
+        "branch": "docs/overview-lic-wp-a5",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `docs/overview-lic-wp-a5` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(roadmap): sync branch docs/overview-lic-wp-a5"
+      },
+      {
+        "repo": "roadmap",
+        "branch": "feat/docs-hpc-ai-north-star",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `feat/docs-hpc-ai-north-star` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(roadmap): sync branch feat/docs-hpc-ai-north-star"
+      },
+      {
+        "repo": "roadmap",
+        "branch": "feat/ecosystem-overview-stats",
+        "base": "main",
+        "ahead_by": 3,
+        "reason": "branch `feat/ecosystem-overview-stats` is 3 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(roadmap): sync branch feat/ecosystem-overview-stats"
+      },
+      {
+        "repo": "roadmap",
+        "branch": "feat/lidb-native-plan",
+        "base": "main",
+        "ahead_by": 2,
+        "reason": "branch `feat/lidb-native-plan` is 2 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(roadmap): sync branch feat/lidb-native-plan"
+      },
+      {
+        "repo": "roadmap",
+        "branch": "feat/liq-token-efficiency-xlink",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `feat/liq-token-efficiency-xlink` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(roadmap): sync branch feat/liq-token-efficiency-xlink"
+      },
+      {
+        "repo": "roadmap",
+        "branch": "feat/org-ci-branch-protection",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `feat/org-ci-branch-protection` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(roadmap): sync branch feat/org-ci-branch-protection"
+      },
+      {
+        "repo": "roadmap",
+        "branch": "feat/ph-db-0-lidb-proposal",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `feat/ph-db-0-lidb-proposal` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(roadmap): sync branch feat/ph-db-0-lidb-proposal"
+      },
+      {
+        "repo": "roadmap",
+        "branch": "feat/ph-db-roadmap-gaps",
+        "base": "main",
+        "ahead_by": 2,
+        "reason": "branch `feat/ph-db-roadmap-gaps` is 2 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(roadmap): sync branch feat/ph-db-roadmap-gaps"
+      },
+      {
+        "repo": "li-net",
+        "branch": "chore/agent-docs_maintainer-1780089273291",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-1780089273291` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-net): sync branch chore/agent-docs_maintainer-1780089273291"
+      },
+      {
+        "repo": "li-net",
+        "branch": "chore/agent-docs_maintainer-20260530",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-20260530` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-net): sync branch chore/agent-docs_maintainer-20260530"
+      },
+      {
+        "repo": "li-net",
+        "branch": "chore/agent-kit-sync-li-net",
+        "base": "main",
+        "ahead_by": 3,
+        "reason": "branch `chore/agent-kit-sync-li-net` is 3 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-net): sync branch chore/agent-kit-sync-li-net"
+      },
+      {
+        "repo": "li-net",
+        "branch": "chore/github-description-seo",
+        "base": "main",
+        "ahead_by": 3,
+        "reason": "branch `chore/github-description-seo` is 3 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-net): sync branch chore/github-description-seo"
+      },
+      {
+        "repo": "li-net",
+        "branch": "ci/pin-lic-main",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `ci/pin-lic-main` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-net): sync branch ci/pin-lic-main"
+      },
+      {
+        "repo": "li-net",
+        "branch": "cursor/sync-def-syntax-57b4",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `cursor/sync-def-syntax-57b4` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-net): sync branch cursor/sync-def-syntax-57b4"
+      },
+      {
+        "repo": "li-httpd",
+        "branch": "chore/agent-docs_maintainer-1780089273291",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-1780089273291` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-httpd): sync branch chore/agent-docs_maintainer-1780089273291"
+      },
+      {
+        "repo": "li-httpd",
+        "branch": "chore/agent-docs_maintainer-20260530",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-20260530` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-httpd): sync branch chore/agent-docs_maintainer-20260530"
+      },
+      {
+        "repo": "li-httpd",
+        "branch": "chore/agent-kit-sync-li-httpd",
+        "base": "main",
+        "ahead_by": 3,
+        "reason": "branch `chore/agent-kit-sync-li-httpd` is 3 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-httpd): sync branch chore/agent-kit-sync-li-httpd"
+      },
+      {
+        "repo": "li-httpd",
+        "branch": "chore/github-description-seo",
+        "base": "main",
+        "ahead_by": 3,
+        "reason": "branch `chore/github-description-seo` is 3 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-httpd): sync branch chore/github-description-seo"
+      },
+      {
+        "repo": "li-httpd",
+        "branch": "ci/pin-lic-main",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `ci/pin-lic-main` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-httpd): sync branch ci/pin-lic-main"
+      },
+      {
+        "repo": "li-httpd",
+        "branch": "cursor/httpd-plan-continue",
+        "base": "main",
+        "ahead_by": 5,
+        "reason": "branch `cursor/httpd-plan-continue` is 5 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-httpd): sync branch cursor/httpd-plan-continue"
+      },
+      {
+        "repo": "li-httpd",
+        "branch": "cursor/sync-def-syntax-57b4",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `cursor/sync-def-syntax-57b4` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-httpd): sync branch cursor/sync-def-syntax-57b4"
+      },
+      {
+        "repo": "li-std-core",
+        "branch": "chore/agent-docs_maintainer-1780089273291",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-1780089273291` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-std-core): sync branch chore/agent-docs_maintainer-1780089273291"
+      },
+      {
+        "repo": "li-std-core",
+        "branch": "chore/agent-docs_maintainer-20260530",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-20260530` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-std-core): sync branch chore/agent-docs_maintainer-20260530"
+      },
+      {
+        "repo": "li-std-core",
+        "branch": "chore/agent-kit-sync-li-std-core",
+        "base": "main",
+        "ahead_by": 3,
+        "reason": "branch `chore/agent-kit-sync-li-std-core` is 3 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-std-core): sync branch chore/agent-kit-sync-li-std-core"
+      },
+      {
+        "repo": "li-std-core",
+        "branch": "chore/github-description-seo",
+        "base": "main",
+        "ahead_by": 3,
+        "reason": "branch `chore/github-description-seo` is 3 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-std-core): sync branch chore/github-description-seo"
+      },
+      {
+        "repo": "li-std-core",
+        "branch": "ci/pin-lic-main",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `ci/pin-lic-main` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-std-core): sync branch ci/pin-lic-main"
+      },
+      {
+        "repo": "li-std-core",
+        "branch": "cursor/sync-def-syntax-57b4",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `cursor/sync-def-syntax-57b4` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-std-core): sync branch cursor/sync-def-syntax-57b4"
+      },
+      {
+        "repo": "li-std-math",
+        "branch": "chore/agent-docs_maintainer-1780089273291",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-1780089273291` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-std-math): sync branch chore/agent-docs_maintainer-1780089273291"
+      },
+      {
+        "repo": "li-std-math",
+        "branch": "chore/agent-docs_maintainer-20260530",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-20260530` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-std-math): sync branch chore/agent-docs_maintainer-20260530"
+      },
+      {
+        "repo": "li-std-math",
+        "branch": "chore/agent-kit-sync-li-std-math",
+        "base": "main",
+        "ahead_by": 3,
+        "reason": "branch `chore/agent-kit-sync-li-std-math` is 3 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-std-math): sync branch chore/agent-kit-sync-li-std-math"
+      },
+      {
+        "repo": "li-std-math",
+        "branch": "chore/github-description-seo",
+        "base": "main",
+        "ahead_by": 3,
+        "reason": "branch `chore/github-description-seo` is 3 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-std-math): sync branch chore/github-description-seo"
+      },
+      {
+        "repo": "li-std-math",
+        "branch": "ci/pin-lic-main",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `ci/pin-lic-main` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-std-math): sync branch ci/pin-lic-main"
+      },
+      {
+        "repo": "li-std-math",
+        "branch": "cursor/sync-def-syntax-57b4",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `cursor/sync-def-syntax-57b4` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-std-math): sync branch cursor/sync-def-syntax-57b4"
+      },
+      {
+        "repo": "li-demo",
+        "branch": "chore/agent-docs_maintainer-20260530",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-20260530` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-demo): sync branch chore/agent-docs_maintainer-20260530"
+      },
+      {
+        "repo": "li-demo",
+        "branch": "chore/agent-docs_maintainer-77703830",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-77703830` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-demo): sync branch chore/agent-docs_maintainer-77703830"
+      },
+      {
+        "repo": "li-demo",
+        "branch": "chore/agent-docs_maintainer-82029732",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-82029732` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-demo): sync branch chore/agent-docs_maintainer-82029732"
+      },
+      {
+        "repo": "li-demo",
+        "branch": "chore/agent-docs_maintainer-83095358",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-83095358` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-demo): sync branch chore/agent-docs_maintainer-83095358"
+      },
+      {
+        "repo": "li-demo",
+        "branch": "chore/agent-docs_maintainer-handbook-link",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `chore/agent-docs_maintainer-handbook-link` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-demo): sync branch chore/agent-docs_maintainer-handbook-link"
+      },
+      {
+        "repo": "li-demo",
+        "branch": "chore/agent-kit-sync-li-demo",
+        "base": "main",
+        "ahead_by": 3,
+        "reason": "branch `chore/agent-kit-sync-li-demo` is 3 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-demo): sync branch chore/agent-kit-sync-li-demo"
+      },
+      {
+        "repo": "li-demo",
+        "branch": "chore/github-description-seo",
+        "base": "main",
+        "ahead_by": 3,
+        "reason": "branch `chore/github-description-seo` is 3 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-demo): sync branch chore/github-description-seo"
+      },
+      {
+        "repo": "li-demo",
+        "branch": "ci/pin-lic-main",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `ci/pin-lic-main` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-demo): sync branch ci/pin-lic-main"
+      },
+      {
+        "repo": "li-demo",
+        "branch": "cursor/sync-def-syntax-57b4",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `cursor/sync-def-syntax-57b4` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-demo): sync branch cursor/sync-def-syntax-57b4"
+      },
+      {
+        "repo": "li-language",
+        "branch": "chore/agent-kit-sync-li-language",
+        "base": "main",
+        "ahead_by": 5,
+        "reason": "branch `chore/agent-kit-sync-li-language` is 5 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-language): sync branch chore/agent-kit-sync-li-language"
+      },
+      {
+        "repo": "li-language",
+        "branch": "docs/archived-use-lic",
+        "base": "main",
+        "ahead_by": 1,
+        "reason": "branch `docs/archived-use-lic` is 1 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-language): sync branch docs/archived-use-lic"
+      },
+      {
+        "repo": "li-language",
+        "branch": "feat/composable-by-default",
+        "base": "main",
+        "ahead_by": 40,
+        "reason": "branch `feat/composable-by-default` is 40 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-language): sync branch feat/composable-by-default"
+      },
+      {
+        "repo": "li-language",
+        "branch": "feat/goal-scaffold-v1-docs",
+        "base": "main",
+        "ahead_by": 16,
+        "reason": "branch `feat/goal-scaffold-v1-docs` is 16 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-language): sync branch feat/goal-scaffold-v1-docs"
+      },
+      {
+        "repo": "li-language",
+        "branch": "feat/hpc-competitive-intelligence",
+        "base": "main",
+        "ahead_by": 38,
+        "reason": "branch `feat/hpc-competitive-intelligence` is 38 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-language): sync branch feat/hpc-competitive-intelligence"
+      },
+      {
+        "repo": "li-language",
+        "branch": "feat/phase-2f-discharge-corpus",
+        "base": "main",
+        "ahead_by": 22,
+        "reason": "branch `feat/phase-2f-discharge-corpus` is 22 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-language): sync branch feat/phase-2f-discharge-corpus"
+      },
+      {
+        "repo": "li-language",
+        "branch": "feat/tier2-physics-suite-expansion",
+        "base": "main",
+        "ahead_by": 47,
+        "reason": "branch `feat/tier2-physics-suite-expansion` is 47 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-language): sync branch feat/tier2-physics-suite-expansion"
+      },
+      {
+        "repo": "li-language",
+        "branch": "feat/vision-llm-agent-diagnostics",
+        "base": "main",
+        "ahead_by": 42,
+        "reason": "branch `feat/vision-llm-agent-diagnostics` is 42 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-language): sync branch feat/vision-llm-agent-diagnostics"
+      },
+      {
+        "repo": "li-language",
+        "branch": "fix/ci-dev-pr3-sync",
+        "base": "main",
+        "ahead_by": 45,
+        "reason": "branch `fix/ci-dev-pr3-sync` is 45 commit(s) ahead of `main` with no open PR",
+        "suggested_title": "chore(li-language): sync branch fix/ci-dev-pr3-sync"
+      }
+    ],
     "prs_recommended_close": []
   },
   "ci_bug_triage": {
-    "generated_at": "2026-05-30T00:05Z",
+    "generated_at": "2026-05-30T02:05Z",
     "summary": {
       "local_ci_failures": 1,
       "bug_issues": 0,
@@ -2920,99 +5564,9 @@
       }
     ]
   },
-  "security_cwe_audit": {
-    "generated_at": "2026-05-29T23:59Z",
-    "catalog_path": "/home/s4il0r/Documents/Cursor/li-langverse/lic/security/cve-catalog.json",
-    "summary": {
-      "catalog_entries": 39,
-      "catalog_gaps": 0,
-      "security_test_files": 16,
-      "repos_without_security_workflow": 12
-    },
-    "catalog_gaps": [],
-    "security_tests": [
-      "li-tests/security/deep_indent.li",
-      "li-tests/security/deeply_nested_calls.li",
-      "li-tests/security/empty.li",
-      "li-tests/security/integer_literal_flood.li",
-      "li-tests/security/invalid_utf8_strings.li",
-      "li-tests/security/long_line_no_newline.li",
-      "li-tests/security/many_tokens.li",
-      "li-tests/security/nested_parens.li",
-      "li-tests/security/pathological_generics.li",
-      "li-tests/security/stdlib_abuse/array_dyn_index.li",
-      "li-tests/security/stdlib_abuse/array_index_oob.li",
-      "li-tests/security/stdlib_abuse/array_negative_index.li",
-      "li-tests/security/stdlib_abuse/hash_flood_design.li",
-      "li-tests/security/truncated_proc.li",
-      "li-tests/security/unclosed_paren.li",
-      "li-tests/security/unclosed_string.li"
-    ],
-    "repos": [
-      {
-        "repo": "lic",
-        "security_workflow": false,
-        "action": "add cve-catalog.yml or security gate workflow"
-      },
-      {
-        "repo": "lip",
-        "security_workflow": false,
-        "action": "add cve-catalog.yml or security gate workflow"
-      },
-      {
-        "repo": "lit",
-        "security_workflow": false,
-        "action": "add cve-catalog.yml or security gate workflow"
-      },
-      {
-        "repo": "lis",
-        "security_workflow": false,
-        "action": "add cve-catalog.yml or security gate workflow"
-      },
-      {
-        "repo": "benchmarks",
-        "security_workflow": false,
-        "action": "add cve-catalog.yml or security gate workflow"
-      },
-      {
-        "repo": "roadmap",
-        "security_workflow": false,
-        "action": "add cve-catalog.yml or security gate workflow"
-      },
-      {
-        "repo": "li-net",
-        "security_workflow": false,
-        "action": "add cve-catalog.yml or security gate workflow"
-      },
-      {
-        "repo": "li-httpd",
-        "security_workflow": false,
-        "action": "add cve-catalog.yml or security gate workflow"
-      },
-      {
-        "repo": "li-std-core",
-        "security_workflow": false,
-        "action": "add cve-catalog.yml or security gate workflow"
-      },
-      {
-        "repo": "li-std-math",
-        "security_workflow": false,
-        "action": "add cve-catalog.yml or security gate workflow"
-      },
-      {
-        "repo": "li-demo",
-        "security_workflow": false,
-        "action": "add cve-catalog.yml or security gate workflow"
-      },
-      {
-        "repo": "li-language",
-        "security_workflow": false,
-        "action": "add cve-catalog.yml or security gate workflow"
-      }
-    ]
-  },
+  "security_cwe_audit": null,
   "cwe_feed_delta": {
-    "generated_at": "2026-05-30T00:51Z",
+    "generated_at": "2026-05-30T03:49Z",
     "new_cwes": [],
     "missing_in_catalog": [
       "CWE-79",
@@ -3099,7 +5653,7 @@
     ]
   },
   "workspace_dirty_sweep": {
-    "generated_at": "2026-05-30T00:51Z",
+    "generated_at": "2026-05-30T03:49Z",
     "ecosystem_root": "/home/s4il0r/Documents/Cursor/li-langverse",
     "dirty_count": 2,
     "dirty_repos": [
@@ -3107,20 +5661,18 @@
         "path": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
         "repo": "lic",
         "org": "li-langverse",
-        "branch": "chore/agent-bench_improver-matmul-naive-at-2026-05-29",
-        "changed_files": 11,
+        "branch": "cursor/httpd-plan-continue",
+        "changed_files": 9,
         "safe_files": [
-          "enchmarks/tier5_http/drivers/http_attacks.py",
-          "benchmarks/tier5_http/drivers/http_weaponized.py",
-          "benchmarks/tier5_http/exploits/client_max_body_size.toml",
+          "enchmarks/harness/exploit_http.py",
           "benchmarks/tier5_http/exploits/dns_resolver_limits.toml",
-          "benchmarks/tier5_http/exploits/h2_rapid_reset.toml",
           "benchmarks/tier5_http/third_party/nginx",
           "data/goal-directed-agents/snapshot.json",
           "data/goal-directed-agents/watch.log",
-          "data/swarm-gap-registry/registry.yaml",
+          "docs/superpowers/plans/2026-05-16-li-httpd-plan.md",
           "logs/access.log",
-          "scripts/check-tier5-mitigation-exploits-complete.sh"
+          "scripts/check-tier5-mitigation-exploits-complete.sh",
+          "benchmarks/tier5_http/drivers/logs/"
         ],
         "test_commands": [
           "./li-tests/run_all.sh"
@@ -3130,32 +5682,20 @@
         "path": "/home/s4il0r/Documents/Cursor/li-langverse/benchmarks",
         "repo": "benchmarks",
         "org": "li-langverse",
-        "branch": "chore/agent-docs_ux_tester-1780100000000-digest",
-        "changed_files": 1,
+        "branch": "chore/agent-gui_ui_tester-1780111959565-digest",
+        "changed_files": 5,
         "safe_files": [
-          "ata/latest/local-ci-results.json"
+          "ashboard-next/app/proofs/page.tsx",
+          "dashboard-next/lib/proof-posture.ts",
+          "data/latest/proof-posture.json",
+          "scripts/build-proof-posture.py",
+          "data/runs/pr_reviewer-1780112947533.md"
         ],
         "test_commands": []
       }
     ]
   },
-  "local_ci_results": {
-    "runs": [
-      {
-        "key": "lic#439",
-        "repo": "lic",
-        "number": 439,
-        "profile": "workflows",
-        "ok": false,
-        "exit_code": 127,
-        "started_at": "2026-05-30T00:49:41Z",
-        "finished_at": "2026-05-30T00:49:41Z",
-        "summary": "==> li-local-ci run profile=lic-host repo=/tmp/li-local-ci-pr.j5zg12 mode=host /home/s4il0r/Documents/Cursor/li-langverse/li-local-ci/profiles/lic-host.sh: line 12: ./scripts/ci.sh: No such file or directory ==> FAIL profile=lic-host (0s) exit=127 "
-      }
-    ],
-    "generated_at": "2026-05-30T00:49:41Z",
-    "sweep_at": "2026-05-30T00:49Z"
-  },
+  "local_ci_results": null,
   "recommended_agents": [
     {
       "agent": "proof_gap_researcher",
@@ -3187,6 +5727,10 @@
       "reason": "10 repos without live docs"
     },
     {
+      "agent": "pr_branch_opener",
+      "reason": "164 branch(es) pushed without open PR"
+    },
+    {
       "agent": "bug_fixer",
       "reason": "1 CI/bug item(s) in work queue (local-ci + issues + GHA red)"
     },
@@ -3196,7 +5740,7 @@
     },
     {
       "agent": "security_auditor",
-      "reason": "CWE/catalog gaps=0, Top25 missing in catalog=19, repos missing security workflow=12"
+      "reason": "CWE/catalog gaps=0, Top25 missing in catalog=19, repos missing security workflow=0"
     },
     {
       "agent": "issue_hygiene",
@@ -3516,7 +6060,7 @@
   ],
   "agent_pr_deliverable_gate": null,
   "agent_deliverable_gaps": {
-    "plan_open_items": 64,
+    "plan_open_items": 166,
     "incomplete_runs": 0,
     "agent_prs_blocked": 0,
     "numerics_without_evidence": 0,
@@ -3526,7 +6070,7 @@
   "agent_incomplete_runs": [],
   "agent_pr_deliverable_failures": [],
   "org_roadmap": {
-    "loaded_at": "2026-05-30T00:51Z",
+    "loaded_at": "2026-05-30T03:49Z",
     "vision_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/vision-and-roadmap.md",
     "engineering_standards_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/engineering-standards.md",
     "master_plan_url": "https://github.com/li-langverse/lic/blob/main/docs/superpowers/plans/2026-05-14-li-master-plan.md",
@@ -3538,7 +6082,7 @@
       "blazingly-fast"
     ],
     "current_ph": "Phase 2i — Math / linalg surface — **partial:** **2i-a/c** (#148); **2i-b** `norm`, `sum`/`dot`, `reductions/`, same-len",
-    "master_plan_open_items": 64,
+    "master_plan_open_items": 166,
     "roadmap_repo": "/home/s4il0r/Documents/Cursor/li-langverse/roadmap",
     "vision_local": "/home/s4il0r/Documents/Cursor/li-langverse/roadmap/docs/ecosystem/vision-and-roadmap.md"
   },
@@ -3749,7 +6293,6 @@
     "sources": [
       "ci_bug_triage",
       "ecosystem_explorer.missing_std",
-      "security_cwe_audit",
       "agent_handoffs"
     ]
   },
@@ -3768,7 +6311,7 @@
     "research_lane_enabled": true,
     "implement_lane_enabled": true,
     "last_research_tick_at": "2026-05-29T23:05:48.793Z",
-    "last_implement_tick_at": "2026-05-29T21:24:52.074Z"
+    "last_implement_tick_at": "2026-05-30T02:08:11.888Z"
   },
   "research_goals_status": [
     {
@@ -3946,7 +6489,7 @@
       "agent": "gui_ux_tester",
       "priority": 5,
       "last_run_at": "2026-05-28T03:31:46.801Z",
-      "eligible": false
+      "eligible": true
     },
     {
       "goal_id": "provability_holes",
@@ -3984,6 +6527,6 @@
     "missing_north_star_fit": [],
     "invalid_north_star_fit": []
   },
-  "swarm_enriched_at": "2026-05-30T00:51:20.611Z",
-  "swarm_recommendations_merged_at": "2026-05-30T00:51:20.611Z"
+  "swarm_enriched_at": "2026-05-30T03:49:34.071Z",
+  "swarm_recommendations_merged_at": "2026-05-30T03:49:34.071Z"
 }
