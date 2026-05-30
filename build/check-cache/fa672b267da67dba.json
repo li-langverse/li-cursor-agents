@@ -1,0 +1,5 @@
+v=1
+exit=0
+content=da83bb31a3290ad4
+---
+{"version":1,"schema":"diagnostic-v1","tool":"lic","command":"check","ok":true,"diagnostics":[{"severity":"warning","file":"/mnt/c/Users/Julian/Documents/Programming/li/lic/packages/li-sim-scientific/src/lib.li","line":1,"column":1,"offset":0,"code":"W0401","message":"unused import `sim`","fix_hint":"remove the import or reference it explicitly"},{"severity":"warning","file":"/mnt/c/Users/Julian/Documents/Programming/li/lic/packages/li-sim-scientific/src/lib.li","line":1,"column":1,"offset":0,"code":"W0401","message":"unused import `physics.particles`","fix_hint":"remove the import or reference it explicitly"},{"severity":"warning","file":"/mnt/c/Users/Julian/Documents/Programming/li/lic/packages/li-sim-scientific/src/lib.li","line":1,"column":1,"offset":0,"code":"W0401","message":"unused import `physics.rigid`","fix_hint":"remove the import or reference it explicitly"}]}
