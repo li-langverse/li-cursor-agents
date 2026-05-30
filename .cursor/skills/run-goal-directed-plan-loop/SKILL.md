@@ -7,6 +7,7 @@ description: >-
   plan-loop.py, bounded --max iterations, or continuing batches until 08:00.
 ---
 
+> **Markdown sprint plans (phase table + Completion gate):** use skill **`run-goal-directed-loop`** and `scripts/goal-directed-loop.sh` instead of YAML `plan-loop.py` when the goal is a single `.md` file.
 # Goal-directed plan loop (li-cursor-agents)
 
 Drive a **YAML todo plan** with a **reusable registry agent** (`code_implementer` by default), not a one-off agent id. Each iteration passes the todo slice as `--goal-file` / `LI_AGENT_GOAL`.

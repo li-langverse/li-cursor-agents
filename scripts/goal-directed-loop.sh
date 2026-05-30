@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# Reusable goal-directed loop: run any registry agent with a goal until success or --max.
+# Reusable goal-directed loop: run a registry agent against a plan until the
+# ## Completion gate passes (bash block + phase status table in the goal file).
 #
 # Usage:
-#   LI_GOAL_LOOP_UNTIL_COMPLETE=1 ./scripts/goal-directed-loop.sh --goal-file goal.md --max 12
-#   ./scripts/goal-directed-loop.sh --goal-file goal.md --until-complete --while-pr-open --max 12
+#   ./scripts/goal-directed-loop.sh --goal-file goal.md --max 12
+#   ./scripts/goal-directed-loop.sh --goal-file goal.md --until-local 08:00
+#   ./scripts/goal-directed-loop.sh --goal-file goal.md --once
 #
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -16,8 +18,6 @@ BENCHMARKS="${BENCHMARKS_ROOT:-}"
 ONCE=0
 MAX=0
 DRY_RUN=0
-UNTIL_COMPLETE="${LI_GOAL_LOOP_UNTIL_COMPLETE:-0}"
-WHILE_PR_OPEN="${LI_GOAL_LOOP_WHILE_PR_OPEN:-0}"
 UNTIL_LOCAL="${LI_GOAL_LOOP_UNTIL_LOCAL:-}"
 GOAL_LOOP_TZ="${LI_GOAL_LOOP_TZ:-Europe/Berlin}"
 DEADLINE_TS=""
@@ -35,29 +35,22 @@ while [[ $# -gt 0 ]]; do
     --once) ONCE=1; shift ;;
     --max) MAX="$2"; shift 2 ;;
     --dry-run) DRY_RUN=1; shift ;;
-    --until-complete) UNTIL_COMPLETE=1; shift ;;
-    --while-pr-open) WHILE_PR_OPEN=1; shift ;;
     --until-local) UNTIL_LOCAL="$2"; shift 2 ;;
     --sleep) SLEEP_SEC="$2"; shift 2 ;;
     -h|--help)
-      sed -n '2,22p' "$0"
+      sed -n '2,14p' "$0"
       exit 0
       ;;
     *) echo "unknown arg: $1" >&2; exit 1 ;;
   esac
 done
 
-# Multi-iteration runs: keep going until deliverable complete (not stop on SDK exit 0 + premature).
-if [[ "$MAX" -gt 1 && "$ONCE" != "1" && "$UNTIL_COMPLETE" != "1" && -z "${LI_GOAL_LOOP_UNTIL_COMPLETE+set}" ]]; then
-  UNTIL_COMPLETE=1
-fi
-
 if [[ -z "$GOAL_FILE" && -z "$GOAL_INLINE" && -z "${LI_AGENT_GOAL:-}" && -z "${LI_AGENT_EXTRA_INSTRUCTION:-}" ]]; then
   echo "goal-directed-loop: pass --goal, --goal-file, or LI_AGENT_GOAL" >&2
   exit 1
 fi
 
-if [[ ! -f "$ROOT/dist/cli/run-agent.js" ]]; then
+if [[ ! -f "$ROOT/dist/cli/run-agent.js" || ! -f "$ROOT/dist/cli/goal-completion-gate.js" ]]; then
   npm ci --prefix "$ROOT" >/dev/null 2>&1 || true
   npm run build --prefix "$ROOT"
 fi
@@ -92,9 +85,42 @@ RUN_ARGS=(node "$ROOT/dist/cli/run-agent.js" --agent "$AGENT" --cwd "$CWD" "${GO
 [[ -n "$BENCHMARKS" ]] && RUN_ARGS+=(--benchmarks "$BENCHMARKS")
 [[ "$DRY_RUN" == "1" ]] && RUN_ARGS+=(--dry-run)
 
+resolve_goal_file_for_gate() {
+  if [[ -z "$GOAL_FILE" ]]; then
+    echo ""
+    return
+  fi
+  if [[ "$GOAL_FILE" = /* ]]; then
+    echo "$GOAL_FILE"
+    return
+  fi
+  local from_root="$ROOT/$GOAL_FILE"
+  if [[ -f "$from_root" ]]; then
+    echo "$from_root"
+    return
+  fi
+  local dir base
+  dir="$(dirname "$GOAL_FILE")"
+  base="$(basename "$GOAL_FILE")"
+  if [[ -f "$CWD/$GOAL_FILE" ]]; then
+    echo "$(cd "$CWD" && cd "$dir" 2>/dev/null && pwd)/$base"
+    return
+  fi
+  echo "$from_root"
+}
+
+GATE_GOAL_FILE="$(resolve_goal_file_for_gate)"
+
+check_goal_completion_gate() {
+  if [[ -z "$GATE_GOAL_FILE" || ! -f "$GATE_GOAL_FILE" ]]; then
+    return 1
+  fi
+  node "$ROOT/dist/cli/goal-completion-gate.js" --goal-file "$GATE_GOAL_FILE" --cwd "$CWD"
+}
+
 record_gaps_from_run() {
   mkdir -p "$(dirname "$LAST_GAPS_FILE")"
-  node --input-type=module -e "
+  ROOT="$ROOT" node --input-type=module -e "
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 const dir = join(process.env.ROOT, 'data/runs');
@@ -108,30 +134,8 @@ for (const f of readdirSync(dir).filter((x) => x.endsWith('.json'))) {
 if (!best) process.exit(0);
 const raw = JSON.parse(readFileSync(best, 'utf8'));
 const gaps = raw.completion?.gaps ?? [];
-process.stdout.write(gaps.join('\n'));
+process.stdout.write(gaps.join('\\n'));
 " 2>/dev/null >"$LAST_GAPS_FILE" || true
-}
-
-sprint_pr_still_open() {
-  local num="${LI_GOAL_LOOP_SPRINT_PR:-}"
-  [[ -z "$num" || -z "$WORKFLOW_REPO" ]] && return 1
-  if ! command -v gh >/dev/null 2>&1; then
-    return 1
-  fi
-  local state
-  state="$(gh pr view "$num" --repo "li-langverse/$WORKFLOW_REPO" --json state -q .state 2>/dev/null || true)"
-  [[ "$state" == "OPEN" ]]
-}
-
-gh_open_pr_count() {
-  local repo_slug="$1"
-  if ! command -v gh >/dev/null 2>&1; then
-    echo 0
-    return
-  fi
-  gh pr list --repo "li-langverse/$repo_slug" --state open --limit 50 --json number 2>/dev/null \
-    | node -e "let n=0; try{const j=JSON.parse(require('fs').readFileSync(0,'utf8')); n=Array.isArray(j)?j.length:0;}catch{} process.stdout.write(String(n));" \
-    || echo 0
 }
 
 deadline_epoch() {
@@ -154,50 +158,36 @@ goal_loop_past_deadline() {
   [[ -z "$DEADLINE_TS" ]] && return 1
   local now
   now="$(date +%s)"
-  if [[ "$now" -ge "$DEADLINE_TS" ]]; then
-    return 0
-  fi
+  [[ "$now" -ge "$DEADLINE_TS" ]] && return 0
   local remaining=$((DEADLINE_TS - now))
-  if [[ "$remaining" -lt 300 ]]; then
-    return 0
-  fi
+  [[ "$remaining" -lt 300 ]] && return 0
   return 1
-}
-
-world_studio_plan_pending() {
-  local plan="$CWD/docs/superpowers/plans/2026-05-29-world-studio-master-plan-loop.md"
-  [[ -f "$plan" ]] || return 1
-  grep -qE '^\s+status: pending' "$plan" 2>/dev/null
-}
-
-audit_p0_remaining() {
-  local audit="$CWD/scripts/audit-dashboard-gaps.py"
-  [[ -f "$audit" ]] || return 1
-  if (cd "$CWD" && python3 "$audit" >/dev/null 2>&1); then
-    return 1
-  fi
-  return 0
 }
 
 if [[ -n "$UNTIL_LOCAL" ]]; then
   export TZ="$GOAL_LOOP_TZ"
   DEADLINE_TS="$(deadline_epoch "$UNTIL_LOCAL")"
   echo "goal-directed-loop: run until local ${UNTIL_LOCAL} (${GOAL_LOOP_TZ}) -> $(TZ="$GOAL_LOOP_TZ" date -d "@${DEADLINE_TS}" -Iseconds 2>/dev/null || date -d "@${DEADLINE_TS}")"
-  if [[ "$MAX" -gt 0 && "$MAX" -lt 50 ]]; then
-  echo "goal-directed-loop: --until-local active; iteration cap raised (was max=$MAX)"
-  fi
+fi
+
+if [[ "$ONCE" != "1" && "$MAX" -le 0 ]]; then
   MAX=999
 fi
 
 iter=0
 while :; do
-  if goal_loop_past_deadline; then
-    echo "goal-directed-loop: local deadline ${UNTIL_LOCAL} reached ($(date -Iseconds)) — stop"
+  if check_goal_completion_gate; then
+    echo "goal-directed-loop: completion gate passed (exit 0)"
     exit 0
   fi
 
+  if goal_loop_past_deadline; then
+    echo "goal-directed-loop: local deadline ${UNTIL_LOCAL} reached ($(date -Iseconds)) — exit 1" >&2
+    exit 1
+  fi
+
   iter=$((iter + 1))
-  echo "==> goal-directed-loop iteration $iter agent=$AGENT repo=${WORKFLOW_REPO:-â€”} (live output below)"
+  echo "==> goal-directed-loop iteration $iter agent=$AGENT repo=${WORKFLOW_REPO:-—} (live output below)"
 
   if [[ "$iter" -gt 1 ]]; then
     gaps_tail=""
@@ -205,19 +195,19 @@ while :; do
     export LI_AGENT_EXTRA_INSTRUCTION="$(cat <<EOF
 ## Goal-directed loop iteration $iter
 
-Continue the same sprint goal. Babysit open PR(s): fix CI, resolve review threads, push scoped fixes.
-Update existing PRs â€” do not open duplicates for the same branch.
+Continue the full plan in the goal file (all phases through the Completion gate).
+Update the phase status table; mark | **DONE** | only when a phase is truly complete.
+Do not open duplicate PRs for the same branch.
 
 Prior completion gaps:
 ${gaps_tail:-_(none recorded)_}
 EOF
 )"
+  else
+    unset LI_AGENT_EXTRA_INSTRUCTION || true
   fi
 
-  export LI_GOAL_LOOP_STRICT_EXIT=0
-  if [[ "$UNTIL_COMPLETE" == "1" && "$ONCE" != "1" ]]; then
-    export LI_GOAL_LOOP_STRICT_EXIT=1
-  fi
+  export LI_GOAL_LOOP_STRICT_EXIT=1
 
   set +e
   ROOT="$ROOT" "${RUN_ARGS[@]}"
@@ -225,54 +215,23 @@ EOF
   set -e
   record_gaps_from_run
 
-  if [[ "$code" -eq 0 ]]; then
-    if sprint_pr_still_open; then
-      echo "goal-directed-loop: sprint PR #${LI_GOAL_LOOP_SPRINT_PR} still open — continuing (babysit)"
-      code=2
-    fi
-    if [[ "$code" -eq 0 && "$WHILE_PR_OPEN" == "1" && -n "$WORKFLOW_REPO" ]]; then
-      open_n="$(gh_open_pr_count "$WORKFLOW_REPO")"
-      if [[ "$open_n" -gt 0 ]]; then
-        echo "goal-directed-loop: $open_n open PR(s) on li-langverse/$WORKFLOW_REPO â€” continuing (babysit)"
-        code=2
-      fi
-    fi
-    if [[ "$code" -eq 0 && "$WORKFLOW_REPO" == "benchmarks" && -f "$CWD/scripts/audit-dashboard-gaps.py" ]]; then
-      if audit_p0_remaining; then
-        echo "goal-directed-loop: audit-dashboard-gaps P0 still failing â€” continuing"
-        code=2
-      fi
-    fi
-    if [[ "$code" -eq 0 && "$AGENT" == "world_studio_builder" ]]; then
-      if world_studio_plan_pending; then
-        echo "goal-directed-loop: world studio plan todos still pending — continuing"
-        code=2
-      fi
-    fi
+  if check_goal_completion_gate; then
+    echo "goal-directed-loop: completion gate passed (exit 0)"
+    exit 0
   fi
 
-  if [[ "$code" -eq 0 ]]; then
-    if [[ -n "$UNTIL_LOCAL" ]] && ! goal_loop_past_deadline; then
-      echo "goal-directed-loop: deliverable ok — continuing until local ${UNTIL_LOCAL} ($(TZ="$GOAL_LOOP_TZ" date -Iseconds 2>/dev/null || date -Iseconds))"
-      code=2
-    else
-      echo "goal-directed-loop: deliverable complete (exit 0)"
-      exit 0
-    fi
-  fi
-
-  if [[ "$code" -eq 2 ]]; then
-    echo "goal-directed-loop: incomplete deliverable (exit 2) â€” retry after sleep" >&2
+  if [[ "$code" -ne 0 ]]; then
+    echo "goal-directed-loop: agent exit $code; gate still failing" >&2
   else
-    echo "goal-directed-loop: agent exit $code" >&2
+    echo "goal-directed-loop: agent exit 0 but completion gate not satisfied — retry after sleep" >&2
   fi
 
   if [[ "$ONCE" == "1" ]]; then
-    exit "$code"
+    exit 1
   fi
   if [[ "$MAX" -gt 0 && "$iter" -ge "$MAX" ]]; then
-    echo "goal-directed-loop: max $MAX iterations (last exit $code)" >&2
-    exit "$code"
+    echo "goal-directed-loop: max $MAX iterations; gate not satisfied (exit 1)" >&2
+    exit 1
   fi
 
   echo "goal-directed-loop: sleep ${SLEEP_SEC}s then retry"

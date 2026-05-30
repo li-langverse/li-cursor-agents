@@ -150,6 +150,12 @@ async function main() {
 
   console.log(JSON.stringify(result, null, 2));
   if (result.status === "error") process.exit(1);
+  if (process.env.LI_GOAL_LOOP_STRICT_EXIT === "1" && result.completion) {
+    const c = result.completion;
+    if (c.premature || !c.complete || (c.gaps?.length ?? 0) > 0) {
+      process.exit(2);
+    }
+  }
 }
 
 main().catch((err) => {
