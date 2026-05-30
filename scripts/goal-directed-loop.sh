@@ -165,9 +165,11 @@ process.stdout.write(gaps.join('\\n'));
 }
 
 deadline_epoch() {
-  local hm="$1" h="${hm%%:*}" m="${hm#*:}"
-  m="${m%%:*}"
-  local now today tomorrow
+  local hm h m now today tomorrow
+  hm="$1"
+  h="${hm%%:*}"
+  m="${hm#*:}"
+  m="${m%%:*}" 
   now="$(date +%s)"
   today="$(TZ="$GOAL_LOOP_TZ" date -d "today ${h}:${m}:00" +%s 2>/dev/null || date -d "today ${h}:${m}:00" +%s)"
   [[ "$today" -gt "$now" ]] && { echo "$today"; return; }
