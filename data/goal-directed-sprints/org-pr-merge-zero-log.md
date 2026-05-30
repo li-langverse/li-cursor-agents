@@ -4,7 +4,7 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
-| 2026-05-31 code_implementer-83175237 | 1 → 0 | 0+1 closed | Phase A: refresh queue (lic#601 dirty); Phase E: close lic#601 (workspace_sweeper fallback re-opened post-#599, 664 commits, 61 files, emit.cpp/matmul regressions); **completion gate pass** |
+| 2026-05-31 code_implementer-83175237 | 1 → 0 | 1+2 closed | Phase A: refresh (lic#601 dirty); Phase E: close lic#601; merge li-cursor-agents#89 (session 35 digest); close lic#602 (duplicate workspace_sweeper re-opened during #89 merge); **completion gate pass** |
 | 2026-05-31 code_implementer-1780182643286 | 1 → 0 | 0+1 closed | Phase A: refresh queue (lic#599 dirty); Phase E: close lic#599 (workspace_sweeper fallback, 658 commits, 139 files, emit.cpp regressions); **completion gate pass** |
 | 2026-05-31 code_implementer-1780182081444 | 3 → 0 | 1+3 closed | Phase E: close benchmarks#258, lic#596, lic#597 (workspace sweeps); Phase F: merge li-cursor-agents#86 (session 33 digest); implementation_queue 1–8 **stale**; **completion gate pass** |
 | 2026-05-30 code_implementer-81185735 | 2 → 0 | 1 | Phase C: rebase prefer-main li-cursor-agents#84 + REST squash (CI green); Phase E: close lic#594 (workspace_sweeper fallback, 100 commits / emit.cpp+matmul); **completion gate pass** |
@@ -34,7 +34,14 @@ Started: 2026-05-30
 
 | PR | Reason |
 |----|--------|
-| lic#601 | workspace_sweeper fallback re-opened post-#599 — 664 commits, 61 files (+38k/-879), merge conflicts, emit.cpp/matmul regressions vs main; branch `chore/workspace-sweep-1780171200` preserved |
+| lic#601 | workspace_sweeper fallback re-opened post-#599 — 664 commits, 61 files (+38k/-879), merge conflicts, emit.cpp/matmul regressions vs main |
+| lic#602 | duplicate workspace_sweeper re-opened during li-cursor-agents#89 merge — same branch `chore/workspace-sweep-1780171200`, 100 commits, 61 files |
+
+## Merged this iteration (83175237)
+
+| PR | Method |
+|----|--------|
+| li-cursor-agents#89 | REST squash merge (session 35 sprint digest; CI green: test-mock-agents, lidb-engine-e2e) |
 
 ## Closed without merge (1780182643286)
 
