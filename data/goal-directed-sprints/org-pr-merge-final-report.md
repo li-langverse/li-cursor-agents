@@ -107,6 +107,19 @@
 
 **implementation_queue:** lic/lis/li-httpd CI items **stale** (referenced PRs closed or merged; 0 open PRs).
 
+## Session 27 (2026-05-30 code_implementer-1780175747261)
+
+| PR | Method |
+|----|--------|
+| li-cursor-agents#79 | REST squash merge (session 26 sprint digest; CI green: test-mock-agents, lidb-engine-e2e) |
+| lic#585 | blocked REST squash merge (feat PH-ML Wave 4; all check-runs green) |
+| lic#584 | **closed** (workspace_sweeper fallback; build/lake/memory/registry failing — same as #579–#582) |
+| lic#586 | **closed** (duplicate workspace_sweeper opened during sprint) |
+
+**Open PR count:** 3 → **0** (search API; completion gate exit 0).
+
+**implementation_queue:** lic/lis/li-httpd CI items **stale** (queue references closed PRs; 0 open PRs).
+
 ## Session 26 (2026-05-30 code_implementer-1780175279050)
 
 | PR | Method |
