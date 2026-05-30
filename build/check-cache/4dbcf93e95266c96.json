@@ -1,0 +1,5 @@
+v=1
+exit=1
+content=fee777765071411d
+---
+{"version":1,"schema":"diagnostic-v1","tool":"lic","command":"check","ok":false,"diagnostics":[{"severity":"error","file":"/mnt/c/Users/Julian/Documents/Programming/li/lic/packages/li-bytes/src/lib.li","line":1,"column":1,"offset":0,"code":"resolve.import","message":"import_resolve: module not found: std.bytes","fix_hint":null}]}

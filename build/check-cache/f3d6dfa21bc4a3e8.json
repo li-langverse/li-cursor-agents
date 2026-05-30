@@ -1,0 +1,5 @@
+v=1
+exit=0
+content=b1f3bdb26bf64078
+---
+{"version":1,"schema":"diagnostic-v1","tool":"lic","command":"check","ok":true,"diagnostics":[]}

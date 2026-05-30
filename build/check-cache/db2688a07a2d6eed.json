@@ -1,0 +1,5 @@
+v=1
+exit=1
+content=2e5259b5d449222b
+---
+{"version":1,"schema":"diagnostic-v1","tool":"lic","command":"check","ok":false,"diagnostics":[{"severity":"error","file":"/tmp/tmpv4ijml6m.li","line":370,"column":1,"offset":8880,"code":"lic.error","message":"expected top-level declaration","fix_hint":null}]}
