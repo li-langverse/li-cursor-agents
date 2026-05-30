@@ -4,7 +4,7 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
-| 2026-05-30 code_implementer (27) | 49 | 0 | Phase D: opened **lic#561** (TimingStats `.mean` + tier5 path filter, supersedes #557); rebased **lic#552** onto main; implementation_queue #439 **stale** (merged); 22 baseline `ci_not_ok` remain |
+| 2026-05-30 code_implementer (27) | 54 → 31 | 0 | Phase D: lic#559 defer 5× import_studio composable manifest rows until #322; cherry-pick onto lic#557; Phase C rebase li-cursor-agents#66; lic#558 dirty conflicts; queue refresh post-rate-limit |
 | 2026-05-30 code_implementer (26) | 51 → 50 | 0 | Phase A refresh; Phase D: lic main CI root cause = 5× `import_studio_*` check_ok failures → PR #559 compile_open_ok until #322; queue items 439/520/517/lis#29/li-httpd#10 stale (closed) |
 | 2026-05-30 code_implementer (25) | 62 → 50 | 3 | Phase C/E: close **12** superseded dirty (lic#554–556, li-cursor-agents#19–63, roadmap#48, benchmarks#223); Phase B merge li-httpd#20–22; fix `org-rebase-pr-branch.py` to merge PR base ref; add baseline filter + dirty gate; lidb#6/#14/#19 **unrelated histories** blocker |
 | 2026-05-30 code_implementer (24) | ~60 | 0 | Phase D: rebased lic#550,#552 onto main; opened lic#557 (bench TimingStats `.mean` + narrow tier5 path filter); completion gate false-green (rate limit emptied queue classify); lic#439 stale (merged) |
