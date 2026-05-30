@@ -25,8 +25,8 @@ Clear every open pull request in the org by squash-merging (preferred), or fixin
 | **B** | Auto-merge green + blocked CI-green | **DONE** |
 | **C** | Local rebase dirty PRs (batch per repo, push) | **DONE** (session 20: 0 dirty remaining in queue) |
 | **D** | Fix CI failures on remaining PRs | **DONE** (lidb#24 CI fix + merge) |
-| **E** | Close superseded duplicate sweeps (only if commit already on main) | **DONE** (lic#566, li-cursor-agents#69 — no unique commits vs main) |
-| **F** | Verify 0 open PRs + update final report | **DONE** (session 33: `open_prs=0`, completion gate exit 0) |
+| **E** | Close superseded duplicate sweeps (only if commit already on main) | **DONE** (lic#599 workspace sweep closed session 34; prior: lic#566, li-cursor-agents#69) |
+| **F** | Verify 0 open PRs + update final report | **DONE** (session 34: `open_prs=0`, completion gate exit 0) |
 
 ### Phase A — Refresh queue
 
