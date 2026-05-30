@@ -8,7 +8,7 @@
 | Metric | Count |
 |--------|------:|
 | Starting open PRs | 255 |
-| Ending open PRs (search API) | **0** (2026-05-31 code_implementer-83175237 completion gate) |
+| Ending open PRs (search API) | **0** (2026-05-31 code_implementer-83955615 completion gate) |
 | Ending open PRs (classified queue) | **0** |
 | PRs squash-merged this session | **30** (prior sessions: 27 + 22) |
 | PRs fixed locally then merged | **10** |
@@ -120,6 +120,18 @@
 
 **implementation_queue:** lic/lis/li-httpd CI items **stale** (queue references closed PRs; 0 open PRs).
 
+
+## Session 36 (2026-05-31 code_implementer-83955615)
+
+**Merged (Phase B):** li-net#20 (bump actions/upload-pages-artifact 3→5), li-net#19 (bump dorny/paths-filter 3→4), li-net#18 (bump actions/deploy-pages 4→5) — blocked CI-green REST squash.
+
+**Closed (Phase E):** lic#604 (workspace_sweeper fallback — 671 commits, 61 files, +38k lines, merge conflicts, emit.cpp/matmul regressions vs main; same branch `chore/workspace-sweep-1780171200` as #599–#602), benchmarks#259 (workspace_sweeper fallback — 100 commits, 70 files, merge conflicts; opened during gate verification).
+
+**Open PR count:** 4 → **0** (`org-pr-merge-completion-gate.sh` exit 0).
+
+**Handoffs:** `cad_fundamentals` skipped (`package_placement: null`).
+
+**implementation_queue:** lic/lis/li-httpd CI items **stale** (0 open PRs; briefing references closed PRs).
 
 ## Session 35 (2026-05-31 code_implementer-83175237)
 
