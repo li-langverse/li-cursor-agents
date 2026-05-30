@@ -1,7 +1,7 @@
 {
   "completed_ids": [],
-  "last_todo_id": "sim-p1-md-neighbor-cell",
+  "last_todo_id": "sim-p2-qm-dft-scf",
   "last_gate_pass": false,
-  "last_gate_at": "2026-05-29T19:45:53.342Z",
+  "last_gate_at": "2026-05-30T04:46:29.222Z",
   "last_agent_status": "error"
 }
