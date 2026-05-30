@@ -65,6 +65,10 @@ export interface EvaluateGoalCompletionInput {
 }
 
 
+function normalizeGateScript(script: string): string {
+  return script.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+}
+
 function resolveGateScriptBody(
   gateScript: string,
   cwd: string,
@@ -75,9 +79,9 @@ function resolveGateScriptBody(
     existsSync(gatePath) &&
     !/^(cd |python|bash|\.\/)/.test(gateScript)
   ) {
-    return readFileSync(gatePath, "utf8");
+    return normalizeGateScript(readFileSync(gatePath, "utf8"));
   }
-  return gateScript;
+  return normalizeGateScript(gateScript);
 }
 
 function runBashGate(
