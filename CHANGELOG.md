@@ -1,4 +1,7 @@
 # Changelog
+## Unreleased
+
+- **Goal-directed loop (fresh)** — goal-directed-loop.sh exits **0 only** when goal-completion-gate.js passes; --max / --until-local exit **1** without completion. Skill un-goal-directed-loop.
 
 All notable changes to this project will be documented in this file.
 
