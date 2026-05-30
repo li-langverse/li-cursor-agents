@@ -1,27 +1,26 @@
-# ADR: Swarm transport via limq
+﻿# ADR-li-mq-swarm-transport
 
 **Status:** Accepted (pilot)  
 **Date:** 2026-05-30  
-**Package:** [li-langverse/limq](https://github.com/li-langverse/limq)
+**Package:** [limq](https://github.com/li-langverse/limq)
 
 ## Context
 
-The swarm control plane polls `GET /api/queue` backed by in-process `agent-work-queue.js`. That does not scale to multi-pod K8s or durable handoff replay.
+The async swarm uses in-process and file-based handoff queues. As agent count grows, we need a capability-governed, auditable message bus aligned with lis and lidb.
 
 ## Decision
 
-1. Introduce **limq** as the Li-native command/event bus.
-2. Add `src/mq/swarm-transport.ts` with **dual-read**: no `LI_MQ_URL` → legacy queue unchanged.
-3. Topic catalog: `swarm.commands`, `swarm.events`, `swarm.handoffs`, `swarm.ci.merge`, `swarm.dlq`.
-4. Phase 4 pilot on registry host (disk mode) before K8s; single broker StatefulSet.
+1. Adopt **limq** as the swarm transport with topics `swarm.commands`, `swarm.events`, `swarm.handoffs`, `swarm.ci.merge`.
+2. Implement dual-read in `src/mq/swarm-transport.ts`: when `LI_MQ_URL` is set, use limq HTTP API; otherwise legacy queues unchanged.
+3. TLS terminates at lis; broker binds loopback only.
 
 ## Consequences
 
-- Dashboard may keep `/api/queue` as a read-model projection during pilot.
-- Performance: phase 1 memory p99 target &lt; 50 ms; not Redis-par until C++ engine.
-- lis PR required for `/v1/mq/*` edge (see `limq/lis/routes.md`).
+- Pilot with `LI_MQ_STORAGE=memory` before disk mode.
+- lis must proxy `/v1/mq/*` (see limq/lis/routes.md).
+- Throughput lower than Redis until C++ engine (phase 5).
 
-## References
+## Links
 
-- [limq/docs/swarm-integration.md](../../../limq/docs/swarm-integration.md)
+- [limq swarm integration](../../limq/docs/swarm-integration.md)
 - [swarm-architecture.md](../ecosystem/swarm-architecture.md)
