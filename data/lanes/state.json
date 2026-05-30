@@ -54,7 +54,8 @@
     "docs_ui_tester": "2026-05-30T09:40:25.569Z",
     "workspace_sweeper": "2026-05-29T17:51:35.171Z",
     "ci_maintainer": "2026-05-30T11:55:39.401Z",
-    "docs_maintainer": "2026-05-29T22:40:17.980Z"
+    "docs_maintainer": "2026-05-29T22:40:17.980Z",
+    "agent_kit_maintainer": "2026-05-30T12:04:57.284Z"
   },
   "last_implement_tick_at": "2026-05-30T11:57:23.669Z",
   "last_maintenance_tick_at": "2026-05-30T12:03:35.994Z"
