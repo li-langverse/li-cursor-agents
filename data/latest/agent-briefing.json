@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-30T09:46Z",
+  "generated_at": "2026-05-30T10:00Z",
   "role": "preflight_for_cursor_agents",
   "note": "Intelligence (web, review, gaps) runs in Cursor Automations — not in this file. plan_audit needs LIC_ROOT (sibling ../lic or CI lic@dev checkout); catalog path gaps skip path=unknown and catalog_lifecycle=planned.",
   "lic_root": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
@@ -71,7 +71,7 @@
     "workspace_dirty_sweep": {
       "command": "python3 scripts/workspace-dirty-sweep.py",
       "exit_code": 0,
-      "stdout_tail": "wrote /home/s4il0r/Documents/Cursor/li-langverse/benchmarks/data/latest/workspace-dirty-sweep.json dirty_count=1\n",
+      "stdout_tail": "wrote /home/s4il0r/Documents/Cursor/li-langverse/benchmarks/data/latest/workspace-dirty-sweep.json dirty_count=2\n",
       "stderr_tail": ""
     },
     "agent_deliverable_gate": {
@@ -80,7 +80,7 @@
     }
   },
   "issue_triage": {
-    "generated_at": "2026-05-30T09:46Z",
+    "generated_at": "2026-05-30T10:00Z",
     "vision_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/vision-and-roadmap.md",
     "skill": "plan-feature-from-issue (see .cursor/skills/)",
     "summary": {
@@ -135,797 +135,30 @@
     "recommended_actions": []
   },
   "issue_backlog_hygiene": {
-    "generated_at": "2026-05-30T09:39Z",
+    "generated_at": "2026-05-30T09:47Z",
     "live_scan": true,
     "skill": "issue_hygiene agent — see .cursor/automations/issue-hygiene-agent.md",
     "summary": {
-      "repos_scanned": 6,
-      "open_issues": 120,
-      "duplicate_clusters": 4,
-      "duplicate_issues": 14,
+      "repos_scanned": 0,
+      "open_issues": 0,
+      "duplicate_clusters": 0,
+      "duplicate_issues": 0,
       "stale_candidates": 0,
-      "explorer_spam_repos": 2,
-      "close_candidates": 32,
-      "route_planner": 51,
+      "explorer_spam_repos": 0,
+      "close_candidates": 0,
+      "route_planner": 0,
       "route_implementer": 0
     },
-    "duplicate_clusters": [
-      {
-        "repo": "lic",
-        "reason": "similar_titles",
-        "keep": {
-          "number": 178,
-          "url": "https://github.com/li-langverse/lic/issues/178",
-          "title": "Studio UI/UX plan loop — progress tracker"
-        },
-        "duplicates": [
-          {
-            "number": 182,
-            "url": "https://github.com/li-langverse/lic/issues/182",
-            "title": "Studio UI/UX plan loop — progress tracker"
-          },
-          {
-            "number": 181,
-            "url": "https://github.com/li-langverse/lic/issues/181",
-            "title": "Studio UI/UX plan loop — progress tracker"
-          },
-          {
-            "number": 180,
-            "url": "https://github.com/li-langverse/lic/issues/180",
-            "title": "Studio UI/UX plan loop — progress tracker"
-          }
-        ],
-        "action": "close_as_duplicate"
-      },
-      {
-        "repo": "lic",
-        "reason": "similar_titles",
-        "keep": {
-          "number": 90,
-          "url": "https://github.com/li-langverse/lic/issues/90",
-          "title": "Numerics researcher pass (2026-05-20): horner P0 + near-limit SOTA — evidence pack"
-        },
-        "duplicates": [
-          {
-            "number": 126,
-            "url": "https://github.com/li-langverse/lic/issues/126",
-            "title": "numerics-research: 2026-05-20 horner P0 + near-limit SOTA evidence pack"
-          },
-          {
-            "number": 118,
-            "url": "https://github.com/li-langverse/lic/issues/118",
-            "title": "numerics-research: 2026-05-20 — horner P0 + near-limit SOTA evidence"
-          }
-        ],
-        "action": "close_as_duplicate"
-      },
-      {
-        "repo": "lic",
-        "reason": "similar_titles",
-        "keep": {
-          "number": 79,
-          "url": "https://github.com/li-langverse/lic/issues/79",
-          "title": "Numerics researcher pass (2026-05-20): horner_pure_li P0 + near-limit SOTA map"
-        },
-        "duplicates": [
-          {
-            "number": 114,
-            "url": "https://github.com/li-langverse/lic/issues/114",
-            "title": "Numerics researcher pass (2026-05-20): horner_pure_li P0 + near-limit tier-1/2 SOTA"
-          },
-          {
-            "number": 106,
-            "url": "https://github.com/li-langverse/lic/issues/106",
-            "title": "Numerics researcher pass (2026-05-20): horner_pure_li red + near-limit SOTA"
-          },
-          {
-            "number": 95,
-            "url": "https://github.com/li-langverse/lic/issues/95",
-            "title": "Numerics researcher pass (2026-05-20): horner_pure_li DCE + near-limit SOTA map"
-          },
-          {
-            "number": 93,
-            "url": "https://github.com/li-langverse/lic/issues/93",
-            "title": "Numerics researcher pass (2026-05-20): horner_pure_li red + near-limit SOTA"
-          },
-          {
-            "number": 86,
-            "url": "https://github.com/li-langverse/lic/issues/86",
-            "title": "Numerics researcher pass (2026-05-20): horner_pure_li P0 + near-limit SOTA"
-          }
-        ],
-        "action": "close_as_duplicate"
-      },
-      {
-        "repo": "lic",
-        "reason": "similar_titles",
-        "keep": {
-          "number": 74,
-          "url": "https://github.com/li-langverse/lic/issues/74",
-          "title": "Numerics researcher pass (2026-05-20): horner dashboard stale + near-limit SOTA map"
-        },
-        "duplicates": [
-          {
-            "number": 107,
-            "url": "https://github.com/li-langverse/lic/issues/107",
-            "title": "Numerics researcher pass (2026-05-20): horner P0 + near-limit SOTA map"
-          },
-          {
-            "number": 105,
-            "url": "https://github.com/li-langverse/lic/issues/105",
-            "title": "Numerics researcher pass (2026-05-20): horner P0 + near-limit SOTA map"
-          },
-          {
-            "number": 97,
-            "url": "https://github.com/li-langverse/lic/issues/97",
-            "title": "Numerics researcher pass (2026-05-20): horner P0 + near-limit SOTA map"
-          },
-          {
-            "number": 76,
-            "url": "https://github.com/li-langverse/lic/issues/76",
-            "title": "Numerics researcher pass (2026-05-20): horner ingest P0 + near-limit SOTA"
-          }
-        ],
-        "action": "close_as_duplicate"
-      }
-    ],
+    "duplicate_clusters": [],
     "stale_candidates": [],
-    "explorer_spam": [
-      {
-        "repo": "lic",
-        "count": 14,
-        "sample_urls": [
-          "https://github.com/li-langverse/lic/issues/129",
-          "https://github.com/li-langverse/lic/issues/128",
-          "https://github.com/li-langverse/lic/issues/125",
-          "https://github.com/li-langverse/lic/issues/124",
-          "https://github.com/li-langverse/lic/issues/117"
-        ],
-        "action": "merge_into_digest_issue",
-        "reason": "14 open explorer-finding issues — consolidate"
-      },
-      {
-        "repo": "benchmarks",
-        "count": 8,
-        "sample_urls": [
-          "https://github.com/li-langverse/benchmarks/issues/54",
-          "https://github.com/li-langverse/benchmarks/issues/53",
-          "https://github.com/li-langverse/benchmarks/issues/52",
-          "https://github.com/li-langverse/benchmarks/issues/51",
-          "https://github.com/li-langverse/benchmarks/issues/41"
-        ],
-        "action": "merge_into_digest_issue",
-        "reason": "8 open explorer-finding issues — consolidate"
-      }
-    ],
-    "close_candidates": [
-      {
-        "repo": "lic",
-        "number": 361,
-        "title": "chem_sim_algorithms: digest refresh + evidence links (cycle 1)",
-        "url": "https://github.com/li-langverse/lic/issues/361",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-28T07:03:40Z",
-        "updated_at": "2026-05-28T07:03:40Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 355,
-        "title": "chem-r2: qm_dft_scf_energy harness + Psi4 oracle (418)",
-        "url": "https://github.com/li-langverse/lic/issues/355",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-27T21:52:58Z",
-        "updated_at": "2026-05-27T21:52:58Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 354,
-        "title": "chem-r0: QM SOTA survey evidence pack (chem_sim_algorithms)",
-        "url": "https://github.com/li-langverse/lic/issues/354",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-27T21:19:24Z",
-        "updated_at": "2026-05-27T21:19:24Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 320,
-        "title": "numerics-research: MD SOTA survey (md-r0) — neighbor list handoff",
-        "url": "https://github.com/li-langverse/lic/issues/320",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-26T05:52:35Z",
-        "updated_at": "2026-05-26T05:52:35Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 316,
-        "title": "numerics-research: md-r2 neighbor cell-list gap (algo 105)",
-        "url": "https://github.com/li-langverse/lic/issues/316",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-25T19:22:22Z",
-        "updated_at": "2026-05-25T19:22:22Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 127,
-        "title": "docs(numerics): 2026-05-20 researcher pass — horner DCE P0 + near-limit SOTA",
-        "url": "https://github.com/li-langverse/lic/issues/127",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-20T20:07:01Z",
-        "updated_at": "2026-05-20T20:07:14Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 126,
-        "title": "numerics-research: 2026-05-20 horner P0 + near-limit SOTA evidence pack",
-        "url": "https://github.com/li-langverse/lic/issues/126",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-20T20:04:51Z",
-        "updated_at": "2026-05-21T07:14:32Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 121,
-        "title": "numerics-research: horner_pure_li anti-DCE + matmul_naive 1.30× (pass 84241347)",
-        "url": "https://github.com/li-langverse/lic/issues/121",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-20T19:51:36Z",
-        "updated_at": "2026-05-20T19:51:36Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 118,
-        "title": "numerics-research: 2026-05-20 — horner P0 + near-limit SOTA evidence",
-        "url": "https://github.com/li-langverse/lic/issues/118",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-20T19:48:39Z",
-        "updated_at": "2026-05-21T07:14:33Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 115,
-        "title": "numerics-research: 2026-05-20 pass — horner DCE (P0), matmul SOTA, tier-2 disjoint_elem",
-        "url": "https://github.com/li-langverse/lic/issues/115",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-20T19:38:11Z",
-        "updated_at": "2026-05-20T19:38:11Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 114,
-        "title": "Numerics researcher pass (2026-05-20): horner_pure_li P0 + near-limit tier-1/2 SOTA",
-        "url": "https://github.com/li-langverse/lic/issues/114",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-20T19:32:56Z",
-        "updated_at": "2026-05-21T07:14:35Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 111,
-        "title": "numerics-research: 2026-05-20 pass — horner P0 DCE + near-limit SOTA map",
-        "url": "https://github.com/li-langverse/lic/issues/111",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-20T19:17:05Z",
-        "updated_at": "2026-05-20T19:17:05Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 107,
-        "title": "Numerics researcher pass (2026-05-20): horner P0 + near-limit SOTA map",
-        "url": "https://github.com/li-langverse/lic/issues/107",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-20T18:28:10Z",
-        "updated_at": "2026-05-21T07:14:38Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 106,
-        "title": "Numerics researcher pass (2026-05-20): horner_pure_li red + near-limit SOTA",
-        "url": "https://github.com/li-langverse/lic/issues/106",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-20T18:02:35Z",
-        "updated_at": "2026-05-21T07:14:37Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 105,
-        "title": "Numerics researcher pass (2026-05-20): horner P0 + near-limit SOTA map",
-        "url": "https://github.com/li-langverse/lic/issues/105",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-20T17:42:50Z",
-        "updated_at": "2026-05-21T07:14:39Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 99,
-        "title": "Numerics researcher pass (2026-05-20): horner_pure_li red + near-limit greens — SOTA map",
-        "url": "https://github.com/li-langverse/lic/issues/99",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-20T16:57:37Z",
-        "updated_at": "2026-05-20T16:57:37Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 97,
-        "title": "Numerics researcher pass (2026-05-20): horner P0 + near-limit SOTA map",
-        "url": "https://github.com/li-langverse/lic/issues/97",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-20T16:37:59Z",
-        "updated_at": "2026-05-20T16:38:22Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 96,
-        "title": "Numerics researcher pass (2026-05-20): horner DCE honesty + near-limit SOTA",
-        "url": "https://github.com/li-langverse/lic/issues/96",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-20T16:19:43Z",
-        "updated_at": "2026-05-20T16:20:05Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 95,
-        "title": "Numerics researcher pass (2026-05-20): horner_pure_li DCE + near-limit SOTA map",
-        "url": "https://github.com/li-langverse/lic/issues/95",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-20T15:54:24Z",
-        "updated_at": "2026-05-20T15:54:24Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 93,
-        "title": "Numerics researcher pass (2026-05-20): horner_pure_li red + near-limit SOTA",
-        "url": "https://github.com/li-langverse/lic/issues/93",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-20T15:37:19Z",
-        "updated_at": "2026-05-20T15:38:11Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 90,
-        "title": "Numerics researcher pass (2026-05-20): horner P0 + near-limit SOTA — evidence pack",
-        "url": "https://github.com/li-langverse/lic/issues/90",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-20T15:17:09Z",
-        "updated_at": "2026-05-20T15:17:09Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 86,
-        "title": "Numerics researcher pass (2026-05-20): horner_pure_li P0 + near-limit SOTA",
-        "url": "https://github.com/li-langverse/lic/issues/86",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-20T14:56:01Z",
-        "updated_at": "2026-05-20T14:56:01Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 79,
-        "title": "Numerics researcher pass (2026-05-20): horner_pure_li P0 + near-limit SOTA map",
-        "url": "https://github.com/li-langverse/lic/issues/79",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-20T13:39:15Z",
-        "updated_at": "2026-05-20T14:16:07Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 76,
-        "title": "Numerics researcher pass (2026-05-20): horner ingest P0 + near-limit SOTA",
-        "url": "https://github.com/li-langverse/lic/issues/76",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-20T12:27:48Z",
-        "updated_at": "2026-05-20T12:27:48Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      },
-      {
-        "repo": "lic",
-        "number": 74,
-        "title": "Numerics researcher pass (2026-05-20): horner dashboard stale + near-limit SOTA map",
-        "url": "https://github.com/li-langverse/lic/issues/74",
-        "labels": [
-          "numerics-research"
-        ],
-        "created_at": "2026-05-20T11:53:59Z",
-        "updated_at": "2026-05-20T12:09:24Z",
-        "comments": 0,
-        "action": "review_agent_issue",
-        "reason": "agent-opened with no discussion"
-      }
-    ],
-    "route_to_issue_planner": [
-      {
-        "repo": "lic",
-        "number": 527,
-        "title": "[plan-needed] PH-2h / G-math-syn: for/range surface — define parse+typecheck Done gate",
-        "url": "https://github.com/li-langverse/lic/issues/527",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 526,
-        "title": "[plan-needed] PH-2i: full NumPy-rank broadcast — define reject gate + defer criteria (G-math)",
-        "url": "https://github.com/li-langverse/lic/issues/526",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 525,
-        "title": "[master-plan-gap] PH-8p-c: lic build --jobs=N sets LI_COMPILE_JOBS but compiler never reads it",
-        "url": "https://github.com/li-langverse/lic/issues/525",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 523,
-        "title": "[master-plan-gap] sim-md-research: md-r3-oracle-plan pending — MD oracle gate open",
-        "url": "https://github.com/li-langverse/lic/issues/523",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 522,
-        "title": "[master-plan-gap] sim-chem-research: chem-r2 + chem-r3 pending — supervisor idle",
-        "url": "https://github.com/li-langverse/lic/issues/522",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 521,
-        "title": "[master-plan-gap] security-research runner: sec-r1/2/3 pending — supervisor off 4d+",
-        "url": "https://github.com/li-langverse/lic/issues/521",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 478,
-        "title": "[master-plan-gap] sim runner: sim-p2-qm-dft-scf pending — supervisor off (algo_id=418)",
-        "url": "https://github.com/li-langverse/lic/issues/478",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 477,
-        "title": "[master-plan-gap] PH-H httpd: gap-phase2-perf-wrk-soak + gap-phase2-streaming-wrk pending (supervisor stale)",
-        "url": "https://github.com/li-langverse/lic/issues/477",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 476,
-        "title": "[plan-needed] PH-Pkg: ecosystem-governance sub-plan — 7 exit gates open (no runner loop)",
-        "url": "https://github.com/li-langverse/lic/issues/476",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 473,
-        "title": "[master-plan-gap] lic/scripts: ship swarm-gap-ingest.py on main for plan_verifier",
-        "url": "https://github.com/li-langverse/lic/issues/473",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 472,
-        "title": "[master-plan-gap] G-lean/PH-2i: P-linalg loop ≡ ensures sub-plan gate still open",
-        "url": "https://github.com/li-langverse/lic/issues/472",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 471,
-        "title": "[master-plan-gap] swarm-gap-ingest: close plan_debt when todo.status=completed (not only state.completed_ids)",
-        "url": "https://github.com/li-langverse/lic/issues/471",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 470,
-        "title": "[plan-needed] PH-02: check off phase-02-typechecker sub-plan exit gates — li-tests evidence exists",
-        "url": "https://github.com/li-langverse/lic/issues/470",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 464,
-        "title": "[plan-needed] Vision-LLM: diagnostic manifest stub — ship gate open (master-plan:476)",
-        "url": "https://github.com/li-langverse/lic/issues/464",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 463,
-        "title": "[master-plan-gap] PH-7e: tier-1 red benchmarks exceed 1.2× advisory bar (G-math, PH-5b)",
-        "url": "https://github.com/li-langverse/lic/issues/463",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 462,
-        "title": "[master-plan-gap] PH-2i-b: length-1 broadcast — no math_linalg test (G-math)",
-        "url": "https://github.com/li-langverse/lic/issues/462",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 461,
-        "title": "[master-plan-gap] Doc: provability-gaps.md duplicate Proof-db appendix (lines 62–68)",
-        "url": "https://github.com/li-langverse/lic/issues/461",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 460,
-        "title": "[master-plan-gap] PH-8p-a: reconcile tracker — LI_TEST_JOBS parallel run_all wired (#428 stale)",
-        "url": "https://github.com/li-langverse/lic/issues/460",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 459,
-        "title": "[plan-needed] PH-5b plots-and-social: 4 exit gates open (plot_shareables.sh, theme, docs link)",
-        "url": "https://github.com/li-langverse/lic/issues/459",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 436,
-        "title": "[master-plan-gap] swarm-gap-registry/registry.yaml merge conflict blocks swarm-gap-ingest",
-        "url": "https://github.com/li-langverse/lic/issues/436",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 429,
-        "title": "[plan-needed] PH-7d: Tier-2 MD benchmark uses @cpu/@parallel/@vectorized on def",
-        "url": "https://github.com/li-langverse/lic/issues/429",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 428,
-        "title": "[master-plan-gap] PH-8p-a: parallel li-tests/run_all.sh (LI_TEST_JOBS) not wired",
-        "url": "https://github.com/li-langverse/lic/issues/428",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 425,
-        "title": "[plan-needed] Vision-LLM: define Done gate for agent manifest + test export CI",
-        "url": "https://github.com/li-langverse/lic/issues/425",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 424,
-        "title": "[master-plan-gap] PH-7e / G-math: 6 tier-1 red benchmark rows vs partial tracker closure",
-        "url": "https://github.com/li-langverse/lic/issues/424",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      },
-      {
-        "repo": "lic",
-        "number": 423,
-        "title": "[master-plan-gap] PH-DB: ph-db-battle-plan — 40 open gate checkboxes vs lidb embed path",
-        "url": "https://github.com/li-langverse/lic/issues/423",
-        "labels": [
-          "master-plan-gap",
-          "plan-needed"
-        ]
-      }
-    ],
+    "explorer_spam": [],
+    "close_candidates": [],
+    "route_to_issue_planner": [],
     "route_to_code_implementer": [],
-    "recommended_actions": [
-      {
-        "priority": "P0",
-        "action": "Comment on duplicate issues; close pointing to keep issue",
-        "count": 14
-      },
-      {
-        "priority": "P1",
-        "action": "Consolidate explorer-finding burst into one tracking issue per repo",
-        "repos": [
-          "lic",
-          "benchmarks"
-        ]
-      },
-      {
-        "priority": "P1",
-        "action": "Hand off to issue_planner (plan-needed / ecosystem-gap)",
-        "count": 51
-      }
-    ]
+    "recommended_actions": []
   },
   "plan_completion_audit": {
-    "generated_at": "2026-05-30T09:39Z",
+    "generated_at": "2026-05-30T09:47Z",
     "roots": {
       "lic": "../lic",
       "lis": "/home/s4il0r/Documents/Cursor/li-langverse/lis",
@@ -1985,7 +1218,7 @@
     ]
   },
   "ecosystem_audit": {
-    "generated_at": "2026-05-30T09:46Z",
+    "generated_at": "2026-05-30T10:00Z",
     "vision": {
       "master_plan": "https://github.com/li-langverse/lic/blob/main/docs/superpowers/plans/2026-05-14-li-master-plan.md",
       "benchmark_goal": "Li ≤1.2× cpp (tier-1/2); beat HPC SOTA everywhere — PH-5b, PH-7e pure-Li codegen",
@@ -2024,7 +1257,7 @@
       "lit"
     ],
     "benchmarks": {
-      "generated_at": "2026-05-30T09:25:06.910563+00:00",
+      "generated_at": "2026-05-30T09:59:49.779097+00:00",
       "red": [],
       "yellow": [
         "matmul_blocked",
@@ -2045,10 +1278,12 @@
           "ratio_vs_cpp": 1.0066
         }
       ],
-      "unknown": []
+      "unknown": [
+        "tier0_stability"
+      ]
     },
     "plan_completion": {
-      "generated_at": "2026-05-30T09:39Z",
+      "generated_at": "2026-05-30T09:47Z",
       "roots": {
         "lic": "../lic",
         "lis": "/home/s4il0r/Documents/Cursor/li-langverse/lis",
@@ -3667,7 +2902,7 @@
     ]
   },
   "org_ci_audit": {
-    "generated_at": "2026-05-30T09:46Z",
+    "generated_at": "2026-05-30T10:00Z",
     "org": "li-langverse",
     "required_workflow": "ci.yml",
     "default_branch_policy": "main",
@@ -3684,7 +2919,7 @@
     "lic_monorepo_hint": "Run lic/scripts/ensure-package-ci.sh before push-official-package-repo.sh"
   },
   "org_agent_kit_audit": {
-    "generated_at": "2026-05-30T09:46Z",
+    "generated_at": "2026-05-30T10:00Z",
     "org": "li-langverse",
     "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
     "roadmap_kit": "/home/s4il0r/Documents/Cursor/li-langverse/roadmap/agent-kit",
@@ -4026,7 +3261,7 @@
     ]
   },
   "merge_plan": {
-    "generated_at": "2026-05-30T09:46Z",
+    "generated_at": "2026-05-30T10:00Z",
     "vision_order": "package CI / mirrors → benchmarks → lic → lip/lit/lis → roadmap",
     "ordering_rules": [
       "Repo tier: mirrors/httpd → benchmarks → lic → lip/lit/lis → roadmap (roadmap last)",
@@ -4053,7 +3288,7 @@
     "warnings": []
   },
   "pr_program": {
-    "generated_at": "2026-05-30T09:44Z",
+    "generated_at": "2026-05-30T09:56Z",
     "merge_first": null,
     "summary": {
       "open_prs": 0,
@@ -4178,7 +3413,7 @@
     ]
   },
   "ci_bug_triage": {
-    "generated_at": "2026-05-30T09:44Z",
+    "generated_at": "2026-05-30T09:58Z",
     "summary": {
       "local_ci_failures": 1,
       "bug_issues": 0,
@@ -4212,7 +3447,7 @@
   },
   "security_cwe_audit": null,
   "cwe_feed_delta": {
-    "generated_at": "2026-05-30T09:46Z",
+    "generated_at": "2026-05-30T10:00Z",
     "new_cwes": [],
     "missing_in_catalog": [
       "CWE-79",
@@ -4299,29 +3534,43 @@
     ]
   },
   "workspace_dirty_sweep": {
-    "generated_at": "2026-05-30T09:46Z",
+    "generated_at": "2026-05-30T10:00Z",
     "ecosystem_root": "/home/s4il0r/Documents/Cursor/li-langverse",
-    "dirty_count": 1,
+    "dirty_count": 2,
     "dirty_repos": [
       {
         "path": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
         "repo": "lic",
         "org": "li-langverse",
-        "branch": "perf/bench-improver-matmul-at-op-20260530",
-        "changed_files": 8,
+        "branch": "perf/bench-improver-matmul-tier1-green-20260530",
+        "changed_files": 5,
         "safe_files": [
-          "enchmarks/tier1_micro/matmul_blocked/li/main.li",
-          "benchmarks/tier1_micro/matmul_naive/li/main.li",
-          "benchmarks/tier5_http/third_party/nginx",
+          "enchmarks/tier5_http/third_party/nginx",
           "data/goal-directed-agents/snapshot.json",
           "data/goal-directed-agents/watch.log",
           "data/swarm-gap-registry/registry.yaml",
-          "data/workspaces/li-langverse/lic/code-implementer-wrk-soak/repo",
-          "logs/access.log.1"
+          "data/workspaces/li-langverse/lic/code-implementer-wrk-soak/repo"
         ],
         "test_commands": [
           "./li-tests/run_all.sh"
         ]
+      },
+      {
+        "path": "/home/s4il0r/Documents/Cursor/li-langverse/benchmarks",
+        "repo": "benchmarks",
+        "org": "li-langverse",
+        "branch": "chore/agent-agent_kit_maintainer-1780134265177-digest",
+        "changed_files": 7,
+        "safe_files": [
+          "ata/latest/benchmark-matrix.json",
+          "data/latest/benchmark-matrix.md",
+          "data/latest/lig-gpu-matrix.json",
+          "data/latest/summary.json",
+          "data/latest/swarm-gap-actions.json",
+          "data/runs/agent_kit_maintainer-agent-kit-1780134265177.md",
+          "docs/ecosystem/http-server-rps-matrix.md"
+        ],
+        "test_commands": []
       }
     ]
   },
@@ -4350,7 +3599,7 @@
     },
     {
       "agent": "workspace_sweeper",
-      "reason": "1 sibling repo(s) with uncommitted work — fallback sweep"
+      "reason": "2 sibling repo(s) with uncommitted work — fallback sweep"
     },
     {
       "agent": "plan_verifier",
@@ -4387,10 +3636,6 @@
     {
       "agent": "security_auditor",
       "reason": "CWE/catalog gaps=0, Top25 missing in catalog=19, repos missing security workflow=0"
-    },
-    {
-      "agent": "issue_hygiene",
-      "reason": "backlog hygiene: dup_clusters=4 stale=0 explorer_spam_repos=2"
     }
   ],
   "agent_skill_root": "/home/s4il0r/Documents/Cursor/li-langverse/li-cursor-agents/.cursor/skills",
@@ -4708,7 +3953,7 @@
   "agent_incomplete_runs": [],
   "agent_pr_deliverable_failures": [],
   "org_roadmap": {
-    "loaded_at": "2026-05-30T09:46Z",
+    "loaded_at": "2026-05-30T10:00Z",
     "vision_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/vision-and-roadmap.md",
     "engineering_standards_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/engineering-standards.md",
     "master_plan_url": "https://github.com/li-langverse/lic/blob/main/docs/superpowers/plans/2026-05-14-li-master-plan.md",
@@ -4756,10 +4001,6 @@
           {
             "agent": "implementation_gaps",
             "reason": "cross-check plan vs implementation"
-          },
-          {
-            "agent": "issue_hygiene",
-            "reason": "backlog hygiene: dup_clusters=4 stale=0 explorer_spam_repos=2"
           }
         ]
       },
@@ -4805,12 +4046,6 @@
         "coordinator": "coord_governance",
         "agent": "implementation_gaps",
         "reason": "cross-check plan vs implementation",
-        "priority": 30
-      },
-      {
-        "coordinator": "coord_governance",
-        "agent": "issue_hygiene",
-        "reason": "backlog hygiene: dup_clusters=4 stale=0 explorer_spam_repos=2",
         "priority": 30
       },
       {
@@ -4938,7 +4173,7 @@
     "active_research_session": "numerics_researcher:numerics_sota (cycle 1)",
     "research_lane_enabled": true,
     "implement_lane_enabled": true,
-    "last_research_tick_at": "2026-05-30T09:28:34.234Z",
+    "last_research_tick_at": "2026-05-30T10:00:16.534Z",
     "last_implement_tick_at": "2026-05-30T09:31:38.613Z"
   },
   "research_goals_status": [
@@ -5132,7 +4367,7 @@
       "title": "Swarm gap orchestration — registry, backlog apply, handoffs",
       "agent": "swarm_observer",
       "priority": 10,
-      "last_run_at": "2026-05-30T09:29:41.701Z",
+      "last_run_at": "2026-05-30T10:00:16.279Z",
       "eligible": false
     },
     {
@@ -5155,6 +4390,6 @@
     "missing_north_star_fit": [],
     "invalid_north_star_fit": []
   },
-  "swarm_enriched_at": "2026-05-30T09:46:35.973Z",
-  "swarm_recommendations_merged_at": "2026-05-30T09:46:35.973Z"
+  "swarm_enriched_at": "2026-05-30T10:00:46.292Z",
+  "swarm_recommendations_merged_at": "2026-05-30T10:00:46.292Z"
 }
