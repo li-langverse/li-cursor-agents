@@ -1,7 +1,7 @@
 {
   "completed_ids": [],
-  "last_todo_id": "gap-phase2-streaming-wrk",
+  "last_todo_id": "gap-phase2-perf-wrk-soak",
   "last_gate_pass": false,
-  "last_gate_at": "2026-05-30T05:33:22.915Z",
+  "last_gate_at": "2026-05-30T08:03:18.192Z",
   "last_agent_status": "error"
 }
