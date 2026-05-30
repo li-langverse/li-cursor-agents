@@ -4,6 +4,7 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
+| 2026-05-30 code_implementer (20) | 220 → 219 | 4 | Phase B merge-green li-cursor-agents#59 + blocked benchmarks#248,#227,#225; Phase C rebase+push li-cursor-agents#57,#58, benchmarks#222 (CI pending); implementation_queue lip/lit 1–8 **stale** (0 open, main CI green) |
 | 2026-05-30 code_implementer (19) | 225 → 220 | 5 | Phase A queue refresh (225 classified); Phase B merge-green li-cursor-agents#55 + blocked benchmarks#248,#227,#225; REST squash li-cursor-agents#56 after rebase; Phase C rebase+push benchmarks#222 (CI re-run); implementation_queue lip/lit 1–8 **stale** (0 open, main CI green) |
 | 2026-05-30 code_implementer (18) | 225 → 224 | 4 | Phase B REST squash li-cursor-agents#54,#51, lic#376; Phase C rebase+push lic#373,#376,#520, li-cursor-agents#51, benchmarks#211, lic#497; implementation_queue lip/lit 1–8 **stale** (0 open, main CI green); lic#373/#520 CI git checkout 128 (pending re-run) |
 | 2026-05-30 code_implementer (16) | 232 → ~226 | 6 | Phase C rebase+merge li-cursor-agents#53, roadmap#39,#44, benchmarks#247,#228,#249; rebase push lic#520 (CI fail); roadmap#37 unrelated histories blocker; implementation_queue lip/lit 1–8 **stale** |
@@ -21,9 +22,18 @@ Started: 2026-05-30
 
 | PR | Method |
 |----|--------|
-| benchmarks#239 | rebase prefer-main + REST squash |
-| benchmarks#230 | rebase prefer-main + mark ready + REST squash |
-| lic#495 | rebase prefer-main + REST squash |
+| li-cursor-agents#59 | merge-green REST squash |
+| benchmarks#248 | blocked CI-green REST squash |
+| benchmarks#227 | blocked CI-green REST squash |
+| benchmarks#225 | blocked CI-green REST squash |
+
+## Rebased (CI pending)
+
+| PR | Fix |
+|----|-----|
+| li-cursor-agents#57 | rebase prefer-main + push |
+| li-cursor-agents#58 | rebase prefer-main + push |
+| benchmarks#222 | rebase prefer-main + push |
 
 ## Fixed (pushed, CI pending)
 
