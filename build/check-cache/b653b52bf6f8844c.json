@@ -1,0 +1,5 @@
+v=1
+exit=0
+content=8256df0e184adf72
+---
+{"version":1,"schema":"diagnostic-v1","tool":"lic","command":"check","ok":true,"diagnostics":[{"severity":"warning","file":"/mnt/c/Users/Julian/Documents/Programming/li/lic/packages/li-render/src/lib.li","line":1,"column":1,"offset":0,"code":"W0401","message":"unused import `lig`","fix_hint":"remove the import or reference it explicitly"},{"severity":"warning","file":"/mnt/c/Users/Julian/Documents/Programming/li/lic/packages/li-render/src/lib.li","line":1,"column":1,"offset":0,"code":"W0401","message":"unused import `lig.present`","fix_hint":"remove the import or reference it explicitly"},{"severity":"warning","file":"/mnt/c/Users/Julian/Documents/Programming/li/lic/packages/li-render/src/lib.li","line":1,"column":1,"offset":0,"code":"W0401","message":"unused import `gui`","fix_hint":"remove the import or reference it explicitly"}]}

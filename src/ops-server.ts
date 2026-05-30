@@ -425,13 +425,21 @@ async function handleApi(url: URL, req: IncomingMessage, res: ServerResponse): P
   if (url.pathname === "/api/swarm/health") {
     const root = resolveBenchmarksRoot();
     const preflight = root ? runPreflight(root, true) : { briefing: null, generated_at: "" };
+    const observerState = loadObserverState(state);
     const health = scanSwarmHealth({
       state,
       briefing: preflight.briefing,
-      observerState: loadObserverState(state),
+      observerState,
       recentRuns: await loadRecentRunSummariesAsync(16),
     });
-    json(res, 200, health);
+    json(res, 200, {
+      ...health,
+      observer_retry_counts: observerState.retry_counts,
+      briefing_generated_at:
+        preflight.briefing && typeof preflight.briefing === "object"
+          ? (preflight.briefing as Record<string, unknown>).generated_at ?? null
+          : null,
+    });
     return;
   }
 

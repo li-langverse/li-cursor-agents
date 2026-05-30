@@ -36,6 +36,7 @@ import type { AgentRunResult, PreflightBundle } from "../types.js";
 import type { ControlPlaneState, HumanIntervention, QueuedAgentTask } from "../control-plane/types.js";
 import { runSwarmGapIngestTick } from "../observer/gap-registry-ingest.js";
 import { loadObserverState, saveObserverState } from "../observer/state.js";
+import { computeSwarmDegraded } from "../observer/degraded.js";
 import { scanSwarmHealth } from "../observer/swarm-health.js";
 import {
   applyInfrastructureRemediations,
@@ -177,12 +178,7 @@ export async function supervisorTick(options: SupervisorOptions): Promise<TickRe
     pendingWebAgents: options.mock ? [] : pendingWeb,
   });
 
-  if (
-    observerEnabled &&
-    !swarmHealth.healthy &&
-    swarmHealth.remediations.length === 0 &&
-    swarmHealth.findings.some((f) => !f.auto_healable || f.severity === "critical")
-  ) {
+  if (observerEnabled && computeSwarmDegraded(swarmHealth)) {
     interventions.push({
       id: "swarm_degraded:observer",
       kind: "swarm_degraded",

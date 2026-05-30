@@ -1,0 +1,5 @@
+v=1
+exit=0
+content=5494b9afc502afd2
+---
+{"version":1,"schema":"diagnostic-v1","tool":"lic","command":"check","ok":true,"diagnostics":[{"severity":"warning","file":"/mnt/c/Users/Julian/Documents/Programming/li/lic/packages/li-scene/src/lib.li","line":1,"column":1,"offset":0,"code":"W0401","message":"unused import `lig.memory`","fix_hint":"remove the import or reference it explicitly"}]}

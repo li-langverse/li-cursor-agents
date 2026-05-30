@@ -1,0 +1,5 @@
+v=1
+exit=1
+content=18b6b730f0de90ec
+---
+{"version":1,"schema":"diagnostic-v1","tool":"lic","command":"check","ok":false,"diagnostics":[{"severity":"error","file":"/mnt/c/Users/Julian/Documents/Programming/li/lic/packages/li-render/src/lib.li","line":12,"column":1,"offset":307,"code":"lic.error","message":"expected '='","fix_hint":null},{"severity":"error","file":"/mnt/c/Users/Julian/Documents/Programming/li/lic/packages/li-render/src/lib.li","line":12,"column":1,"offset":307,"code":"lic.error","message":"expected indented block","fix_hint":null},{"severity":"error","file":"/mnt/c/Users/Julian/Documents/Programming/li/lic/packages/li-render/src/lib.li","line":12,"column":1,"offset":307,"code":"lic.error","message":"expected top-level declaration","fix_hint":null}]}

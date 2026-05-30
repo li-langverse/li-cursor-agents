@@ -123,12 +123,30 @@ function passesSdkMatrixSmokeAudit(outputText: string): { ok: boolean; gaps: str
   return { ok: gaps.length === 0, gaps };
 }
 
+
+/** Agents whose run is complete only when goal-completion-gate.js passes (not heuristics). */
+export const GOAL_LOOP_GATE_AGENT_IDS = new Set(["world_studio_builder"]);
+
 export function auditRunCompletion(input: AuditRunCompletionInput): AgentRunCompletion {
   const { agentId, definition, outputText, backend, mock, rolloutPrUrls, trace } = input;
   const gaps: string[] = [];
   const evidence: string[] = [];
   const pr_urls = [...new Set([...extractPrUrls(outputText), ...(rolloutPrUrls ?? [])])];
 
+  const gateOnly =
+    process.env.LI_GOAL_LOOP_GATE_ONLY === "1" ||
+    GOAL_LOOP_GATE_AGENT_IDS.has(agentId);
+  if (gateOnly && !mock && backend !== "mock") {
+    if (pr_urls.length > 0) evidence.push(`pr_urls:${pr_urls.length}`);
+    return {
+      complete: false,
+      premature: false,
+      pr_urls,
+      deliverable_checked: hasCheckedDeliverableItems(outputText),
+      gaps: [],
+      evidence: ["goal_loop_completion_gate_authority", ...evidence],
+    };
+  }
   if (isSdkMatrixSmoke()) {
     const smoke = passesSdkMatrixSmokeAudit(outputText);
     if (smoke.ok) {

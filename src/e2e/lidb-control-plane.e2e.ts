@@ -119,6 +119,57 @@ engineSuite("lidb control-plane engine e2e", () => {
     assert.ok(read.rows?.some((row) => row.run_id === runId || row.id === runId));
   });
 
-  test.todo("persist handoffs — blocked: agent_handoffs not in lidb CATALOG_ALLOWLIST yet");
-  test.todo("persist control_plane_reports — blocked: native catalog migration parity (DB-R0-4)");
+  test("persist handoffs via liorm bridge", async () => {
+    delete process.env.LI_LIDB_MOCK;
+    process.env.LI_LIDB_URL = process.env.LI_LIDB_URL ?? "lidb://embedded";
+    clearLidbProbeCache();
+    const handoffId = `e2e-handoff-${Date.now()}`;
+    const { runLidbBridge } = await import("../db/lidb-liorm.js");
+    const write = await runLidbBridge(
+      "upsert_handoff",
+      JSON.stringify({
+        handoff_id: handoffId,
+        from_agent: "e2e-from",
+        to_agents: ["e2e-to"],
+        status: "pending_placement",
+        briefing_hash: "e2e-brief",
+        source_run_id: "e2e-run",
+        work: { note: "wp-e handoff probe" },
+      }),
+    );
+    assert.equal(write.ok, true);
+    const read = await runLidbBridge(
+      "exec_sql",
+      "SELECT handoff_id FROM agent_handoffs WHERE handoff_id = ?",
+      JSON.stringify([handoffId]),
+    );
+    assert.equal(read.ok, true);
+    assert.ok(read.rows?.some((r) => r.handoff_id === handoffId));
+  });
+
+  test("persist control_plane_reports via liorm bridge", async () => {
+    delete process.env.LI_LIDB_MOCK;
+    process.env.LI_LIDB_URL = process.env.LI_LIDB_URL ?? "lidb://embedded";
+    clearLidbProbeCache();
+    const { runLidbBridge } = await import("../db/lidb-liorm.js");
+    const reportId = `e2e-report-${Date.now()}`;
+    const write = await runLidbBridge(
+      "upsert_control_plane_report",
+      JSON.stringify({
+        id: reportId,
+        generated_at: new Date().toISOString(),
+        briefing_hash: "e2e-brief-report",
+        payload: { probe: true },
+        is_latest: true,
+      }),
+    );
+    assert.equal(write.ok, true);
+    const read = await runLidbBridge(
+      "exec_sql",
+      "SELECT id FROM control_plane_reports WHERE id = ?",
+      JSON.stringify([reportId]),
+    );
+    assert.equal(read.ok, true);
+    assert.ok(read.rows?.some((r) => r.id === reportId));
+  });
 });

@@ -1,0 +1,5 @@
+v=1
+exit=0
+content=ebd71f62b245037d
+---
+{"version":1,"schema":"diagnostic-v1","tool":"lic","command":"check","ok":true,"diagnostics":[{"severity":"warning","file":"/mnt/c/Users/Julian/Documents/Programming/li/lic/packages/li-gui/src/lib.li","line":1,"column":1,"offset":0,"code":"W0401","message":"unused import `ui`","fix_hint":"remove the import or reference it explicitly"}]}
