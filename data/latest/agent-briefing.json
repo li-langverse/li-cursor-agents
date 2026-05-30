@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-30T15:44Z",
+  "generated_at": "2026-05-30T19:57Z",
   "role": "preflight_for_cursor_agents",
   "note": "Intelligence (web, review, gaps) runs in Cursor Automations — not in this file. plan_audit needs LIC_ROOT (sibling ../lic or CI lic@dev checkout); catalog path gaps skip path=unknown and catalog_lifecycle=planned.",
   "lic_root": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
@@ -7,7 +7,7 @@
     "issue_triage": {
       "command": "python3 scripts/issue-feature-triage.py",
       "exit_code": 0,
-      "stdout_tail": "wrote /home/s4il0r/Documents/Cursor/li-langverse/benchmarks/data/latest/issue-feature-triage.json (needs_plan=0, candidates=0)\n",
+      "stdout_tail": "wrote /home/s4il0r/Documents/Cursor/li-langverse/benchmarks/data/latest/issue-feature-triage.json (needs_plan=32, candidates=3)\n",
       "stderr_tail": ""
     },
     "issue_hygiene": {
@@ -27,13 +27,13 @@
     "org_ci_audit": {
       "command": "python3 scripts/ensure-org-repo-ci.py",
       "exit_code": 0,
-      "stdout_tail": "wrote /home/s4il0r/Documents/Cursor/li-langverse/benchmarks/data/latest/org-repo-ci-audit.json\nOK: 0  missing: 0  gated: 0  incomplete: 0\n",
+      "stdout_tail": "wrote /home/s4il0r/Documents/Cursor/li-langverse/benchmarks/data/latest/org-repo-ci-audit.json\nOK: 34  missing: 0  gated: 0  incomplete: 0\n",
       "stderr_tail": ""
     },
     "org_agent_kit_audit": {
       "command": "python3 scripts/ensure-org-agent-kit.py --local-only",
-      "exit_code": 0,
-      "stdout_tail": "wrote /home/s4il0r/Documents/Cursor/li-langverse/benchmarks/data/latest/org-agent-kit-audit.json\ncanonical: 1.3.5+6018e18bf2ed91f4\nOK: 12  needing sync: 0\n",
+      "exit_code": 1,
+      "stdout_tail": "wrote /home/s4il0r/Documents/Cursor/li-langverse/benchmarks/data/latest/org-agent-kit-audit.json\ncanonical: 1.3.5+6018e18bf2ed91f4\nOK: 13  needing sync: 21\n  - li-gui: missing_kit\n  - li-local-ci: missing_kit\n  - lidb: missing_kit\n  - mmo: missing_kit\n  - net.httpd: missing_kit\n  - physics.custom: missing_kit\n  - physics.runtime: missing_kit\n  - proof-library: missing_kit\n  - render: missing_kit\n  - research-findings: missing_kit\n  - sim: missing_kit\n  - sim.additive: missing_kit\n",
       "stderr_tail": ""
     },
     "explorer": {
@@ -71,7 +71,7 @@
     "workspace_dirty_sweep": {
       "command": "python3 scripts/workspace-dirty-sweep.py",
       "exit_code": 0,
-      "stdout_tail": "wrote /home/s4il0r/Documents/Cursor/li-langverse/benchmarks/data/latest/workspace-dirty-sweep.json dirty_count=1\n",
+      "stdout_tail": "wrote /home/s4il0r/Documents/Cursor/li-langverse/benchmarks/data/latest/workspace-dirty-sweep.json dirty_count=2\n",
       "stderr_tail": ""
     },
     "agent_deliverable_gate": {
@@ -80,32 +80,362 @@
     }
   },
   "issue_triage": {
-    "generated_at": "2026-05-30T15:43Z",
+    "generated_at": "2026-05-30T19:57Z",
     "vision_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/vision-and-roadmap.md",
     "skill": "plan-feature-from-issue (see .cursor/skills/)",
     "summary": {
       "repos_scanned": 6,
-      "needs_plan": 0,
-      "candidates": 0
+      "needs_plan": 32,
+      "candidates": 3
     },
     "repos": [
       {
         "repo": "lic",
-        "error": "no issues or gh failed",
-        "needs_plan": [],
+        "needs_plan": [
+          {
+            "number": 527,
+            "title": "[plan-needed] PH-2h / G-math-syn: for/range surface — define parse+typecheck Done gate",
+            "url": "https://github.com/li-langverse/lic/issues/527",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-30T09:36:47Z"
+          },
+          {
+            "number": 526,
+            "title": "[plan-needed] PH-2i: full NumPy-rank broadcast — define reject gate + defer criteria (G-math)",
+            "url": "https://github.com/li-langverse/lic/issues/526",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-30T09:36:45Z"
+          },
+          {
+            "number": 525,
+            "title": "[master-plan-gap] PH-8p-c: lic build --jobs=N sets LI_COMPILE_JOBS but compiler never reads it",
+            "url": "https://github.com/li-langverse/lic/issues/525",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-30T09:36:41Z"
+          },
+          {
+            "number": 523,
+            "title": "[master-plan-gap] sim-md-research: md-r3-oracle-plan pending — MD oracle gate open",
+            "url": "https://github.com/li-langverse/lic/issues/523",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-30T09:33:49Z"
+          },
+          {
+            "number": 522,
+            "title": "[master-plan-gap] sim-chem-research: chem-r2 + chem-r3 pending — supervisor idle",
+            "url": "https://github.com/li-langverse/lic/issues/522",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-30T09:33:48Z"
+          },
+          {
+            "number": 521,
+            "title": "[master-plan-gap] security-research runner: sec-r1/2/3 pending — supervisor off 4d+",
+            "url": "https://github.com/li-langverse/lic/issues/521",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-30T09:33:47Z"
+          },
+          {
+            "number": 478,
+            "title": "[master-plan-gap] sim runner: sim-p2-qm-dft-scf pending — supervisor off (algo_id=418)",
+            "url": "https://github.com/li-langverse/lic/issues/478",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-30T02:32:37Z"
+          },
+          {
+            "number": 477,
+            "title": "[master-plan-gap] PH-H httpd: gap-phase2-perf-wrk-soak + gap-phase2-streaming-wrk pending (supervisor stale)",
+            "url": "https://github.com/li-langverse/lic/issues/477",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-30T02:32:35Z"
+          },
+          {
+            "number": 476,
+            "title": "[plan-needed] PH-Pkg: ecosystem-governance sub-plan — 7 exit gates open (no runner loop)",
+            "url": "https://github.com/li-langverse/lic/issues/476",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-30T02:31:20Z"
+          },
+          {
+            "number": 473,
+            "title": "[master-plan-gap] lic/scripts: ship swarm-gap-ingest.py on main for plan_verifier",
+            "url": "https://github.com/li-langverse/lic/issues/473",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-30T01:31:23Z"
+          },
+          {
+            "number": 472,
+            "title": "[master-plan-gap] G-lean/PH-2i: P-linalg loop ≡ ensures sub-plan gate still open",
+            "url": "https://github.com/li-langverse/lic/issues/472",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-30T01:31:22Z"
+          },
+          {
+            "number": 471,
+            "title": "[master-plan-gap] swarm-gap-ingest: close plan_debt when todo.status=completed (not only state.completed_ids)",
+            "url": "https://github.com/li-langverse/lic/issues/471",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-30T01:26:46Z"
+          },
+          {
+            "number": 470,
+            "title": "[plan-needed] PH-02: check off phase-02-typechecker sub-plan exit gates — li-tests evidence exists",
+            "url": "https://github.com/li-langverse/lic/issues/470",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-30T01:26:44Z"
+          },
+          {
+            "number": 464,
+            "title": "[plan-needed] Vision-LLM: diagnostic manifest stub — ship gate open (master-plan:476)",
+            "url": "https://github.com/li-langverse/lic/issues/464",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-29T23:53:24Z"
+          },
+          {
+            "number": 463,
+            "title": "[master-plan-gap] PH-7e: tier-1 red benchmarks exceed 1.2× advisory bar (G-math, PH-5b)",
+            "url": "https://github.com/li-langverse/lic/issues/463",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-29T23:53:22Z"
+          },
+          {
+            "number": 462,
+            "title": "[master-plan-gap] PH-2i-b: length-1 broadcast — no math_linalg test (G-math)",
+            "url": "https://github.com/li-langverse/lic/issues/462",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-29T23:53:21Z"
+          },
+          {
+            "number": 460,
+            "title": "[master-plan-gap] PH-8p-a: reconcile tracker — LI_TEST_JOBS parallel run_all wired (#428 stale)",
+            "url": "https://github.com/li-langverse/lic/issues/460",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-29T23:52:33Z"
+          },
+          {
+            "number": 459,
+            "title": "[plan-needed] PH-5b plots-and-social: 4 exit gates open (plot_shareables.sh, theme, docs link)",
+            "url": "https://github.com/li-langverse/lic/issues/459",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-29T23:52:28Z"
+          },
+          {
+            "number": 436,
+            "title": "[master-plan-gap] swarm-gap-registry/registry.yaml merge conflict blocks swarm-gap-ingest",
+            "url": "https://github.com/li-langverse/lic/issues/436",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-29T20:39:59Z"
+          },
+          {
+            "number": 429,
+            "title": "[plan-needed] PH-7d: Tier-2 MD benchmark uses @cpu/@parallel/@vectorized on def",
+            "url": "https://github.com/li-langverse/lic/issues/429",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-29T20:20:29Z"
+          },
+          {
+            "number": 428,
+            "title": "[master-plan-gap] PH-8p-a: parallel li-tests/run_all.sh (LI_TEST_JOBS) not wired",
+            "url": "https://github.com/li-langverse/lic/issues/428",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-29T20:20:26Z"
+          },
+          {
+            "number": 425,
+            "title": "[plan-needed] Vision-LLM: define Done gate for agent manifest + test export CI",
+            "url": "https://github.com/li-langverse/lic/issues/425",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-29T19:30:30Z"
+          },
+          {
+            "number": 424,
+            "title": "[master-plan-gap] PH-7e / G-math: 6 tier-1 red benchmark rows vs partial tracker closure",
+            "url": "https://github.com/li-langverse/lic/issues/424",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-29T19:30:20Z"
+          },
+          {
+            "number": 423,
+            "title": "[master-plan-gap] PH-DB: ph-db-battle-plan — 40 open gate checkboxes vs lidb embed path",
+            "url": "https://github.com/li-langverse/lic/issues/423",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-29T19:30:08Z"
+          },
+          {
+            "number": 387,
+            "title": "[plan-needed] PH-7d / G-par: MIR proc tags + Lean disjoint proofs (decorator lowering)",
+            "url": "https://github.com/li-langverse/lic/issues/387",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-29T10:30:36Z"
+          },
+          {
+            "number": 386,
+            "title": "[master-plan-gap] PH-2i: reconcile tracker — length-1 broadcast closed in tests/sub-plan",
+            "url": "https://github.com/li-langverse/lic/issues/386",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-29T10:30:31Z"
+          },
+          {
+            "number": 385,
+            "title": "[master-plan-gap] PH-8p: 8p-b parallel workspace pool + 8p-d wall-time SLO",
+            "url": "https://github.com/li-langverse/lic/issues/385",
+            "labels": [
+              "master-plan-gap",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-29T10:30:25Z"
+          },
+          {
+            "number": 129,
+            "title": "[explorer-finding] OpenMP affinity + MPI×threads occupancy rubric for portable Li runtime (G-par, PH-7e)",
+            "url": "https://github.com/li-langverse/lic/issues/129",
+            "labels": [
+              "explorer-finding",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-20T20:14:51Z"
+          },
+          {
+            "number": 128,
+            "title": "[explorer-finding] Kokkos 4.6+ std::mdspan View refactor — Li tier-2 strided buffer ABI rubric (PH-7e, G-par)",
+            "url": "https://github.com/li-langverse/lic/issues/128",
+            "labels": [
+              "explorer-finding",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-20T20:14:36Z"
+          },
+          {
+            "number": 125,
+            "title": "[explorer-finding] C++26 std::execution sender/receiver rubric vs Li async tier-2 scheduling (G-par, G-ai)",
+            "url": "https://github.com/li-langverse/lic/issues/125",
+            "labels": [
+              "explorer-finding",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-20T20:00:03Z"
+          },
+          {
+            "number": 124,
+            "title": "[explorer-finding] OpenMP prescriptive vs descriptive divergent-branch rubric for competitive portable codegen (G-par, PH-7e)",
+            "url": "https://github.com/li-langverse/lic/issues/124",
+            "labels": [
+              "explorer-finding",
+              "plan-needed"
+            ],
+            "created_at": "2026-05-20T19:59:59Z"
+          }
+        ],
         "planned": [],
-        "candidates": []
+        "candidates": [
+          {
+            "number": 399,
+            "title": "feat(studio-ui): studio-ux-16 CI capture deps (libsdl2-dev + headless chrome smoke)",
+            "url": "https://github.com/li-langverse/lic/issues/399",
+            "labels": [],
+            "created_at": "2026-05-29T14:39:46Z"
+          },
+          {
+            "number": 398,
+            "title": "feat(studio-ui): studio-ux-13 agentic_ai SOTA refs in world-studio-demo ux-harness",
+            "url": "https://github.com/li-langverse/lic/issues/398",
+            "labels": [],
+            "created_at": "2026-05-29T14:39:45Z"
+          },
+          {
+            "number": 394,
+            "title": "[ui-audit] Add studio-ui-ux-capture-native.sh on main for ux-harness native GUI",
+            "url": "https://github.com/li-langverse/lic/issues/394",
+            "labels": [],
+            "created_at": "2026-05-29T12:55:40Z"
+          }
+        ]
       },
       {
         "repo": "lip",
-        "error": "no issues or gh failed",
         "needs_plan": [],
         "planned": [],
         "candidates": []
       },
       {
         "repo": "lit",
-        "error": "no issues or gh failed",
         "needs_plan": [],
         "planned": [],
         "candidates": []
@@ -119,8 +449,17 @@
       },
       {
         "repo": "benchmarks",
-        "error": "no issues or gh failed",
-        "needs_plan": [],
+        "needs_plan": [
+          {
+            "number": 18,
+            "title": "[Ecosystem gap] Catalog: tier-1 FFT micro-bench (FFTW/vendor roofline)",
+            "url": "https://github.com/li-langverse/benchmarks/issues/18",
+            "labels": [
+              "feature"
+            ],
+            "created_at": "2026-05-17T13:01:12Z"
+          }
+        ],
         "planned": [],
         "candidates": []
       },
@@ -132,7 +471,14 @@
         "candidates": []
       }
     ],
-    "recommended_actions": []
+    "recommended_actions": [
+      {
+        "priority": "P1",
+        "action": "Run issue-feature-planner automation or comment planning checklist on issues",
+        "needs_plan": 32,
+        "candidates": 3
+      }
+    ]
   },
   "issue_backlog_hygiene": {
     "generated_at": "2026-05-30T15:33Z",
@@ -925,7 +1271,7 @@
     ]
   },
   "plan_completion_audit": {
-    "generated_at": "2026-05-30T15:43Z",
+    "generated_at": "2026-05-30T19:27Z",
     "roots": {
       "lic": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
       "lis": "/home/s4il0r/Documents/Cursor/li-langverse/lis",
@@ -1985,7 +2331,7 @@
     ]
   },
   "ecosystem_audit": {
-    "generated_at": "2026-05-30T15:43Z",
+    "generated_at": "2026-05-30T19:56Z",
     "vision": {
       "master_plan": "https://github.com/li-langverse/lic/blob/main/docs/superpowers/plans/2026-05-14-li-master-plan.md",
       "benchmark_goal": "Li ≤1.2× cpp (tier-1/2); beat HPC SOTA everywhere — PH-5b, PH-7e pure-Li codegen",
@@ -1993,14 +2339,55 @@
       "merge_order": "P0 package CI PRs → benchmarks#1 → lic dev→main"
     },
     "metrics": {
-      "open_prs": 0,
-      "failed_prs": 0,
+      "open_prs": 5,
+      "failed_prs": 4,
       "ready_prs": 0,
       "repos_missing_ci_main": 0,
       "repos_without_live_pages": 0,
       "repos_with_live_pages": 12
     },
-    "failed_prs": [],
+    "failed_prs": [
+      {
+        "repo": "benchmarks",
+        "number": 252,
+        "title": "docs: docs_maintainer digest run 1780170457780",
+        "url": "https://github.com/li-langverse/benchmarks/pull/252",
+        "base": "main",
+        "ci": "fail",
+        "draft": false,
+        "ready": false
+      },
+      {
+        "repo": "benchmarks",
+        "number": 251,
+        "title": "chore(ci): ci_maintainer digest 1780170449021 — org CI gate green",
+        "url": "https://github.com/li-langverse/benchmarks/pull/251",
+        "base": "main",
+        "ci": "fail",
+        "draft": false,
+        "ready": false
+      },
+      {
+        "repo": "li-gui",
+        "number": 3,
+        "title": "chore(agent-kit): sync roadmap cursor policy (sync)",
+        "url": "https://github.com/li-langverse/li-gui/pull/3",
+        "base": "main",
+        "ci": "fail",
+        "draft": false,
+        "ready": false
+      },
+      {
+        "repo": "lic",
+        "number": 568,
+        "title": "docs: open PH tracker + ui_ux_quality handoff refresh",
+        "url": "https://github.com/li-langverse/lic/pull/568",
+        "base": "main",
+        "ci": "fail",
+        "draft": false,
+        "ready": false
+      }
+    ],
     "ready_prs": [],
     "missing_ci_on_main": [],
     "repos_without_live_docs": [],
@@ -2029,7 +2416,7 @@
       "unknown": []
     },
     "plan_completion": {
-      "generated_at": "2026-05-30T15:43Z",
+      "generated_at": "2026-05-30T19:27Z",
       "roots": {
         "lic": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
         "lis": "/home/s4il0r/Documents/Cursor/li-langverse/lis",
@@ -3090,6 +3477,16 @@
     },
     "recommended_actions": [
       {
+        "priority": "P0",
+        "action": "Fix failing PR CI before new feature work",
+        "prs": [
+          "benchmarks#252",
+          "benchmarks#251",
+          "li-gui#3",
+          "lic#568"
+        ]
+      },
+      {
         "priority": "P1",
         "action": "Plan completion debt — run plan-completion-audit automation",
         "total_findings": 166,
@@ -3098,7 +3495,7 @@
     ]
   },
   "ecosystem_explorer": {
-    "generated_at": "2026-05-30T15:30Z",
+    "generated_at": "2026-05-30T19:07Z",
     "lic_root": "../lic",
     "lic_present": true,
     "std_modules_on_disk": [
@@ -3648,16 +4045,620 @@
     ]
   },
   "org_ci_audit": {
-    "generated_at": "2026-05-30T15:44Z",
+    "generated_at": "2026-05-30T19:56Z",
     "org": "li-langverse",
     "required_workflow": "ci.yml",
     "default_branch_policy": "main",
-    "repos_ok": [],
+    "repos_ok": [
+      "benchmarks",
+      "li-demo",
+      "li-gui",
+      "li-httpd",
+      "li-language",
+      "li-local-ci",
+      "li-net",
+      "li-std-core",
+      "li-std-math",
+      "lic",
+      "lic-docs",
+      "lidb",
+      "lip",
+      "lis",
+      "lit",
+      "mmo",
+      "net.httpd",
+      "physics.custom",
+      "physics.runtime",
+      "proof-library",
+      "render",
+      "research-findings",
+      "roadmap",
+      "sim",
+      "sim.additive",
+      "sim.automotive",
+      "sim.drug_design",
+      "sim.robotics",
+      "sim.scientific",
+      "store.realtime",
+      "studio",
+      "studio.ai",
+      "ui",
+      "world"
+    ],
     "repos_missing_ci": [],
     "repos_gated_non_main_default": [],
     "repos_audit_incomplete": [],
-    "workflows": {},
-    "per_repo": {},
+    "workflows": {
+      "benchmarks": [
+        "benchmark-nightly.yml",
+        "ci.yml",
+        "ecosystem-audit.yml",
+        "ecosystem-explorer.yml",
+        "ingest.yml",
+        "issue-feature-planning.yml",
+        "org-repo-ci-audit.yml",
+        "pages.yml",
+        "plan-completion-audit.yml",
+        "pr-auto-merge.yml",
+        "tier-db-registry-compare.yml"
+      ],
+      "li-demo": [
+        "ci.yml",
+        "ecosystem-upstream.yml",
+        "pages.yml",
+        "security-gate.yml"
+      ],
+      "li-gui": [
+        "ci.yml",
+        "ecosystem-upstream.yml"
+      ],
+      "li-httpd": [
+        "ci.yml",
+        "ecosystem-upstream.yml",
+        "pages.yml"
+      ],
+      "li-language": [
+        "benchmarks.yml",
+        "ci.yml",
+        "docs.yml",
+        "release.yml"
+      ],
+      "li-local-ci": [
+        "ci.yml"
+      ],
+      "li-net": [
+        "ci.yml",
+        "ecosystem-upstream.yml",
+        "pages.yml"
+      ],
+      "li-std-core": [
+        "ci.yml",
+        "ecosystem-upstream.yml",
+        "pages.yml"
+      ],
+      "li-std-math": [
+        "ci.yml",
+        "ecosystem-upstream.yml",
+        "pages.yml"
+      ],
+      "lic": [
+        "benchmarks.yml",
+        "ci.yml",
+        "cve-catalog.yml",
+        "fuzz.yml",
+        "hpc-competitive.yml",
+        "httpd-tier5-regression.yml",
+        "lean.yml",
+        "memory.yml",
+        "notify-downstream.yml",
+        "pages.yml",
+        "publish-docker-ci-image.yml",
+        "release.yml",
+        "rng-exploit-suite.yml",
+        "ubsan-lic.yml"
+      ],
+      "lic-docs": [
+        "ci.yml",
+        "docs.yml"
+      ],
+      "lidb": [
+        "ci.yml"
+      ],
+      "lip": [
+        "ci.yml",
+        "ecosystem-upstream.yml",
+        "issue-feature-planning.yml",
+        "pages.yml"
+      ],
+      "lis": [
+        "branch-sync.yml",
+        "ci.yml",
+        "issue-feature-planning.yml",
+        "pages.yml"
+      ],
+      "lit": [
+        "ci.yml",
+        "ecosystem-upstream.yml",
+        "issue-feature-planning.yml",
+        "notify-downstream.yml",
+        "pages.yml"
+      ],
+      "mmo": [
+        "ci.yml",
+        "ecosystem-upstream.yml"
+      ],
+      "net.httpd": [
+        "ci.yml",
+        "ecosystem-upstream.yml"
+      ],
+      "physics.custom": [
+        "ci.yml",
+        "ecosystem-upstream.yml"
+      ],
+      "physics.runtime": [
+        "ci.yml",
+        "ecosystem-upstream.yml"
+      ],
+      "proof-library": [
+        "ci.yml",
+        "pages.yml"
+      ],
+      "render": [
+        "ci.yml",
+        "ecosystem-upstream.yml"
+      ],
+      "roadmap": [
+        "ci.yml",
+        "issue-feature-planning.yml",
+        "pages.yml"
+      ],
+      "sim": [
+        "ci.yml",
+        "ecosystem-upstream.yml"
+      ],
+      "sim.additive": [
+        "ci.yml",
+        "ecosystem-upstream.yml"
+      ],
+      "sim.automotive": [
+        "ci.yml",
+        "ecosystem-upstream.yml"
+      ],
+      "sim.drug_design": [
+        "ci.yml",
+        "ecosystem-upstream.yml"
+      ],
+      "sim.robotics": [
+        "ci.yml",
+        "ecosystem-upstream.yml"
+      ],
+      "sim.scientific": [
+        "ci.yml"
+      ],
+      "store.realtime": [
+        "ci.yml",
+        "ecosystem-upstream.yml"
+      ],
+      "studio": [
+        "ci.yml",
+        "ecosystem-upstream.yml"
+      ],
+      "studio.ai": [
+        "ci.yml",
+        "ecosystem-upstream.yml"
+      ],
+      "ui": [
+        "ci.yml",
+        "ecosystem-upstream.yml"
+      ],
+      "world": [
+        "ci.yml",
+        "ecosystem-upstream.yml"
+      ]
+    },
+    "per_repo": {
+      "benchmarks": {
+        "repo": "benchmarks",
+        "default_branch": "main",
+        "workflows": [
+          "benchmark-nightly.yml",
+          "ci.yml",
+          "ecosystem-audit.yml",
+          "ecosystem-explorer.yml",
+          "ingest.yml",
+          "issue-feature-planning.yml",
+          "org-repo-ci-audit.yml",
+          "pages.yml",
+          "plan-completion-audit.yml",
+          "pr-auto-merge.yml",
+          "tier-db-registry-compare.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "li-demo": {
+        "repo": "li-demo",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml",
+          "pages.yml",
+          "security-gate.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "li-gui": {
+        "repo": "li-gui",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "li-httpd": {
+        "repo": "li-httpd",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml",
+          "pages.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "li-language": {
+        "repo": "li-language",
+        "default_branch": "main",
+        "workflows": [
+          "benchmarks.yml",
+          "ci.yml",
+          "docs.yml",
+          "release.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "li-local-ci": {
+        "repo": "li-local-ci",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "li-net": {
+        "repo": "li-net",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml",
+          "pages.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "li-std-core": {
+        "repo": "li-std-core",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml",
+          "pages.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "li-std-math": {
+        "repo": "li-std-math",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml",
+          "pages.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "lic": {
+        "repo": "lic",
+        "default_branch": "main",
+        "workflows": [
+          "benchmarks.yml",
+          "ci.yml",
+          "cve-catalog.yml",
+          "fuzz.yml",
+          "hpc-competitive.yml",
+          "httpd-tier5-regression.yml",
+          "lean.yml",
+          "memory.yml",
+          "notify-downstream.yml",
+          "pages.yml",
+          "publish-docker-ci-image.yml",
+          "release.yml",
+          "rng-exploit-suite.yml",
+          "ubsan-lic.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "lic-docs": {
+        "repo": "lic-docs",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "docs.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "lidb": {
+        "repo": "lidb",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "lip": {
+        "repo": "lip",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml",
+          "issue-feature-planning.yml",
+          "pages.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "lis": {
+        "repo": "lis",
+        "default_branch": "main",
+        "workflows": [
+          "branch-sync.yml",
+          "ci.yml",
+          "issue-feature-planning.yml",
+          "pages.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "lit": {
+        "repo": "lit",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml",
+          "issue-feature-planning.yml",
+          "notify-downstream.yml",
+          "pages.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "mmo": {
+        "repo": "mmo",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "net.httpd": {
+        "repo": "net.httpd",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "physics.custom": {
+        "repo": "physics.custom",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "physics.runtime": {
+        "repo": "physics.runtime",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "proof-library": {
+        "repo": "proof-library",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "pages.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "render": {
+        "repo": "render",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "research-findings": {
+        "repo": "research-findings",
+        "status": "exempt"
+      },
+      "roadmap": {
+        "repo": "roadmap",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "issue-feature-planning.yml",
+          "pages.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "sim": {
+        "repo": "sim",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "sim.additive": {
+        "repo": "sim.additive",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "sim.automotive": {
+        "repo": "sim.automotive",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "sim.drug_design": {
+        "repo": "sim.drug_design",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "sim.robotics": {
+        "repo": "sim.robotics",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "sim.scientific": {
+        "repo": "sim.scientific",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "store.realtime": {
+        "repo": "store.realtime",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "studio": {
+        "repo": "studio",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "studio.ai": {
+        "repo": "studio.ai",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "ui": {
+        "repo": "ui",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      },
+      "world": {
+        "repo": "world",
+        "default_branch": "main",
+        "workflows": [
+          "ci.yml",
+          "ecosystem-upstream.yml"
+        ],
+        "workflow_source": "github",
+        "gated": null,
+        "status": "ok"
+      }
+    },
     "policy": "docs/ecosystem/repo-ci-required.md",
     "non_main_default_gates": {
       "lidb": "WP-H0: set default branch to main before requiring ci.yml on default"
@@ -3665,7 +4666,7 @@
     "lic_monorepo_hint": "Run lic/scripts/ensure-package-ci.sh before push-official-package-repo.sh"
   },
   "org_agent_kit_audit": {
-    "generated_at": "2026-05-30T15:44Z",
+    "generated_at": "2026-05-30T19:57Z",
     "org": "li-langverse",
     "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
     "roadmap_kit": "/home/s4il0r/Documents/Cursor/li-langverse/roadmap/agent-kit",
@@ -3677,6 +4678,7 @@
     "policy": "docs/ecosystem/ADOPTION.md",
     "repos_ok": [
       "benchmarks",
+      "li-cursor-agents",
       "li-demo",
       "li-httpd",
       "li-language",
@@ -3689,12 +4691,383 @@
       "lit",
       "roadmap"
     ],
-    "repos_needing_sync": [],
+    "repos_needing_sync": [
+      {
+        "repo": "li-gui",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/li-gui",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/li-gui && ../roadmap/scripts/install-agent-kit.sh li-gui"
+      },
+      {
+        "repo": "li-local-ci",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/li-local-ci",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/li-local-ci && ../roadmap/scripts/install-agent-kit.sh li-local-ci"
+      },
+      {
+        "repo": "lidb",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/lidb",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/lidb && ../roadmap/scripts/install-agent-kit.sh lidb"
+      },
+      {
+        "repo": "mmo",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/mmo",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/mmo && ../roadmap/scripts/install-agent-kit.sh mmo"
+      },
+      {
+        "repo": "net.httpd",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/net.httpd",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/net.httpd && ../roadmap/scripts/install-agent-kit.sh net.httpd"
+      },
+      {
+        "repo": "physics.custom",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/physics.custom",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/physics.custom && ../roadmap/scripts/install-agent-kit.sh physics.custom"
+      },
+      {
+        "repo": "physics.runtime",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/physics.runtime",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/physics.runtime && ../roadmap/scripts/install-agent-kit.sh physics.runtime"
+      },
+      {
+        "repo": "proof-library",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/proof-library",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/proof-library && ../roadmap/scripts/install-agent-kit.sh proof-library"
+      },
+      {
+        "repo": "render",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/render",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/render && ../roadmap/scripts/install-agent-kit.sh render"
+      },
+      {
+        "repo": "research-findings",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/research-findings",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/research-findings && ../roadmap/scripts/install-agent-kit.sh research-findings"
+      },
+      {
+        "repo": "sim",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/sim",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/sim && ../roadmap/scripts/install-agent-kit.sh sim"
+      },
+      {
+        "repo": "sim.additive",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/sim.additive",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/sim.additive && ../roadmap/scripts/install-agent-kit.sh sim.additive"
+      },
+      {
+        "repo": "sim.automotive",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/sim.automotive",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/sim.automotive && ../roadmap/scripts/install-agent-kit.sh sim.automotive"
+      },
+      {
+        "repo": "sim.drug_design",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/sim.drug_design",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/sim.drug_design && ../roadmap/scripts/install-agent-kit.sh sim.drug_design"
+      },
+      {
+        "repo": "sim.robotics",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/sim.robotics",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/sim.robotics && ../roadmap/scripts/install-agent-kit.sh sim.robotics"
+      },
+      {
+        "repo": "sim.scientific",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/sim.scientific",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/sim.scientific && ../roadmap/scripts/install-agent-kit.sh sim.scientific"
+      },
+      {
+        "repo": "store.realtime",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/store.realtime",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/store.realtime && ../roadmap/scripts/install-agent-kit.sh store.realtime"
+      },
+      {
+        "repo": "studio",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/studio",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/studio && ../roadmap/scripts/install-agent-kit.sh studio"
+      },
+      {
+        "repo": "studio.ai",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/studio.ai",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/studio.ai && ../roadmap/scripts/install-agent-kit.sh studio.ai"
+      },
+      {
+        "repo": "ui",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/ui",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/ui && ../roadmap/scripts/install-agent-kit.sh ui"
+      },
+      {
+        "repo": "world",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/world",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/world && ../roadmap/scripts/install-agent-kit.sh world"
+      }
+    ],
     "entries": [
       {
         "repo": "benchmarks",
         "present_locally": true,
         "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/benchmarks",
+        "status": "ok",
+        "cursor_stamp": "1.3.5+6018e18bf2ed91f4",
+        "expected_stamp": "1.3.5+6018e18bf2ed91f4",
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [],
+        "has_sync_script": true,
+        "has_agents_md": true,
+        "fix": null
+      },
+      {
+        "repo": "li-cursor-agents",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/li-cursor-agents",
         "status": "ok",
         "cursor_stamp": "1.3.5+6018e18bf2ed91f4",
         "expected_stamp": "1.3.5+6018e18bf2ed91f4",
@@ -3716,6 +5089,23 @@
         "has_sync_script": true,
         "has_agents_md": false,
         "fix": null
+      },
+      {
+        "repo": "li-gui",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/li-gui",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/li-gui && ../roadmap/scripts/install-agent-kit.sh li-gui"
       },
       {
         "repo": "li-httpd",
@@ -3742,6 +5132,23 @@
         "has_sync_script": true,
         "has_agents_md": true,
         "fix": null
+      },
+      {
+        "repo": "li-local-ci",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/li-local-ci",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/li-local-ci && ../roadmap/scripts/install-agent-kit.sh li-local-ci"
       },
       {
         "repo": "li-net",
@@ -3796,6 +5203,28 @@
         "fix": null
       },
       {
+        "repo": "lic-docs",
+        "present_locally": false,
+        "status": "missing_local_clone"
+      },
+      {
+        "repo": "lidb",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/lidb",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/lidb && ../roadmap/scripts/install-agent-kit.sh lidb"
+      },
+      {
         "repo": "lip",
         "present_locally": true,
         "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/lip",
@@ -3835,6 +5264,125 @@
         "fix": null
       },
       {
+        "repo": "mmo",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/mmo",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/mmo && ../roadmap/scripts/install-agent-kit.sh mmo"
+      },
+      {
+        "repo": "net.httpd",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/net.httpd",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/net.httpd && ../roadmap/scripts/install-agent-kit.sh net.httpd"
+      },
+      {
+        "repo": "physics.custom",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/physics.custom",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/physics.custom && ../roadmap/scripts/install-agent-kit.sh physics.custom"
+      },
+      {
+        "repo": "physics.runtime",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/physics.runtime",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/physics.runtime && ../roadmap/scripts/install-agent-kit.sh physics.runtime"
+      },
+      {
+        "repo": "proof-library",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/proof-library",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/proof-library && ../roadmap/scripts/install-agent-kit.sh proof-library"
+      },
+      {
+        "repo": "render",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/render",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/render && ../roadmap/scripts/install-agent-kit.sh render"
+      },
+      {
+        "repo": "research-findings",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/research-findings",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/research-findings && ../roadmap/scripts/install-agent-kit.sh research-findings"
+      },
+      {
         "repo": "roadmap",
         "present_locally": true,
         "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/roadmap",
@@ -3846,11 +5394,198 @@
         "has_sync_script": true,
         "has_agents_md": true,
         "fix": null
+      },
+      {
+        "repo": "sim",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/sim",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/sim && ../roadmap/scripts/install-agent-kit.sh sim"
+      },
+      {
+        "repo": "sim.additive",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/sim.additive",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/sim.additive && ../roadmap/scripts/install-agent-kit.sh sim.additive"
+      },
+      {
+        "repo": "sim.automotive",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/sim.automotive",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/sim.automotive && ../roadmap/scripts/install-agent-kit.sh sim.automotive"
+      },
+      {
+        "repo": "sim.drug_design",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/sim.drug_design",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/sim.drug_design && ../roadmap/scripts/install-agent-kit.sh sim.drug_design"
+      },
+      {
+        "repo": "sim.robotics",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/sim.robotics",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/sim.robotics && ../roadmap/scripts/install-agent-kit.sh sim.robotics"
+      },
+      {
+        "repo": "sim.scientific",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/sim.scientific",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/sim.scientific && ../roadmap/scripts/install-agent-kit.sh sim.scientific"
+      },
+      {
+        "repo": "store.realtime",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/store.realtime",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/store.realtime && ../roadmap/scripts/install-agent-kit.sh store.realtime"
+      },
+      {
+        "repo": "studio",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/studio",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/studio && ../roadmap/scripts/install-agent-kit.sh studio"
+      },
+      {
+        "repo": "studio.ai",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/studio.ai",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/studio.ai && ../roadmap/scripts/install-agent-kit.sh studio.ai"
+      },
+      {
+        "repo": "ui",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/ui",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/ui && ../roadmap/scripts/install-agent-kit.sh ui"
+      },
+      {
+        "repo": "world",
+        "present_locally": true,
+        "local_path": "/home/s4il0r/Documents/Cursor/li-langverse/world",
+        "status": "missing_kit",
+        "cursor_stamp": null,
+        "expected_stamp": null,
+        "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
+        "missing_rules": [
+          ".cursor/rules/li-pr-only.mdc",
+          ".cursor/rules/li-ecosystem-gates.mdc",
+          ".cursor/rules/li-release-notes.mdc"
+        ],
+        "has_sync_script": false,
+        "has_agents_md": false,
+        "fix": "cd /home/s4il0r/Documents/Cursor/li-langverse/world && ../roadmap/scripts/install-agent-kit.sh world"
       }
     ]
   },
   "merge_plan": {
-    "generated_at": "2026-05-30T15:44Z",
+    "generated_at": "2026-05-30T19:57Z",
     "vision_order": "package CI / mirrors → benchmarks → lic → lip/lit/lis → roadmap",
     "ordering_rules": [
       "Repo tier: mirrors/httpd → benchmarks → lic → lip/lit/lis → roadmap (roadmap last)",
@@ -3861,7 +5596,7 @@
       "Supervisor: one merge per tick; re-run pr-merge-queue-plan.py after each merge"
     ],
     "summary": {
-      "open_prs": 0,
+      "open_prs": 4,
       "merge_approved": 0,
       "gate_ready": 0,
       "auto_merge_candidates": 0,
@@ -3871,22 +5606,131 @@
     "merge_first": null,
     "next_merge": null,
     "merge_sequence": [],
-    "merge_order": [],
+    "merge_order": [
+      {
+        "rank": 1,
+        "repo": "benchmarks",
+        "number": 251,
+        "url": "https://github.com/li-langverse/benchmarks/pull/251",
+        "title": "chore(ci): ci_maintainer digest 1780170449021 — org CI gate green",
+        "merge_approved": false,
+        "gate_ready": false,
+        "priority_score": 270,
+        "auto_merge_ok": false,
+        "blocked_reason": null,
+        "order_reason": "rank 1; priority_score=270; awaiting merge-approved label"
+      },
+      {
+        "rank": 2,
+        "repo": "benchmarks",
+        "number": 252,
+        "url": "https://github.com/li-langverse/benchmarks/pull/252",
+        "title": "docs: docs_maintainer digest run 1780170457780",
+        "merge_approved": false,
+        "gate_ready": false,
+        "priority_score": 270,
+        "auto_merge_ok": false,
+        "blocked_reason": null,
+        "order_reason": "rank 2; priority_score=270; awaiting merge-approved label"
+      },
+      {
+        "rank": 3,
+        "repo": "lic",
+        "number": 568,
+        "url": "https://github.com/li-langverse/lic/pull/568",
+        "title": "docs: open PH tracker + ui_ux_quality handoff refresh",
+        "merge_approved": false,
+        "gate_ready": false,
+        "priority_score": 280,
+        "auto_merge_ok": false,
+        "blocked_reason": null,
+        "order_reason": "rank 3; priority_score=280; awaiting merge-approved label"
+      },
+      {
+        "rank": 4,
+        "repo": "lic",
+        "number": 569,
+        "url": "https://github.com/li-langverse/lic/pull/569",
+        "title": "fix(ci): remove workspace gitlink breaking GHA checkout",
+        "merge_approved": false,
+        "gate_ready": false,
+        "priority_score": 280,
+        "auto_merge_ok": false,
+        "blocked_reason": null,
+        "order_reason": "rank 4; priority_score=280; awaiting merge-approved label"
+      }
+    ],
     "stacks": [],
     "redundant": [],
     "warnings": []
   },
   "pr_program": {
-    "generated_at": "2026-05-30T15:07Z",
+    "generated_at": "2026-05-30T19:55Z",
     "merge_first": null,
     "summary": {
-      "open_prs": 0,
+      "open_prs": 3,
       "ci_green": 0,
       "merge_approved": 0,
       "gate_ready_labeled": 0
     },
     "recommended_merge_order": [],
-    "all_open": [],
+    "all_open": [
+      {
+        "repo": "benchmarks",
+        "number": 251,
+        "title": "chore(ci): ci_maintainer digest 1780170449021 — org CI gate green",
+        "url": "https://github.com/li-langverse/benchmarks/pull/251",
+        "base": "main",
+        "ci": "fail",
+        "draft": false,
+        "labels": [
+          "agent:ci_maintainer",
+          "ecosystem-ci",
+          "li-swarm"
+        ],
+        "merge_approved": false,
+        "gate_ready_with_approval": false,
+        "gate_blockers_if_approved": [
+          "merge_approved_label: missing label `merge-approved` (reviewer adds after standards pass)",
+          "ci_green: CI status is `fail` and no fresh local-ci pass — run: python3 scripts/local-ci-sweep.py --repo benchmarks --pr 251"
+        ],
+        "priority_score": 120
+      },
+      {
+        "repo": "benchmarks",
+        "number": 252,
+        "title": "docs: docs_maintainer digest run 1780170457780",
+        "url": "https://github.com/li-langverse/benchmarks/pull/252",
+        "base": "main",
+        "ci": "fail",
+        "draft": false,
+        "labels": [],
+        "merge_approved": false,
+        "gate_ready_with_approval": false,
+        "gate_blockers_if_approved": [
+          "merge_approved_label: missing label `merge-approved` (reviewer adds after standards pass)",
+          "ci_green: CI status is `fail` and no fresh local-ci pass — run: python3 scripts/local-ci-sweep.py --repo benchmarks --pr 252"
+        ],
+        "priority_score": 120
+      },
+      {
+        "repo": "lic",
+        "number": 568,
+        "title": "docs: open PH tracker + ui_ux_quality handoff refresh",
+        "url": "https://github.com/li-langverse/lic/pull/568",
+        "base": "main",
+        "ci": "fail",
+        "draft": false,
+        "labels": [],
+        "merge_approved": false,
+        "gate_ready_with_approval": false,
+        "gate_blockers_if_approved": [
+          "merge_approved_label: missing label `merge-approved` (reviewer adds after standards pass)",
+          "ci_green: CI status is `fail` and no fresh local-ci pass — run: python3 scripts/local-ci-sweep.py --repo lic --pr 568"
+        ],
+        "priority_score": 130
+      }
+    ],
     "plan_warnings": []
   },
   "pr_branch_hygiene": {
@@ -4047,7 +5891,7 @@
     ]
   },
   "ci_bug_triage": {
-    "generated_at": "2026-05-30T15:06Z",
+    "generated_at": "2026-05-30T16:08Z",
     "summary": {
       "local_ci_failures": 1,
       "bug_issues": 0,
@@ -4081,7 +5925,7 @@
   },
   "security_cwe_audit": null,
   "cwe_feed_delta": {
-    "generated_at": "2026-05-30T15:44Z",
+    "generated_at": "2026-05-30T19:57Z",
     "new_cwes": [],
     "missing_in_catalog": [
       "CWE-79",
@@ -4168,9 +6012,9 @@
     ]
   },
   "workspace_dirty_sweep": {
-    "generated_at": "2026-05-30T15:44Z",
+    "generated_at": "2026-05-30T19:57Z",
     "ecosystem_root": "/home/s4il0r/Documents/Cursor/li-langverse",
-    "dirty_count": 1,
+    "dirty_count": 2,
     "dirty_repos": [
       {
         "path": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
@@ -4188,6 +6032,18 @@
         "test_commands": [
           "./li-tests/run_all.sh"
         ]
+      },
+      {
+        "path": "/home/s4il0r/Documents/Cursor/li-langverse/benchmarks",
+        "repo": "benchmarks",
+        "org": "li-langverse",
+        "branch": "chore/agent-tui_ui_tester-1780170457820-digest",
+        "changed_files": 2,
+        "safe_files": [
+          "ata/latest/local-ci-results.json",
+          "data/runs/docs_maintainer-1780170457780.md"
+        ],
+        "test_commands": []
       }
     ]
   },
@@ -4200,23 +6056,23 @@
         "profile": "workflows",
         "ok": false,
         "exit_code": 1,
-        "started_at": "2026-05-30T14:31:42Z",
-        "finished_at": "2026-05-30T14:33:54Z",
-        "summary": "── li-tests ─────────────────────────────   ✕ 1 failed  · 254 passed ==> FAIL profile=lic-host (128s) exit=1 "
+        "started_at": "2026-05-30T19:52:11Z",
+        "finished_at": "2026-05-30T19:54:49Z",
+        "summary": "── li-tests ─────────────────────────────   ✕ 2 failed  · 253 passed ==> FAIL profile=lic-host (136s) exit=1 "
       }
     ],
-    "generated_at": "2026-05-30T14:33:54Z",
-    "sweep_at": "2026-05-30T14:33Z"
+    "generated_at": "2026-05-30T19:54:49Z",
+    "sweep_at": "2026-05-30T19:54Z"
   },
   "recommended_agents": [
     {
-      "agent": "proof_gap_researcher",
-      "reason": "swarm: research goal provability_holes eligible (priority 9)",
+      "agent": "swarm_observer",
+      "reason": "swarm: research goal swarm_coverage eligible (priority 10)",
       "source": "research_goals_status"
     },
     {
       "agent": "workspace_sweeper",
-      "reason": "1 sibling repo(s) with uncommitted work — fallback sweep"
+      "reason": "2 sibling repo(s) with uncommitted work — fallback sweep"
     },
     {
       "agent": "plan_verifier",
@@ -4229,6 +6085,10 @@
     {
       "agent": "gap_explorer",
       "reason": "2 missing std modules"
+    },
+    {
+      "agent": "agent_kit_maintainer",
+      "reason": "21 repos missing or drifted agent-kit"
     },
     {
       "agent": "pr_alignment",
@@ -4566,7 +6426,7 @@
   "agent_incomplete_runs": [],
   "agent_pr_deliverable_failures": [],
   "org_roadmap": {
-    "loaded_at": "2026-05-30T15:44Z",
+    "loaded_at": "2026-05-30T19:57Z",
     "vision_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/vision-and-roadmap.md",
     "engineering_standards_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/engineering-standards.md",
     "master_plan_url": "https://github.com/li-langverse/lic/blob/main/docs/superpowers/plans/2026-05-14-li-master-plan.md",
@@ -4589,7 +6449,8 @@
     "priority_order": [
       "coord_pull_requests",
       "coord_governance",
-      "coord_ecosystem"
+      "coord_ecosystem",
+      "coord_platform"
     ],
     "layers": [
       {
@@ -4629,6 +6490,16 @@
             "reason": "2 missing std modules"
           }
         ]
+      },
+      {
+        "coordinator": "coord_platform",
+        "name": "Platform coordinator",
+        "agents": [
+          {
+            "agent": "agent_kit_maintainer",
+            "reason": "21 repos missing or drifted agent-kit"
+          }
+        ]
       }
     ],
     "flat_tasks": [
@@ -4661,6 +6532,12 @@
         "agent": "gap_explorer",
         "reason": "2 missing std modules",
         "priority": 40
+      },
+      {
+        "coordinator": "coord_platform",
+        "agent": "agent_kit_maintainer",
+        "reason": "21 repos missing or drifted agent-kit",
+        "priority": 50
       }
     ],
     "validation_errors": []
@@ -4769,8 +6646,8 @@
     "active_research_session": "numerics_researcher:numerics_sota (cycle 1)",
     "research_lane_enabled": true,
     "implement_lane_enabled": true,
-    "last_research_tick_at": "2026-05-30T12:19:13.248Z",
-    "last_implement_tick_at": "2026-05-30T15:25:36.168Z"
+    "last_research_tick_at": "2026-05-30T16:04:09.903Z",
+    "last_implement_tick_at": "2026-05-30T19:54:40.978Z"
   },
   "research_goals_status": [
     {
@@ -4964,7 +6841,7 @@
       "agent": "swarm_observer",
       "priority": 10,
       "last_run_at": "2026-05-30T12:20:34.891Z",
-      "eligible": false
+      "eligible": true
     },
     {
       "goal_id": "offensive_security",
@@ -4986,6 +6863,6 @@
     "missing_north_star_fit": [],
     "invalid_north_star_fit": []
   },
-  "swarm_enriched_at": "2026-05-30T15:44:12.692Z",
-  "swarm_recommendations_merged_at": "2026-05-30T15:44:12.692Z"
+  "swarm_enriched_at": "2026-05-30T19:57:08.477Z",
+  "swarm_recommendations_merged_at": "2026-05-30T19:57:08.477Z"
 }
