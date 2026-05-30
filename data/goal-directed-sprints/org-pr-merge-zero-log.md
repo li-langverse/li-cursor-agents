@@ -4,6 +4,7 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
+| 2026-05-30 code_implementer (18) | 225 → 224 | 4 | Phase B REST squash li-cursor-agents#54,#51, lic#376; Phase C rebase+push lic#373,#376,#520, li-cursor-agents#51, benchmarks#211, lic#497; implementation_queue lip/lit 1–8 **stale** (0 open, main CI green); lic#373/#520 CI git checkout 128 (pending re-run) |
 | 2026-05-30 code_implementer (16) | 232 → ~226 | 6 | Phase C rebase+merge li-cursor-agents#53, roadmap#39,#44, benchmarks#247,#228,#249; rebase push lic#520 (CI fail); roadmap#37 unrelated histories blocker; implementation_queue lip/lit 1–8 **stale** |
 | 2026-05-30 code_implementer (15) | 235 → 232 | 6 | Phase B blocked×3 (lip#46–48); Phase C rebase+REST squash benchmarks#238,#196; implementation_queue lip/lit 1–8 **stale** (0 open, main CI green) |
 | 2026-05-30 code_implementer (10) | 243 → 244 | 0 | Phase B REST merge rate-limited (403); Phase C rebase+push lip#46,#47,#48 (dirty→blocked, CI green); lip#45 + lit#21–23 blocked CI-green pending merge; li-cursor-agents#51 CLEAN; implementation_queue lip/lit 1–8 stale — CI already green |

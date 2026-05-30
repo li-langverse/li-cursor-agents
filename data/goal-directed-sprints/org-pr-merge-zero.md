@@ -23,8 +23,8 @@ Clear every open pull request in the org by squash-merging (preferred), or fixin
 |-------|-------|--------|
 | **A** | Refresh queue (`org-merge-open-prs.py --dry-run`) | **DONE** |
 | **B** | Auto-merge green + blocked CI-green | **DONE** |
-| **C** | Local rebase dirty PRs (batch per repo, push) | **in progress** (~175 dirty; session 17: rebased+merged benchmarks#239, lic#495; rebased #230,#211; benchmarks#230 ready) |
-| **D** | Fix CI failures on remaining PRs | **in progress** (lip/lit 0 open; lic#520 fix pushed — li_parallel_for_i64 restore; CI pending) |
+| **C** | Local rebase dirty PRs (batch per repo, push) | **in progress** (~115 dirty; session 18: rebased lic#373/#376/#520, benchmarks#211, lic#497 pushed) |
+| **D** | Fix CI failures on remaining PRs | **in progress** (lip/lit 0 open; lic#376 merged; lic#373/#520 CI git checkout 128) |
 | **E** | Close superseded duplicate sweeps (only if commit already on main) | **pending** |
 | **F** | Verify 0 open PRs + update final report | **pending** |
 
