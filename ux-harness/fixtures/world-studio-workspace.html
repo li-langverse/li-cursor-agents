@@ -17,6 +17,8 @@
       background: #161b22; border-bottom: 1px solid #30363d; display: flex; align-items: center;
       padding: 0 16px; font-size: 13px; }
     .badge { background: #238636; color: #fff; padding: 2px 8px; border-radius: 4px; margin-left: 8px; }
+    .kbd-hint { position: absolute; left: 72px; bottom: 8px; font-size: 11px; color: #8b949e; }
+    kbd { background: #21262d; border: 1px solid #30363d; border-radius: 3px; padding: 1px 4px; }
   </style>
 </head>
 <body>
@@ -24,5 +26,6 @@
   <header class="topbar">Li World Studio <span class="badge">Agent: idle</span></header>
   <main class="viewport" role="main" aria-label="3D viewport"></main>
   <aside class="inspector"><h2>Inspector</h2><p>Particle tier: 10k (mock)</p></aside>
+  <footer class="kbd-hint" aria-label="Keyboard shortcuts">Tab: dock → viewport → inspector · <kbd>Cmd</kbd>+<kbd>K</kbd> palette</footer>
 </body>
 </html>

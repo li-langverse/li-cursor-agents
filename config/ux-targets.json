@@ -47,7 +47,8 @@
       "journeys": [
         { "id": "studio_workspace", "steps": ["viewport", "timeline", "inspector"] },
         { "id": "command_palette", "steps": ["open_palette", "filter", "run_command"] },
-        { "id": "vertical_profile", "steps": ["switch_profile", "read_metrics"] }
+        { "id": "vertical_profile", "steps": ["switch_profile", "read_metrics"] },
+        { "id": "keyboard_first_workflow", "steps": ["tab_dock", "tab_viewport", "tab_inspector", "open_palette_shortcut"] }
       ]
     },
     {
