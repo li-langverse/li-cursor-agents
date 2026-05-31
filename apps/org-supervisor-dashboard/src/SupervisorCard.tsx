@@ -71,7 +71,13 @@ export function SupervisorCard({ supervisor, audits, active }: Props) {
                 {supervisor.activeClaims.map((row, i) => (
                   <tr key={i}>
                     <td>{refLabel(row)}</td>
-                    <td>{String(row.role ?? "—")}</td>
+                    <td>
+                      {row.dimension ? (
+                        <span className="chip dim">{String(row.dimension)}</span>
+                      ) : (
+                        String(row.role ?? "-")
+                      )}
+                    </td>
                     <td className={statusClass(row.status)}>{String(row.status ?? "—")}</td>
                     <td>{String(row.workerId ?? "—")}</td>
                   </tr>

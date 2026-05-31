@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "@li-langverse/cursor-agents",
   "version": "0.1.0",
   "description": "Local Cursor SDK agent runner for li-langverse (mock backend for CI)",
