@@ -9,12 +9,13 @@ metadata:
     app.kubernetes.io/component: goal-directed-agent
 data:
   LI_PROOF_EXPLORER_ALWAYS_ON: "1"
-  LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/proof-explorer-program.md"
   LI_PROOF_EXPLORER_PHASE_HANDOFF: "1"
+  LI_PROOF_EXPLORER_SWEEP_MODE: "1"
+  LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/proof-explorer-phase8-basic-corpus.md"
   LI_PROOF_EXPLORER_LIC_ROOT: "/workspace/lic"
   LI_CURSOR_AGENTS_ROOT: "/app"
   LI_PROOF_EXPLORER_WORKFLOW_REPO: "lic"
-  LI_PROOF_EXPLORER_BRANCH: "cursor/proof-explorer-phase2"
+  LI_PROOF_EXPLORER_BRANCH: "cursor/proof-explorer-basic-corpus"
   LI_GITHUB_ORG: "li-langverse"
   LI_PROOF_EXPLORER_LIC_REPO: "lic"
   LI_PROOF_EXPLORER_LOOP_SLEEP_SEC: "120"
@@ -23,4 +24,3 @@ data:
   LI_SDK_TERMINAL_STREAM: "1"
   LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE: "1"
   NODE_ENV: "production"
-

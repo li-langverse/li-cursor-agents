@@ -26,6 +26,26 @@ const DEFAULT_PHASES: ProofExplorerPhase[] = [
     goalRel: "data/goal-directed-sprints/proof-explorer-phase4-li-coverage.md",
     gateRel: "scripts/proof-explorer-phase4-completion-gate.sh",
   },
+  {
+    id: "phase5",
+    goalRel: "data/goal-directed-sprints/proof-explorer-phase5-discharge-sprint.md",
+    gateRel: "scripts/proof-explorer-phase5-completion-gate.sh",
+  },
+  {
+    id: "phase6",
+    goalRel: "data/goal-directed-sprints/proof-explorer-phase6-erdos-formalization.md",
+    gateRel: "scripts/proof-explorer-phase6-completion-gate.sh",
+  },
+  {
+    id: "phase7",
+    goalRel: "data/goal-directed-sprints/proof-explorer-phase7-research-at-scale.md",
+    gateRel: "scripts/proof-explorer-phase7-completion-gate.sh",
+  },
+  {
+    id: "phase8",
+    goalRel: "data/goal-directed-sprints/proof-explorer-phase8-basic-corpus.md",
+    gateRel: "scripts/proof-explorer-phase8-completion-gate.sh",
+  },
 ];
 
 export function isPhaseHandoffEnabled(): boolean {
@@ -58,6 +78,16 @@ function statePath(licRoot: string): string {
   return join(licRoot, "data/proof-explorer-loop/state.json");
 }
 
+const PHASE_HANDOFF_META: Record<string, { nextPhase: number; nextWp: string }> = {
+  phase2: { nextPhase: 3, nextWp: "wp-ra" },
+  phase3: { nextPhase: 4, nextWp: "wp-li-coverage" },
+  phase4: { nextPhase: 5, nextWp: "wp-ds-01" },
+  phase5: { nextPhase: 6, nextWp: "wp-ef-01" },
+  phase6: { nextPhase: 7, nextWp: "wp-rs-01" },
+  phase7: { nextPhase: 8, nextWp: "wp-bc-01" },
+  phase8: { nextPhase: 9, nextWp: "complete" },
+};
+
 function touchStateHandoff(licRoot: string, phaseId: string): void {
   const path = statePath(licRoot);
   if (!existsSync(path)) return;
@@ -67,8 +97,11 @@ function touchStateHandoff(licRoot: string, phaseId: string): void {
       Array.isArray(state.completed_wps) ? (state.completed_wps as string[]) : [],
     );
     completed.add(phaseId);
-    state.phase = phaseId === "phase2" ? 3 : state.phase;
-    state.current_wp = phaseId === "phase2" ? "wp5" : "wp-ra";
+    const meta = PHASE_HANDOFF_META[phaseId];
+    if (meta) {
+      state.phase = meta.nextPhase;
+      state.current_wp = meta.nextWp;
+    }
     state.completed_wps = [...completed];
     state.last_handoff = new Date().toISOString();
     writeFileSync(path, `${JSON.stringify(state, null, 2)}\n`, "utf8");
@@ -107,7 +140,7 @@ export async function resolveActivePhase(licRoot?: string): Promise<ActivePhaseR
     }
 
     if (!existsSync(gatePath)) {
-      workerConsole("li-proof-explorer", "info", `phase ${phase.id}: no gate script yet — active`);
+      workerConsole("li-proof-explorer", "info", `phase ${phase.id}: no gate script yet - active`);
       return { phase, allComplete: false, goalRel: phase.goalRel };
     }
 
@@ -117,7 +150,7 @@ export async function resolveActivePhase(licRoot?: string): Promise<ActivePhaseR
       return { phase, allComplete: false, goalRel: phase.goalRel };
     }
 
-    workerConsole("li-proof-explorer", "info", `phase ${phase.id} gate passed — handoff`);
+    workerConsole("li-proof-explorer", "info", `phase ${phase.id} gate passed - handoff`);
     touchStateHandoff(root, phase.id);
   }
 

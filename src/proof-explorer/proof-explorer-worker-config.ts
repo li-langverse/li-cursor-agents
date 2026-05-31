@@ -1,10 +1,15 @@
-function truthyEnv(name: string): boolean {
+﻿function truthyEnv(name: string): boolean {
   const v = process.env[name]?.trim().toLowerCase();
   return v === "1" || v === "true" || v === "yes";
 }
 
 export function isProofExplorerWorkerAlwaysOn(): boolean {
   return truthyEnv("LI_PROOF_EXPLORER_ALWAYS_ON");
+}
+
+/** Sweep mode: catalog pass gates handoff; per-specimen verify failures are non-fatal. */
+export function isProofExplorerSweepMode(): boolean {
+  return truthyEnv("LI_PROOF_EXPLORER_SWEEP_MODE");
 }
 
 export function proofExplorerGoalFile(): string {
@@ -37,4 +42,18 @@ export function proofExplorerLoopSleepSec(): number {
 export function proofExplorerLoopMax(): number {
   const n = Number(process.env.LI_PROOF_EXPLORER_LOOP_MAX ?? 0);
   return Number.isFinite(n) && n >= 0 ? n : 0;
+}
+export function proofExplorerTrackedBranch(): string {
+  const raw = process.env.LI_PROOF_EXPLORER_BRANCH?.trim();
+  if (raw) return raw;
+  return "cursor/proof-explorer-program";
+}
+
+export function proofExplorerRepoWorkflowEnv(): Record<string, string> {
+  const branch = proofExplorerTrackedBranch();
+  return {
+    LI_REPO_WORKFLOW_BRANCH: branch,
+    LI_REPO_WORKFLOW_TRACK_REMOTE: "1",
+    LI_REPO_WORKFLOW_OPEN_PR: "0",
+  };
 }

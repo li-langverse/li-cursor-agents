@@ -37,15 +37,16 @@ sync_lic_repo() {
 
   echo "proof-explorer-entrypoint: updating existing clone"
   git -C "$LIC_ROOT" fetch origin --prune
-  if git -C "$LIC_ROOT" show-ref --verify --quiet "refs/heads/${BRANCH}"; then
-    git -C "$LIC_ROOT" checkout "$BRANCH"
-  elif git -C "$LIC_ROOT" show-ref --verify --quiet "refs/remotes/origin/${BRANCH}"; then
-    git -C "$LIC_ROOT" checkout -B "$BRANCH" "origin/${BRANCH}"
+  if git -C "$LIC_ROOT" show-ref --verify --quiet "refs/remotes/origin/${BRANCH}"; then
+    git -C "$LIC_ROOT" checkout -f -B "$BRANCH" "origin/${BRANCH}"
+    git -C "$LIC_ROOT" reset --hard "origin/${BRANCH}"
+  elif git -C "$LIC_ROOT" show-ref --verify --quiet "refs/heads/${BRANCH}"; then
+    git -C "$LIC_ROOT" checkout -f "$BRANCH"
+    git -C "$LIC_ROOT" fetch origin "$BRANCH" 2>/dev/null || true
+    git -C "$LIC_ROOT" reset --hard "origin/${BRANCH}" 2>/dev/null || true
   else
-    git -C "$LIC_ROOT" checkout -B "$BRANCH"
+    git -C "$LIC_ROOT" checkout -f -B "$BRANCH"
   fi
-  git -C "$LIC_ROOT" fetch origin "$BRANCH"
-  git -C "$LIC_ROOT" reset --hard "origin/${BRANCH}"
 }
 
 sync_lic_repo

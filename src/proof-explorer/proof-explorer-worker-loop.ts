@@ -11,7 +11,10 @@ import {
   proofExplorerLoopMax,
   proofExplorerLoopSleepSec,
   proofExplorerWorkflowRepo,
+  proofExplorerRepoWorkflowEnv,
 } from "./proof-explorer-worker-config.js";
+import { syncProofExplorerLicFromOrigin } from "./proof-explorer-lic-sync.js";
+import { sweepModeAllowsHandoff } from "./proof-explorer-sweep-mode.js";
 
 let child: ReturnType<typeof spawn> | null = null;
 let abort: AbortController | null = null;
@@ -81,6 +84,7 @@ function runGoalDirectedLoopOnce(goalRel: string): Promise<number> {
       env: {
         ...process.env,
         LI_GOAL_CWD: licRoot,
+        ...proofExplorerRepoWorkflowEnv(),
         LIC_ROOT: licRoot,
         LI_CURSOR_AGENTS_ROOT: agentsRoot,
       },
@@ -115,7 +119,10 @@ async function proofExplorerWorkerLoop(signal: AbortSignal): Promise<void> {
       activeGoalRel = active.goalRel;
 
       const exitCode = await runGoalDirectedLoopOnce(active.goalRel);
-      if (exitCode === 0) {
+      await syncProofExplorerLicFromOrigin();
+      const sweepHandoff =
+        exitCode !== 0 && (await sweepModeAllowsHandoff(activePhaseId, proofExplorerLicRoot()));
+      if (exitCode === 0 || sweepHandoff) {
         workerConsole(
           "li-proof-explorer",
           "info",
@@ -192,6 +199,7 @@ export async function runProofExplorerWorkerOnce(options?: { force?: boolean }):
     return;
   }
   const exitCode = await runGoalDirectedLoopOnce(active.goalRel);
+      await syncProofExplorerLicFromOrigin();
   console.log(JSON.stringify({ ok: exitCode === 0, exit_code: exitCode, phase: active.phase?.id }, null, 2));
   if (exitCode !== 0) process.exit(1);
 }
