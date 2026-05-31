@@ -1,7 +1,7 @@
 {
   "report": {
-    "total": 0,
-    "classified": 0,
+    "total": 1,
+    "classified": 1,
     "green_clean": 0,
     "blocked_ci_ok": 0,
     "dirty": 0,
