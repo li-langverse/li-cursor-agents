@@ -4,6 +4,7 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
+| 2026-05-31 code_implementer-1780196705652 | 6 → 3 | 6+5 closed | Phase A: refresh (7 open after index catch-up); Phase B: roadmap#57, benchmarks#269, benchmarks#270; Phase C/D: merge lic#627,#629,#630; rebase+push lic#633; close lic#626,#631,#624,#628 (superseded/stale); open: lic#632 (bench migration CI fail), lic#633 (CI pending); **completion gate blocked** |
 | 2026-05-31 code_implementer-1780194539860 | 1 → 1 | 0 | Phase A: refresh (li-cursor-agents#100 green clean); implementation_queue 1–8 **stale** (lic#439/#552 closed via REST); completion gate **blocked** — #100 awaits human merge (do-not-self-merge) |
 | 2026-05-31 code_implementer-1780194176407 | 1 → 0 | 1 | Phase A: refresh (li-cursor-agents#99 green clean); Phase B: REST squash #99 (session 24 sprint digest); implementation_queue 1–8 **stale**; **completion gate pass** |
 | 2026-05-31 code_implementer-1780193829432 | 1 → 0 | 1 | Phase A: refresh (li-cursor-agents#98 green clean); Phase B: REST squash #98 (session 23 sprint digest); implementation_queue 1–8 **stale**; **completion gate pass** |
