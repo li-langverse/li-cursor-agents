@@ -1,12 +1,12 @@
 {
   "report": {
-    "total_open": 177,
-    "classified": 177,
+    "total_open": 167,
+    "classified": 167,
     "partial": false,
     "limit": null,
     "implement": 4,
     "route_planner": 73,
-    "close_done": 16,
+    "close_done": 6,
     "close_duplicate": 6,
     "close_wontfix": 0,
     "close_spam": 0,
@@ -1158,144 +1158,6 @@
     }
   ],
   "close_done": [
-    {
-      "repo": "benchmarks",
-      "number": 139,
-      "title": "[ux-audit] Include tui-app-fixture and tui-gen-fixture in org ux_audit preflight",
-      "html_url": "https://github.com/li-langverse/benchmarks/issues/139",
-      "labels": [],
-      "updated_at": "2026-05-29T12:55:59Z",
-      "classification_note": "merged_pr_reference",
-      "suggested_reason": "already_implemented",
-      "close_summary": "[ux-audit] Include tui-app-fixture and tui-gen-fixture in org ux_audit preflight",
-      "close_evidence": "Body references merged PR #30"
-    },
-    {
-      "repo": "lic",
-      "number": 127,
-      "title": "docs(numerics): 2026-05-20 researcher pass \u2014 horner DCE P0 + near-limit SOTA",
-      "html_url": "https://github.com/li-langverse/lic/issues/127",
-      "labels": [
-        "numerics-research"
-      ],
-      "updated_at": "2026-05-20T20:07:14Z",
-      "classification_note": "merged_pr_reference",
-      "suggested_reason": "already_implemented",
-      "close_summary": "docs(numerics): 2026-05-20 researcher pass \u2014 horner DCE P0 + near-limit SOTA",
-      "close_evidence": "Body references merged PR #123"
-    },
-    {
-      "repo": "lic",
-      "number": 126,
-      "title": "numerics-research: 2026-05-20 horner P0 + near-limit SOTA evidence pack",
-      "html_url": "https://github.com/li-langverse/lic/issues/126",
-      "labels": [
-        "numerics-research"
-      ],
-      "updated_at": "2026-05-21T07:14:32Z",
-      "classification_note": "merged_pr_reference",
-      "suggested_reason": "already_implemented",
-      "close_summary": "numerics-research: 2026-05-20 horner P0 + near-limit SOTA evidence pack",
-      "close_evidence": "Body references merged PR #123"
-    },
-    {
-      "repo": "benchmarks",
-      "number": 53,
-      "title": "[explorer-finding] PH-IO-7: Python build_summary.py parity gate until std.summary ships (PH-IO-7)",
-      "html_url": "https://github.com/li-langverse/benchmarks/issues/53",
-      "labels": [
-        "explorer-finding"
-      ],
-      "updated_at": "2026-05-30T13:38:04Z",
-      "classification_note": "merged_pr_reference",
-      "suggested_reason": "already_implemented",
-      "close_summary": "[explorer-finding] PH-IO-7: Python build_summary.py parity gate until std.summary ships (PH-IO-7)",
-      "close_evidence": "Body references merged PR #13"
-    },
-    {
-      "repo": "lic",
-      "number": 121,
-      "title": "numerics-research: horner_pure_li anti-DCE + matmul_naive 1.30\u00d7 (pass 84241347)",
-      "html_url": "https://github.com/li-langverse/lic/issues/121",
-      "labels": [
-        "numerics-research"
-      ],
-      "updated_at": "2026-05-20T19:51:36Z",
-      "classification_note": "merged_pr_reference",
-      "suggested_reason": "already_implemented",
-      "close_summary": "numerics-research: horner_pure_li anti-DCE + matmul_naive 1.30\u00d7 (pass 84241347)",
-      "close_evidence": "Body references merged PR #47"
-    },
-    {
-      "repo": "lic",
-      "number": 115,
-      "title": "numerics-research: 2026-05-20 pass \u2014 horner DCE (P0), matmul SOTA, tier-2 disjoint_elem",
-      "html_url": "https://github.com/li-langverse/lic/issues/115",
-      "labels": [
-        "numerics-research"
-      ],
-      "updated_at": "2026-05-20T19:38:11Z",
-      "classification_note": "merged_pr_reference",
-      "suggested_reason": "already_implemented",
-      "close_summary": "numerics-research: 2026-05-20 pass \u2014 horner DCE (P0), matmul SOTA, tier-2 disjoint_elem",
-      "close_evidence": "Body references merged PR #47"
-    },
-    {
-      "repo": "lic",
-      "number": 111,
-      "title": "numerics-research: 2026-05-20 pass \u2014 horner P0 DCE + near-limit SOTA map",
-      "html_url": "https://github.com/li-langverse/lic/issues/111",
-      "labels": [
-        "numerics-research"
-      ],
-      "updated_at": "2026-05-20T19:17:05Z",
-      "classification_note": "merged_pr_reference",
-      "suggested_reason": "already_implemented",
-      "close_summary": "numerics-research: 2026-05-20 pass \u2014 horner P0 DCE + near-limit SOTA map",
-      "close_evidence": "Body references merged PR #47"
-    },
-    {
-      "repo": "lic",
-      "number": 105,
-      "title": "Numerics researcher pass (2026-05-20): horner P0 + near-limit SOTA map",
-      "html_url": "https://github.com/li-langverse/lic/issues/105",
-      "labels": [
-        "numerics-research"
-      ],
-      "updated_at": "2026-05-21T07:14:39Z",
-      "classification_note": "merged_pr_reference",
-      "suggested_reason": "already_implemented",
-      "close_summary": "Numerics researcher pass (2026-05-20): horner P0 + near-limit SOTA map",
-      "close_evidence": "Body references merged PR #47"
-    },
-    {
-      "repo": "lic",
-      "number": 99,
-      "title": "Numerics researcher pass (2026-05-20): horner_pure_li red + near-limit greens \u2014 SOTA map",
-      "html_url": "https://github.com/li-langverse/lic/issues/99",
-      "labels": [
-        "numerics-research"
-      ],
-      "updated_at": "2026-05-20T16:57:37Z",
-      "classification_note": "merged_pr_reference",
-      "suggested_reason": "already_implemented",
-      "close_summary": "Numerics researcher pass (2026-05-20): horner_pure_li red + near-limit greens \u2014 SOTA map",
-      "close_evidence": "Body references merged PR #47"
-    },
-    {
-      "repo": "lic",
-      "number": 97,
-      "title": "Numerics researcher pass (2026-05-20): horner P0 + near-limit SOTA map",
-      "html_url": "https://github.com/li-langverse/lic/issues/97",
-      "labels": [
-        "numerics-research"
-      ],
-      "updated_at": "2026-05-20T16:38:22Z",
-      "classification_note": "body_main_fixed",
-      "suggested_reason": "already_implemented",
-      "close_summary": "Numerics researcher pass (2026-05-20): horner P0 + near-limit SOTA map",
-      "close_evidence": "Issue body states fix is on main"
-    },
     {
       "repo": "lic",
       "number": 95,
