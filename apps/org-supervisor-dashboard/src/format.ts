@@ -1,4 +1,4 @@
-import type { Health } from "./types";
+﻿import type { Health } from "./types";
 
 export function formatWhen(iso: string | null | undefined): string {
   if (!iso) return "—";
@@ -21,6 +21,10 @@ export function healthChip(health: Health): { label: string; className: string }
 }
 
 export function refLabel(row: Record<string, unknown>): string {
+  if (row.researchRef) {
+    const dim = row.dimension ? ` (${row.dimension})` : "";
+    return `${String(row.researchRef)}${dim}`;
+  }
   return String(
     row.issueRef ?? row.prRef ?? row.repo
       ? `${row.repo}#${row.number}`

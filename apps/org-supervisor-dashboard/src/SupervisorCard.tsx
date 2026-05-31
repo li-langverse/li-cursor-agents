@@ -1,10 +1,11 @@
-import type { AuditRow, SupervisorKind, SupervisorSnapshot } from "./types";
+﻿import type { AuditRow, SupervisorKind, SupervisorSnapshot } from "./types";
 import { formatWhen, healthChip, refLabel, statusClass } from "./format";
 
-const AUDIT_KEYS: Record<SupervisorKind, keyof import("./types").DashboardPayload["audits"]> = {
+export const AUDIT_KEYS: Record<SupervisorKind, keyof import("./types").DashboardPayload["audits"]> = {
   issue: "issue",
   pr: "pr-implement",
   review: "pr-review",
+  research: "research",
 };
 
 interface Props {
@@ -61,7 +62,7 @@ export function SupervisorCard({ supervisor, audits, active }: Props) {
               <thead>
                 <tr>
                   <th>Ref</th>
-                  <th>Role</th>
+                  <th>Role / dimension</th>
                   <th>Status</th>
                   <th>Worker</th>
                 </tr>
@@ -70,9 +71,9 @@ export function SupervisorCard({ supervisor, audits, active }: Props) {
                 {supervisor.activeClaims.map((row, i) => (
                   <tr key={i}>
                     <td>{refLabel(row)}</td>
-                    <td>{String(row.role ?? "—")}</td>
-                    <td className={statusClass(row.status)}>{String(row.status ?? "—")}</td>
-                    <td>{String(row.workerId ?? "—")}</td>
+                    <td>{String(row.role ?? "â€”")}</td>
+                    <td className={statusClass(row.status)}>{String(row.status ?? "â€”")}</td>
+                    <td>{String(row.workerId ?? "â€”")}</td>
                   </tr>
                 ))}
               </tbody>
@@ -93,7 +94,7 @@ export function SupervisorCard({ supervisor, audits, active }: Props) {
                   <strong className={statusClass(row.status)}>{String(row.status ?? "?")}</strong>
                   <span className="meta">{formatWhen(row.ts as string | undefined)}</span>
                 </div>
-                <div>{refLabel(row)} · worker {String(row.workerId ?? "—")}</div>
+                <div>{refLabel(row)} Â· worker {String(row.workerId ?? "â€”")}</div>
                 {row.error ? <div className="status-bad">{String(row.error)}</div> : null}
               </div>
             ))}
@@ -103,7 +104,7 @@ export function SupervisorCard({ supervisor, audits, active }: Props) {
 
       <footer className="kubectl">
         <div className="meta">
-          PVC coordination: <code>{supervisor.activeFile}</code> · KUBECONFIG=
+          PVC coordination: <code>{supervisor.activeFile}</code> Â· KUBECONFIG=
           {supervisor.kubectl.kubeconfig}
         </div>
         <div className="meta">Supervisor logs</div>
@@ -118,3 +119,4 @@ export function SupervisorCard({ supervisor, audits, active }: Props) {
 }
 
 export { AUDIT_KEYS };
+

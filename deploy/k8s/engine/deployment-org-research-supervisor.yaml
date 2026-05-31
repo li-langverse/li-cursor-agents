@@ -1,39 +1,34 @@
-﻿# Long-running supervisor: classifies queue, spawns up to 3 implementer Jobs while issues remain open.
+# Research supervisor: spawns up to 3 researcher Jobs with dimension rotation.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: li-org-issue-supervisor
+  name: li-org-research-supervisor
   namespace: li-swarm
   labels:
-    app: li-org-issue-supervisor
-    li-langverse.io/role: org-issue-supervisor
+    app: li-org-research-supervisor
+    li-langverse.io/role: org-research-supervisor
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: li-org-issue-supervisor
+      app: li-org-research-supervisor
   template:
     metadata:
       labels:
-        app: li-org-issue-supervisor
+        app: li-org-research-supervisor
     spec:
-      serviceAccountName: li-org-issue-supervisor
+      serviceAccountName: li-org-research-supervisor
       nodeSelector:
         li-langverse.io/node-pool: engine
       containers:
         - name: supervisor
           image: ghcr.io/li-langverse/li-cursor-agents:latest
           imagePullPolicy: Always
-          command: ["node", "dist/cli/org-issue-supervisor.js", "supervise"]
+          command: ["node", "dist/cli/org-research-supervisor.js", "supervise"]
           envFrom:
             - configMapRef:
-                name: li-org-issue-supervisor
+                name: li-org-research-supervisor
           env:
-            - name: GH_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: li-agents-secrets
-                  key: GH_TOKEN
             - name: SUPABASE_URL
               valueFrom:
                 secretKeyRef:
@@ -46,7 +41,6 @@ spec:
                   name: li-agents-secrets
                   key: SUPABASE_SERVICE_ROLE_KEY
                   optional: true
-
           resources:
             requests:
               cpu: "250m"

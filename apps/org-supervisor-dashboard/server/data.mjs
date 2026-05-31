@@ -93,6 +93,31 @@ function readPrActiveClaims(role) {
   );
 }
 
+
+function readResearchActiveClaims() {
+  const state = readJson(join(sprintDir(), META.research.activeFile));
+  if (!state?.research) return [];
+  return Object.values(state.research).filter(
+    (e) => e.status === "claimed" || e.status === "running",
+  );
+}
+
+function countOpenResearchGoals() {
+  const goalsPath = join(agentsRoot(), "config", "research-goals.yaml");
+  if (!existsSync(goalsPath)) return 0;
+  const raw = readFileSync(goalsPath, "utf8");
+  let count = 0;
+  let enabled = true;
+  for (const line of raw.split("\n")) {
+    const t = line.trim();
+    if (t.startsWith("- id:")) {
+      if (enabled) count++;
+      enabled = true;
+    } else if (t.startsWith("enabled:")) enabled = t.includes("true");
+  }
+  return count;
+}
+
 function deriveHealth({ lastError, lastCycleAt, openCount, desiredWorkers }) {
   if (lastError) return "degraded";
   if (!lastCycleAt) {
@@ -108,7 +133,7 @@ function deriveHealth({ lastError, lastCycleAt, openCount, desiredWorkers }) {
 
 function mockSupervisor(kind) {
   const meta = META[kind];
-  const openCount = kind === "issue" ? 12 : kind === "pr" ? 8 : 3;
+  const openCount = kind === "issue" ? 12 : kind === "pr" ? 8 : kind === "research" ? 5 : 3;
   const desiredWorkers = computeDesiredWorkers(openCount);
   const now = new Date().toISOString();
   return {
@@ -118,31 +143,41 @@ function mockSupervisor(kind) {
     openCount,
     desiredWorkers,
     activeClaims:
-      kind === "review"
+      kind === "research"
         ? [
             {
-              prRef: "li-cursor-agents#42",
-              role: "reviewer",
+              researchRef: "numerics_sota@security",
+              dimension: "security",
+              goalId: "numerics_sota",
               status: "running",
-              workerId: "a1b2",
+              workerId: "r1s2",
             },
           ]
-        : kind === "issue"
+        : kind === "review"
           ? [
               {
-                issueRef: "benchmarks#101",
+                prRef: "li-cursor-agents#42",
+                role: "reviewer",
                 status: "running",
-                workerId: "c3d4",
+                workerId: "a1b2",
               },
             ]
-          : [
-              {
-                prRef: "lic#7",
-                role: "implementer",
-                status: "claimed",
-                workerId: "e5f6",
-              },
-            ],
+          : kind === "issue"
+            ? [
+                {
+                  issueRef: "benchmarks#101",
+                  status: "running",
+                  workerId: "c3d4",
+                },
+              ]
+            : [
+                {
+                  prRef: "lic#7",
+                  role: "implementer",
+                  status: "claimed",
+                  workerId: "e5f6",
+                },
+              ],
     lastCycleAt: now,
     lastError: null,
     deployment: meta.deployment,
@@ -184,7 +219,9 @@ async function loadFromSupabase() {
           ? readIssueActiveClaims()
           : kind === "pr"
             ? readPrActiveClaims("implementer")
-            : readPrActiveClaims("reviewer");
+            : kind === "research"
+              ? readResearchActiveClaims()
+              : readPrActiveClaims("reviewer");
     }
     supervisors[kind] = {
       kind,
@@ -225,7 +262,8 @@ function loadFromFiles() {
       ? reviewQueue.green.length
       : 0;
 
-  const openByKind = { issue: issueOpen, pr: prOpen, review: reviewOpen };
+  const researchOpen = countOpenResearchGoals();
+  const openByKind = { issue: issueOpen, pr: prOpen, review: reviewOpen, research: researchOpen };
 
   for (const kind of KINDS) {
     const meta = META[kind];
@@ -236,7 +274,9 @@ function loadFromFiles() {
         ? readIssueActiveClaims()
         : kind === "pr"
           ? readPrActiveClaims("implementer")
-          : readPrActiveClaims("reviewer");
+          : kind === "research"
+            ? readResearchActiveClaims()
+            : readPrActiveClaims("reviewer");
     const activeUpdated = readJson(join(sprintDir(), meta.activeFile))?.updatedAt ?? null;
     supervisors[kind] = {
       kind,
@@ -271,6 +311,7 @@ function loadAudits() {
     issue: tailJsonl(join(dir, META.issue.auditFile)),
     "pr-implement": tailJsonl(join(dir, META.pr.auditFile)),
     "pr-review": tailJsonl(join(dir, META.review.auditFile)),
+    research: tailJsonl(join(dir, META.research.auditFile)),
   };
 }
 
@@ -294,6 +335,7 @@ export async function buildPayload() {
         ],
         "pr-implement": [],
         "pr-review": [],
+        research: [],
       },
       notes: [
         "Mock mode (LI_ORG_SUPERVISOR_DASHBOARD_MOCK=1). Unset for Supabase or file fallback.",

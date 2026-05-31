@@ -1,6 +1,6 @@
-/** @typedef {'issue' | 'pr' | 'review'} SupervisorKind */
+﻿/** @typedef {'issue' | 'pr' | 'review' | 'research'} SupervisorKind */
 
-export const KINDS = /** @type {const} */ (["issue", "pr", "review"]);
+export const KINDS = /** @type {const} */ (["issue", "pr", "review", "research"]);
 
 export const META = {
   issue: {
@@ -44,6 +44,20 @@ export const META = {
       'kubectl -n li-swarm logs deploy/li-org-reviewer-supervisor -f --tail=100',
     kubectlJobs:
       'kubectl -n li-swarm get jobs -l li-langverse.io/org-pr-reviewer',
+  },
+  research: {
+    label: "Researcher",
+    deployment: "li-org-research-supervisor",
+    activeFile: "org-research-active.json",
+    auditKey: "research",
+    auditFile: "org-research-audit.jsonl",
+    queueFile: "org-research-dimensions.json",
+    countScript: null,
+    openCountPattern: null,
+    kubectlLogs:
+      'kubectl -n li-swarm logs deploy/li-org-research-supervisor -f --tail=100',
+    kubectlJobs:
+      'kubectl -n li-swarm get jobs -l li-langverse.io/managed-by=org-research-supervisor',
   },
 };
 

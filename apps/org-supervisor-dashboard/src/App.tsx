@@ -1,13 +1,14 @@
-import { useCallback, useEffect, useState } from "react";
+﻿import { useCallback, useEffect, useState } from "react";
 import type { DashboardPayload, SupervisorKind } from "./types";
 import { AUDIT_KEYS, SupervisorCard } from "./SupervisorCard";
 import { formatWhen } from "./format";
 
-const KINDS: SupervisorKind[] = ["issue", "pr", "review"];
+const KINDS: SupervisorKind[] = ["issue", "pr", "review", "research"];
 const TAB_LABELS: Record<SupervisorKind, string> = {
   issue: "Issue",
   pr: "PR implement",
   review: "Review",
+  research: "Research",
 };
 
 export function App() {
@@ -43,7 +44,7 @@ export function App() {
   }, [autoRefresh, load]);
 
   if (loading && !data) {
-    return <div className="loading">Loading org supervisor dashboard…</div>;
+    return <div className="loading">Loading org supervisor dashboardâ€¦</div>;
   }
 
   if (error && !data) {
@@ -73,7 +74,7 @@ export function App() {
         <div>
           <h1>Org supervisor dashboard</h1>
           <div className="subtitle">
-            li-swarm homelab · {sourceLabel} · refreshed {formatWhen(data.refreshedAt)}
+            li-swarm homelab Â· {sourceLabel} Â· refreshed {formatWhen(data.refreshedAt)}
           </div>
         </div>
         <div className="controls">
@@ -129,3 +130,4 @@ export function App() {
     </div>
   );
 }
+

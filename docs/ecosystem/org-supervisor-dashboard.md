@@ -1,4 +1,4 @@
-# Org supervisor dashboard
+﻿# Org supervisor dashboard
 
 Local web UI to explore the three Kubernetes org supervisors on **li-swarm** (issue implementer, PR implementer, PR reviewer).
 
@@ -31,7 +31,7 @@ npm run dashboard:org-supervisors
 
 Browser: **http://127.0.0.1:5174**
 
-API only: `npm --prefix apps/org-supervisor-dashboard run dev:api` → `http://127.0.0.1:9478/api/org-supervisors`
+API only: `npm --prefix apps/org-supervisor-dashboard run dev:api` â†’ `http://127.0.0.1:9478/api/org-supervisors`
 
 Production-style (built static + API):
 
@@ -44,7 +44,7 @@ Then open **http://127.0.0.1:9478** (single port serves UI + API).
 
 ## Required environment
 
-Copy `li-cursor-agents/.env.example` → `.env`. For the **production view** (homelab parity):
+Copy `li-cursor-agents/.env.example` â†’ `.env`. For the **production view** (homelab parity):
 
 | Variable | Required | Notes |
 |----------|----------|-------|
@@ -85,7 +85,7 @@ kubectl -n li-swarm logs deploy/li-org-issue-supervisor -f --tail=100
 
 ## App location
 
-`apps/org-supervisor-dashboard/` — Vite + React UI, small Node API (`server/`).
+`apps/org-supervisor-dashboard/` â€” Vite + React UI, small Node API (`server/`).
 
 Root npm script: `dashboard:org-supervisors`.
 
@@ -125,3 +125,11 @@ kubectl -n li-swarm port-forward svc/li-org-supervisor-dashboard 9478:9478
 Then open **http://127.0.0.1:9478**.
 
 Sprint file fallback reads PVC `li-agents-sprint-data` at `/app/data/goal-directed-sprints` (read-only). Optional Supabase keys on secret `li-agents-secrets` (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`) enable DB-backed cycles when present.
+
+## Homelab Supabase
+
+In-cluster API (majico-staging): `http://supabase-kong.majico-staging.svc.cluster.local:8000`
+
+Secret `li-agents-secrets` in `li-swarm` must include `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` (service role copied from `supabase-secrets` in `majico-staging`). Dashboard shows **Supabase org_supervisor_cycles** when rows exist.
+
+Fourth supervisor kind: **research** — see [org-research-supervisor-k8s.md](./org-research-supervisor-k8s.md).
