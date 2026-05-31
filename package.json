@@ -1,9 +1,9 @@
-{
+﻿{
   "name": "@li-langverse/cursor-agents",
   "version": "0.1.0",
   "description": "Local Cursor SDK agent runner for li-langverse (mock backend for CI)",
   "type": "module",
-  "license": "Apache-2.0",
+  "license": "GPL-3.0-or-later",
   "exports": {
     "./db-api": "./dist/db-api/index.js"
   },
