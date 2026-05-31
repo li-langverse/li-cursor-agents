@@ -8,9 +8,9 @@
 | Metric | Count |
 |--------|------:|
 | Starting open PRs | 255 |
-| Ending open PRs (search API) | **0** (2026-05-31 code_implementer-1780193829432 completion gate) |
+| Ending open PRs (search API) | **0** (2026-05-31 code_implementer-1780194176407 completion gate) |
 | Ending open PRs (classified queue) | **0** |
-| PRs squash-merged this session | **31** (prior sessions: 27 + 22 + session 23 digest) |
+| PRs squash-merged this session | **32** (prior sessions: 27 + 22 + session 23–24 digests) |
 | PRs fixed locally then merged | **10** |
 
 > Search API and full classification differ slightly due to index lag and PRs opened/closed during the run.
@@ -406,6 +406,22 @@ From latest queue (`org-pr-merge-queue.json`):
 | li-cursor-agents#98 | REST squash merge (session 23 sprint digest; CI green: test-mock-agents, lidb-engine-e2e) |
 
 **Open PR count:** 1 → 0. **Completion gate pass.**
+
+## Session 24 (2026-05-31 code_implementer-1780194176407)
+
+| PR | Method |
+|----|--------|
+| li-cursor-agents#99 | REST squash merge (session 24 sprint digest; CI green: test-mock-agents, lidb-engine-e2e) |
+
+**Open PR count:** 1 → 0. **Completion gate pass.**
+
+## Session 25 (2026-05-31 code_implementer-1780194539860)
+
+| Action | Detail |
+|--------|--------|
+| Queue refresh | `open_prs=1` — li-cursor-agents#100 (green clean, CI green) |
+| implementation_queue | Items 1–8 **stale** — lic#439/#552/#537/#520/#517 closed; lis#29, li-httpd#10 closed (REST verify) |
+| Completion gate | **blocked** — `org-pr-merge-completion-gate.sh` exit 1; #100 requires human squash merge |
 
 ## Rate limits
 
