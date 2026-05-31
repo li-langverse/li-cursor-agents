@@ -12,7 +12,7 @@ DASHBOARD_HOST="${LI_AGENT_DASHBOARD_HOST:-127.0.0.1}"
 SDK_MAX="${LI_SDK_MAX_CONCURRENT:-4}"
 SWARM_MAX="${LI_SWARM_MAX_PARALLEL:-4}"
 _store_cli="${LI_CONTROL_PLANE_STORE:-}"
-STORE="${_store_cli:-supabase}"
+STORE="${_store_cli:-lidb}"
 if [[ -f "$ENV_FILE" && -z "$_store_cli" ]]; then
   # shellcheck disable=SC1090
   _store_from_env="$(

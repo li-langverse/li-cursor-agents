@@ -42,7 +42,7 @@ except Exception as e:
 }
 
 supabase_probe() {
-  if [[ "${LI_STACK_SKIP_SUPABASE:-}" == "1" ]] || [[ "${LI_CONTROL_PLANE_STORE:-supabase}" == "disk" ]]; then
+  if [[ "${LI_STACK_SKIP_SUPABASE:-}" == "1" ]] || [[ "${LI_CONTROL_PLANE_STORE:-lidb}" == "disk" ]]; then
     echo "supabase_skipped disk_or_skip"
     return 0
   fi

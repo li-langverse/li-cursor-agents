@@ -27,13 +27,15 @@ export LI_AUTO_START_ASYNC_SWARM=1
 export LI_SWARM_EXTERNAL=0
 export LI_SWARM_DETACHED=1
 
-_store="${LI_CONTROL_PLANE_STORE:-supabase}"
+_store="${LI_CONTROL_PLANE_STORE:-lidb}"
 [[ "${LI_STACK_SKIP_SUPABASE:-}" == "1" ]] && _store="disk"
 if [[ "$_store" == "supabase" ]]; then
   "$ROOT/scripts/ensure-supabase.sh" || {
-    echo "ERROR: LI_CONTROL_PLANE_STORE=supabase but Supabase failed (Docker?). Use LI_CONTROL_PLANE_STORE=disk or fix: npm run db:ensure" >&2
+    echo "ERROR: LI_CONTROL_PLANE_STORE=supabase but Supabase failed (Docker?). Use LI_CONTROL_PLANE_STORE=lidb or disk" >&2
     exit 1
   }
+elif [[ "$_store" == "lidb" ]]; then
+  bash "$ROOT/scripts/ensure-lidb.sh"
 fi
 if [[ -f "$ROOT/.env.supabase" ]]; then
   set -a

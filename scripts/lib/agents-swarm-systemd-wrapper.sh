@@ -28,7 +28,7 @@ fi
 if [[ -n "$STORE_FROM_UNIT" ]]; then
   export LI_CONTROL_PLANE_STORE="$STORE_FROM_UNIT"
 fi
-_store="${LI_CONTROL_PLANE_STORE:-supabase}"
+_store="${LI_CONTROL_PLANE_STORE:-lidb}"
 [[ "${LI_STACK_SKIP_SUPABASE:-}" == "1" ]] && _store="disk"
 _force_disk_store() {
   echo "agents-swarm-systemd[$AGENTS_SWARM_ROLE]: $1 — using LI_CONTROL_PLANE_STORE=disk" >&2
@@ -36,6 +36,10 @@ _force_disk_store() {
   export LI_CONTROL_PLANE_STORE=disk
   unset SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY SUPABASE_ANON_KEY LI_TEST_SUPABASE_URL 2>/dev/null || true
 }
+
+if [[ "$_store" == "lidb" ]]; then
+  bash "$ROOT/scripts/ensure-lidb.sh" || _force_disk_store "lidb ensure failed"
+fi
 
 if [[ "$_store" == "supabase" ]]; then
   if li_supabase_failover_enabled; then

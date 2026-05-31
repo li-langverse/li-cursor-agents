@@ -33,7 +33,7 @@ if [[ -f "$LI_GITHUB_ENV" ]]; then
   export GH_TOKEN GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
 fi
 
-_store="${LI_CONTROL_PLANE_STORE:-supabase}"
+_store="${LI_CONTROL_PLANE_STORE:-lidb}"
 [[ "${LI_STACK_SKIP_SUPABASE:-}" == "1" ]] && _store="disk"
 
 if [[ "$_store" == "supabase" ]]; then
@@ -41,7 +41,7 @@ if [[ "$_store" == "supabase" ]]; then
   if ! "$ROOT/scripts/ensure-supabase.sh"; then
     echo "ERROR: Supabase required for full stack (LI_CONTROL_PLANE_STORE=supabase)." >&2
     echo "       Fix Docker and run: npm run db:ensure" >&2
-    echo "       Or disk-only: LI_STACK_SKIP_SUPABASE=1 npm run dev:all" >&2
+    echo "       Or: LI_CONTROL_PLANE_STORE=lidb npm run dev:all" >&2
     exit 1
   fi
   if [[ -f "$ROOT/.env.supabase" ]]; then
@@ -52,9 +52,12 @@ if [[ "$_store" == "supabase" ]]; then
   fi
   echo "==> db:probe"
   npm run db:probe
+elif [[ "$_store" == "lidb" ]]; then
+  echo "==> lidb control plane (LI_DATA_DIR / lis db)"
+  bash "$ROOT/scripts/ensure-lidb.sh"
 else
   export LI_CONTROL_PLANE_STORE=disk
-  echo "==> Supabase skipped — disk store (LI_STACK_SKIP_SUPABASE=1)"
+  echo "==> disk store (LI_STACK_SKIP_SUPABASE=1 or LI_CONTROL_PLANE_STORE=disk)"
 fi
 
 "$ROOT/scripts/ensure-native-modules.sh"

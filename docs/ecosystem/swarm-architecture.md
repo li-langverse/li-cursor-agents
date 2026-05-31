@@ -130,7 +130,7 @@ npm run db:ensure                # Docker + Supabase CLI; writes .env.supabase
 ./scripts/install-agents-swarm-systemd.sh
 ```
 
-**Control plane store:** production swarm uses **`LI_CONTROL_PLANE_STORE=supabase`** (default in `scripts/env.defaults.sh` and systemd install). State, worker heartbeats, handoffs, and runs persist to local Supabase (`http://127.0.0.1:54321` by default). `data/control-plane/state.json` remains an IPC mirror when the dashboard and async-swarm are separate processes; it is not the source of truth when store=supabase.
+**Control plane store:** production swarm uses **`LI_CONTROL_PLANE_STORE=lidb`** (default in `scripts/env.defaults.sh` and systemd install). State, worker heartbeats, handoffs, and runs persist to local Supabase (`http://127.0.0.1:54321` by default). `data/control-plane/state.json` remains an IPC mirror when the dashboard and async-swarm are separate processes; it is not the source of truth when store=supabase.
 
 - **Verify:** `curl -sf http://127.0.0.1:9477/api/runtime | jq '{store, db_enabled, control_plane_store}'` — expect `store: "supabase"`, `db_enabled: true`.
 - **Disk-only (CI/tests):** `LI_CONTROL_PLANE_STORE=disk` or legacy `LI_STACK_SKIP_SUPABASE=1`.
@@ -138,7 +138,7 @@ npm run db:ensure                # Docker + Supabase CLI; writes .env.supabase
 - **Manual failover test (Docker required):** `npm run db:ensure && LI_SUPABASE_FAILOVER=1 npm run db:standby-ensure`, then `npm run db:failover-probe` (prints env lines; check stderr for `primary OK`). Stop primary DB container (`docker stop supabase_db_li-cursor-agents`), wait ≤90s or re-run probe — expect `standby OK`. Restore primary and probe again.
 - **Migrate disk → Supabase** (optional, does not wipe DB): after `npm run db:ensure`, `set -a && source .env.supabase && set +a && node scripts/backfill-control-plane-db.mjs` imports `data/control-plane/state.json`, `latest-report.json`, and `data/runs/*.md`.
 
-This installs user systemd for the dashboard (`:9477`, `LI_AUTO_START_ASYNC_SWARM=0` when async-swarm is installed) plus `li-agents-async-swarm` and watchdog. Units set `LI_CONTROL_PLANE_STORE=supabase` unless overridden at install time. Only the async-swarm unit runs the swarm process; the dashboard serves API/UI. Stop autostart: `touch data/control-plane/DISABLE_AUTOSTART`.
+This installs user systemd for the dashboard (`:9477`, `LI_AUTO_START_ASYNC_SWARM=0` when async-swarm is installed) plus `li-agents-async-swarm` and watchdog. Units set `LI_CONTROL_PLANE_STORE=lidb` unless overridden at install time. Only the async-swarm unit runs the swarm process; the dashboard serves API/UI. Stop autostart: `touch data/control-plane/DISABLE_AUTOSTART`.
 
 **LAN access (other machines on your network):** by default the ops-server binds to loopback (`127.0.0.1`). To expose the dashboard API and static UI on the LAN:
 
