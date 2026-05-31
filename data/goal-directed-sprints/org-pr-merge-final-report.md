@@ -8,7 +8,7 @@
 | Metric | Count |
 |--------|------:|
 | Starting open PRs | 255 |
-| Ending open PRs (search API) | **0** (2026-05-31 code_implementer-83955615 completion gate) |
+| Ending open PRs (search API) | **0** (2026-05-31 code_implementer-84827153 completion gate) |
 | Ending open PRs (classified queue) | **0** |
 | PRs squash-merged this session | **30** (prior sessions: 27 + 22) |
 | PRs fixed locally then merged | **10** |
@@ -353,6 +353,16 @@ From latest queue (`org-pr-merge-queue.json`):
 - Queue: `data/goal-directed-sprints/org-pr-merge-queue.json`
 - Logs: `data/goal-directed-sprints/fix-dirty-fast-run1.log`, `merge-blocked-run1.log`
 - Helper scripts added: `scripts/org-merge-blocked.py`, `scripts/org-fix-dirty-from-queue.py`, `scripts/org-pr-queue-summary.py`, `scripts/org-pr-info.py`
+
+## Session 36 (2026-05-31 code_implementer-84827153)
+
+| PR | Method |
+|----|--------|
+| **lic#607** | Salvaged linalg gap corpus from workspace sweep; reverted gap scripts from CI corpus; REST squash merge |
+| lic#606, lic#608 | Closed — workspace_sweeper fallback (concurrent pushes re-broke CI after rebase) |
+| benchmarks#260, benchmarks#261 | Closed — dirty workspace sweep (digest/audit data only) |
+
+**Open PR count:** 2 → 0. **Completion gate:** `org-pr-merge-completion-gate.sh` exit 0.
 
 ## Rate limits
 
