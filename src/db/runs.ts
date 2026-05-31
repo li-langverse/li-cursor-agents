@@ -1,6 +1,7 @@
 import type { AgentRunResult } from "../types.js";
 import type { AgentKitRolloutRow } from "../repo-workflow/types.js";
 import { dbEnabled, getSupabase } from "./client.js";
+import { supabaseError } from "./supabase-error.js";
 import { withSupabaseRetry } from "./supabase-retry.js";
 
 export interface PersistRunInput {
@@ -117,7 +118,7 @@ export async function upsertAgentRun(input: PersistRunInput): Promise<void> {
     { onConflict: "run_id" },
   );
 
-  if (error) throw new Error(`agent_runs upsert: ${error.message}`);
+  if (error) throw supabaseError("agent_runs upsert", error);
 
   if (rolloutRows?.length) {
     await getSupabase().from("repo_workflow_rollouts").delete().eq("run_id", runId);
@@ -135,7 +136,7 @@ export async function upsertAgentRun(input: PersistRunInput): Promise<void> {
       workspace: r.workspace ?? null,
     }));
     const { error: roErr } = await getSupabase().from("repo_workflow_rollouts").insert(inserts);
-    if (roErr) throw new Error(`repo_workflow_rollouts insert: ${roErr.message}`);
+    if (roErr) throw supabaseError("repo_workflow_rollouts insert", roErr);
   }
 
   await getSupabase().from("agent_run_events").insert({
@@ -153,7 +154,7 @@ export async function upsertAgentRun(input: PersistRunInput): Promise<void> {
       payload: step,
     }));
     const { error: evErr } = await getSupabase().from("agent_run_events").insert(events);
-    if (evErr) throw new Error(`agent_run_events insert: ${evErr.message}`);
+    if (evErr) throw supabaseError("agent_run_events insert", evErr);
   }
 }
 

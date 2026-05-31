@@ -14,6 +14,7 @@ import {
 } from "./client.js";
 import { lidbPersistAvailable, persistControlPlaneStateLidb, upsertAgentRunLidb } from "./lidb-persist.js";
 import { shouldPersistRunToHistory } from "../control-plane/run-history.js";
+import { workerConsole } from "../worker/worker-console.js";
 import * as runsDb from "./runs.js";
 import * as cpDb from "./control-plane.js";
 
@@ -38,7 +39,13 @@ export async function persistAgentRun(input: runsDb.PersistRunInput): Promise<vo
     return;
   }
   if (dbEnabled()) {
-    await runsDb.upsertAgentRun(input);
+    try {
+      await runsDb.upsertAgentRun(input);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (process.env.LI_DB_STRICT === "1") throw err;
+      workerConsole("persist", "warn", `agent run history not saved: ${msg}`);
+    }
   } else if (useLidbStore() && (await lidbPersistAvailable())) {
     await upsertAgentRunLidb(input);
   }

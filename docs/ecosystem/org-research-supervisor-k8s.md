@@ -1,4 +1,4 @@
-# Org research supervisor (K8s)
+﻿# Org research supervisor (K8s)
 
 Fourth org supervisor blob: spawns **researcher Jobs** for eligible research goals from `config/research-goals.yaml`, rotating through configurable **dimensions** (security, performance, ux, api-coverage by default).
 
@@ -6,11 +6,11 @@ Fourth org supervisor blob: spawns **researcher Jobs** for eligible research goa
 
 ```
 li-org-research-supervisor (Deployment)
-  └─ tick loop → eligible goals → dimension rotation → li-org-researcher Jobs (max 3)
-       ├─ org-research-active.json     (PVC claims + dimensionCursor)
-       ├─ org-research-audit.jsonl
-       ├─ org-research-dimensions.json (optional PVC override)
-       └─ org_supervisor_cycles (supervisor_kind=research) when Supabase configured
+  â””â”€ tick loop â†’ eligible goals â†’ dimension rotation â†’ li-org-researcher Jobs (max 3)
+       â”œâ”€ org-research-active.json     (PVC claims + dimensionCursor)
+       â”œâ”€ org-research-audit.jsonl
+       â”œâ”€ org-research-dimensions.json (optional PVC override)
+       â””â”€ org_supervisor_cycles (supervisor_kind=research) when Supabase configured
 ```
 
 ## Dimension rotation
@@ -18,7 +18,7 @@ li-org-research-supervisor (Deployment)
 1. Load dimensions from `data/goal-directed-sprints/org-research-dimensions.json` (PVC) or env `LI_ORG_RESEARCH_DIMENSIONS` (comma-separated).
 2. Maintain `dimensionCursor` in `org-research-active.json`.
 3. When spawning Job *i*, pick `dimensions[(cursor + offset) % n]`, skipping dimensions already claimed by active Jobs when alternatives exist.
-4. Up to **3 parallel Jobs** hit **3 different dimensions** when the dimension list has ≥3 entries and enough open goals.
+4. Up to **3 parallel Jobs** hit **3 different dimensions** when the dimension list has â‰¥3 entries and enough open goals.
 
 Worker concurrency: `min(3, max(1, ceil(openGoals / 50)))` where `openGoals` = eligible research goals (cadence-aware, same as research lane).
 
@@ -67,7 +67,8 @@ See also: [org-pr-reviewer-supervisor-k8s.md](./org-pr-reviewer-supervisor-k8s.m
 
 ### Homelab setup notes
 
-1. **NetworkPolicy** — apply `deploy/k8s/engine/networkpolicy-li-swarm-supabase.yaml` so `li-swarm` pods can reach Kong/REST in `majico-staging`.
-2. **JWT service role** — `supabase-secrets.SERVICE_ROLE_KEY` on this cluster is not a JWT; generate HS256 keys from `JWT_SECRET` via `node scripts/lib/supabase-local-keys.mjs "$JWT_SECRET"` and patch `li-agents-secrets`.
-3. **PostgREST reload** — after migrations: `NOTIFY pgrst, 'reload schema';` on postgres (included in migration SQL).
-4. **Image** — research supervisor CLI ships in the next `ghcr.io/li-langverse/li-cursor-agents:latest` build; scale Deployment to 1 after push.
+1. **NetworkPolicy** â€” apply `deploy/k8s/engine/networkpolicy-li-swarm-supabase.yaml` so `li-swarm` pods can reach Kong/REST in `majico-staging`.
+2. **JWT service role** â€” `supabase-secrets.SERVICE_ROLE_KEY` on this cluster is not a JWT; generate HS256 keys from `JWT_SECRET` via `node scripts/lib/supabase-local-keys.mjs "$JWT_SECRET"` and patch `li-agents-secrets`.
+3. **PostgREST reload** â€” after migrations: `NOTIFY pgrst, 'reload schema';` on postgres (included in migration SQL).
+4. **Image** â€” research supervisor CLI ships in the next `ghcr.io/li-langverse/li-cursor-agents:latest` build; scale Deployment to 1 after push.
+

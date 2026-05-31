@@ -10,6 +10,7 @@ create table if not exists public.org_supervisor_cycles (
 );
 
 alter table public.org_supervisor_cycles enable row level security;
+drop policy if exists "service_all_org_supervisor_cycles" on public.org_supervisor_cycles;
 create policy "service_all_org_supervisor_cycles" on public.org_supervisor_cycles
   for all using (true) with check (true);
 
