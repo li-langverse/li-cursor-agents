@@ -1,5 +1,4 @@
-# One-shot: clone li-cursor-agents, build proof-explorer image with Podman, push to GHCR.
-# Requires li-agents-secrets (GH_TOKEN with packages:write) and ghcr-li-langverse pull secret.
+# Clone li-cursor-agents, build with Podman, push to GHCR or sideload into k3s on engine.
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -10,7 +9,7 @@ metadata:
     app.kubernetes.io/component: image-build
 spec:
   ttlSecondsAfterFinished: 3600
-  backoffLimit: 2
+  backoffLimit: 1
   template:
     metadata:
       labels:
@@ -24,6 +23,14 @@ spec:
           emptyDir: {}
         - name: podman-storage
           emptyDir: {}
+        - name: k3s-bin
+          hostPath:
+            path: /var/lib/rancher/k3s/data/current/bin
+            type: Directory
+        - name: containerd-sock
+          hostPath:
+            path: /run/k3s/containerd/containerd.sock
+            type: Socket
       initContainers:
         - name: git-clone
           image: alpine/git:latest
@@ -64,6 +71,8 @@ spec:
                   key: GH_TOKEN
             - name: IMAGE
               value: ghcr.io/li-langverse/li-cursor-agents:proof-explorer
+            - name: GHCR_USER
+              value: cap-jmk-real
             - name: STORAGE_DRIVER
               value: vfs
             - name: BUILDAH_ISOLATION
@@ -74,11 +83,24 @@ spec:
             - |
               set -euo pipefail
               cd /workspace/li-cursor-agents
-              echo "$GH_TOKEN" | podman login ghcr.io -u li-langverse --password-stdin
+              echo "$GH_TOKEN" | podman login ghcr.io -u "$GHCR_USER" --password-stdin || true
               podman build -f deploy/Dockerfile.proof-explorer -t "$IMAGE" .
-              podman push "$IMAGE"
+              if podman push "$IMAGE"; then
+                echo "pushed to ghcr.io"
+                exit 0
+              fi
+              echo "ghcr push failed - sideloading into k3s containerd"
+              tar=/tmp/proof-explorer-image.tar
+              podman save -o "$tar" "$IMAGE"
+              /k3s-bin/ctr --address /run/k3s/containerd/containerd.sock -n k8s.io images import "$tar"
+              echo "imported into k3s"
           volumeMounts:
             - name: workspace
               mountPath: /workspace
             - name: podman-storage
               mountPath: /var/lib/containers
+            - name: k3s-bin
+              mountPath: /k3s-bin
+              readOnly: true
+            - name: containerd-sock
+              mountPath: /run/k3s/containerd/containerd.sock

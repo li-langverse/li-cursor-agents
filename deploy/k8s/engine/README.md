@@ -74,3 +74,27 @@ kubectl -n li-swarm exec deploy/li-org-issue-worker -- cat data/goal-directed-sp
 
 - **GitHub:** each closed issue has a table comment (`reason_code`, `summary`, `evidence`)
 - **PVC / repo:** `data/goal-directed-sprints/org-issue-close-audit.jsonl`
+
+## Org-issue supervisor (prototype)
+
+Kubernetes-ready supervisor + implementer Jobs (see `docs/ecosystem/org-issue-supervisor-k8s.md`).
+
+```bash
+kubectl apply -f deploy/k8s/engine/rbac-org-issue-supervisor.yaml
+kubectl apply -f deploy/k8s/engine/configmap-org-issue-supervisor.yaml
+kubectl apply -f deploy/k8s/engine/deployment-org-issue-supervisor.yaml
+kubectl apply -f deploy/k8s/engine/cronjob-org-issue-supervisor-wake.yaml
+```
+
+Homelab:
+
+```powershell
+$env:KUBECONFIG = "C:\Users\Julian\.kube\config-homelab"
+```
+
+Verify:
+
+```bash
+kubectl -n li-swarm get deploy li-org-issue-supervisor
+kubectl -n li-swarm logs deploy/li-org-issue-supervisor --tail=50
+```

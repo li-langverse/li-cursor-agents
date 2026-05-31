@@ -138,7 +138,7 @@ if ($UsePodmanJob) {
     $jobYaml = Get-Content (Join-Path $K8s "job-build-proof-explorer-image.yaml") -Raw
     $jobYaml = $jobYaml -replace 'value: "main"', "value: `"$GitRef`""
     $jobYaml | kubectl apply -f -
-    kubectl -n $Namespace wait --for=condition=complete job/build-proof-explorer-image --timeout=900s
+    kubectl -n $Namespace wait --for=condition=complete job/build-proof-explorer-image --timeout=1800s
     if ($LASTEXITCODE -ne 0) {
         Write-Warning "Podman job did not complete - check: kubectl -n $Namespace logs job/build-proof-explorer-image -c podman"
     }
