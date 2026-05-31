@@ -6,13 +6,13 @@
     "limit": null,
     "implement": 4,
     "route_planner": 73,
-    "close_done": 15,
+    "close_done": 16,
     "close_duplicate": 6,
     "close_wontfix": 0,
     "close_spam": 0,
     "close_superseded": 0,
     "stale_needs_human": 0,
-    "defer_master_plan": 8,
+    "defer_master_plan": 7,
     "needs_triage": 71
   },
   "implement": [
@@ -1353,6 +1353,20 @@
       "close_evidence": "Body references merged PR #9"
     },
     {
+      "repo": "lic",
+      "number": 66,
+      "title": "[explorer-finding] Kokkos 4.6 graph/NUMA policy checklist for std/execution (PH-7e, G-par)",
+      "html_url": "https://github.com/li-langverse/lic/issues/66",
+      "labels": [
+        "explorer-finding"
+      ],
+      "updated_at": "2026-05-19T19:56:32Z",
+      "classification_note": "merged_pr_reference",
+      "suggested_reason": "already_implemented",
+      "close_summary": "[explorer-finding] Kokkos 4.6 graph/NUMA policy checklist for std/execution (PH-7e, G-par)",
+      "close_evidence": "Body references merged PR #630"
+    },
+    {
       "repo": "benchmarks",
       "number": 31,
       "title": "Numerics researcher pass (2026-05-17): horner_pure_li red + near-limit greens \u2014 SOTA map & lic path",
@@ -1489,20 +1503,6 @@
         "explorer-finding"
       ],
       "updated_at": "2026-05-30T13:38:01Z",
-      "classification_note": "master-plan or PH-* tracking",
-      "suggested_reason": "",
-      "close_summary": "",
-      "close_evidence": ""
-    },
-    {
-      "repo": "lic",
-      "number": 66,
-      "title": "[explorer-finding] Kokkos 4.6 graph/NUMA policy checklist for std/execution (PH-7e, G-par)",
-      "html_url": "https://github.com/li-langverse/lic/issues/66",
-      "labels": [
-        "explorer-finding"
-      ],
-      "updated_at": "2026-05-19T19:56:32Z",
       "classification_note": "master-plan or PH-* tracking",
       "suggested_reason": "",
       "close_summary": "",

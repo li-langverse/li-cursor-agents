@@ -8,7 +8,7 @@ import {
   orgIssueWorkerDeferredBySprintRole,
   orgIssueWorkerEnabled,
 } from "./org-issue-worker-config.js";
-import { resolveOrgPrWorkspaceRoot } from "../org-prs/workspace-root.js";
+import { agentsPackageRoot } from "../runner.js";
 
 function hasGhToken(): boolean {
   return Boolean(process.env.GH_TOKEN?.trim() || process.env.GITHUB_TOKEN?.trim());
@@ -17,7 +17,7 @@ function hasGhToken(): boolean {
 function scriptPath(workspaceRoot: string, name: string): string {
   const inRoot = join(workspaceRoot, "scripts", name);
   if (existsSync(inRoot)) return inRoot;
-  return join(resolveOrgPrWorkspaceRoot(), "scripts", name);
+  return join(agentsPackageRoot(), "scripts", name);
 }
 
 function runPython(
@@ -85,7 +85,7 @@ export async function orgIssueWorkerCycle(): Promise<OrgIssueWorkerCycleResult> 
     return { ok: false, skipped: true, skip_reason: "GH_TOKEN required" };
   }
 
-  const workspaceRoot = resolveOrgPrWorkspaceRoot();
+  const workspaceRoot = agentsPackageRoot();
   workerConsole("org-issue-worker", "info", `cycle start workspace=${workspaceRoot}`);
 
   const before = runPython(workspaceRoot, "org-issue-open-count.py", []);

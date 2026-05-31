@@ -1,0 +1,18 @@
+[Unit]
+Description=Li org-issue-zero worker (classify + auditable closes)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/Documents/Programming/li/li-cursor-agents
+Environment=LI_ORG_ISSUE_WORKER_ALWAYS_ON=1
+Environment=LI_ORG_ISSUE_WORKER_INTERVAL_MS=1800000
+Environment=LI_ORG_ISSUE_WORKER_CLOSE_LIMIT=10
+EnvironmentFile=-%h/Documents/Cursor/.env
+ExecStart=%h/.local/node/bin/node dist/cli/org-issue-worker.js start
+Restart=on-failure
+RestartSec=60
+
+[Install]
+WantedBy=default.target
