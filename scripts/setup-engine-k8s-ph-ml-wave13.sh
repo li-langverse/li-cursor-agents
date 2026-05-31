@@ -14,6 +14,10 @@ if [[ -z "${GH_TOKEN:-}" && -z "${GITHUB_TOKEN:-}" ]]; then
   echo "ERROR: GH_TOKEN or GITHUB_TOKEN required for li-agents-secrets" >&2
   exit 1
 fi
+if [[ -z "${CURSOR_API_KEY:-}" ]]; then
+  echo "ERROR: CURSOR_API_KEY required for li-agents-secrets (load from li/.env or li-cursor-agents/.env)" >&2
+  exit 1
+fi
 
 echo "==> context: $(kubectl config current-context)"
 kubectl apply -f "$K8S/namespace.yaml"
@@ -21,15 +25,16 @@ kubectl apply -f "$K8S/pvc-ph-ml-wave13-workspace.yaml"
 kubectl apply -f "$K8S/configmap-ph-ml-wave13.yaml"
 kubectl apply -f "$K8S/configmap-ph-ml-wave13-entrypoint.yaml"
 TOKEN="${GH_TOKEN:-$GITHUB_TOKEN}"
-kubectl -n "$NS" create secret generic li-agents-secrets \
-  --from-literal=GH_TOKEN="$TOKEN" \
-  --dry-run=client -o yaml | kubectl apply -f -
-if [[ -n "${CURSOR_API_KEY:-}" ]]; then
-  kubectl -n "$NS" create secret generic li-agents-secrets \
-    --from-literal=GH_TOKEN="$TOKEN" \
-    --from-literal=CURSOR_API_KEY="$CURSOR_API_KEY" \
-    --dry-run=client -o yaml | kubectl apply -f -
+SECRET_ARGS=(--from-literal=GH_TOKEN="$TOKEN" --from-literal=CURSOR_API_KEY="$CURSOR_API_KEY")
+if [[ -n "${SUPABASE_URL:-}" ]]; then
+  SECRET_ARGS+=(--from-literal=SUPABASE_URL="$SUPABASE_URL")
 fi
+if [[ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]]; then
+  SECRET_ARGS+=(--from-literal=SUPABASE_SERVICE_ROLE_KEY="$SUPABASE_SERVICE_ROLE_KEY")
+fi
+kubectl -n "$NS" create secret generic li-agents-secrets \
+  "${SECRET_ARGS[@]}" \
+  --dry-run=client -o yaml | kubectl apply -f -
 if [[ "${LI_BUILD_PROOF_EXPLORER_IMAGE:-0}" == "1" ]]; then
   echo "==> building proof-explorer image on engine (lic-ci LLVM 22 base)"
   kubectl -n "$NS" delete job build-proof-explorer-image --ignore-not-found
