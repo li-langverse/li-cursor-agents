@@ -98,3 +98,11 @@ Verify:
 kubectl -n li-swarm get deploy li-org-issue-supervisor
 kubectl -n li-swarm logs deploy/li-org-issue-supervisor --tail=50
 ```
+
+### PH-ML Wave 13 (program complete)
+
+- Deployment: `li-ph-ml-wave13` (namespace `li-swarm`, node `engine`)
+- Goal: `lic/data/goal-directed-sprints/ph-ml-dl-rl-llm-wave13-final.md`
+- Gate: `lic/scripts/ph-ml-program-complete-gates.sh` (loop max 0 until pass)
+- Deploy: `bash scripts/setup-engine-k8s-ph-ml-wave13.sh` (requires `KUBECONFIG`, `GH_TOKEN`, `CURSOR_API_KEY`)
+- Logs: `kubectl -n li-swarm logs -f deploy/li-ph-ml-wave13`
