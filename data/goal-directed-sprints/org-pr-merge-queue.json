@@ -5,21 +5,10 @@
     "green_clean": 0,
     "blocked_ci_ok": 0,
     "dirty": 0,
-    "ci_not_ok": 1
+    "ci_not_ok": 0
   },
   "green": [],
   "blocked": [],
   "dirty": [],
-  "ci_not_ok": [
-    {
-      "repo": "lic",
-      "number": 610,
-      "title": "chore(lic): workspace sweep fallback",
-      "mergeable": true,
-      "mergeable_state": "behind",
-      "draft": false,
-      "ci": "pending",
-      "head": "e5bac59"
-    }
-  ]
+  "ci_not_ok": []
 }
