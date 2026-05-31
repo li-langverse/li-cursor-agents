@@ -1,13 +1,24 @@
 {
   "report": {
-    "total": 0,
-    "classified": 0,
-    "green_clean": 0,
+    "total": 1,
+    "classified": 1,
+    "green_clean": 1,
     "blocked_ci_ok": 0,
     "dirty": 0,
     "ci_not_ok": 0
   },
-  "green": [],
+  "green": [
+    {
+      "repo": "li-cursor-agents",
+      "number": 100,
+      "title": "docs(sprint): org-pr-merge session 25 \u2014 zero open PRs confirmed",
+      "mergeable": true,
+      "mergeable_state": "clean",
+      "draft": false,
+      "ci": "ok",
+      "head": "c48ccc7"
+    }
+  ],
   "blocked": [],
   "dirty": [],
   "ci_not_ok": []
