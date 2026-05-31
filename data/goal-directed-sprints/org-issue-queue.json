@@ -1,0 +1,2498 @@
+{
+  "report": {
+    "total_open": 177,
+    "classified": 177,
+    "partial": false,
+    "limit": null,
+    "implement": 4,
+    "route_planner": 73,
+    "close_done": 15,
+    "close_duplicate": 6,
+    "close_wontfix": 0,
+    "close_spam": 0,
+    "close_superseded": 0,
+    "stale_needs_human": 0,
+    "defer_master_plan": 8,
+    "needs_triage": 71
+  },
+  "implement": [
+    {
+      "repo": "li-cursor-agents",
+      "number": 49,
+      "title": "[ui-audit] tui-demo.sh UTF-8 em dash mojibake in harness captures",
+      "html_url": "https://github.com/li-langverse/li-cursor-agents/issues/49",
+      "labels": [
+        "bug"
+      ],
+      "updated_at": "2026-05-30T10:37:55Z",
+      "classification_note": "ready for implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 48,
+      "title": "[ui-audit] TUI harness lacks stdout frame capture and baseline diff",
+      "html_url": "https://github.com/li-langverse/li-cursor-agents/issues/48",
+      "labels": [
+        "enhancement"
+      ],
+      "updated_at": "2026-05-30T10:37:54Z",
+      "classification_note": "ready for implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 120,
+      "title": "bug(cloud-agent): ManagePullRequest false 'no commits on remote' after successful push",
+      "html_url": "https://github.com/li-langverse/lic/issues/120",
+      "labels": [
+        "bug"
+      ],
+      "updated_at": "2026-05-20T19:49:17Z",
+      "classification_note": "ready for implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 28,
+      "title": "[explorer-finding] PETSc\u2013Kokkos exascale patterns vs Li parallel + memory model",
+      "html_url": "https://github.com/li-langverse/lic/issues/28",
+      "labels": [
+        "enhancement",
+        "explorer-finding"
+      ],
+      "updated_at": "2026-05-17T15:53:55Z",
+      "classification_note": "ready for implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    }
+  ],
+  "route_planner": [
+    {
+      "repo": "benchmarks",
+      "number": 266,
+      "title": "[master-plan-gap] PH-5b: catalog.toml 117 missing lic paths \u2014 audit honesty vs competitive verticals stub rows",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/266",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-31T01:52:30Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 619,
+      "title": "[master-plan-gap] PH-H httpd: snapshot 10/10 todos completed \u2014 reconcile #477 + stale plan_debt rows",
+      "html_url": "https://github.com/li-langverse/lic/issues/619",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-31T01:52:21Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 618,
+      "title": "[master-plan-gap] PH-2i: close stale #462 \u2014 broadcast_len1 compile tests landed (G-math Lean witness still open)",
+      "html_url": "https://github.com/li-langverse/lic/issues/618",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-31T01:52:19Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 576,
+      "title": "[master-plan-gap] PH-DB: ph-db runner \u2014 9 wp-* todos pending, no plan-loop YAML",
+      "html_url": "https://github.com/li-langverse/lic/issues/576",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-30T20:31:18Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 575,
+      "title": "[master-plan-gap] studio-ui-ux: studio-ux-16/17 pending \u2014 palette latency + GPU fail recovery",
+      "html_url": "https://github.com/li-langverse/lic/issues/575",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-30T20:31:16Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 574,
+      "title": "[master-plan-gap] PH-2i / G-math: length-1 broadcast \u2014 MIR codegen without Lean witness",
+      "html_url": "https://github.com/li-langverse/lic/issues/574",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-30T20:31:10Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 527,
+      "title": "[plan-needed] PH-2h / G-math-syn: for/range surface \u2014 define parse+typecheck Done gate",
+      "html_url": "https://github.com/li-langverse/lic/issues/527",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-30T10:28:17Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 526,
+      "title": "[plan-needed] PH-2i: full NumPy-rank broadcast \u2014 define reject gate + defer criteria (G-math)",
+      "html_url": "https://github.com/li-langverse/lic/issues/526",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-30T10:28:18Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 525,
+      "title": "[master-plan-gap] PH-8p-c: lic build --jobs=N sets LI_COMPILE_JOBS but compiler never reads it",
+      "html_url": "https://github.com/li-langverse/lic/issues/525",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-30T12:04:35Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 523,
+      "title": "[master-plan-gap] sim-md-research: md-r3-oracle-plan pending \u2014 MD oracle gate open",
+      "html_url": "https://github.com/li-langverse/lic/issues/523",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-30T09:33:49Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 522,
+      "title": "[master-plan-gap] sim-chem-research: chem-r2 + chem-r3 pending \u2014 supervisor idle",
+      "html_url": "https://github.com/li-langverse/lic/issues/522",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-30T09:33:48Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 521,
+      "title": "[master-plan-gap] security-research runner: sec-r1/2/3 pending \u2014 supervisor off 4d+",
+      "html_url": "https://github.com/li-langverse/lic/issues/521",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-30T09:33:47Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 478,
+      "title": "[master-plan-gap] sim runner: sim-p2-qm-dft-scf pending \u2014 supervisor off (algo_id=418)",
+      "html_url": "https://github.com/li-langverse/lic/issues/478",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-30T02:32:37Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 477,
+      "title": "[master-plan-gap] PH-H httpd: gap-phase2-perf-wrk-soak + gap-phase2-streaming-wrk pending (supervisor stale)",
+      "html_url": "https://github.com/li-langverse/lic/issues/477",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-30T02:32:35Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 476,
+      "title": "[plan-needed] PH-Pkg: ecosystem-governance sub-plan \u2014 7 exit gates open (no runner loop)",
+      "html_url": "https://github.com/li-langverse/lic/issues/476",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-30T12:04:36Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "benchmarks",
+      "number": 179,
+      "title": "[master-plan-gap] PH-5b: 117 catalog.toml rows missing lic benchmark paths",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/179",
+      "labels": [
+        "master-plan-gap"
+      ],
+      "updated_at": "2026-05-31T01:02:04Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 473,
+      "title": "[master-plan-gap] lic/scripts: ship swarm-gap-ingest.py on main for plan_verifier",
+      "html_url": "https://github.com/li-langverse/lic/issues/473",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-30T01:31:23Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 472,
+      "title": "[master-plan-gap] G-lean/PH-2i: P-linalg loop \u2261 ensures sub-plan gate still open",
+      "html_url": "https://github.com/li-langverse/lic/issues/472",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-30T10:28:15Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 471,
+      "title": "[master-plan-gap] swarm-gap-ingest: close plan_debt when todo.status=completed (not only state.completed_ids)",
+      "html_url": "https://github.com/li-langverse/lic/issues/471",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-30T01:26:46Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 470,
+      "title": "[plan-needed] PH-02: check off phase-02-typechecker sub-plan exit gates \u2014 li-tests evidence exists",
+      "html_url": "https://github.com/li-langverse/lic/issues/470",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-30T01:26:44Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 464,
+      "title": "[plan-needed] Vision-LLM: diagnostic manifest stub \u2014 ship gate open (master-plan:476)",
+      "html_url": "https://github.com/li-langverse/lic/issues/464",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-29T23:53:24Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 463,
+      "title": "[master-plan-gap] PH-7e: tier-1 red benchmarks exceed 1.2\u00d7 advisory bar (G-math, PH-5b)",
+      "html_url": "https://github.com/li-langverse/lic/issues/463",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-29T23:53:22Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 462,
+      "title": "[master-plan-gap] PH-2i-b: length-1 broadcast \u2014 no math_linalg test (G-math)",
+      "html_url": "https://github.com/li-langverse/lic/issues/462",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-30T09:36:48Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 460,
+      "title": "[master-plan-gap] PH-8p-a: reconcile tracker \u2014 LI_TEST_JOBS parallel run_all wired (#428 stale)",
+      "html_url": "https://github.com/li-langverse/lic/issues/460",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-29T23:52:33Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 459,
+      "title": "[plan-needed] PH-5b plots-and-social: 4 exit gates open (plot_shareables.sh, theme, docs link)",
+      "html_url": "https://github.com/li-langverse/lic/issues/459",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-29T23:52:28Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 436,
+      "title": "[master-plan-gap] swarm-gap-registry/registry.yaml merge conflict blocks swarm-gap-ingest",
+      "html_url": "https://github.com/li-langverse/lic/issues/436",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-29T20:39:59Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 429,
+      "title": "[plan-needed] PH-7d: Tier-2 MD benchmark uses @cpu/@parallel/@vectorized on def",
+      "html_url": "https://github.com/li-langverse/lic/issues/429",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-29T20:32:25Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 428,
+      "title": "[master-plan-gap] PH-8p-a: parallel li-tests/run_all.sh (LI_TEST_JOBS) not wired",
+      "html_url": "https://github.com/li-langverse/lic/issues/428",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-29T20:32:23Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 425,
+      "title": "[plan-needed] Vision-LLM: define Done gate for agent manifest + test export CI",
+      "html_url": "https://github.com/li-langverse/lic/issues/425",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-30T12:16:08Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 424,
+      "title": "[master-plan-gap] PH-7e / G-math: 6 tier-1 red benchmark rows vs partial tracker closure",
+      "html_url": "https://github.com/li-langverse/lic/issues/424",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-29T20:32:28Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 423,
+      "title": "[master-plan-gap] PH-DB: ph-db-battle-plan \u2014 40 open gate checkboxes vs lidb embed path",
+      "html_url": "https://github.com/li-langverse/lic/issues/423",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-29T19:30:08Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 387,
+      "title": "[plan-needed] PH-7d / G-par: MIR proc tags + Lean disjoint proofs (decorator lowering)",
+      "html_url": "https://github.com/li-langverse/lic/issues/387",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-30T12:16:10Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 386,
+      "title": "[master-plan-gap] PH-2i: reconcile tracker \u2014 length-1 broadcast closed in tests/sub-plan",
+      "html_url": "https://github.com/li-langverse/lic/issues/386",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-29T10:30:31Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 385,
+      "title": "[master-plan-gap] PH-8p: 8p-b parallel workspace pool + 8p-d wall-time SLO",
+      "html_url": "https://github.com/li-langverse/lic/issues/385",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-30T12:16:09Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 129,
+      "title": "[explorer-finding] OpenMP affinity + MPI\u00d7threads occupancy rubric for portable Li runtime (G-par, PH-7e)",
+      "html_url": "https://github.com/li-langverse/lic/issues/129",
+      "labels": [
+        "explorer-finding",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-20T20:14:51Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 128,
+      "title": "[explorer-finding] Kokkos 4.6+ std::mdspan View refactor \u2014 Li tier-2 strided buffer ABI rubric (PH-7e, G-par)",
+      "html_url": "https://github.com/li-langverse/lic/issues/128",
+      "labels": [
+        "explorer-finding",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-20T20:14:36Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 125,
+      "title": "[explorer-finding] C++26 std::execution sender/receiver rubric vs Li async tier-2 scheduling (G-par, G-ai)",
+      "html_url": "https://github.com/li-langverse/lic/issues/125",
+      "labels": [
+        "explorer-finding",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-20T20:00:03Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 124,
+      "title": "[explorer-finding] OpenMP prescriptive vs descriptive divergent-branch rubric for competitive portable codegen (G-par, P",
+      "html_url": "https://github.com/li-langverse/lic/issues/124",
+      "labels": [
+        "explorer-finding",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-20T19:59:59Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 117,
+      "title": "[explorer-finding] PETSc 3.25 PCBJKOKKOS device-native Jacobi \u2014 implicit PDE preconditioner rubric (G-math)",
+      "html_url": "https://github.com/li-langverse/lic/issues/117",
+      "labels": [
+        "explorer-finding",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-20T19:43:31Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 116,
+      "title": "[explorer-finding] Kokkos OpenMPTarget backend checklist vs Li std/execution offload (G-par, PH-7e)",
+      "html_url": "https://github.com/li-langverse/lic/issues/116",
+      "labels": [
+        "explorer-finding",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-20T19:43:27Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 113,
+      "title": "[explorer-finding] Chapel 2.8 HPC portability rubric vs Li std/execution (G-par, G-ai)",
+      "html_url": "https://github.com/li-langverse/lic/issues/113",
+      "labels": [
+        "explorer-finding",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-20T19:28:46Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 112,
+      "title": "[explorer-finding] HPX-style async futures vs Li tier-2 game physics scheduling (G-par)",
+      "html_url": "https://github.com/li-langverse/lic/issues/112",
+      "labels": [
+        "explorer-finding",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-20T19:28:36Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 110,
+      "title": "[explorer-finding] Kokkos 4.6 Views + execution-space semantics for Li tier-2 memory model (G-par, PH-7e)",
+      "html_url": "https://github.com/li-langverse/lic/issues/110",
+      "labels": [
+        "explorer-finding",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-20T19:11:53Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 109,
+      "title": "[explorer-finding] RAJA execution policies vs Li std/execution decorators \u2014 ICS 2025 portability rubric (G-par, PH-7e)",
+      "html_url": "https://github.com/li-langverse/lic/issues/109",
+      "labels": [
+        "explorer-finding",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-20T19:11:51Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 108,
+      "title": "[explorer-finding] hypre BoomerAMG + PETSc GPU preconditioners for tier-2 implicit PDE (G-math)",
+      "html_url": "https://github.com/li-langverse/lic/issues/108",
+      "labels": [
+        "explorer-finding",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-20T19:11:34Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 49,
+      "title": "master-plan-gap: provability-gaps summary table drifts from G-math register (PH-2i, PH-7e)",
+      "html_url": "https://github.com/li-langverse/lic/issues/49",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-18T22:30:04Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 50,
+      "title": "[Ecosystem gap] Publish li-std-physics-* org mirrors (12 packages)",
+      "html_url": "https://github.com/li-langverse/lic/issues/50",
+      "labels": [
+        "feature",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-18T22:30:04Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 35,
+      "title": "[explorer-finding] SUNDIALS-class stiff ODE + sensitivity vs tier-2 Li integrators (G-math, physics tier-2)",
+      "html_url": "https://github.com/li-langverse/lic/issues/35",
+      "labels": [
+        "explorer-finding",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-17T16:14:57Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 34,
+      "title": "[explorer-finding] Map std/execution decorators to LLVM OpenMP IR / MLIR omp (G-par, PH-7e)",
+      "html_url": "https://github.com/li-langverse/lic/issues/34",
+      "labels": [
+        "explorer-finding",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-17T16:14:52Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 33,
+      "title": "[explorer-finding] Eigen 5.0 / 3.4.x baseline + BLAS ABI \u2014 pin numerics reference policy (G-math, PH-5b)",
+      "html_url": "https://github.com/li-langverse/lic/issues/33",
+      "labels": [
+        "explorer-finding",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-17T16:14:48Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 32,
+      "title": "[master-plan-gap] Phase 2e\u20132f / 7e partial: close Lean/VC evidence (G-lean, G-vc) and SIMD matmul deferral (G-math)",
+      "html_url": "https://github.com/li-langverse/lic/issues/32",
+      "labels": [
+        "master-plan-gap"
+      ],
+      "updated_at": "2026-05-17T16:08:57Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 31,
+      "title": "[master-plan-gap] Doc-c: link G-* register IDs in phase plan 02 / 03 / 07 exit gates",
+      "html_url": "https://github.com/li-langverse/lic/issues/31",
+      "labels": [
+        "master-plan-gap"
+      ],
+      "updated_at": "2026-05-21T07:14:40Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 30,
+      "title": "[PH-H][master-plan-gap] Phase H \u2014 li-httpd M1 `.li` blocked-by plan: align 2e/2f exit vs httpd prerequisites",
+      "html_url": "https://github.com/li-langverse/lic/issues/30",
+      "labels": [
+        "master-plan-gap"
+      ],
+      "updated_at": "2026-05-17T15:59:11Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 29,
+      "title": "[PH-Doc-c][master-plan-gap] Doc-c checklist vs phase tracker contradict (phase 02/03/07 G-* exit gates)",
+      "html_url": "https://github.com/li-langverse/lic/issues/29",
+      "labels": [
+        "master-plan-gap"
+      ],
+      "updated_at": "2026-05-17T15:59:10Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 27,
+      "title": "master-plan-gap: PH-7e / G-math \u2014 Phase 7e SIMD matmul partial \u2014 define Done criteria",
+      "html_url": "https://github.com/li-langverse/lic/issues/27",
+      "labels": [
+        "master-plan-gap"
+      ],
+      "updated_at": "2026-05-17T15:48:03Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 26,
+      "title": "master-plan-gap: Doc-c \u2014 link G-* ids in phase 02 / 03 / 07 exit gates",
+      "html_url": "https://github.com/li-langverse/lic/issues/26",
+      "labels": [
+        "master-plan-gap"
+      ],
+      "updated_at": "2026-05-17T15:48:02Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 25,
+      "title": "[master-plan-gap] Partial tracker rows (2e/2f/2i/7d/7e/H/Vision-LLM): define closure evidence",
+      "html_url": "https://github.com/li-langverse/lic/issues/25",
+      "labels": [
+        "master-plan-gap"
+      ],
+      "updated_at": "2026-05-17T15:22:16Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 24,
+      "title": "[plan-needed] tier0_stability: benchmarks/tier0_correctness missing on lic main",
+      "html_url": "https://github.com/li-langverse/lic/issues/24",
+      "labels": [
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-17T15:22:21Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 23,
+      "title": "[master-plan-gap] Doc-c: cite G-* IDs in phase 02/03/07 exit gates",
+      "html_url": "https://github.com/li-langverse/lic/issues/23",
+      "labels": [
+        "master-plan-gap"
+      ],
+      "updated_at": "2026-05-17T15:22:13Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 22,
+      "title": "master-plan-gap: Phase 7d / G-dec \u2014 decorators beyond parse + policy (MIR lowering)",
+      "html_url": "https://github.com/li-langverse/lic/issues/22",
+      "labels": [
+        "master-plan-gap"
+      ],
+      "updated_at": "2026-05-17T13:24:54Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 21,
+      "title": "master-plan-gap: Phase 2e / G-vc \u2014 contracts, refinements, open-goals exit gates",
+      "html_url": "https://github.com/li-langverse/lic/issues/21",
+      "labels": [
+        "master-plan-gap"
+      ],
+      "updated_at": "2026-05-17T13:24:53Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "benchmarks",
+      "number": 20,
+      "title": "plan-needed: plan-completion-audit CI must checkout lic (LIC_ROOT)",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/20",
+      "labels": [
+        "master-plan-gap"
+      ],
+      "updated_at": "2026-05-30T13:37:53Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "benchmarks",
+      "number": 19,
+      "title": "master-plan-gap: catalog tier-2 gaming physics rows ahead of lic dev tree",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/19",
+      "labels": [
+        "master-plan-gap"
+      ],
+      "updated_at": "2026-05-30T13:38:06Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 20,
+      "title": "plan-needed: Phase 2i / G-math \u2014 matrix `@` shape rules + lowering plan",
+      "html_url": "https://github.com/li-langverse/lic/issues/20",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-17T13:21:35Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 19,
+      "title": "plan-needed: Vision-LLM \u2014 agent manifest CI + compact test export (beyond stub)",
+      "html_url": "https://github.com/li-langverse/lic/issues/19",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-17T13:09:09Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 18,
+      "title": "plan-needed: Phase H M1 \u2014 li-httpd .li gateway after 2e\u20132f + P0 bytes/async",
+      "html_url": "https://github.com/li-langverse/lic/issues/18",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-17T13:09:07Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 17,
+      "title": "master-plan-gap: Phase 2f / G-lean \u2014 close sqrt_open_bound; default Lean gate on lic build",
+      "html_url": "https://github.com/li-langverse/lic/issues/17",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-17T13:09:06Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 16,
+      "title": "[Ecosystem gap] Reconcile master plan partial PH rows + G-* provability debt",
+      "html_url": "https://github.com/li-langverse/lic/issues/16",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-17T13:01:21Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 15,
+      "title": "[Ecosystem gap] PH-7e/G-par: decorators \u2192 portable parallel lowering (Kokkos-class)",
+      "html_url": "https://github.com/li-langverse/lic/issues/15",
+      "labels": [
+        "feature",
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-17T13:01:17Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 14,
+      "title": "[Ecosystem gap] Physics packages: scaffold lib.li \u2192 domain APIs",
+      "html_url": "https://github.com/li-langverse/lic/issues/14",
+      "labels": [
+        "feature",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-17T13:01:14Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 13,
+      "title": "[Ecosystem gap] PH-IO-4/5/7: ship std.io, std.csv, std.summary, std.plot",
+      "html_url": "https://github.com/li-langverse/lic/issues/13",
+      "labels": [
+        "feature",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-17T13:01:09Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 12,
+      "title": "master-plan-gap: Doc-c \u2014 link G-* in phase 03 and 07 plan exit gates",
+      "html_url": "https://github.com/li-langverse/lic/issues/12",
+      "labels": [
+        "master-plan-gap"
+      ],
+      "updated_at": "2026-05-17T12:58:22Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 11,
+      "title": "plan-needed: PH-7e / G-math \u2014 pure-Li horner codegen (88\u00d7 vs C++)",
+      "html_url": "https://github.com/li-langverse/lic/issues/11",
+      "labels": [
+        "master-plan-gap",
+        "plan-needed"
+      ],
+      "updated_at": "2026-05-17T12:58:25Z",
+      "classification_note": "needs plan before implementation",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    }
+  ],
+  "close_done": [
+    {
+      "repo": "benchmarks",
+      "number": 139,
+      "title": "[ux-audit] Include tui-app-fixture and tui-gen-fixture in org ux_audit preflight",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/139",
+      "labels": [],
+      "updated_at": "2026-05-29T12:55:59Z",
+      "classification_note": "merged_pr_reference",
+      "suggested_reason": "already_implemented",
+      "close_summary": "[ux-audit] Include tui-app-fixture and tui-gen-fixture in org ux_audit preflight",
+      "close_evidence": "Body references merged PR #30"
+    },
+    {
+      "repo": "lic",
+      "number": 127,
+      "title": "docs(numerics): 2026-05-20 researcher pass \u2014 horner DCE P0 + near-limit SOTA",
+      "html_url": "https://github.com/li-langverse/lic/issues/127",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-20T20:07:14Z",
+      "classification_note": "merged_pr_reference",
+      "suggested_reason": "already_implemented",
+      "close_summary": "docs(numerics): 2026-05-20 researcher pass \u2014 horner DCE P0 + near-limit SOTA",
+      "close_evidence": "Body references merged PR #123"
+    },
+    {
+      "repo": "lic",
+      "number": 126,
+      "title": "numerics-research: 2026-05-20 horner P0 + near-limit SOTA evidence pack",
+      "html_url": "https://github.com/li-langverse/lic/issues/126",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-21T07:14:32Z",
+      "classification_note": "merged_pr_reference",
+      "suggested_reason": "already_implemented",
+      "close_summary": "numerics-research: 2026-05-20 horner P0 + near-limit SOTA evidence pack",
+      "close_evidence": "Body references merged PR #123"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 53,
+      "title": "[explorer-finding] PH-IO-7: Python build_summary.py parity gate until std.summary ships (PH-IO-7)",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/53",
+      "labels": [
+        "explorer-finding"
+      ],
+      "updated_at": "2026-05-30T13:38:04Z",
+      "classification_note": "merged_pr_reference",
+      "suggested_reason": "already_implemented",
+      "close_summary": "[explorer-finding] PH-IO-7: Python build_summary.py parity gate until std.summary ships (PH-IO-7)",
+      "close_evidence": "Body references merged PR #13"
+    },
+    {
+      "repo": "lic",
+      "number": 121,
+      "title": "numerics-research: horner_pure_li anti-DCE + matmul_naive 1.30\u00d7 (pass 84241347)",
+      "html_url": "https://github.com/li-langverse/lic/issues/121",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-20T19:51:36Z",
+      "classification_note": "merged_pr_reference",
+      "suggested_reason": "already_implemented",
+      "close_summary": "numerics-research: horner_pure_li anti-DCE + matmul_naive 1.30\u00d7 (pass 84241347)",
+      "close_evidence": "Body references merged PR #47"
+    },
+    {
+      "repo": "lic",
+      "number": 115,
+      "title": "numerics-research: 2026-05-20 pass \u2014 horner DCE (P0), matmul SOTA, tier-2 disjoint_elem",
+      "html_url": "https://github.com/li-langverse/lic/issues/115",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-20T19:38:11Z",
+      "classification_note": "merged_pr_reference",
+      "suggested_reason": "already_implemented",
+      "close_summary": "numerics-research: 2026-05-20 pass \u2014 horner DCE (P0), matmul SOTA, tier-2 disjoint_elem",
+      "close_evidence": "Body references merged PR #47"
+    },
+    {
+      "repo": "lic",
+      "number": 111,
+      "title": "numerics-research: 2026-05-20 pass \u2014 horner P0 DCE + near-limit SOTA map",
+      "html_url": "https://github.com/li-langverse/lic/issues/111",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-20T19:17:05Z",
+      "classification_note": "merged_pr_reference",
+      "suggested_reason": "already_implemented",
+      "close_summary": "numerics-research: 2026-05-20 pass \u2014 horner P0 DCE + near-limit SOTA map",
+      "close_evidence": "Body references merged PR #47"
+    },
+    {
+      "repo": "lic",
+      "number": 105,
+      "title": "Numerics researcher pass (2026-05-20): horner P0 + near-limit SOTA map",
+      "html_url": "https://github.com/li-langverse/lic/issues/105",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-21T07:14:39Z",
+      "classification_note": "merged_pr_reference",
+      "suggested_reason": "already_implemented",
+      "close_summary": "Numerics researcher pass (2026-05-20): horner P0 + near-limit SOTA map",
+      "close_evidence": "Body references merged PR #47"
+    },
+    {
+      "repo": "lic",
+      "number": 99,
+      "title": "Numerics researcher pass (2026-05-20): horner_pure_li red + near-limit greens \u2014 SOTA map",
+      "html_url": "https://github.com/li-langverse/lic/issues/99",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-20T16:57:37Z",
+      "classification_note": "merged_pr_reference",
+      "suggested_reason": "already_implemented",
+      "close_summary": "Numerics researcher pass (2026-05-20): horner_pure_li red + near-limit greens \u2014 SOTA map",
+      "close_evidence": "Body references merged PR #47"
+    },
+    {
+      "repo": "lic",
+      "number": 97,
+      "title": "Numerics researcher pass (2026-05-20): horner P0 + near-limit SOTA map",
+      "html_url": "https://github.com/li-langverse/lic/issues/97",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-20T16:38:22Z",
+      "classification_note": "body_main_fixed",
+      "suggested_reason": "already_implemented",
+      "close_summary": "Numerics researcher pass (2026-05-20): horner P0 + near-limit SOTA map",
+      "close_evidence": "Issue body states fix is on main"
+    },
+    {
+      "repo": "lic",
+      "number": 95,
+      "title": "Numerics researcher pass (2026-05-20): horner_pure_li DCE + near-limit SOTA map",
+      "html_url": "https://github.com/li-langverse/lic/issues/95",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-20T15:54:24Z",
+      "classification_note": "merged_pr_reference",
+      "suggested_reason": "already_implemented",
+      "close_summary": "Numerics researcher pass (2026-05-20): horner_pure_li DCE + near-limit SOTA map",
+      "close_evidence": "Body references merged PR #47"
+    },
+    {
+      "repo": "lic",
+      "number": 93,
+      "title": "Numerics researcher pass (2026-05-20): horner_pure_li red + near-limit SOTA",
+      "html_url": "https://github.com/li-langverse/lic/issues/93",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-20T15:38:11Z",
+      "classification_note": "merged_pr_reference",
+      "suggested_reason": "already_implemented",
+      "close_summary": "Numerics researcher pass (2026-05-20): horner_pure_li red + near-limit SOTA",
+      "close_evidence": "Body references merged PR #47"
+    },
+    {
+      "repo": "lic",
+      "number": 86,
+      "title": "Numerics researcher pass (2026-05-20): horner_pure_li P0 + near-limit SOTA",
+      "html_url": "https://github.com/li-langverse/lic/issues/86",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-20T14:56:01Z",
+      "classification_note": "merged_pr_reference",
+      "suggested_reason": "already_implemented",
+      "close_summary": "Numerics researcher pass (2026-05-20): horner_pure_li P0 + near-limit SOTA",
+      "close_evidence": "Body references merged PR #47"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 41,
+      "title": "[explorer-finding] Catalog: expand pure_li variants beyond horner for PH-7e proof surface",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/41",
+      "labels": [
+        "explorer-finding"
+      ],
+      "updated_at": "2026-05-31T01:02:03Z",
+      "classification_note": "merged_pr_reference",
+      "suggested_reason": "already_implemented",
+      "close_summary": "[explorer-finding] Catalog: expand pure_li variants beyond horner for PH-7e proof surface",
+      "close_evidence": "Body references merged PR #9"
+    },
+    {
+      "repo": "benchmarks",
+      "number": 31,
+      "title": "Numerics researcher pass (2026-05-17): horner_pure_li red + near-limit greens \u2014 SOTA map & lic path",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/31",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-20T14:35:39Z",
+      "classification_note": "merged_pr_reference",
+      "suggested_reason": "already_implemented",
+      "close_summary": "Numerics researcher pass (2026-05-17): horner_pure_li red + near-limit greens \u2014 SOTA map & lic path",
+      "close_evidence": "Body references merged PR #6"
+    }
+  ],
+  "close_duplicate": [
+    {
+      "repo": "lic",
+      "number": 182,
+      "title": "Studio UI/UX plan loop \u2014 progress tracker",
+      "html_url": "https://github.com/li-langverse/lic/issues/182",
+      "labels": [],
+      "updated_at": "2026-05-31T01:55:14Z",
+      "classification_note": "title_cluster",
+      "suggested_reason": "duplicate",
+      "close_summary": "Studio UI/UX plan loop \u2014 progress tracker",
+      "close_evidence": "Duplicate title cluster; keep issue #178"
+    },
+    {
+      "repo": "lic",
+      "number": 181,
+      "title": "Studio UI/UX plan loop \u2014 progress tracker",
+      "html_url": "https://github.com/li-langverse/lic/issues/181",
+      "labels": [],
+      "updated_at": "2026-05-25T01:37:50Z",
+      "classification_note": "title_cluster",
+      "suggested_reason": "duplicate",
+      "close_summary": "Studio UI/UX plan loop \u2014 progress tracker",
+      "close_evidence": "Duplicate title cluster; keep issue #178"
+    },
+    {
+      "repo": "lic",
+      "number": 180,
+      "title": "Studio UI/UX plan loop \u2014 progress tracker",
+      "html_url": "https://github.com/li-langverse/lic/issues/180",
+      "labels": [],
+      "updated_at": "2026-05-24T17:32:33Z",
+      "classification_note": "title_cluster",
+      "suggested_reason": "duplicate",
+      "close_summary": "Studio UI/UX plan loop \u2014 progress tracker",
+      "close_evidence": "Duplicate title cluster; keep issue #178"
+    },
+    {
+      "repo": "lic",
+      "number": 114,
+      "title": "Numerics researcher pass (2026-05-20): horner_pure_li P0 + near-limit tier-1/2 SOTA",
+      "html_url": "https://github.com/li-langverse/lic/issues/114",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-21T07:14:35Z",
+      "classification_note": "title_cluster",
+      "suggested_reason": "duplicate",
+      "close_summary": "Numerics researcher pass (2026-05-20): horner_pure_li P0 + near-limit tier-1/2 SOTA",
+      "close_evidence": "Duplicate title cluster; keep issue #79"
+    },
+    {
+      "repo": "lic",
+      "number": 107,
+      "title": "Numerics researcher pass (2026-05-20): horner P0 + near-limit SOTA map",
+      "html_url": "https://github.com/li-langverse/lic/issues/107",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-21T07:14:38Z",
+      "classification_note": "title_cluster",
+      "suggested_reason": "duplicate",
+      "close_summary": "Numerics researcher pass (2026-05-20): horner P0 + near-limit SOTA map",
+      "close_evidence": "Duplicate title cluster; keep issue #90"
+    },
+    {
+      "repo": "lic",
+      "number": 106,
+      "title": "Numerics researcher pass (2026-05-20): horner_pure_li red + near-limit SOTA",
+      "html_url": "https://github.com/li-langverse/lic/issues/106",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-21T07:14:37Z",
+      "classification_note": "title_cluster",
+      "suggested_reason": "duplicate",
+      "close_summary": "Numerics researcher pass (2026-05-20): horner_pure_li red + near-limit SOTA",
+      "close_evidence": "Duplicate title cluster; keep issue #93"
+    }
+  ],
+  "close_wontfix": [],
+  "close_spam": [],
+  "close_superseded": [],
+  "stale_needs_human": [],
+  "defer_master_plan": [
+    {
+      "repo": "benchmarks",
+      "number": 54,
+      "title": "[explorer-finding] Gap-explorer: require LIC_ROOT lic checkout for accurate static scan in cloud agents (PH-IO)",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/54",
+      "labels": [
+        "explorer-finding"
+      ],
+      "updated_at": "2026-05-30T13:37:59Z",
+      "classification_note": "master-plan or PH-* tracking",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "benchmarks",
+      "number": 52,
+      "title": "[explorer-finding] VkFFT + FFTW/cuFFT crossover rubric for tier-1 FFT catalog row (PH-5b, G-math)",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/52",
+      "labels": [
+        "explorer-finding"
+      ],
+      "updated_at": "2026-05-30T13:38:03Z",
+      "classification_note": "master-plan or PH-* tracking",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "benchmarks",
+      "number": 51,
+      "title": "[explorer-finding] gearshifft multi-vendor FFT tiers for catalog FFT row (PH-5b, G-math)",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/51",
+      "labels": [
+        "explorer-finding"
+      ],
+      "updated_at": "2026-05-30T13:38:01Z",
+      "classification_note": "master-plan or PH-* tracking",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 66,
+      "title": "[explorer-finding] Kokkos 4.6 graph/NUMA policy checklist for std/execution (PH-7e, G-par)",
+      "html_url": "https://github.com/li-langverse/lic/issues/66",
+      "labels": [
+        "explorer-finding"
+      ],
+      "updated_at": "2026-05-19T19:56:32Z",
+      "classification_note": "master-plan or PH-* tracking",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "benchmarks",
+      "number": 28,
+      "title": "[PH-5b][plan-needed] Clarify LIC_ROOT vs sibling benchmarks for plan-completion-audit",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/28",
+      "labels": [],
+      "updated_at": "2026-05-30T13:37:56Z",
+      "classification_note": "master-plan or PH-* tracking",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "benchmarks",
+      "number": 16,
+      "title": "numerics: horner_pure_li PH-7e FMA/vectorize path (88\u00d7 vs cpp)",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/16",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-17T13:18:29Z",
+      "classification_note": "master-plan or PH-* tracking",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 10,
+      "title": "[numerics-research] PH-5b: near-threshold LI_EXTRA_C link parity (7 benches >1.0\u00d7 cpp)",
+      "html_url": "https://github.com/li-langverse/lic/issues/10",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-17T09:11:08Z",
+      "classification_note": "master-plan or PH-* tracking",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 9,
+      "title": "[numerics-research] horner_pure_li: fix pure-Li oracle DCE, then PH-7e FMA (88\u00d7 \u2192 \u22641.2\u00d7 cpp)",
+      "html_url": "https://github.com/li-langverse/lic/issues/9",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-17T09:11:03Z",
+      "classification_note": "master-plan or PH-* tracking",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    }
+  ],
+  "needs_triage": [
+    {
+      "repo": "li-cursor-agents",
+      "number": 47,
+      "title": "[ui-audit] world-studio-native capture_script on main lic fails; lic-studio-ui works",
+      "html_url": "https://github.com/li-langverse/li-cursor-agents/issues/47",
+      "labels": [],
+      "updated_at": "2026-05-30T10:30:15Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 46,
+      "title": "[ui-audit] lic-tetris native_gui runs studio SDL stub instead of examples/tetris",
+      "html_url": "https://github.com/li-langverse/li-cursor-agents/issues/46",
+      "labels": [],
+      "updated_at": "2026-05-30T09:36:35Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 44,
+      "title": "[ux-audit] gui-gen fixture stub \u2014 expand error/empty/edit states",
+      "html_url": "https://github.com/li-langverse/li-cursor-agents/issues/44",
+      "labels": [],
+      "updated_at": "2026-05-30T08:12:06Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 515,
+      "title": "[ux-audit] lic-tetris native_gui capture script missing for play_session",
+      "html_url": "https://github.com/li-langverse/lic/issues/515",
+      "labels": [],
+      "updated_at": "2026-05-30T08:12:04Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 43,
+      "title": "[ux-audit] agents-dashboard unreachable \u2014 empty-state journey blocked",
+      "html_url": "https://github.com/li-langverse/li-cursor-agents/issues/43",
+      "labels": [],
+      "updated_at": "2026-05-30T08:11:59Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 40,
+      "title": "[ui-audit] agents-dashboard: align globals.css with Li dark tokens + focus-visible",
+      "html_url": "https://github.com/li-langverse/li-cursor-agents/issues/40",
+      "labels": [],
+      "updated_at": "2026-05-30T09:22:37Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 426,
+      "title": "[ui-audit] lic-docs: axe color-contrast + link-in-text-block (Material theme)",
+      "html_url": "https://github.com/li-langverse/lic/issues/426",
+      "labels": [],
+      "updated_at": "2026-05-29T20:03:09Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 38,
+      "title": "[ui-audit] Align agents-dashboard harness URL with Playwright port 3099",
+      "html_url": "https://github.com/li-langverse/li-cursor-agents/issues/38",
+      "labels": [],
+      "updated_at": "2026-05-30T09:22:36Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "benchmarks",
+      "number": 148,
+      "title": "[ui-audit] Register benchmarks dashboard in ux-targets + Playwright matrix",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/148",
+      "labels": [],
+      "updated_at": "2026-05-29T19:29:20Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "benchmarks",
+      "number": 147,
+      "title": "[ui-audit] GPU chip picker: complete ARIA tabs + keyboard roving",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/147",
+      "labels": [],
+      "updated_at": "2026-05-29T19:29:19Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 422,
+      "title": "[ux-audit] docs(IA): move language reference pages out of Game development nav",
+      "html_url": "https://github.com/li-langverse/lic/issues/422",
+      "labels": [
+        "documentation"
+      ],
+      "updated_at": "2026-05-29T19:28:28Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 37,
+      "title": "[ui-audit] Seed baselines/docs + Playwright desktop/mobile capture for lic-docs",
+      "html_url": "https://github.com/li-langverse/li-cursor-agents/issues/37",
+      "labels": [
+        "documentation"
+      ],
+      "updated_at": "2026-05-29T15:40:54Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 404,
+      "title": "[ui-audit] Built docs site contains raw .md hrefs (93 unique)",
+      "html_url": "https://github.com/li-langverse/lic/issues/404",
+      "labels": [
+        "documentation"
+      ],
+      "updated_at": "2026-05-29T15:40:52Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 36,
+      "title": "[ui-audit] static_site adapter: unquoted href + site_url prefix (links_checked=0)",
+      "html_url": "https://github.com/li-langverse/li-cursor-agents/issues/36",
+      "labels": [
+        "documentation"
+      ],
+      "updated_at": "2026-05-30T09:22:35Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 403,
+      "title": "[ux-audit] Docs CI strict build failing \u2014 GitHub Pages stale (128 link warnings)",
+      "html_url": "https://github.com/li-langverse/lic/issues/403",
+      "labels": [
+        "documentation"
+      ],
+      "updated_at": "2026-05-29T15:40:34Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 399,
+      "title": "feat(studio-ui): studio-ux-16 CI capture deps (libsdl2-dev + headless chrome smoke)",
+      "html_url": "https://github.com/li-langverse/lic/issues/399",
+      "labels": [],
+      "updated_at": "2026-05-29T14:39:46Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 398,
+      "title": "feat(studio-ui): studio-ux-13 agentic_ai SOTA refs in world-studio-demo ux-harness",
+      "html_url": "https://github.com/li-langverse/lic/issues/398",
+      "labels": [],
+      "updated_at": "2026-05-29T14:39:45Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 34,
+      "title": "[ux-audit] TUI fixtures lack error display and screen-reader plain-text export",
+      "html_url": "https://github.com/li-langverse/li-cursor-agents/issues/34",
+      "labels": [],
+      "updated_at": "2026-05-29T12:56:02Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 33,
+      "title": "[ux-audit] TUI adapter does not execute journey steps (key_nav_help)",
+      "html_url": "https://github.com/li-langverse/li-cursor-agents/issues/33",
+      "labels": [],
+      "updated_at": "2026-05-29T12:55:56Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 32,
+      "title": "[ui-audit] ux-harness web_gui: Playwright snapshots + axe for HTML fixtures",
+      "html_url": "https://github.com/li-langverse/li-cursor-agents/issues/32",
+      "labels": [],
+      "updated_at": "2026-05-29T12:55:46Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "benchmarks",
+      "number": 138,
+      "title": "[ui-audit] Expand org preflight ui-audit.json to GUI/TUI ux-targets",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/138",
+      "labels": [],
+      "updated_at": "2026-05-29T12:55:44Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 394,
+      "title": "[ui-audit] Add studio-ui-ux-capture-native.sh on main for ux-harness native GUI",
+      "html_url": "https://github.com/li-langverse/lic/issues/394",
+      "labels": [],
+      "updated_at": "2026-05-29T12:55:40Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 31,
+      "title": "[ui-audit] dashboard Playwright e2e blocked by live-stream-feed TypeScript build",
+      "html_url": "https://github.com/li-langverse/li-cursor-agents/issues/31",
+      "labels": [],
+      "updated_at": "2026-05-29T12:55:38Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-cursor-agents",
+      "number": 30,
+      "title": "[ui-audit] tui-app-fixture blocks on read in non-interactive harness",
+      "html_url": "https://github.com/li-langverse/li-cursor-agents/issues/30",
+      "labels": [],
+      "updated_at": "2026-05-29T10:02:35Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 361,
+      "title": "chem_sim_algorithms: digest refresh + evidence links (cycle 1)",
+      "html_url": "https://github.com/li-langverse/lic/issues/361",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-28T07:03:40Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 355,
+      "title": "chem-r2: qm_dft_scf_energy harness + Psi4 oracle (418)",
+      "html_url": "https://github.com/li-langverse/lic/issues/355",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-27T21:52:58Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 354,
+      "title": "chem-r0: QM SOTA survey evidence pack (chem_sim_algorithms)",
+      "html_url": "https://github.com/li-langverse/lic/issues/354",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-27T21:19:24Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 320,
+      "title": "numerics-research: MD SOTA survey (md-r0) \u2014 neighbor list handoff",
+      "html_url": "https://github.com/li-langverse/lic/issues/320",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-26T05:52:35Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 316,
+      "title": "numerics-research: md-r2 neighbor cell-list gap (algo 105)",
+      "html_url": "https://github.com/li-langverse/lic/issues/316",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-25T19:22:22Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-net",
+      "number": 9,
+      "title": "ecosystem: bump pins for li-langverse/lic studio-verticals-demo-test-dry",
+      "html_url": "https://github.com/li-langverse/li-net/issues/9",
+      "labels": [],
+      "updated_at": "2026-05-25T12:55:34Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-demo",
+      "number": 13,
+      "title": "ecosystem: bump pins for li-langverse/lic studio-verticals-demo-test-dry",
+      "html_url": "https://github.com/li-langverse/li-demo/issues/13",
+      "labels": [],
+      "updated_at": "2026-05-25T12:55:34Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-httpd",
+      "number": 11,
+      "title": "ecosystem: bump pins for li-langverse/lic studio-verticals-demo-test-dry",
+      "html_url": "https://github.com/li-langverse/li-httpd/issues/11",
+      "labels": [],
+      "updated_at": "2026-05-25T12:55:19Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lit",
+      "number": 11,
+      "title": "ecosystem: bump pins for li-langverse/lic studio-verticals-demo-test-dry",
+      "html_url": "https://github.com/li-langverse/lit/issues/11",
+      "labels": [
+        "ecosystem-upstream"
+      ],
+      "updated_at": "2026-05-25T12:55:18Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lip",
+      "number": 15,
+      "title": "ecosystem: bump pins for li-langverse/lic studio-verticals-demo-test-dry",
+      "html_url": "https://github.com/li-langverse/lip/issues/15",
+      "labels": [
+        "ecosystem-upstream"
+      ],
+      "updated_at": "2026-05-25T12:55:05Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 178,
+      "title": "Studio UI/UX plan loop \u2014 progress tracker",
+      "html_url": "https://github.com/li-langverse/lic/issues/178",
+      "labels": [],
+      "updated_at": "2026-05-24T13:58:04Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-httpd",
+      "number": 9,
+      "title": "ecosystem: bump pins for li-langverse/lic studio-ui-ux-progress",
+      "html_url": "https://github.com/li-langverse/li-httpd/issues/9",
+      "labels": [],
+      "updated_at": "2026-05-24T13:37:11Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lit",
+      "number": 8,
+      "title": "ecosystem: bump pins for li-langverse/lic studio-ui-ux-progress",
+      "html_url": "https://github.com/li-langverse/lit/issues/8",
+      "labels": [
+        "ecosystem-upstream"
+      ],
+      "updated_at": "2026-05-24T13:37:09Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-demo",
+      "number": 12,
+      "title": "ecosystem: bump pins for li-langverse/lic studio-ui-ux-progress",
+      "html_url": "https://github.com/li-langverse/li-demo/issues/12",
+      "labels": [],
+      "updated_at": "2026-05-24T13:37:08Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lip",
+      "number": 9,
+      "title": "ecosystem: bump pins for li-langverse/lic studio-ui-ux-progress",
+      "html_url": "https://github.com/li-langverse/lip/issues/9",
+      "labels": [
+        "ecosystem-upstream"
+      ],
+      "updated_at": "2026-05-24T13:37:07Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-net",
+      "number": 8,
+      "title": "ecosystem: bump pins for li-langverse/lic studio-ui-ux-progress",
+      "html_url": "https://github.com/li-langverse/li-net/issues/8",
+      "labels": [],
+      "updated_at": "2026-05-24T13:37:06Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lit",
+      "number": 7,
+      "title": "ecosystem: bump pins for li-langverse/lic studio-demo-2026-05-24",
+      "html_url": "https://github.com/li-langverse/lit/issues/7",
+      "labels": [
+        "ecosystem-upstream"
+      ],
+      "updated_at": "2026-05-24T12:55:45Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-net",
+      "number": 7,
+      "title": "ecosystem: bump pins for li-langverse/lic studio-demo-2026-05-24",
+      "html_url": "https://github.com/li-langverse/li-net/issues/7",
+      "labels": [],
+      "updated_at": "2026-05-24T12:55:43Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-httpd",
+      "number": 8,
+      "title": "ecosystem: bump pins for li-langverse/lic studio-demo-2026-05-24",
+      "html_url": "https://github.com/li-langverse/li-httpd/issues/8",
+      "labels": [],
+      "updated_at": "2026-05-24T12:55:43Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "li-demo",
+      "number": 11,
+      "title": "ecosystem: bump pins for li-langverse/lic studio-demo-2026-05-24",
+      "html_url": "https://github.com/li-langverse/li-demo/issues/11",
+      "labels": [],
+      "updated_at": "2026-05-24T12:55:43Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lip",
+      "number": 8,
+      "title": "ecosystem: bump pins for li-langverse/lic studio-demo-2026-05-24",
+      "html_url": "https://github.com/li-langverse/lip/issues/8",
+      "labels": [
+        "ecosystem-upstream"
+      ],
+      "updated_at": "2026-05-24T12:55:42Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 118,
+      "title": "numerics-research: 2026-05-20 \u2014 horner P0 + near-limit SOTA evidence",
+      "html_url": "https://github.com/li-langverse/lic/issues/118",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-21T07:14:33Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 96,
+      "title": "Numerics researcher pass (2026-05-20): horner DCE honesty + near-limit SOTA",
+      "html_url": "https://github.com/li-langverse/lic/issues/96",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-20T16:20:05Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 90,
+      "title": "Numerics researcher pass (2026-05-20): horner P0 + near-limit SOTA \u2014 evidence pack",
+      "html_url": "https://github.com/li-langverse/lic/issues/90",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-20T15:17:09Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 79,
+      "title": "Numerics researcher pass (2026-05-20): horner_pure_li P0 + near-limit SOTA map",
+      "html_url": "https://github.com/li-langverse/lic/issues/79",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-20T14:16:07Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 76,
+      "title": "Numerics researcher pass (2026-05-20): horner ingest P0 + near-limit SOTA",
+      "html_url": "https://github.com/li-langverse/lic/issues/76",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-20T12:27:48Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 74,
+      "title": "Numerics researcher pass (2026-05-20): horner dashboard stale + near-limit SOTA map",
+      "html_url": "https://github.com/li-langverse/lic/issues/74",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-20T12:09:24Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 65,
+      "title": "[explorer-finding] Carbon p4880 + Mojo 1.0b \u2014 competitive safety matrix vs lic build certificate (G-meta, provable)",
+      "html_url": "https://github.com/li-langverse/lic/issues/65",
+      "labels": [
+        "explorer-finding"
+      ],
+      "updated_at": "2026-05-19T19:56:30Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "benchmarks",
+      "number": 38,
+      "title": "[explorer-finding] Agent-kit canonical 1.3.2 drift \u2014 benchmarks/roadmap behind swarm stamp",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/38",
+      "labels": [
+        "explorer-finding"
+      ],
+      "updated_at": "2026-05-25T14:11:11Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 54,
+      "title": "[explorer-finding] Chapel 2.3+ Python/NumPy interop \u2014 reference for Li AI-first foreign bindings (G-ai)",
+      "html_url": "https://github.com/li-langverse/lic/issues/54",
+      "labels": [
+        "explorer-finding"
+      ],
+      "updated_at": "2026-05-19T08:40:45Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 44,
+      "title": "numerics-research: red/near-limit SOTA evidence (2026-05-17)",
+      "html_url": "https://github.com/li-langverse/lic/issues/44",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-17T20:18:33Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 42,
+      "title": "numerics-research (2026-05-17): horner_pure_li red + near-limit physics/micro \u2014 evidence pack",
+      "html_url": "https://github.com/li-langverse/lic/issues/42",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-17T20:09:21Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 41,
+      "title": "numerics-research: 2026-05-17 red/near-limit survey (evidence pack)",
+      "html_url": "https://github.com/li-langverse/lic/issues/41",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-17T19:53:04Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 39,
+      "title": "numerics-research: 2026-05-17 red/near-limit SOTA evidence pack",
+      "html_url": "https://github.com/li-langverse/lic/issues/39",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-21T08:06:45Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 38,
+      "title": "Numerics researcher: red horner_pure_li + near-limit tiers \u2014 evidence pack (2026-05-17)",
+      "html_url": "https://github.com/li-langverse/lic/issues/38",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-17T17:35:33Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lic",
+      "number": 36,
+      "title": "numerics-research: red horner_pure_li + near-threshold tier-1/2 literature map",
+      "html_url": "https://github.com/li-langverse/lic/issues/36",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-17T16:34:51Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "benchmarks",
+      "number": 29,
+      "title": "[plan-needed] Align catalog.toml lic paths with plan-completion-audit LIC_ROOT layout",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/29",
+      "labels": [],
+      "updated_at": "2026-05-30T13:37:57Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "benchmarks",
+      "number": 27,
+      "title": "[explorer-finding] Track Eigen / Kokkos / PETSc / Chapel release cadence in bench policy",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/27",
+      "labels": [
+        "documentation",
+        "explorer-finding"
+      ],
+      "updated_at": "2026-05-19T08:40:47Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "benchmarks",
+      "number": 26,
+      "title": "[explorer-finding] Roofline + vendor FFT reference harness for catalog FFT row",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/26",
+      "labels": [
+        "explorer-finding",
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-30T13:41:55Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "benchmarks",
+      "number": 25,
+      "title": "plan-needed: plan-completion-audit false catalog_gaps without sibling LIC_ROOT checkout",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/25",
+      "labels": [],
+      "updated_at": "2026-05-30T13:37:54Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "benchmarks",
+      "number": 24,
+      "title": "numerics-research: SOTA survey \u2014 horner_pure_li (red) + near-limit physics/micro rows",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/24",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-17T16:22:57Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "benchmarks",
+      "number": 23,
+      "title": "numerics-research: Horner red row + near-limit tier-1/2 SOTA digest (2026-05-17)",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/23",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-17T15:11:29Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "benchmarks",
+      "number": 22,
+      "title": "numerics-research: SOTA evidence pack \u2014 horner_pure_li (red) + near-limit tier-1/2",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/22",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-17T15:02:04Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "benchmarks",
+      "number": 21,
+      "title": "numerics-research: tier-1 red + near-limit tier-2 survey (2026-05-17)",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/21",
+      "labels": [
+        "numerics-research"
+      ],
+      "updated_at": "2026-05-17T13:33:00Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "benchmarks",
+      "number": 18,
+      "title": "[Ecosystem gap] Catalog: tier-1 FFT micro-bench (FFTW/vendor roofline)",
+      "html_url": "https://github.com/li-langverse/benchmarks/issues/18",
+      "labels": [
+        "feature"
+      ],
+      "updated_at": "2026-05-31T01:02:05Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lip",
+      "number": 2,
+      "title": "ecosystem: bump pins for li-langverse/lic v0.0.0-ecosystem-test",
+      "html_url": "https://github.com/li-langverse/lip/issues/2",
+      "labels": [],
+      "updated_at": "2026-05-16T14:51:20Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    },
+    {
+      "repo": "lit",
+      "number": 2,
+      "title": "ecosystem: bump pins for li-langverse/lic v0.0.0-ecosystem-test",
+      "html_url": "https://github.com/li-langverse/lit/issues/2",
+      "labels": [],
+      "updated_at": "2026-05-16T14:51:19Z",
+      "classification_note": "unclassified \u2014 agent must decide",
+      "suggested_reason": "",
+      "close_summary": "",
+      "close_evidence": ""
+    }
+  ]
+}

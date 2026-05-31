@@ -5,6 +5,7 @@ export type CursorSdkMode = "agent" | "plan" | "debug" | "ask";
 const MODE_BY_AGENT: Record<string, CursorSdkMode> = {
   plan_verifier: "plan",
   issue_planner: "plan",
+  org_issue_triage: "agent",
   implementation_gaps: "plan",
   package_architect: "plan",
   bug_fixer: "debug",
