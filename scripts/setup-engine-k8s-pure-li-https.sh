@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 # Deploy Pure Li HTTPS goal-directed worker on engine cluster (runs until completion gate passes).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -19,11 +19,16 @@ echo "==> context: $(kubectl config current-context)"
 kubectl apply -f "$K8S/namespace.yaml"
 kubectl apply -f "$K8S/pvc-proof-explorer-workspace.yaml" 2>/dev/null || true
 kubectl apply -f "$K8S/configmap-pure-li-https.yaml"
-kubectl apply -f "$K8S/configmap-pure-li-https-entrypoint.yaml"
 TOKEN="${GH_TOKEN:-$GITHUB_TOKEN}"
 kubectl -n "$NS" create secret generic li-agents-secrets \
   --from-literal=GH_TOKEN="$TOKEN" \
   --dry-run=client -o yaml | kubectl apply -f -
+if [[ -n "${CURSOR_API_KEY:-}" ]]; then
+  kubectl -n "$NS" create secret generic li-agents-secrets \
+    --from-literal=GH_TOKEN="$TOKEN" \
+    --from-literal=CURSOR_API_KEY="$CURSOR_API_KEY" \
+    --dry-run=client -o yaml | kubectl apply -f -
+fi
 kubectl apply -f "$K8S/deployment-pure-li-https.yaml"
 kubectl -n "$NS" rollout status deploy/li-pure-li-https --timeout=120s || true
 echo "Done. Worker runs until pure-li-https-completion-gate passes."

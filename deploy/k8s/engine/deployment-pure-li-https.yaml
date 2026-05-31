@@ -31,7 +31,6 @@ spec:
         - name: pure-li-https
           image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer
           imagePullPolicy: IfNotPresent
-          command: ["/bin/bash", "/scripts/entrypoint.sh"]
           envFrom:
             - configMapRef:
                 name: li-pure-li-https
@@ -68,13 +67,7 @@ spec:
           volumeMounts:
             - name: workspace
               mountPath: /workspace
-            - name: entrypoint
-              mountPath: /scripts
       volumes:
         - name: workspace
           persistentVolumeClaim:
             claimName: li-proof-explorer-workspace
-        - name: entrypoint
-          configMap:
-            name: li-pure-li-https-entrypoint
-            defaultMode: 0755
