@@ -1,4 +1,4 @@
-﻿---
+---
 name: run-goal-directed-loop
 description: >-
   Autonomous plan implementation: write a markdown goal with phases and a
@@ -68,6 +68,16 @@ Optional bounds can combine: `--max 50 --until-local 08:00`.
 ```
 
 `-Max 0` = no iteration cap (completion only). Set `-Max 12` to cap iterations.
+### Env files (Windows launcher)
+
+`scripts/start-goal-directed-sprints.ps1` loads secrets in order (later overrides earlier):
+
+1. `li/.env.github` — preferred `GH_TOKEN` for `gh`/git HTTPS
+2. `li/li-cursor-agents/.env` — optional agent-local overrides
+3. `li/.env` — `CURSOR_API_KEY` and fallback tokens
+
+Blank values are skipped. Child bash jobs receive `export GH_TOKEN`, `export GITHUB_TOKEN`, and `export CURSOR_API_KEY`.
+
 
 
 ## Live gate updates (no restart needed)
