@@ -26,7 +26,7 @@ Clear every open pull request in the org by squash-merging (preferred), or fixin
 | **C** | Local rebase dirty PRs (batch per repo, push) | **DONE** (benchmarks#267 rebase prefer-main + merge) |
 | **D** | Fix CI failures on remaining PRs | **DONE** (closed li-cursor-agents#96 — build broken on sweep head) |
 | **E** | Close superseded duplicate sweeps (only if commit already on main) | **DONE** (closed #96 workspace sweep; merged #97 docs) |
-| **F** | Verify 0 open PRs + update final report | **DONE** (completion gate 2026-05-31T02:30Z — merged li-cursor-agents#99) |
+| **F** | Verify 0 open PRs + update final report | **pending** (1 open PR: li-cursor-agents#100 green — awaits human merge; gate exit 1) |
 
 ### Phase A — Refresh queue
 
