@@ -4,7 +4,10 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
+| 2026-05-31 code_implementer-1780190889283 | 2 → 0 | 1+1 closed | Phase A: refresh (lic#615 dirty, li-cursor-agents#94 dirty); Phase C: rebase+merge li-cursor-agents#94 (session 39 digest); Phase E: close lic#615 (719 commits, workspace_sweeper fallback); **completion gate pass** |
+| 2026-05-31 code_implementer-1780188483685 | 2 → 0 | 5+4 closed | Phase B: merge li-cursor-agents#93 (session 38 digest), benchmarks#265; Phase C/D: fix+merge lic#612 (revert contracts_discharge_corpus drift, orch-r3 note); Phase E: close lic#613,#614, benchmarks#264 (no unique commits); merge benchmarks#262,#263 (PH plan docs); **completion gate pass** |
 | 2026-05-31 code_implementer-88051158 | 2 → 0 | 1+2 closed | Phase A: refresh (#92 green, lic#610 ci_not_ok); Phase B: REST squash li-cursor-agents#92; Phase E: close lic#610, lic#611 (workspace_sweeper re-opens, same branch); **completion gate pass** |
+| 2026-05-31 code_implementer-84426760 | 2 → 0 | 1+1 closed | Phase B: REST squash li-cursor-agents#91 (session 36 sprint digest, CI green); Phase E: close lic#605 (workspace_sweeper fallback, 100 commits, +38k/-879, emit.cpp regressions); **completion gate pass** |
 | 2026-05-31 code_implementer-1780187657074 | 1 → 0 | 0+1 closed | Phase A: refresh (lic#609 ci_not_ok); Phase E: close lic#609 (696 commits, workspace_sweeper on `chore/workspace-sweep-1780171200`, same as #604); **completion gate pass** |
 | 2026-05-31 code_implementer-83955615 | 4 → 0 | 3+2 closed | Phase A: refresh (3 blocked li-net, 1 dirty lic#604); Phase B: REST squash li-net#18–20 (deps bumps, CI green); Phase E: close lic#604 (671 commits, workspace_sweeper), benchmarks#259 (100 commits, opened during gate); **completion gate pass** |
 | 2026-05-31 code_implementer-83175237 | 1 → 0 | 1+2 closed | Phase A: refresh (lic#601 dirty); Phase E: close lic#601; merge li-cursor-agents#89 (session 35 digest); close lic#602 (duplicate workspace_sweeper re-opened during #89 merge); **completion gate pass** |
@@ -32,6 +35,18 @@ Started: 2026-05-30
 | 2026-05-30 code_implementer (2) | ~239 → ~228 | 12+ | REST blocked batch (lip#40,lis#31-32,li-std-*,li-net,li-language,li-httpd); merge lip#31,lit#17,li-cursor-agents#50; rebase+push lip#22,lit#13; closed lip#42 (lis main premature); GraphQL rate limit — REST only |
 | 2026-05-30 code_implementer | 239 → 228 | 11 | Phase A queue refresh; Phase B blocked merge (lic#534, benchmarks#220, li-demo#18); Phase C local rebase+merge (lip#24,25,26,28,30, benchmarks#215, roadmap#44,45); org-rebase-pr-branch.py: pull/N/head fetch + force-with-lease |
 | 2026-05-30 prior session | 255 → 231 | 27 | See org-pr-merge-final-report.md |
+
+## Closed without merge (1780190889283)
+
+| PR | Reason |
+|----|--------|
+| lic#615 | workspace_sweeper fallback re-opened post-#612 merge — 719 commits, 9 files (+3888/-228), branch `chore/workspace-sweep-1780171200`, stale contracts_discharge_corpus + orch-r3 docs drift vs main |
+
+## Merged this iteration (1780190889283)
+
+| PR | Method |
+|----|--------|
+| li-cursor-agents#94 | rebase prefer-main + REST squash (session 39 sprint digest; CI green) |
 
 ## Closed without merge (88051158)
 
