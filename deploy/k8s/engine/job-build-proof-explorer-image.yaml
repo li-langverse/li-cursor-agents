@@ -1,0 +1,70 @@
+# One-shot: clone li-cursor-agents, build proof-explorer image, push to GHCR.
+# Requires li-agents-secrets (GH_TOKEN with packages:write) and ghcr-li-langverse pull secret.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: build-proof-explorer-image
+  namespace: li-swarm
+  labels:
+    app: li-proof-explorer
+    app.kubernetes.io/component: image-build
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        app: build-proof-explorer-image
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/hostname: engine
+      volumes:
+        - name: workspace
+          emptyDir: {}
+        - name: docker-config
+          secret:
+            secretName: ghcr-li-langverse
+            items:
+              - key: .dockerconfigjson
+                path: config.json
+      initContainers:
+        - name: git-clone
+          image: alpine/git:latest
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+            - name: GIT_REF
+              value: "main"
+            - name: GIT_REPO
+              value: "https://github.com/li-langverse/li-cursor-agents.git"
+          command:
+            - sh
+            - -lc
+            - |
+              set -eu
+              ref="${GIT_REF:-main}"
+              dest=/workspace/li-cursor-agents
+              url="${GIT_REPO/https:\/\//https://x-access-token:${GH_TOKEN}@}"
+              git clone --depth 1 --branch "$ref" "$url" "$dest" \
+                || git clone --depth 1 "$url" "$dest"
+              test -f "$dest/deploy/Dockerfile.proof-explorer"
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+      containers:
+        - name: kaniko
+          image: gcr.io/kaniko-project/executor:v1.23.2
+          args:
+            - --dockerfile=/workspace/li-cursor-agents/deploy/Dockerfile.proof-explorer
+            - --context=/workspace/li-cursor-agents
+            - --destination=ghcr.io/li-langverse/li-cursor-agents:proof-explorer
+            - --cache=false
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: docker-config
+              mountPath: /kaniko/.docker
