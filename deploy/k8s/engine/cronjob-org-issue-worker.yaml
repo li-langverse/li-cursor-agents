@@ -1,0 +1,56 @@
+# Scheduled org-issue-zero pass on the engine cluster (classify + auditable closes).
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: li-org-issue-worker
+  namespace: li-swarm
+  labels:
+    app: li-org-issue-worker
+    li-langverse.io/role: org-issue-triage
+spec:
+  schedule: "*/30 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 3600
+      template:
+        metadata:
+          labels:
+            app: li-org-issue-worker
+        spec:
+          restartPolicy: OnFailure
+          nodeSelector:
+            # Adjust to your engine pool label (examples):
+            # kubernetes.io/hostname: engine
+            li-langverse.io/node-pool: engine
+          containers:
+            - name: worker
+              image: ghcr.io/li-langverse/li-cursor-agents:latest
+              imagePullPolicy: Always
+              command: ["node", "dist/cli/org-issue-worker.js", "once"]
+              envFrom:
+                - configMapRef:
+                    name: li-org-issue-worker
+              env:
+                - name: GH_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: li-agents-secrets
+                      key: GH_TOKEN
+              resources:
+                requests:
+                  cpu: "250m"
+                  memory: "512Mi"
+                limits:
+                  cpu: "2"
+                  memory: "2Gi"
+              volumeMounts:
+                - name: sprint-data
+                  mountPath: /app/data/goal-directed-sprints
+          volumes:
+            - name: sprint-data
+              persistentVolumeClaim:
+                claimName: li-agents-sprint-data

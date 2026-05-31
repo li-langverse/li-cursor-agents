@@ -24,6 +24,7 @@ import {
 } from "../worker/heartbeat-loop.js";
 import { proactiveAllPoolWorkersEnabled } from "../control-plane/proactive-agent-work.js";
 import { workerConsole } from "../worker/worker-console.js";
+import { startOrgIssueWorkerLoop, stopOrgIssueWorkerLoop } from "../org-issues/org-issue-worker-loop.js";
 
 export { isAsyncSwarmRunning, asyncSwarmSnapshot } from "./async-swarm-state.js";
 
@@ -50,6 +51,7 @@ export async function startAsyncSwarm(options?: {
   const maintenance = startMaintenanceLaneLoop({ mock });
   const observer = startObserverLaneLoop();
   const workers = startAgentWorkerPool({ mock });
+  const issueWorker = startOrgIssueWorkerLoop();
 
   setAsyncSwarmRunning(true);
   startWorkerHeartbeatLoop();
@@ -67,6 +69,7 @@ export async function startAsyncSwarm(options?: {
     maintenance.message,
     observer.message,
     workers.message,
+    issueWorker.message,
   ].join("; ");
 
   pushSupervisorActivity("info", message, { mode: "async_swarm", mock });
@@ -93,6 +96,7 @@ export async function stopAsyncSwarm(): Promise<{ stopped: boolean; message: str
   stopImplementLaneLoop();
   stopMaintenanceLaneLoop();
   stopObserverLaneLoop();
+  stopOrgIssueWorkerLoop();
   const workers = stopAgentWorkerPool();
 
   setAsyncSwarmRunning(false);

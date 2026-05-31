@@ -33,3 +33,7 @@ cat data/goal-directed-sprints/org-issue-close-audit.jsonl
 ```
 
 Every closed issue also has a comment table (`reason_code`, `summary`, `evidence`) on GitHub.
+
+## Kubernetes (engine cluster)
+
+See [deploy/k8s/engine/README.md](../../deploy/k8s/engine/README.md). CronJob li-org-issue-worker every 30 minutes on nodes labeled li-langverse.io/node-pool=engine.

@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: li-swarm
+  labels:
+    app.kubernetes.io/part-of: li-langverse
+    li-langverse.io/cluster: engine
