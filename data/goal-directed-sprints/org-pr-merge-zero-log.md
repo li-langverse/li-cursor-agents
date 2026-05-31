@@ -4,6 +4,7 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
+| 2026-05-31 code_implementer-1780193829432 | 1 → 0 | 1 | Phase A: refresh (li-cursor-agents#98 green clean); Phase B: REST squash #98 (session 23 sprint digest); implementation_queue 1–8 **stale**; **completion gate pass** |
 | 2026-05-31 code_implementer-1780193346282 | 3 → 0 | 2+1 closed | Phase C: rebase+merge benchmarks#267 (prefer-main); merge li-cursor-agents#97 (session 22 digest); Phase E: close li-cursor-agents#96 (15× workspace sweep, TS build fail); **completion gate pass** |
 | 2026-05-31 code_implementer-1780191687132 | 1 → 3 | 2+3 closed | Phase C: clean+merge lic#617 (matmul_blocked+bench.py, drop contracts drift); rebase+merge lic#621 (studio-ux-21 wgpu); Phase E: close lic#622,#620 (workspace sweeps); open: benchmarks#267, li-cursor-agents#96 |
 | 2026-05-31 code_implementer-1780190889283 | 2 → 0 | 1+1 closed | Phase A: refresh (lic#615 dirty, li-cursor-agents#94 dirty); Phase C: rebase+merge li-cursor-agents#94 (session 39 digest); Phase E: close lic#615 (719 commits, workspace_sweeper fallback); **completion gate pass** |
@@ -37,6 +38,12 @@ Started: 2026-05-30
 | 2026-05-30 code_implementer (2) | ~239 → ~228 | 12+ | REST blocked batch (lip#40,lis#31-32,li-std-*,li-net,li-language,li-httpd); merge lip#31,lit#17,li-cursor-agents#50; rebase+push lip#22,lit#13; closed lip#42 (lis main premature); GraphQL rate limit — REST only |
 | 2026-05-30 code_implementer | 239 → 228 | 11 | Phase A queue refresh; Phase B blocked merge (lic#534, benchmarks#220, li-demo#18); Phase C local rebase+merge (lip#24,25,26,28,30, benchmarks#215, roadmap#44,45); org-rebase-pr-branch.py: pull/N/head fetch + force-with-lease |
 | 2026-05-30 prior session | 255 → 231 | 27 | See org-pr-merge-final-report.md |
+
+## Merged this iteration (1780193829432)
+
+| PR | Method |
+|----|--------|
+| li-cursor-agents#98 | REST squash merge (session 23 sprint digest; CI green) |
 
 ## Closed without merge (1780190889283)
 

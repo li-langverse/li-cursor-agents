@@ -8,9 +8,9 @@
 | Metric | Count |
 |--------|------:|
 | Starting open PRs | 255 |
-| Ending open PRs (search API) | **0** (2026-05-31 code_implementer-1780193346282 completion gate) |
+| Ending open PRs (search API) | **0** (2026-05-31 code_implementer-1780193829432 completion gate) |
 | Ending open PRs (classified queue) | **0** |
-| PRs squash-merged this session | **30** (prior sessions: 27 + 22) |
+| PRs squash-merged this session | **31** (prior sessions: 27 + 22 + session 23 digest) |
 | PRs fixed locally then merged | **10** |
 
 > Search API and full classification differ slightly due to index lag and PRs opened/closed during the run.
@@ -398,6 +398,14 @@ From latest queue (`org-pr-merge-queue.json`):
 | lic#620 | Closed — superseded workspace sweep (orch notes already on main via #621) |
 
 **Open PR count:** 1 → 3 (new workspace sweeps opened during run: benchmarks#267, li-cursor-agents#96).
+
+## Session 23 (2026-05-31 code_implementer-1780193829432)
+
+| PR | Method |
+|----|--------|
+| li-cursor-agents#98 | REST squash merge (session 23 sprint digest; CI green: test-mock-agents, lidb-engine-e2e) |
+
+**Open PR count:** 1 → 0. **Completion gate pass.**
 
 ## Rate limits
 

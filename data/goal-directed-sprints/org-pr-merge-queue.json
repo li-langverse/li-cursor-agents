@@ -1,25 +1,14 @@
 {
   "report": {
-    "total": 1,
-    "classified": 1,
+    "total": 0,
+    "classified": 0,
     "green_clean": 0,
     "blocked_ci_ok": 0,
     "dirty": 0,
-    "ci_not_ok": 1
+    "ci_not_ok": 0
   },
   "green": [],
   "blocked": [],
   "dirty": [],
-  "ci_not_ok": [
-    {
-      "repo": "benchmarks",
-      "number": 267,
-      "title": "chore(benchmarks): workspace sweep fallback",
-      "mergeable": null,
-      "mergeable_state": "unknown",
-      "draft": false,
-      "ci": "pending",
-      "head": "d2bdc37"
-    }
-  ]
+  "ci_not_ok": []
 }
