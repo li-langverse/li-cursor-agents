@@ -1,4 +1,4 @@
-# Clone li-cursor-agents, build with Podman, push to GHCR or sideload into k3s on engine.
+﻿# Clone li-cursor-agents, build with Podman, push to GHCR or sideload into k3s on engine.
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -88,6 +88,7 @@ spec:
               podman build -f deploy/Dockerfile.proof-explorer \
                 --build-arg LI_CI_IMAGE=ghcr.io/li-langverse/lic-ci:debian12-llvm22 \
                 -t "$IMAGE" .
+              podman tag "$IMAGE" ghcr.io/li-langverse/li-cursor-agents:proof-explorer
               if podman push "$IMAGE"; then
                 echo "pushed to ghcr.io"
                 exit 0

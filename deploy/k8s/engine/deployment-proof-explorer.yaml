@@ -1,4 +1,4 @@
-# Always-on Proof Explorer goal-directed agent (engine node, prebuilt image + PVC workspace).
+﻿# Always-on Proof Explorer goal-directed agent (engine node, prebuilt image + PVC workspace).
 
 apiVersion: apps/v1
 
@@ -76,7 +76,7 @@ spec:
 
         - name: proof-explorer
 
-          image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer
+          image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
 
           imagePullPolicy: IfNotPresent
 
