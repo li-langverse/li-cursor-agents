@@ -1,4 +1,4 @@
-﻿import { spawn } from "node:child_process";
+import { spawn } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { workerConsole } from "../worker/worker-console.js";
@@ -41,6 +41,11 @@ const DEFAULT_PHASES: ProofExplorerPhase[] = [
     goalRel: "data/goal-directed-sprints/proof-explorer-phase7-research-at-scale.md",
     gateRel: "scripts/proof-explorer-phase7-completion-gate.sh",
   },
+  {
+    id: "phase8",
+    goalRel: "data/goal-directed-sprints/proof-explorer-phase8-basic-corpus.md",
+    gateRel: "scripts/proof-explorer-phase8-completion-gate.sh",
+  },
 ];
 
 export function isPhaseHandoffEnabled(): boolean {
@@ -79,7 +84,8 @@ const PHASE_HANDOFF_META: Record<string, { nextPhase: number; nextWp: string }> 
   phase4: { nextPhase: 5, nextWp: "wp-ds-01" },
   phase5: { nextPhase: 6, nextWp: "wp-ef-01" },
   phase6: { nextPhase: 7, nextWp: "wp-rs-01" },
-  phase7: { nextPhase: 8, nextWp: "complete" },
+  phase7: { nextPhase: 8, nextWp: "wp-bc-01" },
+  phase8: { nextPhase: 9, nextWp: "complete" },
 };
 
 function touchStateHandoff(licRoot: string, phaseId: string): void {
