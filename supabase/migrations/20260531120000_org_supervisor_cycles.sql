@@ -12,3 +12,7 @@ create table if not exists public.org_supervisor_cycles (
 alter table public.org_supervisor_cycles enable row level security;
 create policy "service_all_org_supervisor_cycles" on public.org_supervisor_cycles
   for all using (true) with check (true);
+
+-- PostgREST roles need table grants; reload schema cache after create.
+GRANT ALL ON public.org_supervisor_cycles TO anon, authenticated, service_role;
+NOTIFY pgrst, 'reload schema';

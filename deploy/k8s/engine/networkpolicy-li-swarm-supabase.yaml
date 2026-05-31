@@ -1,0 +1,44 @@
+# Allow li-swarm org supervisors + dashboard to reach in-cluster Supabase (majico-staging).
+# Required because majico-staging default-deny only permits intra-namespace ingress.
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-li-swarm-supabase-kong
+  namespace: majico-staging
+spec:
+  podSelector:
+    matchLabels:
+      app: supabase-kong
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: li-swarm
+      ports:
+        - protocol: TCP
+          port: 8000
+        - protocol: TCP
+          port: 8443
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-li-swarm-supabase-rest
+  namespace: majico-staging
+spec:
+  podSelector:
+    matchLabels:
+      app: supabase-rest
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: li-swarm
+      ports:
+        - protocol: TCP
+          port: 3000

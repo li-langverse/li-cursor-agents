@@ -5,3 +5,6 @@ alter table public.org_supervisor_cycles
 alter table public.org_supervisor_cycles
   add constraint org_supervisor_cycles_supervisor_kind_check
   check (supervisor_kind in ('issue', 'pr', 'review', 'research'));
+
+GRANT ALL ON public.org_supervisor_cycles TO anon, authenticated, service_role;
+NOTIFY pgrst, 'reload schema';
