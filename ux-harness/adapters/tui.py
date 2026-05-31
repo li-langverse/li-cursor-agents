@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .base import TargetConfig
 from .mock_data import mock_ui_result, mock_ux_result
+from .tui_baseline import baseline_path, compare_stdout_baseline, write_stdout_capture
 
 
 def _fixture_path(target: TargetConfig, agents_root: Path) -> Path | None:
@@ -30,26 +31,57 @@ def _run_fixture(target: TargetConfig, agents_root: Path) -> dict:
     }
     if fixture is None:
         return {**base, "status": "skip", "skip_reason": "TUI fixture missing"}
-    proc = subprocess.run(
-        ["bash", str(fixture)],
-        cwd=str(fixture.parent),
-        capture_output=True,
-        text=True,
-        timeout=30,
-        check=False,
-    )
-    ok = proc.returncode == 0
-    return {
+
+    timed_out = False
+    returncode = 1
+    stdout = ""
+    stderr = ""
+    try:
+        proc = subprocess.run(
+            ["bash", str(fixture)],
+            cwd=str(fixture.parent),
+            capture_output=True,
+            text=True,
+            timeout=30,
+            stdin=subprocess.DEVNULL,
+            check=False,
+        )
+        returncode = proc.returncode
+        stdout = proc.stdout or ""
+        stderr = proc.stderr or ""
+    except subprocess.TimeoutExpired as exc:
+        timed_out = True
+        stdout = exc.stdout or ""
+        stderr = exc.stderr or ""
+        if isinstance(stdout, bytes):
+            stdout = stdout.decode("utf-8", errors="replace")
+        if isinstance(stderr, bytes):
+            stderr = stderr.decode("utf-8", errors="replace")
+
+    capture_path = write_stdout_capture(agents_root, target.id, stdout)
+    diff = compare_stdout_baseline(stdout, baseline_path(agents_root, target.id))
+    artifacts = [str(capture_path)]
+    ok = returncode == 0 and not timed_out and diff["baseline_status"] != "drift"
+    result = {
         **base,
         "status": "pass" if ok else "fail",
-        "fixture_exit_code": proc.returncode,
+        "fixture_exit_code": returncode,
+        "artifacts": artifacts,
+        "stdout_capture": str(capture_path),
         "axe_violations": [],
-        "pixel_diff": {"max_ratio": 0.0, "threshold": 0.04},
+        "pixel_diff": diff["pixel_diff"],
         "contrast_failures": [],
-        "baseline_status": "ok",
+        "baseline_status": diff["baseline_status"],
+        "line_diff": diff["line_diff"],
         "tokens_deviation": [],
         "broken_links": 0,
     }
+    if timed_out:
+        result["timeout"] = True
+        result["skip_reason"] = "TUI fixture timed out after 30s"
+    if stderr.strip():
+        result["stderr_tail"] = stderr.strip()[-400:]
+    return result
 
 
 def run_tui_ui(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
@@ -76,10 +108,17 @@ def run_tui_ux(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
             "rubric_scores": {},
             "rubric_threshold": 0.6,
             "missing_states": [],
-            "artifacts": [],
+            "artifacts": ui.get("artifacts", []),
             "mode": "fixture",
         }
     low = ui.get("status") == "fail"
+    friction: list[dict[str, str]] = []
+    if ui.get("timeout"):
+        friction.append({"issue": "fixture timed out"})
+    elif ui.get("fixture_exit_code") not in (0, None):
+        friction.append({"issue": "fixture exited non-zero"})
+    elif ui.get("baseline_status") == "drift":
+        friction.append({"issue": "stdout frame drift vs baseline"})
     return {
         "target_id": target.id,
         "repo": target.repo,
@@ -87,7 +126,7 @@ def run_tui_ux(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
         "surface_class": target.surface_class,
         "status": "fail" if low else "pass",
         "journeys": [],
-        "friction_points": [{"issue": "fixture exited non-zero"}] if low else [],
+        "friction_points": friction,
         "sota_refs": ["textual"],
         "rubric_scores": {
             "nav_clarity": 0.5 if low else 0.85,
@@ -98,6 +137,6 @@ def run_tui_ux(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
         },
         "rubric_threshold": 0.6,
         "missing_states": [],
-        "artifacts": [],
+        "artifacts": ui.get("artifacts", []),
         "mode": "fixture",
     }
