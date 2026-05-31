@@ -8,8 +8,8 @@
 | Metric | Count |
 |--------|------:|
 | Starting open PRs | 255 |
-| Ending open PRs (search API) | **3** (2026-05-31 code_implementer-1780191687132 — new workspace sweeps opened during run) |
-| Ending open PRs (classified queue) | **0** |
+| Ending open PRs (search API) | **2** (2026-05-31 code_implementer-1780193346282 — #97 docs, benchmarks#267; closed #96 workspace sweep) |
+| Ending open PRs (classified queue) | **2** |
 | PRs squash-merged this session | **30** (prior sessions: 27 + 22) |
 | PRs fixed locally then merged | **10** |
 
