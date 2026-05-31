@@ -1,11 +1,13 @@
-﻿import { spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { randomBytes } from "node:crypto";
 import { agentLog } from "../agent-log.js";
+import { saveOrgSupervisorCycle } from "../db/org-supervisor-cycle.js";
 import { workerConsole } from "../worker/worker-console.js";
 import { agentsPackageRoot } from "../runner.js";
 import {
+  activeClaimsForDb,
   activeIssueRefs,
   claimIssue,
   countActiveWorkers,
@@ -151,6 +153,16 @@ export async function orgIssueSupervisorTick(): Promise<SupervisorTickResult> {
   workerConsole("org-issue-supervisor", "info", msg);
   agentLog("org-issue-supervisor", "info", msg);
 
+  const latest = readActiveState(root);
+  await saveOrgSupervisorCycle("issue", {
+    open_count: openCount,
+    desired_workers: desiredWorkers,
+    active_claims: activeClaimsForDb(latest),
+    last_error: classify.ok ? null : classify.tail.slice(-500),
+  }).catch((err) => {
+    workerConsole("org-issue-supervisor", "warn", `db sync failed: ${String(err)}`);
+  });
+
   return { openCount, desiredWorkers, activeWorkers, spawned, message: msg };
 }
 
@@ -170,13 +182,13 @@ export async function runOrgIssueSupervisorLoop(signal?: AbortSignal): Promise<v
     try {
       const tick = await orgIssueSupervisorTick();
       if (tick.openCount <= 0) {
-        workerConsole("org-issue-supervisor", "info", "no open issues â€” exiting");
+        workerConsole("org-issue-supervisor", "info", "no open issues — exiting");
         break;
       }
       if (tick.desiredWorkers === 0 || (tick.activeWorkers === 0 && tick.spawned === 0)) {
         idleCycles++;
         if (idleCycles >= maxIdle) {
-          workerConsole("org-issue-supervisor", "info", `idle limit reached (${maxIdle}) â€” exiting`);
+          workerConsole("org-issue-supervisor", "info", `idle limit reached (${maxIdle}) — exiting`);
           break;
         }
       } else {
@@ -190,4 +202,5 @@ export async function runOrgIssueSupervisorLoop(signal?: AbortSignal): Promise<v
     await sleep(intervalMs, signal);
   }
 }
+
 

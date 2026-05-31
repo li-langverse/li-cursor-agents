@@ -37,6 +37,10 @@
     "agents:org-issue-worker-once": "npm run build && node dist/cli/org-issue-worker.js once",
     "agents:org-issue-supervisor": "npm run build && node dist/cli/org-issue-supervisor.js supervise",
     "agents:org-issue-supervisor-wake": "npm run build && node dist/cli/org-issue-supervisor.js wake",
+    "agents:org-pr-supervisor": "npm run build && node dist/cli/org-pr-supervisor.js supervise",
+    "agents:org-pr-supervisor-wake": "npm run build && node dist/cli/org-pr-supervisor.js wake",
+    "agents:org-reviewer-supervisor": "npm run build && node dist/cli/org-reviewer-supervisor.js supervise",
+    "agents:org-reviewer-supervisor-wake": "npm run build && node dist/cli/org-reviewer-supervisor.js wake",
     "agents:proof-explorer-worker": "npm run build && node dist/cli/proof-explorer-worker.js start",
     "agents:proof-explorer-worker-once": "npm run build && node dist/cli/proof-explorer-worker.js once",
     "research-goals:sync": "npm run build && node dist/cli/sync-research-goals-from-factory.js",
@@ -109,3 +113,4 @@
     "typescript": "^5.7.0"
   }
 }
+

@@ -1,0 +1,50 @@
+# PR implementer supervisor: refresh merge queue, spawn up to 3 implementer Jobs.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: li-org-pr-supervisor
+  namespace: li-swarm
+  labels:
+    app: li-org-pr-supervisor
+    li-langverse.io/role: org-pr-supervisor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: li-org-pr-supervisor
+  template:
+    metadata:
+      labels:
+        app: li-org-pr-supervisor
+    spec:
+      serviceAccountName: li-org-pr-supervisor
+      nodeSelector:
+        li-langverse.io/node-pool: engine
+      containers:
+        - name: supervisor
+          image: ghcr.io/li-langverse/li-cursor-agents:latest
+          imagePullPolicy: Always
+          command: ["node", "dist/cli/org-pr-supervisor.js", "supervise"]
+          envFrom:
+            - configMapRef:
+                name: li-org-pr-supervisor
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+          volumeMounts:
+            - name: sprint-data
+              mountPath: /app/data/goal-directed-sprints
+      volumes:
+        - name: sprint-data
+          persistentVolumeClaim:
+            claimName: li-agents-sprint-data

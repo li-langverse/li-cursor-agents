@@ -1,0 +1,50 @@
+# PR reviewer supervisor: green/blocked queue, spawns up to 3 reviewer Jobs (coordinates via org-pr-active.json).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: li-org-reviewer-supervisor
+  namespace: li-swarm
+  labels:
+    app: li-org-reviewer-supervisor
+    li-langverse.io/role: org-reviewer-supervisor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: li-org-reviewer-supervisor
+  template:
+    metadata:
+      labels:
+        app: li-org-reviewer-supervisor
+    spec:
+      serviceAccountName: li-org-reviewer-supervisor
+      nodeSelector:
+        li-langverse.io/node-pool: engine
+      containers:
+        - name: supervisor
+          image: ghcr.io/li-langverse/li-cursor-agents:latest
+          imagePullPolicy: Always
+          command: ["node", "dist/cli/org-reviewer-supervisor.js", "supervise"]
+          envFrom:
+            - configMapRef:
+                name: li-org-reviewer-supervisor
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+          volumeMounts:
+            - name: sprint-data
+              mountPath: /app/data/goal-directed-sprints
+      volumes:
+        - name: sprint-data
+          persistentVolumeClaim:
+            claimName: li-agents-sprint-data

@@ -1,4 +1,4 @@
-﻿import {
+import {
   closeSync,
   existsSync,
   mkdirSync,
@@ -213,7 +213,7 @@ function readQueueBucket(
   return out;
 }
 
-/** Implement-bucket issues only — supervisor spawns real implementer Jobs for these. */
+/** Implement-bucket issues only � supervisor spawns real implementer Jobs for these. */
 export function readImplementQueueIssues(root = agentsPackageRoot()): QueuedOrgIssue[] {
   return readQueueBucket(root, "implement");
 }
@@ -238,6 +238,13 @@ export function readQueueIssues(root = agentsPackageRoot()): QueuedOrgIssue[] {
     }
   }
   return out;
+}
+
+
+export function activeClaimsForDb(state: OrgIssueActiveState): unknown[] {
+  return Object.values(state.issues).filter(
+    (e) => e.status === "claimed" || e.status === "running",
+  );
 }
 
 export function pruneTerminalActiveEntries(root = agentsPackageRoot()): number {
