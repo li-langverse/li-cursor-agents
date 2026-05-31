@@ -64,3 +64,10 @@ kubectl exec -n majico-staging postgres-0 -- psql -U postgres -d postgres -f - <
 Org supervisor dashboard (NodePort **30478**) shows a fourth **Research** tab with dimension in active claims. Data source label `Supabase org_supervisor_cycles` when DB rows exist.
 
 See also: [org-pr-reviewer-supervisor-k8s.md](./org-pr-reviewer-supervisor-k8s.md), [org-supervisor-dashboard.md](./org-supervisor-dashboard.md).
+
+### Homelab setup notes
+
+1. **NetworkPolicy** — apply `deploy/k8s/engine/networkpolicy-li-swarm-supabase.yaml` so `li-swarm` pods can reach Kong/REST in `majico-staging`.
+2. **JWT service role** — `supabase-secrets.SERVICE_ROLE_KEY` on this cluster is not a JWT; generate HS256 keys from `JWT_SECRET` via `node scripts/lib/supabase-local-keys.mjs "$JWT_SECRET"` and patch `li-agents-secrets`.
+3. **PostgREST reload** — after migrations: `NOTIFY pgrst, 'reload schema';` on postgres (included in migration SQL).
+4. **Image** — research supervisor CLI ships in the next `ghcr.io/li-langverse/li-cursor-agents:latest` build; scale Deployment to 1 after push.
