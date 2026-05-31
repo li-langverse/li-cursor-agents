@@ -1,25 +1,77 @@
 {
   "report": {
-    "total": 1,
-    "classified": 1,
-    "green_clean": 1,
-    "blocked_ci_ok": 0,
-    "dirty": 0,
-    "ci_not_ok": 0
+    "total": 6,
+    "classified": 6,
+    "green_clean": 0,
+    "blocked_ci_ok": 1,
+    "dirty": 2,
+    "ci_not_ok": 3
   },
-  "green": [
+  "green": [],
+  "blocked": [
     {
-      "repo": "li-cursor-agents",
-      "number": 100,
-      "title": "docs(sprint): org-pr-merge session 25 \u2014 zero open PRs confirmed",
+      "repo": "benchmarks",
+      "number": 269,
+      "title": "Move benchmark workloads and harness into benchmarks repo only",
       "mergeable": true,
-      "mergeable_state": "clean",
+      "mergeable_state": "blocked",
       "draft": false,
       "ci": "ok",
-      "head": "c48ccc7"
+      "head": "1f7287d"
     }
   ],
-  "blocked": [],
-  "dirty": [],
-  "ci_not_ok": []
+  "dirty": [
+    {
+      "repo": "lic",
+      "number": 633,
+      "title": "World Studio W1: li-studio-demo build + SIM-3 done (wsm-w1-sim3-envpool)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "486a809"
+    },
+    {
+      "repo": "lic",
+      "number": 624,
+      "title": "World Studio runnable on Windows + SIM-3 envpool (wsm-w1-sim3-envpool)",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "ok",
+      "head": "fe8f3be"
+    }
+  ],
+  "ci_not_ok": [
+    {
+      "repo": "benchmarks",
+      "number": 270,
+      "title": "fix(ci): export BENCH_NIGHTLY for nightly ecosystem benches",
+      "mergeable": true,
+      "mergeable_state": "blocked",
+      "draft": false,
+      "ci": "pending",
+      "head": "6e0e807"
+    },
+    {
+      "repo": "lic",
+      "number": 632,
+      "title": "Remove lic/benchmarks; route all bench I/O through benchmarks repo",
+      "mergeable": true,
+      "mergeable_state": "behind",
+      "draft": false,
+      "ci": "failure",
+      "head": "1a40258"
+    },
+    {
+      "repo": "lic",
+      "number": 628,
+      "title": "feat(PH-ML): Wave 6 competitive benches + process env scaffold",
+      "mergeable": true,
+      "mergeable_state": "behind",
+      "draft": false,
+      "ci": "failure",
+      "head": "a4685ce"
+    }
+  ]
 }

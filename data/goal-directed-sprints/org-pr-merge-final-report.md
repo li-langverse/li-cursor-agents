@@ -433,6 +433,25 @@ From latest queue (`org-pr-merge-queue.json`):
 
 Phases **A–F** marked **DONE** — org search API reports zero open PRs.
 
+## Session 27 (2026-05-31 code_implementer-1780196705652)
+
+New PRs opened during zero-PR window (World Studio SIM-3 wave + benchmarks single-repo migration).
+
+| PR | Method |
+|----|--------|
+| roadmap#57 | REST blocked merge (Chart.js tick callback fix) |
+| lic#627 | REST squash (studio runnable gate — MD memory ledger + WSL path) |
+| lic#629 | REST squash (SIM-3 session-persistent EnvPool + obs contract) |
+| lic#630 | REST squash (CRLF-safe manifest parsing on Windows/WSL) |
+| benchmarks#269 | REST blocked merge (workloads into benchmarks repo) |
+| benchmarks#270 | REST squash (`BENCH_NIGHTLY=1` for nightly ecosystem benches) |
+
+**Closed without merge:** lic#626 (superseded by #627/#629), lic#631 (reverted #629 scene ledger), lic#624 (emit.cpp already on main via #627), lic#628 (PH-ML Wave 6 CI red after prefer-main rebase).
+
+**Open PR count:** 6 → **3** (`lic#632` bench migration CI fail, `lic#633` studio demo CI pending). **Completion gate blocked.**
+
+**implementation_queue:** Items 1–8 **stale** (no failing lic/lis/li-httpd PR CI tied to queue rows).
+
 ## Rate limits
 
 REST search + per-PR classification (~3 API calls/PR) consumed significant quota; no hard stop hit. GraphQL was avoided per instructions.
