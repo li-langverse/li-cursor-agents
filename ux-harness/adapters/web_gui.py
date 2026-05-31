@@ -20,11 +20,12 @@ _STUDIO_DEMO_SOTA = (
 
 
 def _probe_url_for_target(target: TargetConfig) -> str:
-    url = _probe_url_for_target(target)
     if target.id == "agents-dashboard":
         port = os.environ.get("LI_PLAYWRIGHT_UI_PORT", "3099")
         return f"http://127.0.0.1:{port}"
-    return url
+    return str(target.raw.get("url") or "")
+
+
 def _probe_url(url: str, timeout: float = 2.0) -> bool:
     try:
         with urllib.request.urlopen(url, timeout=timeout) as resp:
