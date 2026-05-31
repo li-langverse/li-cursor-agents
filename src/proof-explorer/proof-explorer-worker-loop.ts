@@ -14,6 +14,7 @@ import {
   proofExplorerRepoWorkflowEnv,
 } from "./proof-explorer-worker-config.js";
 import { syncProofExplorerLicFromOrigin } from "./proof-explorer-lic-sync.js";
+import { sweepModeAllowsHandoff } from "./proof-explorer-sweep-mode.js";
 
 let child: ReturnType<typeof spawn> | null = null;
 let abort: AbortController | null = null;
@@ -119,7 +120,9 @@ async function proofExplorerWorkerLoop(signal: AbortSignal): Promise<void> {
 
       const exitCode = await runGoalDirectedLoopOnce(active.goalRel);
       await syncProofExplorerLicFromOrigin();
-      if (exitCode === 0) {
+      const sweepHandoff =
+        exitCode !== 0 && (await sweepModeAllowsHandoff(activePhaseId, proofExplorerLicRoot()));
+      if (exitCode === 0 || sweepHandoff) {
         workerConsole(
           "li-proof-explorer",
           "info",

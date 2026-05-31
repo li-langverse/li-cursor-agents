@@ -7,6 +7,11 @@ export function isProofExplorerWorkerAlwaysOn(): boolean {
   return truthyEnv("LI_PROOF_EXPLORER_ALWAYS_ON");
 }
 
+/** Sweep mode: catalog pass gates handoff; per-specimen verify failures are non-fatal. */
+export function isProofExplorerSweepMode(): boolean {
+  return truthyEnv("LI_PROOF_EXPLORER_SWEEP_MODE");
+}
+
 export function proofExplorerGoalFile(): string {
   const raw = process.env.LI_PROOF_EXPLORER_GOAL_FILE?.trim();
   if (raw) return raw;

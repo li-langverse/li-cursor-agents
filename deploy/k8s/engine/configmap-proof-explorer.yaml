@@ -10,11 +10,12 @@ metadata:
 data:
   LI_PROOF_EXPLORER_ALWAYS_ON: "1"
   LI_PROOF_EXPLORER_PHASE_HANDOFF: "1"
+  LI_PROOF_EXPLORER_SWEEP_MODE: "1"
   LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/proof-explorer-program.md"
   LI_PROOF_EXPLORER_LIC_ROOT: "/workspace/lic"
   LI_CURSOR_AGENTS_ROOT: "/app"
   LI_PROOF_EXPLORER_WORKFLOW_REPO: "lic"
-  LI_PROOF_EXPLORER_BRANCH: "cursor/proof-explorer-phase5-planning"
+  LI_PROOF_EXPLORER_BRANCH: "cursor/proof-explorer-proof-sweep"
   LI_GITHUB_ORG: "li-langverse"
   LI_PROOF_EXPLORER_LIC_REPO: "lic"
   LI_PROOF_EXPLORER_LOOP_SLEEP_SEC: "120"
