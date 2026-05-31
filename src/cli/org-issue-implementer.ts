@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env node
+#!/usr/bin/env node
 import { loadRuntimeEnv } from "../env.js";
 loadRuntimeEnv();
 import { installProcessStabilityHandlers } from "../swarm/process-stability.js";
@@ -35,6 +35,7 @@ function optionalGhComment(org: string, repo: string, number: number, body: stri
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: "application/vnd.github+json",
+        "User-Agent": "li-langverse/li-cursor-agents (org-issue-implementer)",
         "Content-Type": "application/json",
         "Content-Length": Buffer.byteLength(payload),
       },
