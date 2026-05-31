@@ -1,14 +1,46 @@
 {
   "report": {
-    "total": 1,
-    "classified": 1,
+    "total": 3,
+    "classified": 3,
     "green_clean": 0,
     "blocked_ci_ok": 0,
-    "dirty": 0,
-    "ci_not_ok": 0
+    "dirty": 1,
+    "ci_not_ok": 2
   },
   "green": [],
   "blocked": [],
-  "dirty": [],
-  "ci_not_ok": []
+  "dirty": [
+    {
+      "repo": "benchmarks",
+      "number": 267,
+      "title": "chore(benchmarks): workspace sweep fallback",
+      "mergeable": false,
+      "mergeable_state": "dirty",
+      "draft": false,
+      "ci": "no_checks",
+      "head": "6eee34d"
+    }
+  ],
+  "ci_not_ok": [
+    {
+      "repo": "li-cursor-agents",
+      "number": 96,
+      "title": "chore(li-cursor-agents): studio UX harness SOTA + workspace sweep",
+      "mergeable": true,
+      "mergeable_state": "unstable",
+      "draft": false,
+      "ci": "failure",
+      "head": "0ce9fca"
+    },
+    {
+      "repo": "lic",
+      "number": 620,
+      "title": "chore(lic): workspace sweep \u2014 orch notes, gap registry, agent snapshots",
+      "mergeable": null,
+      "mergeable_state": "unknown",
+      "draft": false,
+      "ci": "failure",
+      "head": "648fba3"
+    }
+  ]
 }

@@ -8,8 +8,8 @@
 | Metric | Count |
 |--------|------:|
 | Starting open PRs | 255 |
-| Ending open PRs (search API) | **0** (2026-05-31 code_implementer-1780190889283 completion gate) |
-| Ending open PRs (classified queue) | **0** |
+| Ending open PRs (search API) | **2** (2026-05-31 code_implementer-1780193346282 — #97 docs, benchmarks#267; closed #96 workspace sweep) |
+| Ending open PRs (classified queue) | **2** |
 | PRs squash-merged this session | **30** (prior sessions: 27 + 22) |
 | PRs fixed locally then merged | **10** |
 
@@ -387,6 +387,17 @@ From latest queue (`org-pr-merge-queue.json`):
 - Queue: `data/goal-directed-sprints/org-pr-merge-queue.json`
 - Logs: `data/goal-directed-sprints/fix-dirty-fast-run1.log`, `merge-blocked-run1.log`
 - Helper scripts added: `scripts/org-merge-blocked.py`, `scripts/org-fix-dirty-from-queue.py`, `scripts/org-pr-queue-summary.py`, `scripts/org-pr-info.py`
+
+## Session 22 (2026-05-31 code_implementer-1780191687132)
+
+| PR | Method |
+|----|--------|
+| lic#617 | Clean workspace-sweep → product-only diff (matmul_blocked + bench.py); CI fix (revert contracts_discharge_corpus drift); REST squash |
+| lic#621 | Rebase prefer-main + REST squash (studio-ux-21 wgpu swapchain GPU runner) |
+| lic#622 | Closed — superseded workspace sweep (2538 files) |
+| lic#620 | Closed — superseded workspace sweep (orch notes already on main via #621) |
+
+**Open PR count:** 1 → 3 (new workspace sweeps opened during run: benchmarks#267, li-cursor-agents#96).
 
 ## Rate limits
 
