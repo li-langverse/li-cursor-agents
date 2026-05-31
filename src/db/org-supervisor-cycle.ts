@@ -1,7 +1,7 @@
 import { dbEnabled, getSupabase } from "./client.js";
 import { withSupabaseRetry } from "./supabase-retry.js";
 
-export type OrgSupervisorKind = "issue" | "pr" | "review";
+export type OrgSupervisorKind = "issue" | "pr" | "review" | "research";
 
 export interface OrgSupervisorCyclePatch {
   open_count: number;

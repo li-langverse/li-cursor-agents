@@ -1,14 +1,14 @@
 import { FINISHED_JOB_TTL_SECONDS } from "../k8s/finished-job-ttl.js";
-﻿import { readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import https from "node:https";
 import { randomBytes } from "node:crypto";
 import {
-  issueSlug,
-  orgIssueSupervisorDeploymentName,
-  orgIssueSupervisorImage,
-  orgIssueSupervisorNamespace,
-  orgIssueSupervisorNodeSelector,
-} from "./org-issue-supervisor-config.js";
+  orgResearchSupervisorDeploymentName,
+  orgResearchSupervisorImage,
+  orgResearchSupervisorNamespace,
+  orgResearchSupervisorNodeSelector,
+  researchSlug,
+} from "./org-research-supervisor-config.js";
 
 interface InClusterConfig {
   baseUrl: string;
@@ -19,7 +19,7 @@ interface InClusterConfig {
 
 export interface K8sJobSummary {
   name: string;
-  issueRef: string;
+  researchRef: string;
   active: boolean;
   succeeded: boolean;
   failed: boolean;
@@ -89,34 +89,30 @@ export function isInKubernetesCluster(): boolean {
   return inClusterConfig() !== null;
 }
 
-export function k8sNamespace(): string {
-  return inClusterConfig()?.namespace ?? orgIssueSupervisorNamespace();
-}
-
 function sanitizeLabel(value: string): string {
   return value.replace(/[^a-zA-Z0-9._-]/g, "-").slice(0, 63);
 }
 
-function jobLabels(issueRef: string, workerId: string): Record<string, string> {
+function jobLabels(researchRef: string, workerId: string): Record<string, string> {
   return {
-    "app.kubernetes.io/name": "li-org-issue-implementer",
-    "li-langverse.io/org-issue": sanitizeLabel(issueRef),
+    "app.kubernetes.io/name": "li-org-researcher",
+    "li-langverse.io/org-research": sanitizeLabel(researchRef),
     "li-langverse.io/worker-id": sanitizeLabel(workerId),
-    "li-langverse.io/managed-by": "org-issue-supervisor",
+    "li-langverse.io/managed-by": "org-research-supervisor",
   };
 }
 
-export function implementerJobName(repo: string, number: number): string {
+export function researcherJobName(goalId: string, dimension: string): string {
   const suffix = randomBytes(3).toString("hex");
-  const base = `li-org-impl-${issueSlug(repo, number)}-${suffix}`;
+  const base = `li-org-res-${researchSlug(goalId, dimension)}-${suffix}`;
   return base.slice(0, 63);
 }
 
-export async function listImplementerJobs(): Promise<K8sJobSummary[]> {
+export async function listResearcherJobs(): Promise<K8sJobSummary[]> {
   const cfg = inClusterConfig();
   if (!cfg) return [];
-  const ns = orgIssueSupervisorNamespace();
-  const path = `/apis/batch/v1/namespaces/${ns}/jobs?labelSelector=${encodeURIComponent("li-langverse.io/managed-by=org-issue-supervisor")}`;
+  const ns = orgResearchSupervisorNamespace();
+  const path = `/apis/batch/v1/namespaces/${ns}/jobs?labelSelector=${encodeURIComponent("li-langverse.io/managed-by=org-research-supervisor")}`;
   const res = await k8sRequest(cfg, "GET", path);
   if (res.status !== 200 || !res.body || typeof res.body !== "object") return [];
   const items = (res.body as { items?: unknown[] }).items ?? [];
@@ -128,13 +124,13 @@ export async function listImplementerJobs(): Promise<K8sJobSummary[]> {
       status?: { active?: number; succeeded?: number; failed?: number };
     };
     const name = job.metadata?.name ?? "";
-    const issueRef =
-      job.metadata?.annotations?.["li-langverse.io/org-issue-ref"] ??
-      job.metadata?.labels?.["li-langverse.io/org-issue"] ??
+    const researchRef =
+      job.metadata?.annotations?.["li-langverse.io/org-research-ref"] ??
+      job.metadata?.labels?.["li-langverse.io/org-research"] ??
       name;
     out.push({
       name,
-      issueRef,
+      researchRef,
       active: (job.status?.active ?? 0) > 0,
       succeeded: (job.status?.succeeded ?? 0) > 0,
       failed: (job.status?.failed ?? 0) > 0,
@@ -143,21 +139,21 @@ export async function listImplementerJobs(): Promise<K8sJobSummary[]> {
   return out;
 }
 
-export async function createImplementerJob(options: {
-  issueRef: string;
-  repo: string;
-  number: number;
+export async function createResearcherJob(options: {
+  researchRef: string;
+  goalId: string;
+  dimension: string;
   workerId: string;
 }): Promise<{ ok: boolean; jobName?: string; message?: string }> {
   const cfg = inClusterConfig();
   if (!cfg) {
     return { ok: false, message: "not in kubernetes cluster" };
   }
-  const ns = orgIssueSupervisorNamespace();
-  const jobName = implementerJobName(options.repo, options.number);
-  const nodeSelector = orgIssueSupervisorNodeSelector();
-  const image = orgIssueSupervisorImage();
-  const labels = jobLabels(options.issueRef, options.workerId);
+  const ns = orgResearchSupervisorNamespace();
+  const jobName = researcherJobName(options.goalId, options.dimension);
+  const nodeSelector = orgResearchSupervisorNodeSelector();
+  const image = orgResearchSupervisorImage();
+  const labels = jobLabels(options.researchRef, options.workerId);
 
   const job = {
     apiVersion: "batch/v1",
@@ -167,7 +163,8 @@ export async function createImplementerJob(options: {
       namespace: ns,
       labels,
       annotations: {
-        "li-langverse.io/org-issue-ref": options.issueRef,
+        "li-langverse.io/org-research-ref": options.researchRef,
+        "li-langverse.io/research-dimension": options.dimension,
       },
     },
     spec: {
@@ -175,30 +172,32 @@ export async function createImplementerJob(options: {
       ttlSecondsAfterFinished: FINISHED_JOB_TTL_SECONDS,
       activeDeadlineSeconds: 7200,
       template: {
-        metadata: { labels, annotations: { "li-langverse.io/org-issue-ref": options.issueRef } },
+        metadata: {
+          labels,
+          annotations: {
+            "li-langverse.io/org-research-ref": options.researchRef,
+            "li-langverse.io/research-dimension": options.dimension,
+          },
+        },
         spec: {
           restartPolicy: "Never",
-          serviceAccountName: "li-org-issue-implementer",
+          serviceAccountName: "li-org-researcher",
           nodeSelector,
           containers: [
             {
-              name: "implementer",
+              name: "researcher",
               image,
               imagePullPolicy: "Always",
               command: [
                 "node",
-                "dist/cli/org-issue-implementer.js",
-                "--issue",
-                options.issueRef,
+                "dist/cli/org-researcher.js",
+                "--research",
+                options.researchRef,
                 "--worker-id",
                 options.workerId,
               ],
-              envFrom: [{ configMapRef: { name: "li-org-issue-supervisor" } }],
+              envFrom: [{ configMapRef: { name: "li-org-research-supervisor" } }],
               env: [
-                {
-                  name: "GH_TOKEN",
-                  valueFrom: { secretKeyRef: { name: "li-agents-secrets", key: "GH_TOKEN" } },
-                },
                 {
                   name: "CURSOR_API_KEY",
                   valueFrom: {
@@ -209,6 +208,22 @@ export async function createImplementerJob(options: {
                   name: "CURSOR_SDK_KEY",
                   valueFrom: {
                     secretKeyRef: { name: "li-agents-secrets", key: "CURSOR_SDK_KEY", optional: true },
+                  },
+                },
+                {
+                  name: "SUPABASE_URL",
+                  valueFrom: {
+                    secretKeyRef: { name: "li-agents-secrets", key: "SUPABASE_URL", optional: true },
+                  },
+                },
+                {
+                  name: "SUPABASE_SERVICE_ROLE_KEY",
+                  valueFrom: {
+                    secretKeyRef: {
+                      name: "li-agents-secrets",
+                      key: "SUPABASE_SERVICE_ROLE_KEY",
+                      optional: true,
+                    },
                   },
                 },
               ],
@@ -242,28 +257,20 @@ export async function createImplementerJob(options: {
   return { ok: false, message: `create job failed (${res.status}): ${msg}` };
 }
 
-export async function deleteJob(name: string): Promise<void> {
-  const cfg = inClusterConfig();
-  if (!cfg) return;
-  const ns = orgIssueSupervisorNamespace();
-  const path = `/apis/batch/v1/namespaces/${ns}/jobs/${name}?propagationPolicy=Background`;
-  await k8sRequest(cfg, "DELETE", path);
-}
-
 export async function ensureSupervisorDeployment(): Promise<{ ok: boolean; message: string }> {
   const cfg = inClusterConfig();
   if (!cfg) {
     return { ok: false, message: "wake skipped: not in kubernetes cluster (apply Deployment manually)" };
   }
-  const ns = orgIssueSupervisorNamespace();
-  const name = orgIssueSupervisorDeploymentName();
+  const ns = orgResearchSupervisorNamespace();
+  const name = orgResearchSupervisorDeploymentName();
   const getPath = `/apis/apps/v1/namespaces/${ns}/deployments/${name}`;
   const getRes = await k8sRequest(cfg, "GET", getPath);
 
   if (getRes.status === 404) {
     return {
       ok: false,
-      message: `deployment ${name} not found — apply deploy/k8s/engine/deployment-org-issue-supervisor.yaml first`,
+      message: `deployment ${name} not found - apply deploy/k8s/engine/deployment-org-research-supervisor.yaml first`,
     };
   }
   if (getRes.status !== 200) {

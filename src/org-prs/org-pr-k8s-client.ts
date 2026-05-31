@@ -1,3 +1,4 @@
+import { FINISHED_JOB_TTL_SECONDS } from "../k8s/finished-job-ttl.js";
 import { readFileSync } from "node:fs";
 import https from "node:https";
 import { randomBytes } from "node:crypto";
@@ -181,7 +182,7 @@ async function createPrWorkerJob(options: {
     },
     spec: {
       backoffLimit: 0,
-      ttlSecondsAfterFinished: 86400,
+      ttlSecondsAfterFinished: FINISHED_JOB_TTL_SECONDS,
       activeDeadlineSeconds: 7200,
       template: {
         metadata: { labels, annotations: { "li-langverse.io/org-pr-ref": options.prRef } },
