@@ -1,4 +1,4 @@
-# One-shot: clone li-cursor-agents, build proof-explorer image, push to GHCR.
+# One-shot: clone li-cursor-agents, build proof-explorer image with Podman, push to GHCR.
 # Requires li-agents-secrets (GH_TOKEN with packages:write) and ghcr-li-langverse pull secret.
 apiVersion: batch/v1
 kind: Job
@@ -22,12 +22,8 @@ spec:
       volumes:
         - name: workspace
           emptyDir: {}
-        - name: docker-config
-          secret:
-            secretName: ghcr-li-langverse
-            items:
-              - key: .dockerconfigjson
-                path: config.json
+        - name: podman-storage
+          emptyDir: {}
       initContainers:
         - name: git-clone
           image: alpine/git:latest
@@ -56,15 +52,33 @@ spec:
             - name: workspace
               mountPath: /workspace
       containers:
-        - name: kaniko
-          image: gcr.io/kaniko-project/executor:v1.23.2
-          args:
-            - --dockerfile=/workspace/li-cursor-agents/deploy/Dockerfile.proof-explorer
-            - --context=/workspace/li-cursor-agents
-            - --destination=ghcr.io/li-langverse/li-cursor-agents:proof-explorer
-            - --cache=false
+        - name: podman
+          image: quay.io/podman/stable:v5.4.2
+          securityContext:
+            privileged: true
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+            - name: IMAGE
+              value: ghcr.io/li-langverse/li-cursor-agents:proof-explorer
+            - name: STORAGE_DRIVER
+              value: vfs
+            - name: BUILDAH_ISOLATION
+              value: chroot
+          command:
+            - bash
+            - -lc
+            - |
+              set -euo pipefail
+              cd /workspace/li-cursor-agents
+              echo "$GH_TOKEN" | podman login ghcr.io -u li-langverse --password-stdin
+              podman build -f deploy/Dockerfile.proof-explorer -t "$IMAGE" .
+              podman push "$IMAGE"
           volumeMounts:
             - name: workspace
               mountPath: /workspace
-            - name: docker-config
-              mountPath: /kaniko/.docker
+            - name: podman-storage
+              mountPath: /var/lib/containers
