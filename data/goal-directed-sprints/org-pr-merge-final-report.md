@@ -8,7 +8,7 @@
 | Metric | Count |
 |--------|------:|
 | Starting open PRs | 255 |
-| Ending open PRs (search API) | **0** (2026-05-31 code_implementer-1780188483685 completion gate) |
+| Ending open PRs (search API) | **3** (2026-05-31 code_implementer-1780191687132 — new workspace sweeps opened during run) |
 | Ending open PRs (classified queue) | **0** |
 | PRs squash-merged this session | **30** (prior sessions: 27 + 22) |
 | PRs fixed locally then merged | **10** |
@@ -120,6 +120,18 @@
 
 **implementation_queue:** lic/lis/li-httpd CI items **stale** (queue references closed PRs; 0 open PRs).
 
+
+## Session 40 (2026-05-31 code_implementer-1780190889283)
+
+**Merged (Phase C):** li-cursor-agents#94 (rebase prefer-main + REST squash — session 39/40 sprint digest; CI green: test-mock-agents, lidb-engine-e2e).
+
+**Closed (Phase E):** lic#615 (workspace_sweeper fallback — 719 commits, 9 files, branch `chore/workspace-sweep-1780171200`; stale contracts_discharge_corpus + orch-r3 docs drift vs main).
+
+**Open PR count:** 2 → **0** (`org-pr-merge-completion-gate.sh` exit 0).
+
+**Handoffs:** `cad_fundamentals` already completed (lic#496); skipped this pass.
+
+**implementation_queue:** lic/lis/li-httpd CI items **stale** (0 open PRs; briefing references closed PRs).
 
 ## Session 38 (2026-05-31 code_implementer-88051158)
 
@@ -375,6 +387,17 @@ From latest queue (`org-pr-merge-queue.json`):
 - Queue: `data/goal-directed-sprints/org-pr-merge-queue.json`
 - Logs: `data/goal-directed-sprints/fix-dirty-fast-run1.log`, `merge-blocked-run1.log`
 - Helper scripts added: `scripts/org-merge-blocked.py`, `scripts/org-fix-dirty-from-queue.py`, `scripts/org-pr-queue-summary.py`, `scripts/org-pr-info.py`
+
+## Session 22 (2026-05-31 code_implementer-1780191687132)
+
+| PR | Method |
+|----|--------|
+| lic#617 | Clean workspace-sweep → product-only diff (matmul_blocked + bench.py); CI fix (revert contracts_discharge_corpus drift); REST squash |
+| lic#621 | Rebase prefer-main + REST squash (studio-ux-21 wgpu swapchain GPU runner) |
+| lic#622 | Closed — superseded workspace sweep (2538 files) |
+| lic#620 | Closed — superseded workspace sweep (orch notes already on main via #621) |
+
+**Open PR count:** 1 → 3 (new workspace sweeps opened during run: benchmarks#267, li-cursor-agents#96).
 
 ## Rate limits
 

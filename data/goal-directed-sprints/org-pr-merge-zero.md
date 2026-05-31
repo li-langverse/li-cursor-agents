@@ -23,10 +23,10 @@ Clear every open pull request in the org by squash-merging (preferred), or fixin
 |-------|-------|--------|
 | **A** | Refresh queue (`org-merge-open-prs.py --dry-run`) | **DONE** |
 | **B** | Auto-merge green + blocked CI-green | **DONE** |
-| **C** | Local rebase dirty PRs (batch per repo, push) | **DONE** (session 20: 0 dirty remaining in queue) |
-| **D** | Fix CI failures on remaining PRs | **DONE** (lidb#24 CI fix + merge) |
-| **E** | Close superseded duplicate sweeps (only if commit already on main) | **DONE** (session 40: lic#615; session 39: lic#613,#614, benchmarks#264; prior: lic#610, lic#604, benchmarks#259) |
-| **F** | Verify 0 open PRs + update final report | **DONE** (session 40: `open_prs=0`, completion gate exit 0) |
+| **C** | Local rebase dirty PRs (batch per repo, push) | **in progress** (benchmarks#267 dirty) |
+| **D** | Fix CI failures on remaining PRs | **in progress** (li-cursor-agents#96 ci_not_ok) |
+| **E** | Close superseded duplicate sweeps (only if commit already on main) | **in progress** (closed lic#622,#620 this pass) |
+| **F** | Verify 0 open PRs + update final report | **pending** (3 open PRs — new workspace sweeps during run) |
 
 ### Phase A — Refresh queue
 
