@@ -44,7 +44,7 @@ sync_lic_repo() {
   else
     git -C "$LIC_ROOT" checkout -B "$BRANCH"
   fi
-  git -C "$LIC_ROOT" pull --ff-only origin "$BRANCH" 2>/dev/null || true
+  git -C "$LIC_ROOT" fetch origin "$BRANCH"`n  git -C "$LIC_ROOT" reset --hard "origin/${BRANCH}"
 }
 
 sync_lic_repo
