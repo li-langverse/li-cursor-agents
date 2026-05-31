@@ -84,7 +84,10 @@ spec:
               set -euo pipefail
               cd /workspace/li-cursor-agents
               echo "$GH_TOKEN" | podman login ghcr.io -u "$GHCR_USER" --password-stdin || true
-              podman build -f deploy/Dockerfile.proof-explorer -t "$IMAGE" .
+              podman pull ghcr.io/li-langverse/lic-ci:debian12-llvm22 || true
+              podman build -f deploy/Dockerfile.proof-explorer \
+                --build-arg LI_CI_IMAGE=ghcr.io/li-langverse/lic-ci:debian12-llvm22 \
+                -t "$IMAGE" .
               if podman push "$IMAGE"; then
                 echo "pushed to ghcr.io"
                 exit 0

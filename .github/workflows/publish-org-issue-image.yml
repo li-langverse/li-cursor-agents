@@ -1,4 +1,4 @@
-name: Publish org-issue worker image
+﻿name: Publish org-issue worker image
 
 on:
   workflow_dispatch:
@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - "deploy/Dockerfile"
+      - "deploy/lic-ci-base.env"
       - "src/cli/org-issue-worker.ts"
       - "src/**"
 
@@ -32,6 +33,8 @@ jobs:
           context: .
           file: deploy/Dockerfile
           push: true
+          build-args: |
+            LI_CI_IMAGE=ghcr.io/li-langverse/lic-ci:debian12-llvm22
           tags: |
             ghcr.io/li-langverse/li-cursor-agents:latest
             ghcr.io/li-langverse/li-cursor-agents:${{ github.sha }}

@@ -1,6 +1,6 @@
 ﻿---
 name: homelab-goal-directed-k8s-worker
-description: Deploy always-on goal-directed Cursor agents on the homelab engine Kubernetes cluster by reusing the proof-explorer container image with a dedicated workspace PVC per sprint. Use when launching K8s workers for lic sprints, pure-li-https, ph-ml, proof-explorer, li-swarm, engine node, or homelab goal-directed loops until completion gates pass.
+description: Deploy always-on goal-directed Cursor agents on the homelab engine Kubernetes cluster using the proof-explorer image (FROM org lic-ci LLVM toolchain) with a dedicated workspace PVC per sprint. Use when launching K8s workers for lic sprints, pure-li-https, ph-ml, proof-explorer, li-swarm, engine node, lic-ci, or homelab goal-directed loops until completion gates pass.
 ---
 
 # Homelab goal-directed K8s worker
@@ -13,7 +13,7 @@ Do **not** add custom entrypoint ConfigMaps or override `command`. Reuse what al
 
 | Resource | Reuse |
 |----------|-------|
-| Image | `ghcr.io/li-langverse/li-cursor-agents:proof-explorer` |
+| Image | `ghcr.io/li-langverse/li-cursor-agents:proof-explorer` (built `FROM ghcr.io/li-langverse/lic-ci:debian12-llvm22`) |
 | Entrypoint | Image default (`proof-explorer-entrypoint.sh` → `proof-explorer-worker.js`) |
 | Secrets | `li-agents-secrets` (`GH_TOKEN`, optional `CURSOR_API_KEY`) |
 | Node | `kubernetes.io/hostname: engine` |
@@ -52,7 +52,7 @@ LI_SDK_TERMINAL_STREAM: "1"
 | Flag | Why |
 |------|-----|
 | `PHASE_HANDOFF=0` | Without it worker exits immediately when phase handoff logic thinks program is complete |
-| `SKIP_IMPLEMENTER_PREFLIGHT_GATE=1` | Without it agent dies before SDK run (LLVM 22 preflight in container) |
+| `SKIP_IMPLEMENTER_PREFLIGHT_GATE=1` | Optional when image is rebuilt on lic-ci (has clang-22); keep for faster worker start |
 
 ## Prerequisites
 

@@ -1,4 +1,4 @@
-name: Publish proof-explorer image
+﻿name: Publish proof-explorer image
 
 on:
   workflow_dispatch:
@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - "deploy/Dockerfile.proof-explorer"
+      - "deploy/lic-ci-base.env"
       - "deploy/proof-explorer-entrypoint.sh"
       - "src/proof-explorer/**"
       - "src/cli/proof-explorer-worker.ts"
@@ -33,6 +34,8 @@ jobs:
           context: .
           file: deploy/Dockerfile.proof-explorer
           push: true
+          build-args: |
+            LI_CI_IMAGE=ghcr.io/li-langverse/lic-ci:debian12-llvm22
           tags: |
             ghcr.io/li-langverse/li-cursor-agents:proof-explorer
             ghcr.io/li-langverse/li-cursor-agents:proof-explorer-${{ github.sha }}

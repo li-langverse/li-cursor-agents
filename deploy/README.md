@@ -1,30 +1,35 @@
-# Container images (K8s engine workers)
+﻿# Container images (K8s engine workers)
 
-## GHCR image
+## Shared toolchain base (org-wide)
 
-- **Org-issue worker:** `ghcr.io/li-langverse/li-cursor-agents:latest` (`deploy/Dockerfile`)
-- **Proof explorer:** `ghcr.io/li-langverse/li-cursor-agents:proof-explorer` (`deploy/Dockerfile.proof-explorer`)
+All agent images **`FROM ghcr.io/li-langverse/lic-ci:debian12-llvm22`** — the same LLVM 22 toolchain image used by `lic` CI and `./scripts/local-ci.sh --docker`.
 
-CI publishes `:latest` via [publish-org-issue-image.yml](../.github/workflows/publish-org-issue-image.yml) (`workflow_dispatch` or push to `main`).
+| File | Role |
+|------|------|
+| `deploy/lic-ci-base.env` | Pin for build-args (`LI_CI_IMAGE=...`) |
+| `lic/docker/ci-debian12-llvm22/` | Source Dockerfile (published from **lic** repo) |
+| `lic/scripts/llvm-env.sh` | Source of truth for `LI_LLVM_MAJOR` |
 
-## Local build (Windows + Podman)
+When lic bumps LLVM, publish a new `lic-ci` tag (e.g. `debian12-llvm23`), update `lic-ci-base.env`, rebuild agent images.
 
-Native Windows `podman` can fail on `known_hosts` when talking to GHCR. Use the Podman machine VM:
+Built-in env on the base: `CC=clang-22`, `CXX=clang++-22`, `LLVM_DIR`, `LI_LLVM_MAJOR=22`.
 
-```powershell
-# From repo root; token in ../.env.github as GH_TOKEN (needs write:packages for push)
-$tok = (Get-Content ..\.env.github | Where-Object { $_ -match '^\s*GH_TOKEN=' }) -replace '^\s*GH_TOKEN=\s*',''
-Set-Content -Path .ghcr-token.tmp -Value $tok.Trim().Trim('"') -NoNewline
-podman machine ssh -- bash deploy/podman-build-push.sh
-Remove-Item .ghcr-token.tmp -Force
-```
+## GHCR images (this repo)
 
-VM path: `/mnt/c/Users/Julian/Documents/Programming/li/li-cursor-agents`
+| Tag | Dockerfile | Adds on top of lic-ci |
+|-----|------------|------------------------|
+| `:latest` | `deploy/Dockerfile` | Node 22, li-cursor-agents app |
+| `:proof-explorer` | `deploy/Dockerfile.proof-explorer` | Node 22, gh CLI, goal-directed entrypoint |
 
-Or run only inside the VM:
+CI publishes via [publish-org-issue-image.yml](../.github/workflows/publish-org-issue-image.yml) and [publish-proof-explorer-image.yml](../.github/workflows/publish-proof-explorer-image.yml).
+
+## Local build
 
 ```bash
-bash deploy/podman-build-push.sh   # expects .ghcr-token.tmp with PAT
+podman pull ghcr.io/li-langverse/lic-ci:debian12-llvm22
+podman build -f deploy/Dockerfile.proof-explorer \
+  --build-arg LI_CI_IMAGE=ghcr.io/li-langverse/lic-ci:debian12-llvm22 \
+  -t ghcr.io/li-langverse/li-cursor-agents:proof-explorer .
 ```
 
-If push fails with `permission_denied` / scope errors, regenerate `GH_TOKEN` with **write:packages** or trigger the GitHub Actions publish workflow instead.
+Windows + Podman: see existing `deploy/podman-build-push*.sh` scripts.

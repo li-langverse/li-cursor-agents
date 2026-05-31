@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 # Build and push proof-explorer image with Podman (run inside podman machine on Windows).
 set -euo pipefail
 TOKEN_FILE="${TOKEN_FILE:-/mnt/c/Users/Julian/Documents/Programming/li/li-cursor-agents/.ghcr-token.tmp}"
@@ -12,6 +12,7 @@ fi
 TOKEN=$(cat "$TOKEN_FILE")
 echo "$TOKEN" | podman login ghcr.io -u "$GHCR_USER" --password-stdin
 cd "$REPO"
-podman build -f deploy/Dockerfile.proof-explorer -t "$IMAGE" .
+podman pull ghcr.io/li-langverse/lic-ci:debian12-llvm22 || true
+podman build --build-arg LI_CI_IMAGE=ghcr.io/li-langverse/lic-ci:debian12-llvm22 -f deploy/Dockerfile.proof-explorer -t "$IMAGE" .
 podman push "$IMAGE"
 echo BUILD_PUSH_OK
