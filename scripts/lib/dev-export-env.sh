@@ -32,5 +32,5 @@ dev_export_li_env() {
   export BENCHMARKS_ROOT="${BENCHMARKS_ROOT:-}"
   export LI_LOCAL_CI_ROOT="${LI_LOCAL_CI_ROOT:-}"
   export LI_USE_LOCAL_CI="${LI_USE_LOCAL_CI:-1}"
-  export LI_CONTROL_PLANE_STORE="${LI_CONTROL_PLANE_STORE:-supabase}"
+  export LI_CONTROL_PLANE_STORE="${LI_CONTROL_PLANE_STORE:-lidb}"
 }

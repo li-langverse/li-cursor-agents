@@ -89,7 +89,9 @@ export LI_ASYNC_AGENT_INTERVAL_MS="${LI_ASYNC_AGENT_INTERVAL_MS:-120000}"
 # Prefer host lic CI (brew llvm) over 2GB docker image
 export LI_LOCAL_CI_LIC_MODE="${LI_LOCAL_CI_LIC_MODE:-host}"
 
-# Control-plane store: supabase (default, Docker) or disk (JSON under data/)
-export LI_CONTROL_PLANE_STORE="${LI_CONTROL_PLANE_STORE:-supabase}"
+# Control-plane store: lidb (default, native embed), supabase, or disk (JSON under data/)
+export LI_CONTROL_PLANE_STORE="${LI_CONTROL_PLANE_STORE:-lidb}"
+export LI_DATA_DIR="${LI_DATA_DIR:-$ROOT/data/lidb-control-plane}"
+export LI_LIDB_REPO="${LI_LIDB_REPO:-}"
 # Legacy alias for disk: LI_STACK_SKIP_SUPABASE=1
 export LI_STACK_SKIP_SUPABASE="${LI_STACK_SKIP_SUPABASE:-0}"
