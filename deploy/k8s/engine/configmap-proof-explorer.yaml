@@ -1,4 +1,4 @@
-apiVersion: v1
+﻿apiVersion: v1
 kind: ConfigMap
 metadata:
   name: li-proof-explorer
@@ -10,6 +10,7 @@ metadata:
 data:
   LI_PROOF_EXPLORER_ALWAYS_ON: "1"
   LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/proof-explorer-program.md"
+  LI_PROOF_EXPLORER_PHASE_HANDOFF: "1"
   LI_PROOF_EXPLORER_LIC_ROOT: "/workspace/lic"
   LI_CURSOR_AGENTS_ROOT: "/app"
   LI_PROOF_EXPLORER_WORKFLOW_REPO: "lic"
@@ -22,3 +23,4 @@ data:
   LI_SDK_TERMINAL_STREAM: "1"
   LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE: "1"
   NODE_ENV: "production"
+
