@@ -1,0 +1,5 @@
+li-tui-gen v0 (fixture)
+┌─────────────────────────────┐
+│ Generated panel (mock)      │
+│ Status: ok                  │
+└─────────────────────────────┘

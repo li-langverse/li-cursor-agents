@@ -10,6 +10,7 @@ from sota.rubric import min_rubric_score, rubric_failing
 
 from .base import TargetConfig
 from .mock_data import mock_ui_result, mock_ux_result
+from .tui_baseline import baseline_path, compare_stdout_baseline, write_stdout_capture
 
 # Map journey step ids to fixture input keys.
 _STEP_KEYS: dict[str, str] = {
@@ -25,6 +26,12 @@ _ERROR_MARKERS = ("Error:", "simulated failure")
 _A11Y_MARKERS_BY_CLASS: dict[str, tuple[str, ...]] = {
     "tui_app": ("plain snapshot", "Surface: tui_app"),
     "tui_gen": ("plain snapshot", "Surface: tui_gen"),
+}
+
+_NO_BASELINE_DIFF = {
+    "pixel_diff": {"max_ratio": 0.0, "threshold": 0.04},
+    "baseline_status": "ok",
+    "line_diff": {"changed_lines": 0, "total_lines": 0},
 }
 
 
@@ -57,7 +64,7 @@ def _run_fixture(
     agents_root: Path,
     *,
     ux_script: str = "",
-    write_frame: bool = False,
+    check_baseline: bool = False,
     extra_env: dict[str, str] | None = None,
 ) -> dict:
     fixture = _fixture_path(target, agents_root)
@@ -71,11 +78,18 @@ def _run_fixture(
     }
     if fixture is None:
         return {**base, "status": "skip", "skip_reason": "TUI fixture missing"}
+
     env = {**os.environ, "UX_HARNESS": "1"}
     if ux_script:
         env["LI_UX_SCRIPT"] = ux_script
     if extra_env:
         env.update(extra_env)
+
+    timed_out = False
+    returncode = 1
+    stdout = ""
+    stderr = ""
+
     try:
         proc = subprocess.run(
             ["bash", str(fixture)],
@@ -83,39 +97,55 @@ def _run_fixture(
             capture_output=True,
             text=True,
             timeout=30,
+            stdin=subprocess.DEVNULL,
             check=False,
             env=env,
         )
+        returncode = proc.returncode
+        stdout = proc.stdout or ""
+        stderr = proc.stderr or ""
     except subprocess.TimeoutExpired as exc:
-        return {
-            **base,
-            "status": "fail",
-            "fixture_exit_code": -1,
-            "timeout": True,
-            "stdout": (exc.stdout or "") if exc.stdout is not None else "",
-            "stderr": (exc.stderr or "") if exc.stderr is not None else "",
-            "friction_points": [{"issue": f"fixture timed out after {exc.timeout}s"}],
-        }
-    ok = proc.returncode == 0
+        timed_out = True
+        stdout = (exc.stdout or "") if exc.stdout is not None else ""
+        stderr = (exc.stderr or "") if exc.stderr is not None else ""
+
+    diff = (
+        compare_stdout_baseline(stdout, baseline_path(agents_root, target.id))
+        if check_baseline
+        else _NO_BASELINE_DIFF
+    )
+
+    artifacts: list[str] = []
+    if check_baseline:
+        capture_path = write_stdout_capture(agents_root, target.id, stdout)
+        artifacts.append(str(capture_path))
+
+    ok = returncode == 0 and not timed_out
+    if check_baseline and diff["baseline_status"] == "drift":
+        ok = False
+
     result = {
         **base,
         "status": "pass" if ok else "fail",
-        "fixture_exit_code": proc.returncode,
-        "stdout": proc.stdout,
-        "stderr": proc.stderr,
+        "fixture_exit_code": returncode,
+        "stdout": stdout,
+        "stderr": stderr,
+        "artifacts": artifacts,
         "axe_violations": [],
-        "pixel_diff": {"max_ratio": 0.0, "threshold": 0.04},
+        "pixel_diff": diff["pixel_diff"],
         "contrast_failures": [],
-        "baseline_status": "ok",
+        "baseline_status": diff["baseline_status"],
+        "line_diff": diff["line_diff"],
         "tokens_deviation": [],
         "broken_links": 0,
     }
-    if write_frame:
-        out_dir = _artifact_dir(target, agents_root)
-        out_dir.mkdir(parents=True, exist_ok=True)
-        frame_path = out_dir / "frame.txt"
-        frame_path.write_text(proc.stdout, encoding="utf-8")
-        result["artifacts"] = [str(frame_path)]
+    if check_baseline and artifacts:
+        result["stdout_capture"] = artifacts[0]
+    if timed_out:
+        result["timeout"] = True
+        result["friction_points"] = [{"issue": "fixture timed out after 30s"}]
+    if stderr.strip():
+        result["stderr_tail"] = stderr.strip()[-400:]
     return result
 
 
@@ -203,7 +233,7 @@ def _error_surface_ok(stderr: str) -> bool:
 def run_tui_ui(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
     if mock:
         return mock_ui_result(target, str(agents_root))
-    return _run_fixture(target, agents_root, write_frame=True)
+    return _run_fixture(target, agents_root, check_baseline=True)
 
 
 def run_tui_ux(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
@@ -211,7 +241,7 @@ def run_tui_ux(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
         return mock_ux_result(target, str(agents_root))
     journeys_cfg = target.raw.get("journeys") or []
     script = _journey_script(journeys_cfg)
-    ui = _run_fixture(target, agents_root, ux_script=script, write_frame=True)
+    ui = _run_fixture(target, agents_root, ux_script=script)
     if ui.get("status") == "skip":
         return {
             "target_id": target.id,
