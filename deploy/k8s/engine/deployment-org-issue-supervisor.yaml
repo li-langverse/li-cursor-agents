@@ -1,0 +1,50 @@
+﻿# Long-running supervisor: classifies queue, spawns up to 3 implementer Jobs while issues remain open.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: li-org-issue-supervisor
+  namespace: li-swarm
+  labels:
+    app: li-org-issue-supervisor
+    li-langverse.io/role: org-issue-supervisor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: li-org-issue-supervisor
+  template:
+    metadata:
+      labels:
+        app: li-org-issue-supervisor
+    spec:
+      serviceAccountName: li-org-issue-supervisor
+      nodeSelector:
+        li-langverse.io/node-pool: engine
+      containers:
+        - name: supervisor
+          image: ghcr.io/li-langverse/li-cursor-agents:latest
+          imagePullPolicy: Always
+          command: ["node", "dist/cli/org-issue-supervisor.js", "supervise"]
+          envFrom:
+            - configMapRef:
+                name: li-org-issue-supervisor
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+          volumeMounts:
+            - name: sprint-data
+              mountPath: /app/data/goal-directed-sprints
+      volumes:
+        - name: sprint-data
+          persistentVolumeClaim:
+            claimName: li-agents-sprint-data
