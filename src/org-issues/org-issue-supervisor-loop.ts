@@ -11,7 +11,7 @@ import {
   countActiveWorkers,
   pruneTerminalActiveEntries,
   readActiveState,
-  readQueueIssues,
+  readImplementQueueIssues,
   updateIssueStatus,
 } from "./org-issue-coordination.js";
 import {
@@ -112,7 +112,7 @@ export async function orgIssueSupervisorTick(): Promise<SupervisorTickResult> {
   }
 
   const slots = Math.max(0, desiredWorkers - activeWorkers);
-  const queued = readQueueIssues(root);
+  const queued = readImplementQueueIssues(root);
   const activeSet = activeIssueRefs(readActiveState(root));
   let spawned = 0;
 

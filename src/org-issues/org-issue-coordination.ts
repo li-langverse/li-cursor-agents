@@ -193,6 +193,30 @@ export function appendImplementAudit(
   });
 }
 
+
+function readQueueBucket(
+  root: string,
+  bucket: string,
+): QueuedOrgIssue[] {
+  const path = join(sprintDataDir(root), "org-issue-queue.json");
+  if (!existsSync(path)) return [];
+  const q = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
+  const rows = q[bucket];
+  if (!Array.isArray(rows)) return [];
+  const out: QueuedOrgIssue[] = [];
+  for (const row of rows) {
+    if (!row || typeof row !== "object") continue;
+    const r = row as QueuedOrgIssue;
+    if (!r.repo || !r.number) continue;
+    out.push(r);
+  }
+  return out;
+}
+
+/** Implement-bucket issues only — supervisor spawns real implementer Jobs for these. */
+export function readImplementQueueIssues(root = agentsPackageRoot()): QueuedOrgIssue[] {
+  return readQueueBucket(root, "implement");
+}
 export function readQueueIssues(root = agentsPackageRoot()): QueuedOrgIssue[] {
   const path = join(sprintDataDir(root), "org-issue-queue.json");
   if (!existsSync(path)) return [];

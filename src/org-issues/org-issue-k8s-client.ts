@@ -198,6 +198,18 @@ export async function createImplementerJob(options: {
                   name: "GH_TOKEN",
                   valueFrom: { secretKeyRef: { name: "li-agents-secrets", key: "GH_TOKEN" } },
                 },
+                {
+                  name: "CURSOR_API_KEY",
+                  valueFrom: {
+                    secretKeyRef: { name: "li-agents-secrets", key: "CURSOR_API_KEY", optional: true },
+                  },
+                },
+                {
+                  name: "CURSOR_SDK_KEY",
+                  valueFrom: {
+                    secretKeyRef: { name: "li-agents-secrets", key: "CURSOR_SDK_KEY", optional: true },
+                  },
+                },
               ],
               resources: {
                 requests: { cpu: "250m", memory: "512Mi" },
