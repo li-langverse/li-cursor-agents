@@ -134,6 +134,14 @@ Started: 2026-05-30
 | roadmap#44 | rebase + REST squash |
 | roadmap#45 | rebase + REST squash |
 
+## Session 26 (2026-05-31 code_implementer-1780194891944)
+
+| PR | Method |
+|----|--------|
+| li-cursor-agents#100 | `--merge-green` REST squash → a688aa8 |
+
+**Open PR count:** 1 → 0. Completion gate pass after ~15s search index lag.
+
 ## Blockers noted
 
 - lip#29 — PR **closed** on GitHub; branch refreshed with cherry-pick onto main (2d928db) for potential reopen
