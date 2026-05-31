@@ -4,7 +4,8 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
-| 2026-05-31 code_implementer-88051158 | 2 → 0 | 1+1 closed | Phase A: refresh (li-cursor-agents#92 green, lic#610 ci_not_ok); Phase B: REST squash li-cursor-agents#92 (session 37 digest); Phase E: close lic#610 (workspace_sweeper re-open, 699 commits, same branch as #601/#602); **completion gate pass** |
+| 2026-05-31 code_implementer-88051158 | 2 → 0 | 1+2 closed | Phase A: refresh (#92 green, lic#610 ci_not_ok); Phase B: REST squash li-cursor-agents#92; Phase E: close lic#610, lic#611 (workspace_sweeper re-opens, same branch); **completion gate pass** |
+| 2026-05-31 code_implementer-1780187657074 | 1 → 0 | 0+1 closed | Phase A: refresh (lic#609 ci_not_ok); Phase E: close lic#609 (696 commits, workspace_sweeper on `chore/workspace-sweep-1780171200`, same as #604); **completion gate pass** |
 | 2026-05-31 code_implementer-83955615 | 4 → 0 | 3+2 closed | Phase A: refresh (3 blocked li-net, 1 dirty lic#604); Phase B: REST squash li-net#18–20 (deps bumps, CI green); Phase E: close lic#604 (671 commits, workspace_sweeper), benchmarks#259 (100 commits, opened during gate); **completion gate pass** |
 | 2026-05-31 code_implementer-83175237 | 1 → 0 | 1+2 closed | Phase A: refresh (lic#601 dirty); Phase E: close lic#601; merge li-cursor-agents#89 (session 35 digest); close lic#602 (duplicate workspace_sweeper re-opened during #89 merge); **completion gate pass** |
 | 2026-05-31 code_implementer-1780182643286 | 1 → 0 | 0+1 closed | Phase A: refresh queue (lic#599 dirty); Phase E: close lic#599 (workspace_sweeper fallback, 658 commits, 139 files, emit.cpp regressions); **completion gate pass** |
@@ -37,6 +38,7 @@ Started: 2026-05-30
 | PR | Reason |
 |----|--------|
 | lic#610 | workspace_sweeper fallback re-opened post-#601/#602 — branch `chore/workspace-sweep-1780171200`, 699 commits, 32 files, CI pending, no shippable diff vs main |
+| lic#611 | workspace_sweeper re-opened immediately after #610 close — same branch, 700 commits, 32 files |
 
 ## Merged this iteration (88051158)
 

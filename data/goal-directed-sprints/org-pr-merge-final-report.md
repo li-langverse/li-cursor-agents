@@ -125,13 +125,23 @@
 
 **Merged (Phase B):** li-cursor-agents#92 (REST squash — session 37 sprint digest; CI green).
 
-**Closed (Phase E):** lic#610 (workspace_sweeper fallback re-opened post-#601/#602 — branch `chore/workspace-sweep-1780171200`, 699 commits, 32 files, CI pending, no shippable diff vs main).
+**Closed (Phase E):** lic#610 (workspace_sweeper fallback — 699 commits, 32 files), lic#611 (re-opened during gate — 700 commits, same branch `chore/workspace-sweep-1780171200`).
 
 **Open PR count:** 2 → **0** (`org-pr-merge-completion-gate.sh` exit 0).
 
 **Handoffs:** `cad_fundamentals` skipped (`package_placement: null`).
 
 **implementation_queue:** lic/lis/li-httpd CI items **stale** (0 open PRs; briefing references closed PRs).
+
+## Session 37 (2026-05-31 code_implementer-1780187657074)
+
+**Closed (Phase E):** lic#609 (workspace_sweeper fallback — 696 commits, 32 files, branch `chore/workspace-sweep-1780171200`; same disposition as #604/#601/#599; CI was pending behind main).
+
+**Open PR count:** 1 → **0** (`org-pr-merge-completion-gate.sh` exit 0).
+
+**Handoffs:** `cad_fundamentals` skipped (`package_placement: null`).
+
+**implementation_queue:** lic/lis/li-httpd CI items **stale** (0 open PRs).
 
 ## Session 36 (2026-05-31 code_implementer-83955615)
 
