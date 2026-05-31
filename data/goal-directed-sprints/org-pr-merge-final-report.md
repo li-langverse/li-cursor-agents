@@ -8,7 +8,7 @@
 | Metric | Count |
 |--------|------:|
 | Starting open PRs | 255 |
-| Ending open PRs (search API) | **0** (2026-05-31 code_implementer-1780187657074 completion gate) |
+| Ending open PRs (search API) | **0** (2026-05-31 code_implementer-88051158 completion gate) |
 | Ending open PRs (classified queue) | **0** |
 | PRs squash-merged this session | **30** (prior sessions: 27 + 22) |
 | PRs fixed locally then merged | **10** |
@@ -120,6 +120,18 @@
 
 **implementation_queue:** lic/lis/li-httpd CI items **stale** (queue references closed PRs; 0 open PRs).
 
+
+## Session 38 (2026-05-31 code_implementer-88051158)
+
+**Merged (Phase B):** li-cursor-agents#92 (REST squash — session 37 sprint digest; CI green).
+
+**Closed (Phase E):** lic#610 (workspace_sweeper fallback — 699 commits, 32 files), lic#611 (re-opened during gate — 700 commits, same branch `chore/workspace-sweep-1780171200`).
+
+**Open PR count:** 2 → **0** (`org-pr-merge-completion-gate.sh` exit 0).
+
+**Handoffs:** `cad_fundamentals` skipped (`package_placement: null`).
+
+**implementation_queue:** lic/lis/li-httpd CI items **stale** (0 open PRs; briefing references closed PRs).
 
 ## Session 37 (2026-05-31 code_implementer-1780187657074)
 
