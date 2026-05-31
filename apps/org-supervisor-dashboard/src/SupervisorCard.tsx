@@ -1,4 +1,4 @@
-﻿import type { AuditRow, SupervisorKind, SupervisorSnapshot } from "./types";
+import type { AuditRow, SupervisorKind, SupervisorSnapshot } from "./types";
 import { formatWhen, healthChip, refLabel, statusClass } from "./format";
 
 export const AUDIT_KEYS: Record<SupervisorKind, keyof import("./types").DashboardPayload["audits"]> = {
@@ -71,9 +71,9 @@ export function SupervisorCard({ supervisor, audits, active }: Props) {
                 {supervisor.activeClaims.map((row, i) => (
                   <tr key={i}>
                     <td>{refLabel(row)}</td>
-                    <td>{String(row.role ?? "â€”")}</td>
-                    <td className={statusClass(row.status)}>{String(row.status ?? "â€”")}</td>
-                    <td>{String(row.workerId ?? "â€”")}</td>
+                    <td>{String(row.role ?? "—")}</td>
+                    <td className={statusClass(row.status)}>{String(row.status ?? "—")}</td>
+                    <td>{String(row.workerId ?? "—")}</td>
                   </tr>
                 ))}
               </tbody>
@@ -94,7 +94,7 @@ export function SupervisorCard({ supervisor, audits, active }: Props) {
                   <strong className={statusClass(row.status)}>{String(row.status ?? "?")}</strong>
                   <span className="meta">{formatWhen(row.ts as string | undefined)}</span>
                 </div>
-                <div>{refLabel(row)} Â· worker {String(row.workerId ?? "â€”")}</div>
+                <div>{refLabel(row)} · worker {String(row.workerId ?? "—")}</div>
                 {row.error ? <div className="status-bad">{String(row.error)}</div> : null}
               </div>
             ))}
@@ -104,7 +104,7 @@ export function SupervisorCard({ supervisor, audits, active }: Props) {
 
       <footer className="kubectl">
         <div className="meta">
-          PVC coordination: <code>{supervisor.activeFile}</code> Â· KUBECONFIG=
+          PVC coordination: <code>{supervisor.activeFile}</code> · KUBECONFIG=
           {supervisor.kubectl.kubeconfig}
         </div>
         <div className="meta">Supervisor logs</div>
@@ -118,5 +118,4 @@ export function SupervisorCard({ supervisor, audits, active }: Props) {
   );
 }
 
-export { AUDIT_KEYS };
 
