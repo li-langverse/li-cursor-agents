@@ -1,8 +1,9 @@
-import { appendFileSync } from "node:fs";
+﻿import { appendFileSync } from "node:fs";
 import type { AgentDefinition } from "../types.js";
 import type { AgentRunResult } from "../types.js";
 import { buildSwarmAttribution, type SwarmGitArtifact } from "../swarm/swarm-attribution.js";
 import { commitPushOpenPr, pushUnpublishedCommits } from "./pr.js";
+import { gitCurrentBranch } from "./git-branch.js";
 import type { CommitPushPrResult } from "./types.js";
 import {
   defaultPrBody,
@@ -35,6 +36,18 @@ function attributionForSession(
 const IMPLEMENT_RHYTHM_AGENTS = new Set(["code_implementer", "bug_fixer"]);
 
 /** Implement agents commit+push each run; open PR unless explicitly disabled. */
+
+function resolvePushBranch(session: RepoWorkflowSession): string {
+  const configured = process.env.LI_REPO_WORKFLOW_BRANCH?.trim();
+  const head = gitCurrentBranch(session.cloneDir, session.dryRun);
+  if (head && configured && head !== session.branch) {
+    return head;
+  }
+  if (head && (!configured || configured === head)) {
+    return head;
+  }
+  return session.branch;
+}
 export function shouldOpenPrAfterRun(agentId: string): boolean {
   if (!IMPLEMENT_RHYTHM_AGENTS.has(agentId)) return true;
   const v = process.env.LI_REPO_WORKFLOW_OPEN_PR?.trim().toLowerCase();
@@ -49,7 +62,7 @@ export function formatPushDigest(push: PostHookPushResult): string {
   }
   if (push.commit_sha) lines.push(`- **Commit:** \`${push.commit_sha.slice(0, 12)}\``);
   if (push.pr_url) lines.push(`- **PR:** ${push.pr_url}`);
-  if (push.pushed) lines.push(`- **Pushed:** \`${push.branch}\` → origin`);
+  if (push.pushed) lines.push(`- **Pushed:** \`${push.branch}\` â†’ origin`);
   if (push.committed && !push.pushed) lines.push(`- **Committed locally** (push skipped)`);
   if (push.skipped) lines.push(`- **Skipped:** ${push.skip_reason ?? "no changes"}`);
   if (push.error) lines.push(`- **Error:** ${push.error}`);
@@ -62,6 +75,7 @@ export function commitPushOpenPrAfterAgentRun(
   definition: AgentDefinition,
   result: AgentRunResult,
 ): PostHookPushResult {
+  session = { ...session, branch: resolvePushBranch(session) };
   const dryRun = session.dryRun;
   const skipPush = session.skipPush || process.env.LI_REPO_WORKFLOW_SKIP_PUSH === "1";
 
