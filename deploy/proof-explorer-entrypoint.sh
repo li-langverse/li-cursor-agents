@@ -45,7 +45,8 @@ sync_lic_repo() {
     git -C "$LIC_ROOT" checkout -B "$BRANCH"
   fi
   git -C "$LIC_ROOT" fetch origin "$BRANCH"
-  git -C "$LIC_ROOT" reset --hard "origin/${BRANCH}"}
+  git -C "$LIC_ROOT" reset --hard "origin/${BRANCH}"
+}
 
 sync_lic_repo
 
