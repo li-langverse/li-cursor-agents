@@ -1,4 +1,4 @@
-apiVersion: apps/v1
+﻿apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: li-ph-ml-wave13
@@ -73,7 +73,7 @@ spec:
       volumes:
         - name: workspace
           persistentVolumeClaim:
-            claimName: li-proof-explorer-workspace
+            claimName: li-ph-ml-wave13-workspace
         - name: entrypoint
           configMap:
             name: li-ph-ml-wave13-entrypoint

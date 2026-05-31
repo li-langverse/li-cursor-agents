@@ -1,0 +1,17 @@
+﻿apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: li-ph-ml-wave13-workspace
+  namespace: li-swarm
+  labels:
+    app: li-ph-ml-wave13
+    app.kubernetes.io/name: li-ph-ml-wave13
+    app.kubernetes.io/component: goal-directed-agent
+    li-langverse.io/sprint: ph-ml-program-complete
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: local-path

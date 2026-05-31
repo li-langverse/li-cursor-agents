@@ -1,4 +1,4 @@
-apiVersion: apps/v1
+﻿apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: li-pure-li-https
@@ -70,4 +70,4 @@ spec:
       volumes:
         - name: workspace
           persistentVolumeClaim:
-            claimName: li-proof-explorer-workspace
+            claimName: li-pure-li-https-workspace

@@ -17,7 +17,7 @@ fi
 
 echo "==> context: $(kubectl config current-context)"
 kubectl apply -f "$K8S/namespace.yaml"
-kubectl apply -f "$K8S/pvc-proof-explorer-workspace.yaml" 2>/dev/null || true
+kubectl apply -f "$K8S/pvc-pure-li-https-workspace.yaml"
 kubectl apply -f "$K8S/configmap-pure-li-https.yaml"
 TOKEN="${GH_TOKEN:-$GITHUB_TOKEN}"
 kubectl -n "$NS" create secret generic li-agents-secrets \
@@ -30,6 +30,6 @@ if [[ -n "${CURSOR_API_KEY:-}" ]]; then
     --dry-run=client -o yaml | kubectl apply -f -
 fi
 kubectl apply -f "$K8S/deployment-pure-li-https.yaml"
-kubectl -n "$NS" rollout status deploy/li-pure-li-https --timeout=120s || true
+kubectl -n "$NS" rollout status deploy/li-pure-li-https --timeout=180s || true
 echo "Done. Worker runs until pure-li-https-completion-gate passes."
 echo "Watch: kubectl -n $NS logs -f deploy/li-pure-li-https"

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 # Deploy PH-ML Wave 13 goal-directed worker on engine cluster (runs until program-complete gate passes).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -17,7 +17,7 @@ fi
 
 echo "==> context: $(kubectl config current-context)"
 kubectl apply -f "$K8S/namespace.yaml"
-kubectl apply -f "$K8S/pvc-proof-explorer-workspace.yaml" 2>/dev/null || true
+kubectl apply -f "$K8S/pvc-ph-ml-wave13-workspace.yaml"
 kubectl apply -f "$K8S/configmap-ph-ml-wave13.yaml"
 kubectl apply -f "$K8S/configmap-ph-ml-wave13-entrypoint.yaml"
 TOKEN="${GH_TOKEN:-$GITHUB_TOKEN}"

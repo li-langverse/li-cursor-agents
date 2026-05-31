@@ -1,0 +1,17 @@
+﻿apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: li-pure-li-https-workspace
+  namespace: li-swarm
+  labels:
+    app: li-pure-li-https
+    app.kubernetes.io/name: li-pure-li-https
+    app.kubernetes.io/component: goal-directed-agent
+    li-langverse.io/sprint: pure-li-https
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: local-path

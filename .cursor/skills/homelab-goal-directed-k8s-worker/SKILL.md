@@ -1,6 +1,6 @@
 ﻿---
 name: homelab-goal-directed-k8s-worker
-description: Deploy always-on goal-directed Cursor agents on the homelab engine Kubernetes cluster by reusing the proof-explorer container image and PVC. Use when launching K8s workers for lic sprints, pure-li-https, ph-ml, proof-explorer, li-swarm, engine node, or homelab goal-directed loops until completion gates pass.
+description: Deploy always-on goal-directed Cursor agents on the homelab engine Kubernetes cluster by reusing the proof-explorer container image with a dedicated workspace PVC per sprint. Use when launching K8s workers for lic sprints, pure-li-https, ph-ml, proof-explorer, li-swarm, engine node, or homelab goal-directed loops until completion gates pass.
 ---
 
 # Homelab goal-directed K8s worker
@@ -15,11 +15,22 @@ Do **not** add custom entrypoint ConfigMaps or override `command`. Reuse what al
 |----------|-------|
 | Image | `ghcr.io/li-langverse/li-cursor-agents:proof-explorer` |
 | Entrypoint | Image default (`proof-explorer-entrypoint.sh` → `proof-explorer-worker.js`) |
-| Workspace PVC | `li-proof-explorer-workspace` → `/workspace/lic` |
 | Secrets | `li-agents-secrets` (`GH_TOKEN`, optional `CURSOR_API_KEY`) |
 | Node | `kubernetes.io/hostname: engine` |
 
-Copy `deployment-proof-explorer.yaml` + `configmap-proof-explorer.yaml`, rename labels, change only ConfigMap data.
+Copy `deployment-proof-explorer.yaml` + `configmap-proof-explorer.yaml`, rename labels, change ConfigMap data and PVC name.
+
+## One PVC per concurrent sprint (required)
+
+Each always-on worker needs its **own** workspace PVC mounted at `/workspace`. Workers git-sync their branch into `/workspace/lic` on startup; sharing a PVC causes branch clobbering and `missing goal file` loops.
+
+| Sprint | PVC | Deployment |
+|--------|-----|------------|
+| proof-explorer | `li-proof-explorer-workspace` | `li-proof-explorer` |
+| pure-li-https | `li-pure-li-https-workspace` | `li-pure-li-https` |
+| ph-ml wave13 | `li-ph-ml-wave13-workspace` | `li-ph-ml-wave13` |
+
+Template: `deploy/k8s/engine/pvc-pure-li-https-workspace.yaml` (10Gi, `local-path`, `ReadWriteOnce`).
 
 ## ConfigMap essentials
 
@@ -52,10 +63,11 @@ LI_SDK_TERMINAL_STREAM: "1"
 
 ## Deploy
 
-Add three files under `deploy/k8s/engine/`:
+Add four files under `deploy/k8s/engine/`:
 
+- `pvc-<sprint>-workspace.yaml` — dedicated PVC (do not share across concurrent workers)
 - `configmap-<sprint>.yaml` — env only
-- `deployment-<sprint>.yaml` — no `command`, no entrypoint volume
+- `deployment-<sprint>.yaml` — no `command`, no entrypoint volume, sprint-specific `claimName`
 - `scripts/setup-engine-k8s-<sprint>.sh` — apply namespace, PVC, configmap, secrets, deployment
 
 ```bash
@@ -68,13 +80,16 @@ bash scripts/setup-engine-k8s-pure-li-https.sh
 ## Verify
 
 ```bash
-kubectl -n li-swarm get deploy,po -l app=li-pure-li-https
+kubectl -n li-swarm get deploy,po,pvc | grep pure-li-https
 kubectl -n li-swarm logs -f deploy/li-pure-li-https
+kubectl -n li-swarm exec deploy/li-pure-li-https -- test -f /workspace/lic/data/goal-directed-sprints/pure-li-https.md && echo OK
+kubectl -n li-swarm exec deploy/li-pure-li-https -- git -C /workspace/lic branch --show-current
 ```
 
 Healthy startup:
 
 ```
+proof-explorer-entrypoint: cloning ... branch=cursor/pure-li-https
 proof-explorer-entrypoint: starting worker agents=/app lic=/workspace/lic
 always-on loop started ... handoff=0
 spawn: bash --agent code_implementer --goal-file .../pure-li-https.md
@@ -85,18 +100,18 @@ spawn: bash --agent code_implementer --goal-file .../pure-li-https.md
 
 ## Anti-patterns
 
+- **Sharing `li-proof-explorer-workspace` across concurrent deploys** — branch checkout races; goal file disappears
 - Custom `command: ["/bin/bash", "/scripts/entrypoint.sh"]` + ConfigMap entrypoint — duplicates image entrypoint
 - Missing `LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE` — LLVM 22 preflight error before agent runs
 - Missing `LI_PROOF_EXPLORER_PHASE_HANDOFF=0` — worker exits thinking program complete
-- New PVC per sprint — share `li-proof-explorer-workspace`
 
 ## Examples
 
-| Sprint | Deployment | Setup script |
-|--------|------------|--------------|
-| pure-li-https | `li-pure-li-https` | `setup-engine-k8s-pure-li-https.sh` |
-| proof-explorer | `li-proof-explorer` | built into image defaults |
-| ph-ml wave13 | `li-ph-ml-wave13` | `setup-engine-k8s-ph-ml-wave13.sh` |
+| Sprint | PVC | Setup script |
+|--------|-----|--------------|
+| pure-li-https | `li-pure-li-https-workspace` | `setup-engine-k8s-pure-li-https.sh` |
+| proof-explorer | `li-proof-explorer-workspace` | built into image defaults |
+| ph-ml wave13 | `li-ph-ml-wave13-workspace` | `setup-engine-k8s-ph-ml-wave13.sh` |
 
 ## Related
 

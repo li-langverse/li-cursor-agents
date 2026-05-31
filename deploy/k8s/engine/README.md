@@ -1,4 +1,4 @@
-# Engine cluster — org issue worker
+﻿# Engine cluster â€” org issue worker
 
 Runs **org-issue-zero** on your Kubernetes **engine** node pool: classify open issues, close high-confidence rows with **auditable GitHub comments** + `org-issue-close-audit.jsonl`.
 
@@ -44,8 +44,8 @@ Update `image:` in the YAML if you use a private registry.
 
 ## What each run does
 
-1. `org-classify-open-issues.py` → `org-issue-queue.json`
-2. `org-close-issue.py --from-queue --limit 10` → comment + close + JSONL audit
+1. `org-classify-open-issues.py` â†’ `org-issue-queue.json`
+2. `org-close-issue.py --from-queue --limit 10` â†’ comment + close + JSONL audit
 3. Logs `open_issues=N` before/after
 
 ## Env (ConfigMap)
@@ -106,3 +106,11 @@ kubectl -n li-swarm logs deploy/li-org-issue-supervisor --tail=50
 - Gate: `lic/scripts/ph-ml-program-complete-gates.sh` (loop max 0 until pass)
 - Deploy: `bash scripts/setup-engine-k8s-ph-ml-wave13.sh` (requires `KUBECONFIG`, `GH_TOKEN`, `CURSOR_API_KEY`)
 - Logs: `kubectl -n li-swarm logs -f deploy/li-ph-ml-wave13`
+### Pure Li HTTPS
+
+- Deployment: `li-pure-li-https` (namespace `li-swarm`, node `engine`)
+- PVC: `li-pure-li-https-workspace` (dedicated — do not share with other sprints)
+- Goal: `lic/data/goal-directed-sprints/pure-li-https.md`
+- Deploy: `bash scripts/setup-engine-k8s-pure-li-https.sh` (requires `KUBECONFIG`, `GH_TOKEN`, `CURSOR_API_KEY`)
+- Logs: `kubectl -n li-swarm logs -f deploy/li-pure-li-https`
+
