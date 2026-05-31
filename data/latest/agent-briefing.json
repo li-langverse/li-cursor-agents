@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-31T01:00Z",
+  "generated_at": "2026-05-31T01:46Z",
   "role": "preflight_for_cursor_agents",
   "note": "Intelligence (web, review, gaps) runs in Cursor Automations — not in this file. plan_audit needs LIC_ROOT (sibling ../lic or CI lic@dev checkout); catalog path gaps skip path=unknown and catalog_lifecycle=planned.",
   "lic_root": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
@@ -80,7 +80,7 @@
     }
   },
   "issue_triage": {
-    "generated_at": "2026-05-31T00:59Z",
+    "generated_at": "2026-05-31T01:45Z",
     "vision_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/vision-and-roadmap.md",
     "skill": "plan-feature-from-issue (see .cursor/skills/)",
     "summary": {
@@ -1668,7 +1668,7 @@
     ]
   },
   "ecosystem_audit": {
-    "generated_at": "2026-05-31T00:59Z",
+    "generated_at": "2026-05-31T01:45Z",
     "vision": {
       "master_plan": "https://github.com/li-langverse/lic/blob/main/docs/superpowers/plans/2026-05-14-li-master-plan.md",
       "benchmark_goal": "Li ≤1.2× cpp (tier-1/2); beat HPC SOTA everywhere — PH-5b, PH-7e pure-Li codegen",
@@ -1677,24 +1677,13 @@
     },
     "metrics": {
       "open_prs": 1,
-      "failed_prs": 1,
+      "failed_prs": 0,
       "ready_prs": 0,
       "repos_missing_ci_main": 0,
       "repos_without_live_pages": 0,
       "repos_with_live_pages": 12
     },
-    "failed_prs": [
-      {
-        "repo": "lic",
-        "number": 612,
-        "title": "chore(lic): workspace sweep fallback",
-        "url": "https://github.com/li-langverse/lic/pull/612",
-        "base": "main",
-        "ci": "fail",
-        "draft": false,
-        "ready": false
-      }
-    ],
+    "failed_prs": [],
     "ready_prs": [],
     "missing_ci_on_main": [],
     "repos_without_live_docs": [],
@@ -2110,13 +2099,6 @@
       ]
     },
     "recommended_actions": [
-      {
-        "priority": "P0",
-        "action": "Fix failing PR CI before new feature work",
-        "prs": [
-          "lic#612"
-        ]
-      },
       {
         "priority": "P1",
         "action": "Plan completion debt — run plan-completion-audit automation",
@@ -2696,7 +2678,7 @@
     ]
   },
   "org_ci_audit": {
-    "generated_at": "2026-05-31T01:00Z",
+    "generated_at": "2026-05-31T01:45Z",
     "org": "li-langverse",
     "required_workflow": "ci.yml",
     "default_branch_policy": "main",
@@ -3319,7 +3301,7 @@
     "lic_monorepo_hint": "Run lic/scripts/ensure-package-ci.sh before push-official-package-repo.sh"
   },
   "org_agent_kit_audit": {
-    "generated_at": "2026-05-31T01:00Z",
+    "generated_at": "2026-05-31T01:46Z",
     "org": "li-langverse",
     "canonical_stamp": "1.3.5+6018e18bf2ed91f4",
     "roadmap_kit": "/home/s4il0r/Documents/Cursor/li-langverse/roadmap/agent-kit",
@@ -4238,7 +4220,7 @@
     ]
   },
   "merge_plan": {
-    "generated_at": "2026-05-31T01:00Z",
+    "generated_at": "2026-05-31T01:46Z",
     "vision_order": "package CI / mirrors → benchmarks → lic → lip/lit/lis → roadmap",
     "ordering_rules": [
       "Repo tier: mirrors/httpd → benchmarks → lic → lip/lit/lis → roadmap (roadmap last)",
@@ -4263,8 +4245,8 @@
       {
         "rank": 1,
         "repo": "lic",
-        "number": 612,
-        "url": "https://github.com/li-langverse/lic/pull/612",
+        "number": 617,
+        "url": "https://github.com/li-langverse/lic/pull/617",
         "title": "chore(lic): workspace sweep fallback",
         "merge_approved": false,
         "gate_ready": false,
@@ -4279,7 +4261,7 @@
     "warnings": []
   },
   "pr_program": {
-    "generated_at": "2026-05-31T00:56Z",
+    "generated_at": "2026-05-31T01:45Z",
     "merge_first": null,
     "summary": {
       "open_prs": 1,
@@ -4291,18 +4273,18 @@
     "all_open": [
       {
         "repo": "lic",
-        "number": 612,
+        "number": 617,
         "title": "chore(lic): workspace sweep fallback",
-        "url": "https://github.com/li-langverse/lic/pull/612",
+        "url": "https://github.com/li-langverse/lic/pull/617",
         "base": "main",
-        "ci": "fail",
+        "ci": "pending",
         "draft": false,
         "labels": [],
         "merge_approved": false,
         "gate_ready_with_approval": false,
         "gate_blockers_if_approved": [
           "merge_approved_label: missing label `merge-approved` (reviewer adds after standards pass)",
-          "ci_green: CI status is `fail` and no fresh local-ci pass — run: python3 scripts/local-ci-sweep.py --repo lic --pr 612"
+          "ci_green: CI status is `pending` and no fresh local-ci pass — run: python3 scripts/local-ci-sweep.py --repo lic --pr 617"
         ],
         "priority_score": 130
       }
@@ -4310,12 +4292,12 @@
     "plan_warnings": []
   },
   "pr_branch_hygiene": {
-    "generated_at": "2026-05-31T00:59Z",
+    "generated_at": "2026-05-31T01:04Z",
     "org": "li-langverse",
     "summary": {
       "repos_scanned": 12,
       "branches_needing_pr": 153,
-      "prs_recommended_close": 0,
+      "prs_recommended_close": 2,
       "prs_safe_close_now": 0
     },
     "branches_needing_pr": [
@@ -5544,7 +5526,26 @@
         "suggested_title": "chore(li-language): sync branch fix/ci-dev-pr3-sync"
       }
     ],
-    "prs_recommended_close": []
+    "prs_recommended_close": [
+      {
+        "repo": "benchmarks",
+        "number": 263,
+        "url": "https://github.com/li-langverse/benchmarks/pull/263",
+        "reason": "draft PR — confirm abandoned before close",
+        "action": "close",
+        "safe_now": false,
+        "source": "draft"
+      },
+      {
+        "repo": "benchmarks",
+        "number": 262,
+        "url": "https://github.com/li-langverse/benchmarks/pull/262",
+        "reason": "draft PR — confirm abandoned before close",
+        "action": "close",
+        "safe_now": false,
+        "source": "draft"
+      }
+    ]
   },
   "ci_bug_triage": {
     "generated_at": "2026-05-31T00:59Z",
@@ -5598,7 +5599,7 @@
   },
   "security_cwe_audit": null,
   "cwe_feed_delta": {
-    "generated_at": "2026-05-31T01:00Z",
+    "generated_at": "2026-05-31T01:46Z",
     "new_cwes": [],
     "missing_in_catalog": [
       "CWE-79",
@@ -5685,7 +5686,7 @@
     ]
   },
   "workspace_dirty_sweep": {
-    "generated_at": "2026-05-31T01:00Z",
+    "generated_at": "2026-05-31T01:46Z",
     "ecosystem_root": "/home/s4il0r/Documents/Cursor/li-langverse",
     "dirty_count": 1,
     "dirty_repos": [
@@ -5693,17 +5694,11 @@
         "path": "/home/s4il0r/Documents/Cursor/li-langverse/lic",
         "repo": "lic",
         "org": "li-langverse",
-        "branch": "chore/agent-bench_improver-matmul-blocked-20260530",
-        "changed_files": 8,
+        "branch": "HEAD",
+        "changed_files": 2,
         "safe_files": [
-          "enchmarks/harness/bench.py",
-          "benchmarks/tier1_micro/matmul_blocked/li/main.li",
-          "benchmarks/tier5_http/third_party/nginx",
-          "data/goal-directed-agents/snapshot.json",
-          "data/goal-directed-agents/watch.log",
-          "data/swarm-gap-registry/registry.yaml",
-          "data/workspaces/li-langverse/lic/code-implementer-wrk-soak/repo",
-          "docs/ecosystem/orchestrator-notes/2026-05-31-orch-r3-missing-package-sweep.md"
+          "enchmarks/tier5_http/third_party/nginx",
+          "data/workspaces/"
         ],
         "test_commands": [
           "./li-tests/run_all.sh"
@@ -5757,6 +5752,10 @@
     {
       "agent": "pr_branch_opener",
       "reason": "153 branch(es) pushed without open PR"
+    },
+    {
+      "agent": "pr_alignment",
+      "reason": "2 PR(s) flagged for close/supersede review"
     },
     {
       "agent": "bug_fixer",
@@ -6090,7 +6089,7 @@
   "agent_incomplete_runs": [],
   "agent_pr_deliverable_failures": [],
   "org_roadmap": {
-    "loaded_at": "2026-05-31T01:00Z",
+    "loaded_at": "2026-05-31T01:46Z",
     "vision_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/vision-and-roadmap.md",
     "engineering_standards_url": "https://github.com/li-langverse/roadmap/blob/main/docs/ecosystem/engineering-standards.md",
     "master_plan_url": "https://github.com/li-langverse/lic/blob/main/docs/superpowers/plans/2026-05-14-li-master-plan.md",
@@ -6111,11 +6110,22 @@
     "model": "agentron-heap-v1",
     "reference": "https://docs.agentron.rocks/concepts/heap/",
     "priority_order": [
+      "coord_pull_requests",
       "coord_governance",
       "coord_ecosystem",
       "coord_platform"
     ],
     "layers": [
+      {
+        "coordinator": "coord_pull_requests",
+        "name": "PR coordinator",
+        "agents": [
+          {
+            "agent": "pr_alignment",
+            "reason": "2 PR(s) flagged for close/supersede review"
+          }
+        ]
+      },
       {
         "coordinator": "coord_governance",
         "name": "Governance coordinator",
@@ -6156,6 +6166,12 @@
       }
     ],
     "flat_tasks": [
+      {
+        "coordinator": "coord_pull_requests",
+        "agent": "pr_alignment",
+        "reason": "2 PR(s) flagged for close/supersede review",
+        "priority": 10
+      },
       {
         "coordinator": "coord_governance",
         "agent": "plan_verifier",
@@ -6295,8 +6311,8 @@
     "active_research_session": "numerics_researcher:numerics_sota (cycle 1)",
     "research_lane_enabled": true,
     "implement_lane_enabled": true,
-    "last_research_tick_at": "2026-05-31T01:00:46.723Z",
-    "last_implement_tick_at": "2026-05-31T00:57:36.938Z"
+    "last_research_tick_at": "2026-05-31T01:43:26.446Z",
+    "last_implement_tick_at": "2026-05-31T01:04:00.811Z"
   },
   "research_goals_status": [
     {
@@ -6489,7 +6505,7 @@
       "title": "Swarm gap orchestration — registry, backlog apply, handoffs",
       "agent": "swarm_observer",
       "priority": 10,
-      "last_run_at": "2026-05-31T00:59:42.530Z",
+      "last_run_at": "2026-05-31T01:04:00.736Z",
       "eligible": false
     },
     {
@@ -6512,6 +6528,6 @@
     "missing_north_star_fit": [],
     "invalid_north_star_fit": []
   },
-  "swarm_enriched_at": "2026-05-31T01:00:48.676Z",
-  "swarm_recommendations_merged_at": "2026-05-31T01:00:48.676Z"
+  "swarm_enriched_at": "2026-05-31T01:47:28.055Z",
+  "swarm_recommendations_merged_at": "2026-05-31T01:47:28.055Z"
 }
