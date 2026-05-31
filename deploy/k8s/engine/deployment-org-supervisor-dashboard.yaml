@@ -1,0 +1,82 @@
+# Org supervisor dashboard: Vite UI + Node API on port 9478 (Supabase + sprint PVC fallback).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: li-org-supervisor-dashboard
+  namespace: li-swarm
+  labels:
+    app: li-org-supervisor-dashboard
+    li-langverse.io/role: org-supervisor-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: li-org-supervisor-dashboard
+  template:
+    metadata:
+      labels:
+        app: li-org-supervisor-dashboard
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull
+      nodeSelector:
+        li-langverse.io/node-pool: engine
+      containers:
+        - name: dashboard
+          image: ghcr.io/li-langverse/li-cursor-agents:latest
+          imagePullPolicy: Always
+          command:
+            - node
+            - apps/org-supervisor-dashboard/server/index.mjs
+            - --serve-static
+          ports:
+            - name: http
+              containerPort: 9478
+          envFrom:
+            - configMapRef:
+                name: li-org-supervisor-dashboard
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+            - name: SUPABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: SUPABASE_URL
+                  optional: true
+            - name: SUPABASE_SERVICE_ROLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: SUPABASE_SERVICE_ROLE_KEY
+                  optional: true
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          volumeMounts:
+            - name: sprint-data
+              mountPath: /app/data/goal-directed-sprints
+              readOnly: true
+      volumes:
+        - name: sprint-data
+          persistentVolumeClaim:
+            claimName: li-agents-sprint-data

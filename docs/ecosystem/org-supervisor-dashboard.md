@@ -92,3 +92,36 @@ Root npm script: `dashboard:org-supervisors`.
 ## UX notes
 
 Dark theme aligned with `dashboard-ui` tokens. Layout follows the ux-harness web_gui pattern: status at a glance, scannable tables, kubectl hints at the bottom of each column. No auth in v1 (local dev only).
+## Homelab (K8s)
+
+Deployed on the engine **k3s** cluster (namespace `li-swarm`).
+
+| Resource | Name |
+|----------|------|
+| Deployment | `li-org-supervisor-dashboard` |
+| Service | `li-org-supervisor-dashboard` (NodePort **30478** -> container **9478**) |
+| In-cluster DNS | `http://li-org-supervisor-dashboard.li-swarm.svc.cluster.local:9478` |
+| LAN (any node) | `http://<node-ip>:30478` (engine node: **http://192.168.10.32:30478**) |
+
+Manifests: `deploy/k8s/engine/deployment-org-supervisor-dashboard.yaml`, `service-org-supervisor-dashboard.yaml`, `configmap-org-supervisor-dashboard.yaml`.
+
+Image: `ghcr.io/li-langverse/li-cursor-agents:latest` (dashboard static + API built in `deploy/Dockerfile`).
+
+Apply:
+
+```powershell
+$env:KUBECONFIG = "C:\Users\Julian\.kube\config-homelab"
+kubectl apply -f deploy/k8s/engine/configmap-org-supervisor-dashboard.yaml `
+  -f deploy/k8s/engine/deployment-org-supervisor-dashboard.yaml `
+  -f deploy/k8s/engine/service-org-supervisor-dashboard.yaml
+```
+
+Port-forward (ClusterIP-style access without NodePort):
+
+```powershell
+kubectl -n li-swarm port-forward svc/li-org-supervisor-dashboard 9478:9478
+```
+
+Then open **http://127.0.0.1:9478**.
+
+Sprint file fallback reads PVC `li-agents-sprint-data` at `/app/data/goal-directed-sprints` (read-only). Optional Supabase keys on secret `li-agents-secrets` (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`) enable DB-backed cycles when present.

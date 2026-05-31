@@ -8,6 +8,7 @@ on:
       - "deploy/Dockerfile"
       - "src/cli/org-issue-worker.ts"
       - "src/**"
+      - "apps/org-supervisor-dashboard/**"
 
 permissions:
   contents: read

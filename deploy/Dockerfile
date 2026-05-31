@@ -11,7 +11,11 @@ COPY package.json package-lock.json* ./
 RUN npm ci
 
 COPY . .
-RUN npm run build && npm prune --omit=dev
+RUN npm run build \
+  && npm --prefix apps/org-supervisor-dashboard ci \
+  && npm --prefix apps/org-supervisor-dashboard run build \
+  && npm prune --omit=dev \
+  && npm --prefix apps/org-supervisor-dashboard prune --omit=dev
 
 ENV NODE_ENV=production
 # Default: org-issue worker one-shot (CronJob overrides command).
