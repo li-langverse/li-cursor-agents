@@ -45,7 +45,7 @@ For each issue in `needs_plan` + top 2 `candidates` for **this** repo:
 
 **Language/compiler features** → plan lives in **lic**, even if issue is on another repo.
 
-**Benchmarks** → plan must say harness stays in **lic**; catalog-only change is not sufficient.
+**Benchmarks** → harness and workloads live in **li-langverse/benchmarks**; **lic** is toolchain-only. Catalog-only change is not sufficient.
 
 ---
 

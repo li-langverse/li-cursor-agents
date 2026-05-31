@@ -13,6 +13,7 @@ export type AgentId =
   | "bug_fixer"
   | "security_auditor"
   | "issue_planner"
+  | "org_issue_triage"
   | "pr_branch_opener"
   | "pr_alignment"
   | "pr_reviewer"
@@ -146,3 +147,4 @@ export interface AgentBackend {
     options: AgentRunOptions,
   ): Promise<AgentRunResult>;
 }
+

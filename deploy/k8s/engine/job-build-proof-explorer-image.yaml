@@ -1,0 +1,84 @@
+# One-shot: clone li-cursor-agents, build proof-explorer image with Podman, push to GHCR.
+# Requires li-agents-secrets (GH_TOKEN with packages:write) and ghcr-li-langverse pull secret.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: build-proof-explorer-image
+  namespace: li-swarm
+  labels:
+    app: li-proof-explorer
+    app.kubernetes.io/component: image-build
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 2
+  template:
+    metadata:
+      labels:
+        app: build-proof-explorer-image
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/hostname: engine
+      volumes:
+        - name: workspace
+          emptyDir: {}
+        - name: podman-storage
+          emptyDir: {}
+      initContainers:
+        - name: git-clone
+          image: alpine/git:latest
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+            - name: GIT_REF
+              value: "main"
+            - name: GIT_REPO
+              value: "https://github.com/li-langverse/li-cursor-agents.git"
+          command:
+            - sh
+            - -lc
+            - |
+              set -eu
+              ref="${GIT_REF:-main}"
+              dest=/workspace/li-cursor-agents
+              url="${GIT_REPO/https:\/\//https://x-access-token:${GH_TOKEN}@}"
+              git clone --depth 1 --branch "$ref" "$url" "$dest" \
+                || git clone --depth 1 "$url" "$dest"
+              test -f "$dest/deploy/Dockerfile.proof-explorer"
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+      containers:
+        - name: podman
+          image: quay.io/podman/stable:v5.4.2
+          securityContext:
+            privileged: true
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+            - name: IMAGE
+              value: ghcr.io/li-langverse/li-cursor-agents:proof-explorer
+            - name: STORAGE_DRIVER
+              value: vfs
+            - name: BUILDAH_ISOLATION
+              value: chroot
+          command:
+            - bash
+            - -lc
+            - |
+              set -euo pipefail
+              cd /workspace/li-cursor-agents
+              echo "$GH_TOKEN" | podman login ghcr.io -u li-langverse --password-stdin
+              podman build -f deploy/Dockerfile.proof-explorer -t "$IMAGE" .
+              podman push "$IMAGE"
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: podman-storage
+              mountPath: /var/lib/containers

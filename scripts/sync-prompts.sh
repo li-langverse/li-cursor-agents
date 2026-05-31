@@ -11,7 +11,7 @@ SRC="$AUTOMATIONS"
 DST="$ROOT/prompts"
 mkdir -p "$DST"
 for f in agent-orchestrator.md ecosystem-explorer.md implementation-gaps-agent.md \
-  plan-completion-audit.md issue-feature-planner.md issue-hygiene-agent.md pr-alignment-agent.md \
+  plan-completion-audit.md issue-feature-planner.md issue-hygiene-agent.md org-issue-triage-agent.md pr-alignment-agent.md \
   pr-review-agent.md numerics-research-cycle.md ecosystem-health.md; do
   if [[ -f "$SRC/$f" ]]; then
     cp "$SRC/$f" "$DST/$f"

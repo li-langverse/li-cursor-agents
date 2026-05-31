@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: li-org-issue-worker
+  namespace: li-swarm
+data:
+  LI_ORG_ISSUE_WORKER_ALWAYS_ON: "1"
+  LI_ORG_ISSUE_WORKER_INTERVAL_MS: "1800000"
+  LI_ORG_ISSUE_WORKER_CLOSE_LIMIT: "10"
+  LI_CONTROL_PLANE_STORE: "disk"
+  NODE_ENV: "production"

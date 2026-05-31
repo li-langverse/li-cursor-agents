@@ -1,0 +1,48 @@
+# Always-on org issue worker loop (optional; use CronJob if you prefer batch only).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: li-org-issue-worker
+  namespace: li-swarm
+  labels:
+    app: li-org-issue-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: li-org-issue-worker
+  template:
+    metadata:
+      labels:
+        app: li-org-issue-worker
+    spec:
+      nodeSelector:
+        li-langverse.io/node-pool: engine
+      containers:
+        - name: worker
+          image: ghcr.io/li-langverse/li-cursor-agents:latest
+          imagePullPolicy: Always
+          command: ["node", "dist/cli/org-issue-worker.js", "start"]
+          envFrom:
+            - configMapRef:
+                name: li-org-issue-worker
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+          volumeMounts:
+            - name: sprint-data
+              mountPath: /app/data/goal-directed-sprints
+      volumes:
+        - name: sprint-data
+          persistentVolumeClaim:
+            claimName: li-agents-sprint-data

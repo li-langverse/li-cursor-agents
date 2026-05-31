@@ -107,6 +107,18 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     cursorSdkMode: "plan",
   },
   {
+    id: "org_issue_triage",
+    name: "Org issue triage",
+    description:
+      "Org-wide issue zero sprint: classify, implement, or close with auditable reason comments.",
+    category: "governance",
+    promptFile: "org-issue-triage-agent.md",
+    skills: [],
+    needsWeb: false,
+    preflightKeys: ["briefing"],
+    cursorSdkMode: "agent",
+  },
+  {
     id: "pr_branch_opener",
     name: "PR branch opener",
     description: "Opens PRs for pushed branches that have no open pull request yet.",
@@ -462,3 +474,4 @@ export function listAgentsPublic(): Array<{
     skills,
   }));
 }
+
