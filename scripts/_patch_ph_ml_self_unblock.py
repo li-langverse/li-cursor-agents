@@ -1,4 +1,69 @@
-apiVersion: v1
+#!/usr/bin/env python3
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+
+LIC_SYNC = ROOT / "src/proof-explorer/proof-explorer-lic-sync.ts"
+LIC_SYNC.write_text(
+    """import { agentLog } from "../agent-log.js";
+import { workerConsole } from "../worker/worker-console.js";
+import { healProofExplorerWorkspace, syncProofExplorerLicSmart } from "./proof-explorer-workspace-heal.js";
+
+/** Pull agent commits from origin into the PVC-mounted lic workspace (gate cwd). */
+export async function syncProofExplorerLicFromOrigin(): Promise<void> {
+  const sync = syncProofExplorerLicSmart();
+  if (!sync.ok) {
+    const msg = sync.detail || "lic sync failed";
+    agentLog("li-proof-explorer", "WARN", `lic sync: ${msg}`);
+    workerConsole("li-proof-explorer", "warn", `lic sync failed: ${msg}`);
+    return;
+  }
+  workerConsole(
+    "li-proof-explorer",
+    "info",
+    `lic sync OK branch=${sync.branch} ${sync.detail}`.trim(),
+  );
+}
+
+/** Full workspace self-heal after each loop iteration (lic, benchmarks, lic build). */
+export async function healProofExplorerWorkspaceFromOrigin(): Promise<void> {
+  try {
+    healProofExplorerWorkspace();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    agentLog("li-proof-explorer", "WARN", `workspace heal: ${msg}`);
+    workerConsole("li-proof-explorer", "warn", `workspace heal: ${msg}`);
+  }
+}
+""",
+    encoding="utf-8",
+)
+print("updated lic-sync.ts")
+
+WORKER = ROOT / "src/proof-explorer/proof-explorer-worker-loop.ts"
+text = WORKER.read_text(encoding="utf-8")
+text = text.replace(
+    'import { syncProofExplorerLicFromOrigin } from "./proof-explorer-lic-sync.js";',
+    """import {
+  healProofExplorerWorkspaceFromOrigin,
+  syncProofExplorerLicFromOrigin,
+} from "./proof-explorer-lic-sync.js";
+import { healProofExplorerWorkspace } from "./proof-explorer-workspace-heal.js";""",
+)
+text = text.replace(
+    "  while (!signal.aborted) {\n    try {\n      const active = await resolveActivePhase();",
+    "  while (!signal.aborted) {\n    try {\n      healProofExplorerWorkspace();\n      const active = await resolveActivePhase();",
+)
+text = text.replace(
+    "      await syncProofExplorerLicFromOrigin();",
+    "      await healProofExplorerWorkspaceFromOrigin();",
+)
+WORKER.write_text(text, encoding="utf-8")
+print("updated worker-loop.ts")
+
+ENTRYPOINT = ROOT / "deploy/k8s/engine/configmap-ph-ml-wave13-entrypoint.yaml"
+ENTRYPOINT.write_text(
+    """apiVersion: v1
 kind: ConfigMap
 metadata:
   name: li-ph-ml-wave13-entrypoint
@@ -121,7 +186,10 @@ data:
         return 0
       fi
       echo "ph-ml-wave13-entrypoint: installing ph-ml competitive python deps (numpy/torch/jax; may take several minutes)"
-      python3 -m pip install --user --break-system-packages         -r "${LIC_ROOT}/scripts/requirements-ph-ml-competitive.txt"         -r "${LIC_ROOT}/scripts/requirements-ph-ml-wave12-rl.txt"         >/tmp/ph-ml-pip.log 2>&1 || {
+      python3 -m pip install --user --break-system-packages \
+        -r "${LIC_ROOT}/scripts/requirements-ph-ml-competitive.txt" \
+        -r "${LIC_ROOT}/scripts/requirements-ph-ml-wave12-rl.txt" \
+        >/tmp/ph-ml-pip.log 2>&1 || {
         echo "ph-ml-wave13-entrypoint: WARN pip install failed; see /tmp/ph-ml-pip.log" >&2
         tail -20 /tmp/ph-ml-pip.log >&2 || true
         return 0
@@ -140,3 +208,59 @@ data:
     export LI_PROOF_EXPLORER_LIC_ROOT="$LIC_ROOT" LI_CURSOR_AGENTS_ROOT="$AGENTS_ROOT" LIC_ROOT="$LIC_ROOT" BENCHMARKS_ROOT="$BENCHMARKS_ROOT"
     export LI_PROOF_EXPLORER_GOAL_FILE="$GOAL_REL"
     exec node "${AGENTS_ROOT}/dist/cli/proof-explorer-worker.js" start
+""",
+    encoding="utf-8",
+)
+print("updated entrypoint configmap")
+
+CONFIGMAP = ROOT / "deploy/k8s/engine/configmap-ph-ml-wave13.yaml"
+CONFIGMAP.write_text(
+    """apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: li-ph-ml-wave13
+  namespace: li-swarm
+  labels:
+    app: li-ph-ml-wave13
+    app.kubernetes.io/name: li-ph-ml-wave13
+    app.kubernetes.io/component: goal-directed-agent
+    li-langverse.io/sprint: ph-ml-program-complete
+  annotations:
+    li-langverse.io/gate-honesty: >-
+      PH_ML_REQUIRE_SB3, PH_ML_REQUIRE_RAY, PH_ML_REQUIRE_GPU are opt-in only.
+      Do NOT set them in this ConfigMap unless you require executed:true on competitor
+      benches. Default honesty gate passes with declared deps + live_proxy without GPU.
+data:
+  LI_PROOF_EXPLORER_ALWAYS_ON: "1"
+  LI_PROOF_EXPLORER_PHASE_HANDOFF: "0"
+  LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/ph-ml-dl-rl-llm-wave13-final.md"
+  LI_PROOF_EXPLORER_LIC_ROOT: "/workspace/lic"
+  BENCHMARKS_ROOT: "/workspace/benchmarks"
+  LI_CURSOR_AGENTS_ROOT: "/app"
+  LI_PROOF_EXPLORER_WORKFLOW_REPO: "lic"
+  LI_PROOF_EXPLORER_BRANCH: "main"
+  LI_PROOF_EXPLORER_BRANCH_FALLBACKS: "main,cursor/ph-ml-program-complete"
+  LI_GITHUB_ORG: "li-langverse"
+  LI_PROOF_EXPLORER_LIC_REPO: "lic"
+  LI_BENCHMARKS_REPO: "benchmarks"
+  LI_BENCHMARKS_BRANCH: "main"
+  LI_PROOF_EXPLORER_LOOP_SLEEP_SEC: "90"
+  LI_PROOF_EXPLORER_AGENT: "code_implementer"
+  LI_PROOF_EXPLORER_LOOP_MAX: "0"
+  LI_CONTROL_PLANE_STORE: "disk"
+  LI_SDK_TERMINAL_STREAM: "1"
+  LI_SWARM_EXTERNAL: "1"
+  NODE_ENV: "production"
+""",
+    encoding="utf-8",
+)
+print("updated configmap")
+
+DEPLOY = ROOT / "deploy/k8s/engine/deployment-ph-ml-wave13.yaml"
+dt = DEPLOY.read_text(encoding="utf-8")
+dt = dt.replace(
+    "image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22-llvm22",
+    "image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22",
+)
+DEPLOY.write_text(dt, encoding="utf-8")
+print("updated deployment image tag")
