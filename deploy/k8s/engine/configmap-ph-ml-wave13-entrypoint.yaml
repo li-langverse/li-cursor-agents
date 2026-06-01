@@ -15,32 +15,63 @@ data:
     ORG="${LI_GITHUB_ORG:-li-langverse}"
     REPO_LIC="${LI_PROOF_EXPLORER_LIC_REPO:-lic}"
     REPO_BENCHMARKS="${LI_BENCHMARKS_REPO:-benchmarks}"
-    BRANCH="${LI_PROOF_EXPLORER_BRANCH:-cursor/ph-ml-program-complete}"
+    PREFERRED_BRANCH="${LI_PROOF_EXPLORER_BRANCH:-main}"
+    FALLBACK_RAW="${LI_PROOF_EXPLORER_BRANCH_FALLBACKS:-main,cursor/ph-ml-program-complete}"
     BENCHMARKS_BRANCH="${LI_BENCHMARKS_BRANCH:-main}"
     LIC_ROOT="${LI_PROOF_EXPLORER_LIC_ROOT:-/workspace/lic}"
     BENCHMARKS_ROOT="${BENCHMARKS_ROOT:-/workspace/benchmarks}"
     AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
     GOAL_REL="${LI_PROOF_EXPLORER_GOAL_FILE:-data/goal-directed-sprints/ph-ml-dl-rl-llm-wave13-final.md}"
-    echo "ph-ml-wave13-entrypoint: branch=${BRANCH} goal=${GOAL_REL}"
+    echo "ph-ml-wave13-entrypoint: preferred_branch=${PREFERRED_BRANCH} goal=${GOAL_REL}"
     export GH_TOKEN GITHUB_TOKEN
     echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
     gh auth setup-git 2>/dev/null || true
     git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
     git config --global user.email "${LI_GIT_USER_EMAIL:-goal-worker@li-langverse.dev}"
     git config --global user.name "${LI_GIT_USER_NAME:-li-goal-worker}"
-    mkdir -p "$(dirname "$LIC_ROOT")"
-    if [[ ! -d "$LIC_ROOT/.git" ]]; then
-      gh repo clone "${ORG}/${REPO_LIC}" "$LIC_ROOT" -- --branch "$BRANCH" 2>/dev/null || {
-        rm -rf "$LIC_ROOT"
-        gh repo clone "${ORG}/${REPO_LIC}" "$LIC_ROOT"
-        git -C "$LIC_ROOT" checkout -B "$BRANCH"
-      }
-    else
+
+    branch_candidates() {
+      local seen="" b
+      for b in "$PREFERRED_BRANCH" ${FALLBACK_RAW//,/ }; do
+        b="${b// /}"
+        [[ -z "$b" ]] && continue
+        [[ " $seen " == *" $b "* ]] && continue
+        seen="$seen $b"
+        echo "$b"
+      done
+    }
+
+    sync_lic_repo() {
+      mkdir -p "$(dirname "$LIC_ROOT")"
+      if [[ ! -d "$LIC_ROOT/.git" ]]; then
+        echo "ph-ml-wave13-entrypoint: cloning ${ORG}/${REPO_LIC}"
+        gh repo clone "${ORG}/${REPO_LIC}" "$LIC_ROOT" || {
+          rm -rf "$LIC_ROOT"
+          gh repo clone "${ORG}/${REPO_LIC}" "$LIC_ROOT"
+        }
+      fi
       git -C "$LIC_ROOT" fetch origin --prune
-      git -C "$LIC_ROOT" checkout -f -B "$BRANCH" "origin/${BRANCH}" 2>/dev/null || git -C "$LIC_ROOT" checkout -f -B "$BRANCH"
-      git -C "$LIC_ROOT" reset --hard "origin/${BRANCH}" 2>/dev/null || true
-    fi
-    test -f "${LIC_ROOT}/${GOAL_REL}" || { echo "missing goal: ${LIC_ROOT}/${GOAL_REL}" >&2; exit 1; }
+      local branch goal_ok=0
+      for branch in $(branch_candidates); do
+        if ! git -C "$LIC_ROOT" show-ref --verify --quiet "refs/remotes/origin/${branch}"; then
+          continue
+        fi
+        git -C "$LIC_ROOT" checkout -f -B "$branch" "origin/${branch}"
+        git -C "$LIC_ROOT" reset --hard "origin/${branch}"
+        if [[ -f "${LIC_ROOT}/${GOAL_REL}" ]]; then
+          goal_ok=1
+          export LI_PROOF_EXPLORER_BRANCH="$branch"
+          export LI_REPO_WORKFLOW_BRANCH="$branch"
+          echo "ph-ml-wave13-entrypoint: lic on branch=${branch} $(git -C "$LIC_ROOT" log -1 --oneline)"
+          break
+        fi
+        echo "ph-ml-wave13-entrypoint: branch ${branch} missing goal ${GOAL_REL}, trying next"
+      done
+      [[ "$goal_ok" == "1" ]] || {
+        echo "ph-ml-wave13-entrypoint: no branch contains goal ${GOAL_REL}" >&2
+        exit 1
+      }
+    }
 
     sync_benchmarks_repo() {
       if [[ ! -d "$BENCHMARKS_ROOT/.git" ]]; then
@@ -67,11 +98,30 @@ data:
       fi
     }
 
+    ensure_lic_built() {
+      local lic_bin="${LIC_ROOT}/build/compiler/lic/lic"
+      if [[ -x "$lic_bin" ]]; then
+        export LIC="$lic_bin"
+        echo "ph-ml-wave13-entrypoint: lic compiler present at ${LIC}"
+        return 0
+      fi
+      echo "ph-ml-wave13-entrypoint: building lic (LLVM 22 in-container)"
+      if (cd "$LIC_ROOT" && bash scripts/build.sh); then
+        export LIC="$lic_bin"
+        echo "ph-ml-wave13-entrypoint: lic build OK ${LIC}"
+        return 0
+      fi
+      echo "ph-ml-wave13-entrypoint: WARN lic build failed; agent loop may retry" >&2
+      return 0
+    }
+
+    sync_lic_repo
     sync_benchmarks_repo
     test -f "${BENCHMARKS_ROOT}/harness/bench.py" || {
       echo "ph-ml-wave13-entrypoint: missing benchmarks harness at ${BENCHMARKS_ROOT}/harness/bench.py" >&2
       exit 1
     }
+    ensure_lic_built
     export LI_PROOF_EXPLORER_LIC_ROOT="$LIC_ROOT" LI_CURSOR_AGENTS_ROOT="$AGENTS_ROOT" LIC_ROOT="$LIC_ROOT" BENCHMARKS_ROOT="$BENCHMARKS_ROOT"
     export LI_PROOF_EXPLORER_GOAL_FILE="$GOAL_REL"
     exec node "${AGENTS_ROOT}/dist/cli/proof-explorer-worker.js" start

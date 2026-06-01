@@ -13,7 +13,11 @@ import {
   proofExplorerWorkflowRepo,
   proofExplorerRepoWorkflowEnv,
 } from "./proof-explorer-worker-config.js";
-import { syncProofExplorerLicFromOrigin } from "./proof-explorer-lic-sync.js";
+import {
+  healProofExplorerWorkspaceFromOrigin,
+  syncProofExplorerLicFromOrigin,
+} from "./proof-explorer-lic-sync.js";
+import { healProofExplorerWorkspace } from "./proof-explorer-workspace-heal.js";
 import { sweepModeAllowsHandoff } from "./proof-explorer-sweep-mode.js";
 
 let child: ReturnType<typeof spawn> | null = null;
@@ -109,6 +113,7 @@ async function proofExplorerWorkerLoop(signal: AbortSignal): Promise<void> {
 
   while (!signal.aborted) {
     try {
+      healProofExplorerWorkspace();
       const active = await resolveActivePhase();
       if (active.allComplete) {
         workerConsole("li-proof-explorer", "info", "program complete — all phase gates passed");
@@ -119,7 +124,7 @@ async function proofExplorerWorkerLoop(signal: AbortSignal): Promise<void> {
       activeGoalRel = active.goalRel;
 
       const exitCode = await runGoalDirectedLoopOnce(active.goalRel);
-      await syncProofExplorerLicFromOrigin();
+      await healProofExplorerWorkspaceFromOrigin();
       const sweepHandoff =
         exitCode !== 0 && (await sweepModeAllowsHandoff(activePhaseId, proofExplorerLicRoot()));
       if (exitCode === 0 || sweepHandoff) {
@@ -199,7 +204,7 @@ export async function runProofExplorerWorkerOnce(options?: { force?: boolean }):
     return;
   }
   const exitCode = await runGoalDirectedLoopOnce(active.goalRel);
-      await syncProofExplorerLicFromOrigin();
+      await healProofExplorerWorkspaceFromOrigin();
   console.log(JSON.stringify({ ok: exitCode === 0, exit_code: exitCode, phase: active.phase?.id }, null, 2));
   if (exitCode !== 0) process.exit(1);
 }
