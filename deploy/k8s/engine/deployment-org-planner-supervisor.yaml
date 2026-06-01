@@ -24,7 +24,18 @@ spec:
         - name: supervisor
           image: ghcr.io/li-langverse/li-cursor-agents:latest
           imagePullPolicy: Always
-          command: ["node", "dist/cli/org-planner-supervisor.js", "supervise"]
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /app/dist/org-planner /app/dist/cli /app/dist/k8s
+              for f in /hotfix/org-planner-*.js; do
+                cp "$f" /app/dist/org-planner/
+              done
+              cp /hotfix/org-planner-supervisor.js /app/dist/cli/org-planner-supervisor.js
+              cp /hotfix/org-planner-worker.js /app/dist/cli/org-planner-worker.js
+              cp /hotfix/finished-job-ttl.js /app/dist/k8s/finished-job-ttl.js
+              exec node dist/cli/org-planner-supervisor.js supervise
           envFrom:
             - configMapRef:
                 name: li-org-planner-supervisor
@@ -46,6 +57,8 @@ spec:
                   name: li-agents-secrets
                   key: SUPABASE_SERVICE_ROLE_KEY
                   optional: true
+            - name: LI_ORG_PLANNER_HOTFIX_CONFIGMAP
+              value: li-org-planner-hotfix
           resources:
             requests:
               cpu: "250m"
@@ -54,9 +67,14 @@ spec:
               cpu: "1"
               memory: "1Gi"
           volumeMounts:
+            - name: planner-hotfix
+              mountPath: /hotfix
             - name: sprint-data
               mountPath: /app/data/goal-directed-sprints
       volumes:
+        - name: planner-hotfix
+          configMap:
+            name: li-org-planner-hotfix
         - name: sprint-data
           persistentVolumeClaim:
             claimName: li-agents-sprint-data

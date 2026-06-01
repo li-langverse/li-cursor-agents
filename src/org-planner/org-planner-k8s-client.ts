@@ -86,6 +86,28 @@ function k8sRequest(
   });
 }
 
+
+const PLANNER_HOTFIX_CM = process.env.LI_ORG_PLANNER_HOTFIX_CONFIGMAP?.trim() || "li-org-planner-hotfix";
+
+function plannerHotfixVolumeMounts(): Array<{ name: string; mountPath: string; subPath?: string }> {
+  return [
+    { name: "planner-hotfix", mountPath: "/app/dist/org-planner" },
+    {
+      name: "planner-hotfix",
+      mountPath: "/app/dist/cli/org-planner-supervisor.js",
+      subPath: "org-planner-supervisor.js",
+    },
+    {
+      name: "planner-hotfix",
+      mountPath: "/app/dist/cli/org-planner-worker.js",
+      subPath: "org-planner-worker.js",
+    },
+  ];
+}
+
+function plannerHotfixVolumes(): Array<{ name: string; configMap: { name: string; optional?: boolean } }> {
+  return [{ name: "planner-hotfix", configMap: { name: PLANNER_HOTFIX_CM, optional: true } }];
+}
 export function isInKubernetesCluster(): boolean {
   return inClusterConfig() !== null;
 }
@@ -254,12 +276,14 @@ export async function createPlannerJob(options: {
                 limits: { cpu: "2", memory: "2Gi" },
               },
               volumeMounts: [
+                ...plannerHotfixVolumeMounts(),
                 { name: "sprint-data", mountPath: "/app/data/goal-directed-sprints" },
                 { name: "handoffs-data", mountPath: "/app/data/handoffs" },
               ],
             },
           ],
           volumes: [
+            ...plannerHotfixVolumes(),
             {
               name: "sprint-data",
               persistentVolumeClaim: { claimName: "li-agents-sprint-data" },

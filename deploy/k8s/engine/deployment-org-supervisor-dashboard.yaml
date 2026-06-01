@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: li-org-supervisor-dashboard
+  namespace: li-swarm
+  labels:
+    app: li-org-supervisor-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: li-org-supervisor-dashboard
+  template:
+    metadata:
+      labels:
+        app: li-org-supervisor-dashboard
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull
+      nodeSelector:
+        li-langverse.io/node-pool: engine
+      containers:
+        - name: dashboard
+          image: ghcr.io/li-langverse/li-cursor-agents:latest
+          imagePullPolicy: Always
+          command: ["node", "apps/org-supervisor-dashboard/server/index.mjs", "--serve-static"]
+          ports:
+            - containerPort: 9478
+              name: http
+          envFrom:
+            - configMapRef:
+                name: li-org-supervisor-dashboard
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+            - name: SUPABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: SUPABASE_URL
+                  optional: true
+            - name: SUPABASE_SERVICE_ROLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: SUPABASE_SERVICE_ROLE_KEY
+                  optional: true
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          volumeMounts:
+            - name: dash-server
+              mountPath: /app/apps/org-supervisor-dashboard/server
+            - name: dash-assets
+              mountPath: /app/apps/org-supervisor-dashboard/dist/assets
+            - name: dash-index
+              mountPath: /app/apps/org-supervisor-dashboard/dist/index.html
+              subPath: index.html
+            - name: sprint-data
+              mountPath: /app/data/goal-directed-sprints
+              readOnly: true
+      volumes:
+        - name: dash-server
+          configMap:
+            name: li-org-supervisor-dashboard-server
+        - name: dash-assets
+          configMap:
+            name: li-org-supervisor-dashboard-assets
+        - name: dash-index
+          configMap:
+            name: li-org-supervisor-dashboard-index
+        - name: sprint-data
+          persistentVolumeClaim:
+            claimName: li-agents-sprint-data
