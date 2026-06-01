@@ -1,0 +1,23 @@
+[
+  {
+    "op": "add",
+    "path": "/spec/template/spec/containers/0/volumeMounts/-",
+    "value": {
+      "name": "sprint-scripts",
+      "mountPath": "/app/scripts/physics-codegen-completion-gate.sh",
+      "subPath": "physics-codegen-completion-gate.sh",
+      "readOnly": true
+    }
+  },
+  {
+    "op": "add",
+    "path": "/spec/template/spec/volumes/-",
+    "value": {
+      "name": "sprint-scripts",
+      "configMap": {
+        "name": "li-physics-codegen-scripts",
+        "defaultMode": 493
+      }
+    }
+  }
+]

@@ -68,7 +68,8 @@ spec:
             - name: workspace
               mountPath: /workspace
             - name: sprint-goal
-              mountPath: /config/goal
+              mountPath: /workspace/lic/data/goal-directed-sprints/physics-codegen-matrix.md
+              subPath: physics-codegen-matrix.md
               readOnly: true
       volumes:
         - name: workspace

@@ -11,7 +11,7 @@ metadata:
 data:
   LI_PROOF_EXPLORER_ALWAYS_ON: "1"
   LI_PROOF_EXPLORER_PHASE_HANDOFF: "0"
-  LI_PROOF_EXPLORER_GOAL_FILE: "/config/goal/physics-codegen-matrix.md"
+  LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/physics-codegen-matrix.md"
   LI_PROOF_EXPLORER_LIC_ROOT: "/workspace/lic"
   BENCHMARKS_ROOT: "/workspace/benchmarks"
   LI_CURSOR_AGENTS_ROOT: "/app"

@@ -2,7 +2,7 @@
 
 **Scope:** Cursor Auto vs Qwen 3.5-9B/20B on tier-2 PDE physics benches; token cost (especially thinking) for C++/Rust/Julia/Li implementations.
 
-**Stop when:** `bash scripts/physics-codegen-completion-gate.sh` exits 0.
+**Stop when:** `bash /app/scripts/physics-codegen-completion-gate.sh` exits 0.
 
 ## Non-negotiable rules
 
@@ -46,7 +46,7 @@ test -d ../benchmarks/scripts/physics-codegen-matrix || test -d ../../benchmarks
 ## Completion gate
 
 ```bash
-bash scripts/physics-codegen-completion-gate.sh
+bash /app/scripts/physics-codegen-completion-gate.sh
 ```
 
 ## Agent
