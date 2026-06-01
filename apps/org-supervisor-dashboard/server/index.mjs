@@ -1,11 +1,26 @@
-﻿import { createServer } from "node:http";
+import { createServer } from "node:http";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { buildPayload } from "./data.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const DIST_DIR = join(__dirname, "..", "dist");
+
+/** ConfigMap mounts resolve import.meta.url under server/..data/; dist lives beside server/. */
+function resolveDistDir(moduleDir) {
+  const fromEnv = process.env.ORG_SUPERVISOR_DASHBOARD_DIST_DIR?.trim();
+  if (fromEnv && existsSync(join(fromEnv, "index.html"))) return fromEnv;
+  const candidates = [
+    join(moduleDir, "..", "..", "dist"),
+    join(moduleDir, "..", "dist"),
+  ];
+  for (const dir of candidates) {
+    if (existsSync(join(dir, "index.html"))) return dir;
+  }
+  return join(moduleDir, "..", "..", "dist");
+}
+
+const DIST_DIR = resolveDistDir(__dirname);
 
 const port = Number(process.env.ORG_SUPERVISOR_DASHBOARD_API_PORT || 9478);
 const host = process.env.ORG_SUPERVISOR_DASHBOARD_HOST || "127.0.0.1";
@@ -37,8 +52,9 @@ function sendText(res, status, body, type = "text/plain") {
 }
 
 function staticFile(pathname) {
-  const safe = pathname.replace(/\.\./g, "");
-  const file = join(DIST_DIR, safe === "/" ? "index.html" : safe);
+  let rel = pathname.replace(/\.\./g, "").replace(/^\/+/, "");
+  if (!rel) rel = "index.html";
+  const file = join(DIST_DIR, rel);
   if (!existsSync(file)) return null;
   const ext = file.split(".").pop() || "";
   const types = {
@@ -99,6 +115,6 @@ const server = createServer(async (req, res) => {
 
 server.listen(port, host, () => {
   console.log(
-    `org-supervisor-dashboard API http://${host}:${port} (static=${serveStatic})`,
+    `org-supervisor-dashboard API http://${host}:${port} (static=${serveStatic} dist=${DIST_DIR})`,
   );
 });
