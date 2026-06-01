@@ -1,8 +1,9 @@
-ï»¿import type { AuditRow, SupervisorKind, SupervisorSnapshot } from "./types";
+import type { AuditRow, SupervisorKind, SupervisorSnapshot } from "./types";
 import { formatWhen, healthChip, refLabel, statusClass } from "./format";
 
 export const AUDIT_KEYS: Record<SupervisorKind, keyof import("./types").DashboardPayload["audits"]> = {
   issue: "issue",
+  planner: "planner",
   pr: "pr-implement",
   review: "pr-review",
   research: "research",
@@ -78,8 +79,8 @@ export function SupervisorCard({ supervisor, audits, active }: Props) {
                         String(row.role ?? "-")
                       )}
                     </td>
-                    <td className={statusClass(row.status)}>{String(row.status ?? "Ã”Ã‡Ã¶")}</td>
-                    <td>{String(row.workerId ?? "Ã”Ã‡Ã¶")}</td>
+                    <td className={statusClass(row.status)}>{String(row.status ?? "ÔÇö")}</td>
+                    <td>{String(row.workerId ?? "ÔÇö")}</td>
                   </tr>
                 ))}
               </tbody>
@@ -100,7 +101,7 @@ export function SupervisorCard({ supervisor, audits, active }: Props) {
                   <strong className={statusClass(row.status)}>{String(row.status ?? "?")}</strong>
                   <span className="meta">{formatWhen(row.ts as string | undefined)}</span>
                 </div>
-                <div>{refLabel(row)} â”¬Ã€ worker {String(row.workerId ?? "Ã”Ã‡Ã¶")}</div>
+                <div>{refLabel(row)} -À worker {String(row.workerId ?? "ÔÇö")}</div>
                 {row.error ? <div className="status-bad">{String(row.error)}</div> : null}
               </div>
             ))}
@@ -110,7 +111,7 @@ export function SupervisorCard({ supervisor, audits, active }: Props) {
 
       <footer className="kubectl">
         <div className="meta">
-          PVC coordination: <code>{supervisor.activeFile}</code> â”¬Ã€ KUBECONFIG=
+          PVC coordination: <code>{supervisor.activeFile}</code> -À KUBECONFIG=
           {supervisor.kubectl.kubeconfig}
         </div>
         <div className="meta">Supervisor logs</div>

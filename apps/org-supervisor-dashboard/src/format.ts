@@ -1,7 +1,7 @@
-ï»¿import type { Health } from "./types";
+import type { Health } from "./types";
 
 export function formatWhen(iso: string | null | undefined): string {
-  if (!iso) return "â€”";
+  if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
   return d.toLocaleString();
@@ -25,12 +25,13 @@ export function refLabel(row: Record<string, unknown>): string {
     const dim = row.dimension ? ` (${row.dimension})` : "";
     return `${String(row.researchRef)}${dim}`;
   }
+  if (row.planRef) return String(row.planRef);
   if (row.issueRef) return String(row.issueRef);
   if (row.prRef) return String(row.prRef);
   if (row.repo != null && row.number != null) {
     return `${String(row.repo)}#${String(row.number)}`;
   }
-  return String(row.workerId ?? "â€”");
+  return String(row.workerId ?? "—");
 }
 
 export function statusClass(status: unknown): string {

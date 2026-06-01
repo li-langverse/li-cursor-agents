@@ -1,0 +1,62 @@
+# Long-running supervisor: merges issue + research planner queues, spawns planner Jobs.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: li-org-planner-supervisor
+  namespace: li-swarm
+  labels:
+    app: li-org-planner-supervisor
+    li-langverse.io/role: org-planner-supervisor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: li-org-planner-supervisor
+  template:
+    metadata:
+      labels:
+        app: li-org-planner-supervisor
+    spec:
+      serviceAccountName: li-org-planner-supervisor
+      nodeSelector:
+        li-langverse.io/node-pool: engine
+      containers:
+        - name: supervisor
+          image: ghcr.io/li-langverse/li-cursor-agents:latest
+          imagePullPolicy: Always
+          command: ["node", "dist/cli/org-planner-supervisor.js", "supervise"]
+          envFrom:
+            - configMapRef:
+                name: li-org-planner-supervisor
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+            - name: SUPABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: SUPABASE_URL
+                  optional: true
+            - name: SUPABASE_SERVICE_ROLE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: SUPABASE_SERVICE_ROLE_KEY
+                  optional: true
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+          volumeMounts:
+            - name: sprint-data
+              mountPath: /app/data/goal-directed-sprints
+      volumes:
+        - name: sprint-data
+          persistentVolumeClaim:
+            claimName: li-agents-sprint-data

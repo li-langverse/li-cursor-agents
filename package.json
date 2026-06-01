@@ -1,4 +1,4 @@
-﻿{
+{
   "name": "@li-langverse/cursor-agents",
   "version": "0.1.0",
   "description": "Local Cursor SDK agent runner for li-langverse (mock backend for CI)",
@@ -37,6 +37,8 @@
     "agents:org-issue-worker-once": "npm run build && node dist/cli/org-issue-worker.js once",
     "agents:org-issue-supervisor": "npm run build && node dist/cli/org-issue-supervisor.js supervise",
     "agents:org-issue-supervisor-wake": "npm run build && node dist/cli/org-issue-supervisor.js wake",
+    "agents:org-planner-supervisor": "npm run build && node dist/cli/org-planner-supervisor.js supervise",
+    "agents:org-planner-supervisor-wake": "npm run build && node dist/cli/org-planner-supervisor.js wake",
     "agents:org-pr-supervisor": "npm run build && node dist/cli/org-pr-supervisor.js supervise",
     "agents:org-pr-supervisor-wake": "npm run build && node dist/cli/org-pr-supervisor.js wake",
     "agents:org-reviewer-supervisor": "npm run build && node dist/cli/org-reviewer-supervisor.js supervise",
