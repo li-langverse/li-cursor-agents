@@ -49,6 +49,15 @@ export interface SdkAttemptTraceMeta {
   runId?: string;
 }
 
+export interface AgentRunTokenUsage {
+  input_tokens: number;
+  output_tokens: number;
+  thinking_tokens: number;
+  thinking_chars: number;
+  thinking_tokens_estimated: boolean;
+  delta_event_count: number;
+}
+
 export interface AgentRunTrace {
   version: typeof TRACE_VERSION;
   assistant_text: string;
@@ -57,6 +66,7 @@ export interface AgentRunTrace {
   deltas: AgentRunTraceEvent[];
   file_edits: AgentRunTraceFileEdit[];
   tool_call_count: number;
+  token_usage?: AgentRunTokenUsage;
   /** Cursor SDK retry diagnostics (live runs only). */
   sdk_attempts?: SdkAttemptTraceMeta[];
   sdk_session_gap_ms?: number;
@@ -102,6 +112,81 @@ export function buildRunInput(params: {
   return input;
 }
 
+
+export function estimateTokensFromChars(chars: number): number {
+  return Math.max(0, Math.ceil(chars / 4));
+}
+
+function emptyTokenUsage(): AgentRunTokenUsage {
+  return {
+    input_tokens: 0,
+    output_tokens: 0,
+    thinking_tokens: 0,
+    thinking_chars: 0,
+    thinking_tokens_estimated: false,
+    delta_event_count: 0,
+  };
+}
+
+export function accumulateInteractionTokenUsage(
+  acc: AgentRunTokenUsage,
+  update: InteractionUpdate,
+): void {
+  const u = update as Record<string, unknown>;
+  acc.delta_event_count += 1;
+  switch (update.type) {
+    case "token-delta": {
+      const n = typeof u.tokens === "number" ? u.tokens : 0;
+      const role = String(u.role ?? u.kind ?? "").toLowerCase();
+      if (role.includes("input") || role.includes("prompt")) acc.input_tokens += n;
+      else acc.output_tokens += n;
+      break;
+    }
+    case "thinking-delta": {
+      const t = typeof u.text === "string" ? u.text : "";
+      if (t) {
+        acc.thinking_chars += t.length;
+        acc.thinking_tokens += estimateTokensFromChars(t.length);
+        acc.thinking_tokens_estimated = true;
+      }
+      break;
+    }
+    case "text-delta": {
+      const t = typeof u.text === "string" ? u.text : "";
+      if (t) acc.output_tokens += estimateTokensFromChars(t.length);
+      break;
+    }
+    default:
+      break;
+  }
+}
+
+export function computeTokenUsageFromTrace(trace: AgentRunTrace): AgentRunTokenUsage {
+  const acc = emptyTokenUsage();
+  for (const row of trace.deltas) {
+    if (row.kind !== "delta") continue;
+    acc.delta_event_count += 1;
+    const p = row.payload as Record<string, unknown> | undefined;
+    if (row.type === "thinking-delta" && typeof p?.text === "string") {
+      acc.thinking_chars += p.text.length;
+      acc.thinking_tokens += estimateTokensFromChars(p.text.length);
+      acc.thinking_tokens_estimated = true;
+    } else if (row.type === "text-delta" && typeof p?.text === "string") {
+      acc.output_tokens += estimateTokensFromChars(p.text.length);
+    } else if (row.type === "token-delta" && typeof p?.tokens === "number") {
+      const role = String(p.role ?? p.kind ?? "").toLowerCase();
+      if (role.includes("input") || role.includes("prompt")) acc.input_tokens += p.tokens;
+      else acc.output_tokens += p.tokens;
+    }
+  }
+  if (trace.thinking_text && acc.thinking_chars === 0) {
+    acc.thinking_chars = trace.thinking_text.length;
+    acc.thinking_tokens = estimateTokensFromChars(trace.thinking_text.length);
+    acc.thinking_tokens_estimated = true;
+  }
+  return acc;
+}
+
 export function createTraceCollector(): {
   onStep: (args: { step: ConversationStep }) => void;
   onDelta: (args: { update: InteractionUpdate }) => void;
@@ -112,6 +197,7 @@ export function createTraceCollector(): {
   const deltas: AgentRunTraceEvent[] = [];
   let seq = 0;
   const thinkingParts: string[] = [];
+  const tokenUsage = emptyTokenUsage();
 
   return {
     onStep: ({ step }) => {
@@ -122,6 +208,7 @@ export function createTraceCollector(): {
     },
     onDelta: ({ update }) => {
       const type = update.type;
+      accumulateInteractionTokenUsage(tokenUsage, update);
       if (type === "thinking-delta" && "text" in update) {
         thinkingParts.push(String((update as { text: string }).text));
       }
@@ -135,8 +222,8 @@ export function createTraceCollector(): {
       deltas.push(row);
       if (deltas.length > MAX_DELTAS) deltas.shift();
     },
-    peek: (assistantText = "") => buildTraceSnapshot(steps, deltas, thinkingParts, assistantText),
-    finalize: (assistantText: string) => buildTraceSnapshot(steps, deltas, thinkingParts, assistantText),
+    peek: (assistantText = "") => buildTraceSnapshot(steps, deltas, thinkingParts, assistantText, tokenUsage),
+    finalize: (assistantText: string) => buildTraceSnapshot(steps, deltas, thinkingParts, assistantText, tokenUsage),
   };
 }
 
@@ -145,6 +232,7 @@ function buildTraceSnapshot(
   deltas: AgentRunTraceEvent[],
   thinkingParts: string[],
   assistantText: string,
+  tokenUsage: AgentRunTokenUsage,
 ): AgentRunTrace {
   const file_edits = extractFileEdits(steps);
   const tool_call_count = steps.filter((s) => s.type === "toolCall").length;
@@ -156,6 +244,16 @@ function buildTraceSnapshot(
     deltas,
     file_edits,
     tool_call_count,
+    token_usage: (() => {
+      const usage = { ...tokenUsage };
+      if (thinkingParts.length && usage.thinking_chars === 0) {
+        const joined = thinkingParts.join("");
+        usage.thinking_chars = joined.length;
+        usage.thinking_tokens = estimateTokensFromChars(joined.length);
+        usage.thinking_tokens_estimated = true;
+      }
+      return usage;
+    })(),
   };
 }
 
@@ -258,5 +356,13 @@ export function buildMockTrace(params: {
     ],
     file_edits: extractFileEdits(steps),
     tool_call_count: 2,
+    token_usage: {
+      input_tokens: 0,
+      output_tokens: estimateTokensFromChars(params.assistantText.length),
+      thinking_tokens: estimateTokensFromChars(15),
+      thinking_chars: 15,
+      thinking_tokens_estimated: true,
+      delta_event_count: 2,
+    },
   };
 }

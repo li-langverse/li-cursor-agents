@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: li-physics-codegen-matrix-workspace
+  namespace: li-swarm
+  labels:
+    app: li-physics-codegen-matrix
+    app.kubernetes.io/name: li-physics-codegen-matrix
+    app.kubernetes.io/component: goal-directed-agent
+    li-langverse.io/sprint: physics-codegen-matrix
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: local-path
