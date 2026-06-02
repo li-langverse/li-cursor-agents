@@ -11,4 +11,8 @@ data:
   LI_ORG_RESEARCH_SUPERVISOR_NAMESPACE: "li-swarm"
   LI_ORG_RESEARCH_DIMENSIONS: "security,performance,ux,api-coverage"
   LI_CONTROL_PLANE_STORE: "supabase"
+  LIC_ROOT: "/workspace/lic"
+  BENCHMARKS_ROOT: "/workspace/benchmarks"
+  LI_ORG_SYNC_LIC: "1"
+  LI_ORG_SYNC_BENCHMARKS: "1"
   NODE_ENV: "production"

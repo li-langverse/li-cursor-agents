@@ -23,6 +23,7 @@ export interface OrgPrImplementResult {
   agentId: string;
   prMerged: boolean;
   prWasOpen: boolean;
+  partialSuccess?: boolean;
   error?: string;
   agentStatus?: string;
   durationMs?: number;
@@ -167,6 +168,7 @@ export async function runOrgPrImplementCycle(
     };
   }
 
+  const beforeHeadSha = pr.headSha;
   const agentId = orgPrImplementerAgentId();
   const queueEntry = queueEntryForPr(parsed.repo, parsed.number);
   const instruction = buildPrImplementInstruction(options.prRef, pr, options.workerId, queueEntry);
@@ -228,13 +230,27 @@ export async function runOrgPrImplementCycle(
     removeClosedPrFromQueue(parsed.repo, parsed.number);
   }
 
-  const ok = agentResult.status === "finished";
+  const headChanged =
+    Boolean(beforeHeadSha && after.headSha && beforeHeadSha !== after.headSha);
+  const agentOk = agentResult.status === "finished";
+  const partialSuccess = !agentOk && !prMerged && headChanged;
+  const ok = agentOk || prMerged || partialSuccess;
+
+  if (partialSuccess) {
+    workerConsole(
+      "org-pr-implementer",
+      "warn",
+      `${options.prRef} agent incomplete but head moved ${beforeHeadSha?.slice(0, 7)}→${after.headSha?.slice(0, 7)} — partial success`,
+    );
+  }
+
   return {
     ok,
     status: ok ? "completed" : "failed",
     agentId,
     prMerged,
     prWasOpen: pr.state === "open",
+    partialSuccess,
     agentStatus: agentResult.status,
     durationMs: Date.now() - started,
     outputTail: outputTail(agentResult.outputText ?? agentResult.error),

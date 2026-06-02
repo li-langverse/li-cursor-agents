@@ -195,6 +195,7 @@ async function createPrWorkerJob(options: {
               image: orgPrSupervisorImage(),
               imagePullPolicy: "Always",
               command: [
+                "/app/deploy/org-worker-entrypoint.sh",
                 "node",
                 options.cli,
                 "--pr",

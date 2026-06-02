@@ -10,6 +10,7 @@ export interface GitHubPullRequest {
   draft: boolean;
   mergeable: boolean | null;
   mergeable_state: string | null;
+  headSha: string | null;
 }
 
 function ghRequest<T>(
@@ -74,6 +75,7 @@ export async function fetchGitHubPullRequest(
     draft?: boolean;
     mergeable?: boolean | null;
     mergeable_state?: string | null;
+    head?: { sha?: string };
   }>("GET", `/repos/${org}/${repo}/pulls/${number}`);
 
   if (res.status !== 200 || !res.data) {
@@ -89,6 +91,7 @@ export async function fetchGitHubPullRequest(
     draft: Boolean(d.draft),
     mergeable: d.mergeable ?? null,
     mergeable_state: d.mergeable_state ?? null,
+    headSha: d.head?.sha ?? null,
   };
 }
 

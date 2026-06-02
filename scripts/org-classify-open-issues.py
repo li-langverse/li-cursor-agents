@@ -140,6 +140,11 @@ def classify_issue(issue: dict, title_index: dict[str, list[tuple[str, int]]]) -
         row["close_evidence"] = f"Closing labels present: {sorted(labels & CLOSE_LABELS)}"
         return {**row, "_bucket": "close_wontfix" if reason == "wontfix" else "close_spam"}
 
+    # plan-approved wins over plan-needed — avoid re-planning approved work
+    if labels & IMPLEMENT_LABELS:
+        row["classification_note"] = "ready for implementation"
+        return {**row, "_bucket": "implement"}
+
     if labels & PLANNER_LABELS:
         row["classification_note"] = "needs plan before implementation"
         return {**row, "_bucket": "route_planner"}
@@ -185,10 +190,6 @@ def classify_issue(issue: dict, title_index: dict[str, list[tuple[str, int]]]) -
     if re.search(r"\bPH-[A-Z0-9]", title) or "master-plan" in labels:
         row["classification_note"] = "master-plan or PH-* tracking"
         return {**row, "_bucket": "defer_master_plan"}
-
-    if labels & IMPLEMENT_LABELS:
-        row["classification_note"] = "ready for implementation"
-        return {**row, "_bucket": "implement"}
 
     if age_days >= 120 and not labels:
         row["classification_note"] = f"stale {age_days}d, no labels"

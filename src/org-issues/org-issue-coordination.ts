@@ -217,6 +217,18 @@ function readQueueBucket(
 export function readImplementQueueIssues(root = agentsPackageRoot()): QueuedOrgIssue[] {
   return readQueueBucket(root, "implement");
 }
+
+/** Count of issues ready for implementer Jobs (from last classify report or bucket length). */
+export function readImplementQueueCount(root = agentsPackageRoot()): number {
+  const path = join(sprintDataDir(root), "org-issue-queue.json");
+  if (!existsSync(path)) return 0;
+  const q = JSON.parse(readFileSync(path, "utf8")) as {
+    report?: { implement?: number };
+    implement?: unknown[];
+  };
+  if (typeof q.report?.implement === "number") return q.report.implement;
+  return Array.isArray(q.implement) ? q.implement.length : 0;
+}
 export function readQueueIssues(root = agentsPackageRoot()): QueuedOrgIssue[] {
   const path = join(sprintDataDir(root), "org-issue-queue.json");
   if (!existsSync(path)) return [];

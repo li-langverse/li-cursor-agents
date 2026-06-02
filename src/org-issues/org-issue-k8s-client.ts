@@ -185,6 +185,7 @@ export async function createImplementerJob(options: {
               image,
               imagePullPolicy: "Always",
               command: [
+                "/app/deploy/org-worker-entrypoint.sh",
                 "node",
                 "dist/cli/org-issue-implementer.js",
                 "--issue",

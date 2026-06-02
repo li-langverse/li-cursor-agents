@@ -50,10 +50,10 @@ export function orgIssueSupervisorNodeSelector(): Record<string, string> {
   return { "li-langverse.io/node-pool": "engine" };
 }
 
-/** Desired concurrent implementer Jobs from open-issue backlog. */
-export function computeDesiredWorkers(openCount: number, maxWorkers = orgIssueSupervisorMaxWorkers()): number {
-  if (openCount <= 0) return 0;
-  return Math.min(maxWorkers, Math.max(1, Math.ceil(openCount / 50)));
+/** Desired concurrent implementer Jobs from implement-bucket backlog. */
+export function computeDesiredWorkers(implementCount: number, maxWorkers = orgIssueSupervisorMaxWorkers()): number {
+  if (implementCount <= 0) return 0;
+  return Math.min(maxWorkers, Math.max(1, Math.ceil(implementCount / 10)));
 }
 
 export function orgName(): string {
