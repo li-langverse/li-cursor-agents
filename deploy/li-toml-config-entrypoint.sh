@@ -114,7 +114,9 @@ while true; do
   set -e
 
   if [[ "$rc" == "0" ]]; then
-    exit 0
+    echo "li-toml-config-entrypoint: GOAL COMPLETE — idling (scale deploy to 0 to stop)"
+    # Stay alive so the Deployment does not CrashLoopBackOff after success.
+    exec sleep infinity
   fi
 
   sleep "$LOOP_SLEEP"
