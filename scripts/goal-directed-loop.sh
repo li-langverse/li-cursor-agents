@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# goal-directed-loop.sh — run an agent against a plan until the Completion gate passes.
+# goal-directed-loop.sh â€” run an agent against a plan until the Completion gate passes.
 #
-# Success (exit 0):  completion gate passes — and only then.
+# Success (exit 0):  completion gate passes â€” and only then.
 # Failure (exit 1):  --until-local deadline or --max iterations reached without completion.
 # Agent exit 0 alone never ends the loop successfully.
 #
@@ -33,7 +33,7 @@ warn_if_loop_script_changed() {
   local now
   now="$(stat -c %Y "$LOOP_SCRIPT" 2>/dev/null || stat -f %m "$LOOP_SCRIPT" 2>/dev/null || echo 0)"
   if [[ "$now" != "$LOOP_SCRIPT_MTIME" && "$now" != "0" ]]; then
-    echo "goal-directed-loop: WARNING script changed on disk — restart this process to pick up loop.sh edits" >&2
+    echo "goal-directed-loop: WARNING script changed on disk â€” restart this process to pick up loop.sh edits" >&2
   fi
 }
 
@@ -147,16 +147,40 @@ resolve_goal_file_for_gate() {
 
 GATE_GOAL_FILE="$(resolve_goal_file_for_gate)"
 
+# Completion/progress gates must run in the agent's isolated clone when present;
+# --cwd ../studio (sibling checkout) stays stale while the agent marks todos in data/workspaces/.
+# Set LI_GOAL_GATE_PREFER_CWD=1 to force sibling --cwd (e.g. after manual branch sync).
+resolve_gate_cwd() {
+  if [[ "${LI_GOAL_GATE_PREFER_CWD:-0}" == "1" ]]; then
+    echo "$(cd "$CWD" && pwd)"
+    return 0
+  fi
+  if [[ -n "$WORKFLOW_REPO" && -n "$AGENT" ]]; then
+    local ws_root="$ROOT/data/workspaces/li-langverse/${WORKFLOW_REPO}"
+    if [[ -d "$ws_root" ]]; then
+      local latest
+      latest="$(ls -td "$ws_root"/${AGENT}-*/repo 2>/dev/null | head -1 || true)"
+      if [[ -n "$latest" && -d "$latest" ]]; then
+        echo "$(cd "$latest" && pwd)"
+        return 0
+      fi
+    fi
+  fi
+  echo "$(cd "$CWD" && pwd)"
+}
+
 gate_status() {
   ensure_dist_built
-  local goal_path
+  local goal_path gate_cwd
   goal_path="$(resolve_goal_file_for_gate)"
   if [[ -z "$goal_path" || ! -f "$goal_path" ]]; then
     echo "goal-directed-loop: no goal file for completion gate" >&2
     return 1
   fi
   GATE_GOAL_FILE="$goal_path"
-  node "$ROOT/dist/cli/goal-completion-gate.js" --goal-file "$GATE_GOAL_FILE" --cwd "$CWD"
+  gate_cwd="$(resolve_gate_cwd)"
+  echo "goal-directed-loop: gate cwd=$gate_cwd" >&2
+  node "$ROOT/dist/cli/goal-completion-gate.js" --goal-file "$GATE_GOAL_FILE" --cwd "$gate_cwd"
 }
 
 record_gaps_from_run() {
@@ -205,7 +229,7 @@ stop_success() {
 
 stop_bounded() {
   local reason="$1"
-  echo "goal-directed-loop: STOP without completion — $reason (exit 1)" >&2
+  echo "goal-directed-loop: STOP without completion â€” $reason (exit 1)" >&2
   exit 1
 }
 
@@ -217,7 +241,7 @@ fi
 max_label="${MAX}"
 [[ "$MAX" -le 0 ]] && max_label="unlimited"
 export LI_GOAL_LOOP_GATE_ONLY=1
-echo "goal-directed-loop: agent=$AGENT repo=${WORKFLOW_REPO:-—}"
+echo "goal-directed-loop: agent=$AGENT repo=${WORKFLOW_REPO:-â€”}"
 echo "goal-directed-loop: success = completion gate only | max=$max_label | until-local=${UNTIL_LOCAL:-none} (${GOAL_LOOP_TZ})"
 [[ -n "$GATE_GOAL_FILE" ]] && echo "goal-directed-loop: goal=$GATE_GOAL_FILE"
 
@@ -235,7 +259,7 @@ while :; do
     [[ -f "$LAST_GAPS_FILE" ]] && gaps_tail="$(head -c 2000 "$LAST_GAPS_FILE" 2>/dev/null || true)"
     gate_note="$(gate_status 2>&1 | tail -4 || true)"
     export LI_AGENT_EXTRA_INSTRUCTION="$(cat <<EOF
-## Goal-directed loop — iteration $iter
+## Goal-directed loop â€” iteration $iter
 
 Implement the full plan until the ## Completion gate passes.
 Mark phases | **DONE** | in the status table only when truly finished.
@@ -264,7 +288,7 @@ EOF
   if [[ "$code" -ne 0 && "$code" -ne 2 ]]; then
     echo "goal-directed-loop: agent error exit $code (continuing)" >&2
   else
-    echo "goal-directed-loop: plan incomplete — continuing" >&2
+    echo "goal-directed-loop: plan incomplete â€” continuing" >&2
   fi
 
   if [[ "$ONCE" == "1" ]]; then stop_bounded "--once without completion gate"; fi
