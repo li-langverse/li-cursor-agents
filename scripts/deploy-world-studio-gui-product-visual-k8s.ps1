@@ -46,8 +46,10 @@ kubectl apply -f (Join-Path $K8s "configmap-world-studio-gui-product-visual.yaml
 kubectl apply -f (Join-Path $K8s "deployment-world-studio-gui-product-visual.yaml")
 
 $entry = Join-Path $Root "deploy\world-studio-gui-product-visual-entrypoint.sh"
+$entryLf = Join-Path $env:TEMP "world-studio-gui-product-visual-entrypoint.sh"
+(Get-Content -Raw $entry) -replace "`r`n", "`n" | Set-Content -NoNewline -Encoding utf8 $entryLf
 kubectl -n $Namespace create configmap li-world-studio-gui-product-visual-bundle `
-    --from-file=entrypoint.sh=$entry `
+    --from-file=entrypoint.sh=$entryLf `
     --dry-run=client -o yaml | kubectl apply -f -
 
 $secretArgs = @(
