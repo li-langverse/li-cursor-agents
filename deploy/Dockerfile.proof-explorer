@@ -21,7 +21,11 @@ COPY . .
 RUN npm run build && npm prune --omit=dev
 
 COPY deploy/proof-explorer-entrypoint.sh /app/deploy/proof-explorer-entrypoint.sh
-RUN chmod +x /app/deploy/proof-explorer-entrypoint.sh
+COPY deploy/world-studio-gui-product-visual-entrypoint.sh /app/deploy/world-studio-gui-product-visual-entrypoint.sh
+COPY deploy/li-toml-config-entrypoint.sh /app/deploy/li-toml-config-entrypoint.sh
+RUN chmod +x /app/deploy/proof-explorer-entrypoint.sh \
+    /app/deploy/world-studio-gui-product-visual-entrypoint.sh \
+    /app/deploy/li-toml-config-entrypoint.sh
 
 ENV NODE_ENV=production
 ENTRYPOINT ["/app/deploy/proof-explorer-entrypoint.sh"]

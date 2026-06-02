@@ -224,6 +224,10 @@ past_deadline() {
 
 stop_success() {
   echo "goal-directed-loop: GOAL COMPLETE (exit 0)"
+  if [[ "${LI_GOAL_LOOP_IDLE_ON_COMPLETE:-0}" == "1" ]]; then
+    echo "goal-directed-loop: idling (LI_GOAL_LOOP_IDLE_ON_COMPLETE=1)"
+    exec sleep infinity
+  fi
   exit 0
 }
 

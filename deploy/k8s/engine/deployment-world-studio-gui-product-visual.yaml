@@ -74,10 +74,9 @@ spec:
               mountPath: /workspace
       containers:
         - name: world-studio-gui-product-visual
-          # Use the proof-explorer image because it includes `gh` for authenticated pushes/PR updates.
-          # Prefer the llvm22 flavor so the worker can build `lic` and run native smokes/captures.
           image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
           imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "/config/entrypoint.sh"]
           envFrom:
             - configMapRef:
                 name: li-world-studio-gui-product-visual
@@ -104,76 +103,6 @@ spec:
                   name: li-agents-secrets
                   key: CURSOR_SDK_KEY
                   optional: true
-          command:
-            - bash
-            - -lc
-            - |
-              set -euo pipefail
-              : "${GH_TOKEN:?GH_TOKEN required}"
-              export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
-              echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
-              gh auth setup-git 2>/dev/null || true
-              git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
-              git config --global user.email "${LI_GIT_USER_EMAIL:-world-studio@li-langverse.dev}"
-              git config --global user.name "${LI_GIT_USER_NAME:-li-world-studio}"
-
-              STUDIO_ROOT="${LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_STUDIO_ROOT:-/workspace/studio}"
-              LIC_ROOT="${LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_LIC_ROOT:-/workspace/lic}"
-              GOAL_FILE_REL="${LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_GOAL_FILE:-data/goal-directed-sprints/world-studio-gui-product-visual.md}"
-              AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
-
-              # The PVC workspace persists between restarts. Ensure we can always switch branches deterministically.
-              if [ -d "$STUDIO_ROOT/.git" ]; then
-                git -C "$STUDIO_ROOT" reset --hard || true
-                git -C "$STUDIO_ROOT" clean -fd || true
-              fi
-              if [ -d "$LIC_ROOT/.git" ]; then
-                git -C "$LIC_ROOT" reset --hard || true
-                git -C "$LIC_ROOT" clean -fd || true
-              fi
-
-              cd "$STUDIO_ROOT"
-              # Ensure goal file exists in studio repo.
-              test -f "$GOAL_FILE_REL"
-
-              # Keep repos aligned to their target branches (create if missing).
-              studio_branch="${LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_STUDIO_BRANCH:-cursor/world-studio-gui-product-visual}"
-              lic_branch="${LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_LIC_BRANCH:-cursor/world-studio-gui-product-visual}"
-
-              git -C "$STUDIO_ROOT" fetch origin --prune
-              git -C "$LIC_ROOT" fetch origin --prune
-              if git -C "$STUDIO_ROOT" show-ref --verify --quiet "refs/remotes/origin/${studio_branch}"; then
-                git -C "$STUDIO_ROOT" checkout -B "$studio_branch" "origin/${studio_branch}"
-                git -C "$STUDIO_ROOT" reset --hard "origin/${studio_branch}"
-              else
-                git -C "$STUDIO_ROOT" checkout -B "$studio_branch"
-              fi
-
-              if git -C "$LIC_ROOT" show-ref --verify --quiet "refs/remotes/origin/${lic_branch}"; then
-                git -C "$LIC_ROOT" checkout -B "$lic_branch" "origin/${lic_branch}"
-                git -C "$LIC_ROOT" reset --hard "origin/${lic_branch}"
-              else
-                git -C "$LIC_ROOT" checkout -B "$lic_branch"
-              fi
-
-              export LIC_ROOT
-              export LI_CURSOR_AGENTS_ROOT="$AGENTS_ROOT"
-              export LI_GOAL_LOOP_GATE_ONLY="${LI_GOAL_LOOP_GATE_ONLY:-1}"
-              export LI_GOAL_GATE_PREFER_CWD="${LI_GOAL_GATE_PREFER_CWD:-1}"
-
-              # `run-agent` preflight expects a local fixture at CWD/fixtures/mock-briefing.json.
-              # Provide it from the li-cursor-agents image fixtures to avoid ENOENT.
-              if [ ! -f "$STUDIO_ROOT/fixtures/mock-briefing.json" ] && [ -f "$AGENTS_ROOT/fixtures/mock-briefing.json" ]; then
-                mkdir -p "$STUDIO_ROOT/fixtures"
-                cp "$AGENTS_ROOT/fixtures/mock-briefing.json" "$STUDIO_ROOT/fixtures/mock-briefing.json"
-              fi
-
-              exec "$AGENTS_ROOT/scripts/goal-directed-loop.sh" \
-                --agent "${LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_AGENT:-world_studio_builder}" \
-                --workflow-repo studio \
-                --cwd "$STUDIO_ROOT" \
-                --goal-file "$STUDIO_ROOT/$GOAL_FILE_REL" \
-                --max 0
           resources:
             requests:
               cpu: "1000m"
@@ -184,8 +113,13 @@ spec:
           volumeMounts:
             - name: workspace
               mountPath: /workspace
+            - name: config-bundle
+              mountPath: /config
       volumes:
         - name: workspace
           persistentVolumeClaim:
             claimName: li-world-studio-gui-product-visual-workspace
-
+        - name: config-bundle
+          configMap:
+            name: li-world-studio-gui-product-visual-bundle
+            defaultMode: 0755

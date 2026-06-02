@@ -28,6 +28,7 @@ data:
   # Goal-directed loop mode
   LI_GOAL_LOOP_GATE_ONLY: "1"
   LI_GOAL_GATE_PREFER_CWD: "1"
+  LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_IDLE_RECHECK_SEC: "300"
 
   # K8s worker should not depend on local fixture files.
   LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE: "1"
