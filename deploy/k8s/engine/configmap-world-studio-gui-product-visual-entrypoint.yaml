@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: li-world-studio-gui-product-visual-entrypoint
+  namespace: li-swarm
+  labels:
+    app: li-world-studio-gui-product-visual
+    li-langverse.io/sprint: world-studio-gui-product-visual
+data:
+  entrypoint.sh: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    : "${GH_TOKEN:?GH_TOKEN required}"
+    export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
+
+    ORG="${LI_GITHUB_ORG:-li-langverse}"
+    AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
+    WORKSPACE="${LI_WORKSPACE_ROOT:-/workspace}"
+    WORKFLOW_REPO="${LI_WORKFLOW_REPO:-studio}"
+    WORKFLOW_BRANCH="${LI_WORKFLOW_BRANCH:-main}"
+    LIC_REPO="${LI_LIC_REPO:-lic}"
+    LIC_BRANCH="${LI_LIC_BRANCH:-main}"
+    STUDIO_REPO="${LI_STUDIO_REPO:-studio}"
+    STUDIO_BRANCH="${LI_STUDIO_BRANCH:-main}"
+
+    LIC_ROOT="${LIC_ROOT:-${WORKSPACE}/lic}"
+    STUDIO_ROOT="${STUDIO_ROOT:-${WORKSPACE}/studio}"
+    GOAL_REL="${LI_GOAL_FILE_REL:-data/goal-directed-sprints/world-studio-gui-product-visual.md}"
+
+    echo "wsg-product-visual-entrypoint: context repos=(${WORKFLOW_REPO}@${WORKFLOW_BRANCH}, lic@${LIC_BRANCH}) ws=${WORKSPACE}"
+
+    export GH_TOKEN GITHUB_TOKEN
+    echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
+    gh auth setup-git 2>/dev/null || true
+    git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+    git config --global user.email "${LI_GIT_USER_EMAIL:-goal-worker@li-langverse.dev}"
+    git config --global user.name "${LI_GIT_USER_NAME:-li-goal-worker}"
+
+    sync_repo() {
+      local repo="$1" root="$2" branch="$3"
+      mkdir -p "$(dirname "$root")"
+      if [[ ! -d "$root/.git" ]]; then
+        echo "clone ${ORG}/${repo} -> ${root}"
+        gh repo clone "${ORG}/${repo}" "$root" || {
+          rm -rf "$root"
+          gh repo clone "${ORG}/${repo}" "$root"
+        }
+      fi
+      git -C "$root" fetch origin --prune
+      if git -C "$root" show-ref --verify --quiet "refs/remotes/origin/${branch}"; then
+        git -C "$root" checkout -f -B "$branch" "origin/${branch}"
+        git -C "$root" reset --hard "origin/${branch}"
+      else
+        echo "WARN: branch ${branch} missing in ${repo}; using origin/HEAD" >&2
+        git -C "$root" checkout -f -B "$branch" origin/HEAD || git -C "$root" checkout -f "$branch" || true
+      fi
+      echo "sync ok: ${repo}@${branch} $(git -C "$root" log -1 --oneline)"
+    }
+
+    sync_repo "$LIC_REPO" "$LIC_ROOT" "$LIC_BRANCH"
+    sync_repo "$STUDIO_REPO" "$STUDIO_ROOT" "$STUDIO_BRANCH"
+
+    test -f "${STUDIO_ROOT}/${GOAL_REL}" || {
+      echo "ERROR: missing goal file: ${STUDIO_ROOT}/${GOAL_REL}" >&2
+      exit 1
+    }
+
+    # Best-effort compiler build (worker can retry if this fails)
+    if [[ ! -x "${LIC_ROOT}/build/compiler/lic/lic" ]]; then
+      echo "wsg-product-visual-entrypoint: building lic (best-effort)"
+      (cd "$LIC_ROOT" && bash scripts/build.sh) || echo "WARN: lic build failed (will retry in loop)" >&2
+    fi
+
+    export LIC_ROOT STUDIO_ROOT
+    export LI_GOAL_LOOP_GATE_ONLY="${LI_GOAL_LOOP_GATE_ONLY:-1}"
+    export LI_GOAL_GATE_PREFER_CWD="${LI_GOAL_GATE_PREFER_CWD:-1}"
+
+    # Run goal-directed loop until completion gate passes
+    exec bash "${AGENTS_ROOT}/scripts/goal-directed-loop.sh" \
+      --agent "${LI_GOAL_AGENT:-world_studio_builder}" \
+      --workflow-repo "$WORKFLOW_REPO" \
+      --cwd "$STUDIO_ROOT" \
+      --goal-file "${STUDIO_ROOT}/${GOAL_REL}" \
+      --max "${LI_GOAL_MAX:-0}"
+
