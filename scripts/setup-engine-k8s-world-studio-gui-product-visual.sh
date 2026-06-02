@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Deploy World Studio GUI product-visual goal-directed worker on engine cluster (runs until completion gate passes).
+# Note: keep this file with LF line endings (bash).
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 NS=li-swarm
