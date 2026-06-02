@@ -5,7 +5,7 @@ import { runAgent, agentsPackageRoot, shouldUseMock } from "../runner.js";
 import { workerConsole } from "../worker/worker-console.js";
 import type { AgentId } from "../types.js";
 import type { QueuedOrgIssue } from "./org-issue-coordination.js";
-import { sprintDataDir } from "./org-issue-coordination.js";
+import { sprintDataDir, setIssueBackoff, setIssueCooldown } from "./org-issue-coordination.js";
 import { fetchGitHubIssue, postGitHubIssueComment } from "./org-issue-github.js";
 import { orgName, parseIssueRef } from "./org-issue-supervisor-config.js";
 
@@ -145,7 +145,21 @@ export async function runOrgIssueImplementCycle(
     issue = await fetchGitHubIssue(parsed.org, parsed.repo, parsed.number);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    return {
+if (/rate limit exceeded|secondary rate limit/i.test(msg)) {
+  const ms = Number(process.env.LI_GH_BACKOFF_MS || 15 * 60_000);
+  const until = new Date(Date.now() + (Number.isFinite(ms) ? ms : 15 * 60_000)).toISOString();
+  setIssueBackoff(until, "github_rate_limited");
+  setIssueCooldown(options.issueRef, until);
+  return {
+    ok: true,
+    status: "completed",
+    agentId: orgIssueImplementerAgentId(),
+    issueClosed: false,
+    issueWasOpen: false,
+    outputTail: "GitHub rate limited - backoff until " + until,
+  };
+}
+return {
       ok: false,
       status: "failed",
       agentId: orgIssueImplementerAgentId(),

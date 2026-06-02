@@ -285,3 +285,85 @@ export function activeClaimsForDb(state: OrgPrActiveState): unknown[] {
     (e) => e.status === "claimed" || e.status === "running",
   );
 }
+
+export interface OrgPrBackoffState {
+  until: string;
+  reason?: string;
+}
+
+export interface OrgPrCooldownState {
+  version: 1;
+  updatedAt: string;
+  untilByRef: Record<string, string>;
+}
+
+function prBackoffPath(root = agentsPackageRoot()): string {
+  return join(sprintDataDir(root), "org-pr-gh-backoff.json");
+}
+
+function prCooldownPath(root = agentsPackageRoot()): string {
+  return join(sprintDataDir(root), "org-pr-cooldown.json");
+}
+
+export function getPrBackoff(root = agentsPackageRoot()): OrgPrBackoffState | null {
+  const path = prBackoffPath(root);
+  if (!existsSync(path)) return null;
+  try {
+    const parsed = JSON.parse(readFileSync(path, "utf8")) as OrgPrBackoffState;
+    if (!parsed?.until) return null;
+    if (!Number.isFinite(Date.parse(parsed.until))) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function setPrBackoff(untilIso: string, reason?: string, root = agentsPackageRoot()): void {
+  const path = prBackoffPath(root);
+  mkdirSync(dirname(path), { recursive: true });
+  const tmp = `${path}.${process.pid}.tmp`;
+  writeFileSync(tmp, JSON.stringify({ until: untilIso, reason }, null, 2), "utf8");
+  renameSync(tmp, path);
+}
+
+function emptyCooldown(): OrgPrCooldownState {
+  const now = new Date().toISOString();
+  return { version: 1, updatedAt: now, untilByRef: {} };
+}
+
+function readCooldown(root = agentsPackageRoot()): OrgPrCooldownState {
+  const path = prCooldownPath(root);
+  if (!existsSync(path)) return emptyCooldown();
+  try {
+    const parsed = JSON.parse(readFileSync(path, "utf8")) as OrgPrCooldownState;
+    if (parsed?.version === 1 && parsed.untilByRef && typeof parsed.untilByRef === "object") return parsed;
+  } catch {
+    /* ignore */
+  }
+  return emptyCooldown();
+}
+
+function writeCooldown(state: OrgPrCooldownState, root = agentsPackageRoot()): void {
+  const path = prCooldownPath(root);
+  mkdirSync(dirname(path), { recursive: true });
+  const tmp = `${path}.${process.pid}.tmp`;
+  writeFileSync(tmp, JSON.stringify(state, null, 2), "utf8");
+  renameSync(tmp, path);
+}
+
+export function cooldownUntilForPr(prRef: string, root = agentsPackageRoot()): string | null {
+  const state = readCooldown(root);
+  const until = state.untilByRef[prRef];
+  if (!until) return null;
+  const ms = Date.parse(until);
+  if (!Number.isFinite(ms)) return null;
+  if (Date.now() >= ms) return null;
+  return until;
+}
+
+export function setPrCooldown(prRef: string, untilIso: string, root = agentsPackageRoot()): void {
+  const state = readCooldown(root);
+  state.updatedAt = new Date().toISOString();
+  state.untilByRef[prRef] = untilIso;
+  writeCooldown(state, root);
+}

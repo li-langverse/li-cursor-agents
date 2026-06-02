@@ -17,6 +17,8 @@ import {
   readPlannerWorkQueue,
   updatePlanStatus,
   getPlannerBackoff,
+  cooldownUntilForPlan,
+  setPlanCooldown,
 } from "./org-planner-coordination.js";
 import { refreshPlannerQueue, issuePlanRef } from "./org-planner-queue.js";
 import {
@@ -126,6 +128,11 @@ export async function orgPlannerSupervisorTick(): Promise<PlannerSupervisorTickR
 
     if (item.kind === "research_plan") {
       const ref = researchPlanRef(item.goal_id, item.session_id);
+      const until = cooldownUntilForPlan(ref, root);
+      if (until) continue;
+      const cooldownMs = Number(process.env.LI_ORG_PLANNER_REF_COOLDOWN_MS || 10 * 60_000);
+      const cooldownUntil = new Date(Date.now() + (Number.isFinite(cooldownMs) ? cooldownMs : 10 * 60_000)).toISOString();
+      setPlanCooldown(ref, cooldownUntil, root);
       if (activeSet.has(ref)) continue;
       if (
         !claimPlan(
@@ -169,6 +176,11 @@ export async function orgPlannerSupervisorTick(): Promise<PlannerSupervisorTickR
     }
 
     const ref = issuePlanRef(item.repo, item.number);
+    const until = cooldownUntilForPlan(ref, root);
+      if (until) continue;
+      const cooldownMs = Number(process.env.LI_ORG_PLANNER_REF_COOLDOWN_MS || 10 * 60_000);
+      const cooldownUntil = new Date(Date.now() + (Number.isFinite(cooldownMs) ? cooldownMs : 10 * 60_000)).toISOString();
+      setPlanCooldown(ref, cooldownUntil, root);
     if (activeSet.has(ref)) continue;
     if (
       !claimPlan(

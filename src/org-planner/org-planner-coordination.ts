@@ -297,3 +297,55 @@ export function setPlannerBackoff(untilIso: string, reason?: string, root = agen
   writeFileSync(tmp, JSON.stringify({ until: untilIso, reason }, null, 2), "utf8");
   renameSync(tmp, path);
 }
+
+export interface PlannerCooldownState {
+  version: 1;
+  updatedAt: string;
+  untilByRef: Record<string, string>;
+}
+
+function plannerCooldownPath(root = agentsPackageRoot()): string {
+  return join(sprintDataDir(root), "org-planner-cooldown.json");
+}
+
+function emptyPlannerCooldown(): PlannerCooldownState {
+  const now = new Date().toISOString();
+  return { version: 1, updatedAt: now, untilByRef: {} };
+}
+
+function readPlannerCooldown(root = agentsPackageRoot()): PlannerCooldownState {
+  const path = plannerCooldownPath(root);
+  if (!existsSync(path)) return emptyPlannerCooldown();
+  try {
+    const parsed = JSON.parse(readFileSync(path, "utf8")) as PlannerCooldownState;
+    if (parsed?.version === 1 && parsed.untilByRef && typeof parsed.untilByRef === "object") return parsed;
+  } catch {
+    /* ignore */
+  }
+  return emptyPlannerCooldown();
+}
+
+function writePlannerCooldown(state: PlannerCooldownState, root = agentsPackageRoot()): void {
+  const path = plannerCooldownPath(root);
+  mkdirSync(dirname(path), { recursive: true });
+  const tmp = `${path}.${process.pid}.tmp`;
+  writeFileSync(tmp, JSON.stringify(state, null, 2), "utf8");
+  renameSync(tmp, path);
+}
+
+export function cooldownUntilForPlan(planRef: string, root = agentsPackageRoot()): string | null {
+  const state = readPlannerCooldown(root);
+  const until = state.untilByRef[planRef];
+  if (!until) return null;
+  const ms = Date.parse(until);
+  if (!Number.isFinite(ms)) return null;
+  if (Date.now() >= ms) return null;
+  return until;
+}
+
+export function setPlanCooldown(planRef: string, untilIso: string, root = agentsPackageRoot()): void {
+  const state = readPlannerCooldown(root);
+  state.updatedAt = new Date().toISOString();
+  state.untilByRef[planRef] = untilIso;
+  writePlannerCooldown(state, root);
+}

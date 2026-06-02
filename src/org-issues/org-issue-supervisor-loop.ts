@@ -15,6 +15,9 @@ import {
   readActiveState,
   readImplementQueueIssues,
   updateIssueStatus,
+  getIssueBackoff,
+  cooldownUntilForIssue,
+  setIssueCooldown,
 } from "./org-issue-coordination.js";
 import {
   createImplementerJob,
@@ -80,6 +83,18 @@ export async function orgIssueSupervisorTick(): Promise<SupervisorTickResult> {
   const root = agentsPackageRoot();
   pruneTerminalActiveEntries(root);
 
+  const backoff = getIssueBackoff(root);
+  const untilMs = backoff?.until ? Date.parse(backoff.until) : NaN;
+  if (Number.isFinite(untilMs) && Date.now() < untilMs) {
+    return {
+      openCount: 0,
+      desiredWorkers: 0,
+      activeWorkers: 0,
+      spawned: 0,
+      message: `GitHub rate limit backoff until ${backoff!.until}${backoff?.reason ? ` (${backoff.reason})` : ""}`,
+    };
+  }
+
   const countRes = runPython("org-issue-open-count.py");
   let openCount = parseOpenCount(countRes.tail) ?? readQueueOpenTotal(root);
 
@@ -121,9 +136,14 @@ export async function orgIssueSupervisorTick(): Promise<SupervisorTickResult> {
   for (const issue of queued) {
     if (spawned >= slots) break;
     const ref = issueRef(issue.repo, issue.number);
+    const until = cooldownUntilForIssue(ref, root);
+    if (until) continue;
     if (activeSet.has(ref)) continue;
 
     const workerId = randomBytes(4).toString("hex");
+    const cooldownMs = Number(process.env.LI_ORG_ISSUE_REF_COOLDOWN_MS || 10 * 60_000);
+    const cooldownUntil = new Date(Date.now() + (Number.isFinite(cooldownMs) ? cooldownMs : 10 * 60_000)).toISOString();
+    setIssueCooldown(ref, cooldownUntil, root);
     if (!claimIssue(ref, issue.repo, issue.number, workerId, undefined, root)) continue;
 
     if (!isInKubernetesCluster()) {

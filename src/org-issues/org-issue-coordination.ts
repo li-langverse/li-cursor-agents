@@ -262,3 +262,85 @@ export function pruneTerminalActiveEntries(root = agentsPackageRoot()): number {
 
 
 
+
+export interface OrgIssueBackoffState {
+  until: string;
+  reason?: string;
+}
+
+export interface OrgIssueCooldownState {
+  version: 1;
+  updatedAt: string;
+  untilByRef: Record<string, string>;
+}
+
+function issueBackoffPath(root = agentsPackageRoot()): string {
+  return join(sprintDataDir(root), "org-issue-gh-backoff.json");
+}
+
+function issueCooldownPath(root = agentsPackageRoot()): string {
+  return join(sprintDataDir(root), "org-issue-cooldown.json");
+}
+
+export function getIssueBackoff(root = agentsPackageRoot()): OrgIssueBackoffState | null {
+  const path = issueBackoffPath(root);
+  if (!existsSync(path)) return null;
+  try {
+    const parsed = JSON.parse(readFileSync(path, "utf8")) as OrgIssueBackoffState;
+    if (!parsed?.until) return null;
+    if (!Number.isFinite(Date.parse(parsed.until))) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function setIssueBackoff(untilIso: string, reason?: string, root = agentsPackageRoot()): void {
+  const path = issueBackoffPath(root);
+  mkdirSync(dirname(path), { recursive: true });
+  const tmp = `${path}.${process.pid}.tmp`;
+  writeFileSync(tmp, JSON.stringify({ until: untilIso, reason }, null, 2), "utf8");
+  renameSync(tmp, path);
+}
+
+function emptyIssueCooldown(): OrgIssueCooldownState {
+  const now = new Date().toISOString();
+  return { version: 1, updatedAt: now, untilByRef: {} };
+}
+
+function readIssueCooldown(root = agentsPackageRoot()): OrgIssueCooldownState {
+  const path = issueCooldownPath(root);
+  if (!existsSync(path)) return emptyIssueCooldown();
+  try {
+    const parsed = JSON.parse(readFileSync(path, "utf8")) as OrgIssueCooldownState;
+    if (parsed?.version === 1 && parsed.untilByRef && typeof parsed.untilByRef === "object") return parsed;
+  } catch {
+    /* ignore */
+  }
+  return emptyIssueCooldown();
+}
+
+function writeIssueCooldown(state: OrgIssueCooldownState, root = agentsPackageRoot()): void {
+  const path = issueCooldownPath(root);
+  mkdirSync(dirname(path), { recursive: true });
+  const tmp = `${path}.${process.pid}.tmp`;
+  writeFileSync(tmp, JSON.stringify(state, null, 2), "utf8");
+  renameSync(tmp, path);
+}
+
+export function cooldownUntilForIssue(issueRef: string, root = agentsPackageRoot()): string | null {
+  const state = readIssueCooldown(root);
+  const until = state.untilByRef[issueRef];
+  if (!until) return null;
+  const ms = Date.parse(until);
+  if (!Number.isFinite(ms)) return null;
+  if (Date.now() >= ms) return null;
+  return until;
+}
+
+export function setIssueCooldown(issueRef: string, untilIso: string, root = agentsPackageRoot()): void {
+  const state = readIssueCooldown(root);
+  state.updatedAt = new Date().toISOString();
+  state.untilByRef[issueRef] = untilIso;
+  writeIssueCooldown(state, root);
+}
