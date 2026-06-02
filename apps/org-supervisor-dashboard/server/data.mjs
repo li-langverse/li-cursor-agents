@@ -56,7 +56,10 @@ const GH_COUNT_CACHE_MS = Number(process.env.LI_ORG_DASHBOARD_GH_CACHE_MS || 10 
 const GH_COUNT_BACKOFF_MS = Number(process.env.LI_ORG_DASHBOARD_GH_BACKOFF_MS || 15 * 60 * 1000);
 
 function ghCountCachePath() {
-  return join(sprintDir(), ".org-open-count-cache.json");
+  const fromEnv = process.env.LI_ORG_DASHBOARD_GH_CACHE_FILE?.trim();
+  if (fromEnv) return fromEnv;
+  // Sprint PVC is read-only in-cluster; keep cache on local disk.
+  return join(agentsRoot(), "data", ".org-open-count-cache.json");
 }
 
 function readGhCountCache() {
@@ -65,9 +68,15 @@ function readGhCountCache() {
 
 function writeGhCountCache(patch) {
   const path = ghCountCachePath();
-  mkdirSync(dirname(path), { recursive: true });
-  const prev = readGhCountCache();
-  writeFileSync(path, JSON.stringify({ ...prev, ...patch, updatedAt: new Date().toISOString() }, null, 2));
+  try {
+    mkdirSync(dirname(path), { recursive: true });
+    const prev = readGhCountCache();
+    writeFileSync(path, JSON.stringify({ ...prev, ...patch, updatedAt: new Date().toISOString() }, null, 2));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    // Read-only sprint mount or missing permissions — skip cache write.
+    if (!message.includes("EROFS") && !message.includes("EACCES")) throw err;
+  }
 }
 
 function isRateLimitOutput(tail) {
