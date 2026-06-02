@@ -147,16 +147,35 @@ resolve_goal_file_for_gate() {
 
 GATE_GOAL_FILE="$(resolve_goal_file_for_gate)"
 
+# Completion/progress gates must run in the agent's isolated clone when present;
+# --cwd ../studio (sibling checkout) stays stale while the agent marks todos in data/workspaces/.
+resolve_gate_cwd() {
+  if [[ -n "$WORKFLOW_REPO" && -n "$AGENT" ]]; then
+    local ws_root="$ROOT/data/workspaces/li-langverse/${WORKFLOW_REPO}"
+    if [[ -d "$ws_root" ]]; then
+      local latest
+      latest="$(ls -td "$ws_root"/${AGENT}-*/repo 2>/dev/null | head -1 || true)"
+      if [[ -n "$latest" && -d "$latest" ]]; then
+        echo "$(cd "$latest" && pwd)"
+        return 0
+      fi
+    fi
+  fi
+  echo "$(cd "$CWD" && pwd)"
+}
+
 gate_status() {
   ensure_dist_built
-  local goal_path
+  local goal_path gate_cwd
   goal_path="$(resolve_goal_file_for_gate)"
   if [[ -z "$goal_path" || ! -f "$goal_path" ]]; then
     echo "goal-directed-loop: no goal file for completion gate" >&2
     return 1
   fi
   GATE_GOAL_FILE="$goal_path"
-  node "$ROOT/dist/cli/goal-completion-gate.js" --goal-file "$GATE_GOAL_FILE" --cwd "$CWD"
+  gate_cwd="$(resolve_gate_cwd)"
+  echo "goal-directed-loop: gate cwd=$gate_cwd" >&2
+  node "$ROOT/dist/cli/goal-completion-gate.js" --goal-file "$GATE_GOAL_FILE" --cwd "$gate_cwd"
 }
 
 record_gaps_from_run() {
