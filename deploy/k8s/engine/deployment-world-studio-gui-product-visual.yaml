@@ -75,7 +75,8 @@ spec:
       containers:
         - name: world-studio-gui-product-visual
           # Use the proof-explorer image because it includes `gh` for authenticated pushes/PR updates.
-          image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer
+          # Prefer the llvm22 flavor so the worker can build `lic` and run native smokes/captures.
+          image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
           imagePullPolicy: IfNotPresent
           envFrom:
             - configMapRef:
@@ -121,6 +122,16 @@ spec:
               GOAL_FILE_REL="${LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_GOAL_FILE:-data/goal-directed-sprints/world-studio-gui-product-visual.md}"
               AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
 
+              # The PVC workspace persists between restarts. Ensure we can always switch branches deterministically.
+              if [ -d "$STUDIO_ROOT/.git" ]; then
+                git -C "$STUDIO_ROOT" reset --hard || true
+                git -C "$STUDIO_ROOT" clean -fd || true
+              fi
+              if [ -d "$LIC_ROOT/.git" ]; then
+                git -C "$LIC_ROOT" reset --hard || true
+                git -C "$LIC_ROOT" clean -fd || true
+              fi
+
               cd "$STUDIO_ROOT"
               # Ensure goal file exists in studio repo.
               test -f "$GOAL_FILE_REL"
@@ -149,6 +160,13 @@ spec:
               export LI_CURSOR_AGENTS_ROOT="$AGENTS_ROOT"
               export LI_GOAL_LOOP_GATE_ONLY="${LI_GOAL_LOOP_GATE_ONLY:-1}"
               export LI_GOAL_GATE_PREFER_CWD="${LI_GOAL_GATE_PREFER_CWD:-1}"
+
+              # `run-agent` preflight expects a local fixture at CWD/fixtures/mock-briefing.json.
+              # Provide it from the li-cursor-agents image fixtures to avoid ENOENT.
+              if [ ! -f "$STUDIO_ROOT/fixtures/mock-briefing.json" ] && [ -f "$AGENTS_ROOT/fixtures/mock-briefing.json" ]; then
+                mkdir -p "$STUDIO_ROOT/fixtures"
+                cp "$AGENTS_ROOT/fixtures/mock-briefing.json" "$STUDIO_ROOT/fixtures/mock-briefing.json"
+              fi
 
               exec "$AGENTS_ROOT/scripts/goal-directed-loop.sh" \
                 --agent "${LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_AGENT:-world_studio_builder}" \
