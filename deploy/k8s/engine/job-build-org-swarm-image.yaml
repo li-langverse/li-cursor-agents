@@ -70,7 +70,7 @@ spec:
                   name: li-agents-secrets
                   key: GH_SWARM_TOKEN
             - name: IMAGE
-              value: ghcr.io/li-langverse/li-cursor-agents:latest
+              value: ghcr.io/li-langverse/li-cursor-agents:swarm-20260602
             - name: GHCR_USER
               value: cap-jmk-real
             - name: STORAGE_DRIVER

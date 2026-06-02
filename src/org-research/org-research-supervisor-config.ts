@@ -33,7 +33,7 @@ export function orgResearchSupervisorMaxWorkers(): number {
 export function orgResearchSupervisorImage(): string {
   return (
     process.env.LI_ORG_RESEARCH_SUPERVISOR_IMAGE?.trim() ||
-    "ghcr.io/li-langverse/li-cursor-agents:latest"
+    "ghcr.io/li-langverse/li-cursor-agents:swarm-20260602"
   );
 }
 

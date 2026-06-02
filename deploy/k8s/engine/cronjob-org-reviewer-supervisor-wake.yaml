@@ -25,7 +25,7 @@ spec:
             li-langverse.io/node-pool: engine
           containers:
             - name: wake
-              image: ghcr.io/li-langverse/li-cursor-agents:latest
+              image: ghcr.io/li-langverse/li-cursor-agents:swarm-20260602
               imagePullPolicy: Always
               command: ["node", "dist/cli/org-reviewer-supervisor.js", "wake"]
               envFrom:
