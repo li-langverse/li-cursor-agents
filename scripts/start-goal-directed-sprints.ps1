@@ -149,6 +149,7 @@ $sprints = @(
         Cwd      = "../studio"
         GoalRel  = "../data/goal-directed-sprints/world-studio-gui-polish.md"
         ExtraEnv = @{
+            LI_GOAL_GATE_PREFER_CWD = "1"
             WORLD_STUDIO_GATES_WSL = "1"
             LI_GOAL_LOOP_SLEEP_SEC = "45"
             LIC = "../lic/build-wsl/compiler/lic/lic"
