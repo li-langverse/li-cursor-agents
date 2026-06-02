@@ -280,6 +280,37 @@ export function pruneTerminalActiveEntries(root = agentsPackageRoot()): number {
   return removed;
 }
 
+/** Drop a merged/closed PR from merge queue buckets and decrement report.total. */
+export function removeClosedPrFromQueue(
+  repo: string,
+  number: number,
+  root = agentsPackageRoot(),
+): boolean {
+  const path = join(sprintDataDir(root), "org-pr-merge-queue.json");
+  if (!existsSync(path)) return false;
+  const q = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
+  let removed = false;
+  for (const [key, value] of Object.entries(q)) {
+    if (key === "report" || !Array.isArray(value)) continue;
+    const before = value.length;
+    q[key] = (value as { repo: string; number: number }[]).filter(
+      (row) => !(row.repo === repo && Number(row.number) === number),
+    );
+    if ((q[key] as unknown[]).length < before) removed = true;
+  }
+  if (removed) {
+    const report = q.report;
+    if (report && typeof report === "object" && !Array.isArray(report)) {
+      const total = (report as { total?: number }).total;
+      if (typeof total === "number" && total > 0) {
+        (report as { total: number }).total = total - 1;
+      }
+    }
+    writeFileSync(path, `${JSON.stringify(q, null, 2)}\n`, "utf8");
+  }
+  return removed;
+}
+
 export function activeClaimsForDb(state: OrgPrActiveState): unknown[] {
   return Object.values(state.prs).filter(
     (e) => e.status === "claimed" || e.status === "running",

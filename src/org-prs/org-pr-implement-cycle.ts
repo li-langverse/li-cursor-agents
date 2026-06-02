@@ -6,6 +6,7 @@ import { workerConsole } from "../worker/worker-console.js";
 import type { AgentId } from "../types.js";
 import { sprintDataDir } from "../org-issues/org-issue-coordination.js";
 import type { QueuedOrgPr } from "./org-pr-coordination.js";
+import { removeClosedPrFromQueue } from "./org-pr-coordination.js";
 import { fetchGitHubPullRequest, postGitHubPrComment } from "./org-pr-github.js";
 import { orgName, parsePrRef } from "./org-pr-supervisor-config.js";
 
@@ -155,6 +156,7 @@ export async function runOrgPrImplementCycle(
   }
 
   if (pr.state === "closed") {
+    removeClosedPrFromQueue(parsed.repo, parsed.number);
     return {
       ok: true,
       status: "completed",
@@ -221,12 +223,17 @@ export async function runOrgPrImplementCycle(
     after = pr;
   }
 
+  const prMerged = after.state === "closed";
+  if (prMerged) {
+    removeClosedPrFromQueue(parsed.repo, parsed.number);
+  }
+
   const ok = agentResult.status === "finished";
   return {
     ok,
     status: ok ? "completed" : "failed",
     agentId,
-    prMerged: after.state === "closed",
+    prMerged,
     prWasOpen: pr.state === "open",
     agentStatus: agentResult.status,
     durationMs: Date.now() - started,

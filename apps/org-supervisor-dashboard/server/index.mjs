@@ -13,7 +13,7 @@ const serveStatic = process.argv.includes("--serve-static");
 
 let cache = null;
 let cacheAt = 0;
-const CACHE_MS = 5_000;
+const CACHE_MS = Number(process.env.LI_ORG_DASHBOARD_CACHE_MS || 30_000);
 
 async function getPayload(force = false) {
   if (!force && cache && Date.now() - cacheAt < CACHE_MS) return cache;

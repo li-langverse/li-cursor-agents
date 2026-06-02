@@ -5,7 +5,7 @@ import { runAgent, agentsPackageRoot, shouldUseMock } from "../runner.js";
 import { workerConsole } from "../worker/worker-console.js";
 import type { AgentId } from "../types.js";
 import type { QueuedOrgIssue } from "./org-issue-coordination.js";
-import { sprintDataDir } from "./org-issue-coordination.js";
+import { removeClosedIssueFromQueue, sprintDataDir } from "./org-issue-coordination.js";
 import { fetchGitHubIssue, postGitHubIssueComment } from "./org-issue-github.js";
 import { orgName, parseIssueRef } from "./org-issue-supervisor-config.js";
 
@@ -159,8 +159,9 @@ export async function runOrgIssueImplementCycle(
     workerConsole(
       "org-issue-implementer",
       "info",
-      `${options.issueRef} already closed â€” marking completed`,
+      `${options.issueRef} already closed — marking completed`,
     );
+    removeClosedIssueFromQueue(parsed.repo, parsed.number);
     return {
       ok: true,
       status: "completed",
@@ -231,6 +232,7 @@ export async function runOrgIssueImplementCycle(
 
   if (issueClosed) {
     workerConsole("org-issue-implementer", "info", `${options.issueRef} closed on GitHub`);
+    removeClosedIssueFromQueue(parsed.repo, parsed.number);
   } else if (!agentOk) {
     workerConsole(
       "org-issue-implementer",

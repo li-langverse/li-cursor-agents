@@ -14,6 +14,7 @@ export interface SupervisorSnapshot {
   label: string;
   health: Health;
   openCount: number;
+  openCountSource?: string;
   desiredWorkers: number;
   activeClaims: Record<string, unknown>[];
   lastCycleAt: string | null;

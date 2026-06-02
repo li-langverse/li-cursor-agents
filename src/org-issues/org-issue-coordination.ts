@@ -260,5 +260,35 @@ export function pruneTerminalActiveEntries(root = agentsPackageRoot()): number {
   return removed;
 }
 
+/** Drop a closed issue from all queue buckets and decrement report.total_open. */
+export function removeClosedIssueFromQueue(
+  repo: string,
+  number: number,
+  root = agentsPackageRoot(),
+): boolean {
+  const path = join(sprintDataDir(root), "org-issue-queue.json");
+  if (!existsSync(path)) return false;
+  const q = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
+  let removed = false;
+  for (const [key, value] of Object.entries(q)) {
+    if (key === "report" || !Array.isArray(value)) continue;
+    const before = value.length;
+    q[key] = (value as QueuedOrgIssue[]).filter(
+      (row) => !(row.repo === repo && Number(row.number) === number),
+    );
+    if ((q[key] as unknown[]).length < before) removed = true;
+  }
+  if (removed) {
+    const report = q.report;
+    if (report && typeof report === "object" && !Array.isArray(report)) {
+      const total = (report as { total_open?: number }).total_open;
+      if (typeof total === "number" && total > 0) {
+        (report as { total_open: number }).total_open = total - 1;
+      }
+    }
+    writeFileSync(path, `${JSON.stringify(q, null, 2)}\n`, "utf8");
+  }
+  return removed;
+}
 
 
