@@ -1,0 +1,173 @@
+# Always-on World Studio GUI product-visual goal-directed agent (engine node, prebuilt image + PVC workspace).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: li-world-studio-gui-product-visual
+  namespace: li-swarm
+  labels:
+    app: li-world-studio-gui-product-visual
+    app.kubernetes.io/name: li-world-studio-gui-product-visual
+    app.kubernetes.io/component: goal-directed-agent
+    app.kubernetes.io/part-of: li-langverse
+    li-langverse.io/sprint: world-studio-gui-product-visual
+    li-langverse.io/role: world-studio-builder
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: li-world-studio-gui-product-visual
+  template:
+    metadata:
+      labels:
+        app: li-world-studio-gui-product-visual
+        app.kubernetes.io/name: li-world-studio-gui-product-visual
+        app.kubernetes.io/component: goal-directed-agent
+        app.kubernetes.io/part-of: li-langverse
+        li-langverse.io/sprint: world-studio-gui-product-visual
+        li-langverse.io/role: world-studio-builder
+      annotations:
+        prometheus.io/scrape: "false"
+        li-langverse.io/curator: julianmkleber.com
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: engine
+      imagePullSecrets:
+        - name: ghcr-li-langverse
+      initContainers:
+        - name: git-sync
+          image: alpine/git:latest
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+            - name: ORG
+              value: "li-langverse"
+            - name: STUDIO_REPO
+              value: "https://github.com/li-langverse/studio.git"
+            - name: LIC_REPO
+              value: "https://github.com/li-langverse/lic.git"
+          command:
+            - sh
+            - -lc
+            - |
+              set -eu
+              auth_url() {
+                echo "$1" | sed "s#https://#https://x-access-token:${GH_TOKEN}@#"
+              }
+              mkdir -p /workspace
+              if [ ! -d /workspace/studio/.git ]; then
+                git clone --depth 1 "$(auth_url "$STUDIO_REPO")" /workspace/studio
+              else
+                git -C /workspace/studio fetch origin --prune
+              fi
+              if [ ! -d /workspace/lic/.git ]; then
+                git clone --depth 1 "$(auth_url "$LIC_REPO")" /workspace/lic
+              else
+                git -C /workspace/lic fetch origin --prune
+              fi
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+      containers:
+        - name: world-studio-gui-product-visual
+          # Use the proof-explorer image because it includes `gh` for authenticated pushes/PR updates.
+          image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: li-world-studio-gui-product-visual
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+            - name: CURSOR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: CURSOR_API_KEY
+                  optional: true
+            - name: CURSOR_SDK_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: CURSOR_SDK_KEY
+                  optional: true
+          command:
+            - bash
+            - -lc
+            - |
+              set -euo pipefail
+              : "${GH_TOKEN:?GH_TOKEN required}"
+              export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
+              echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
+              gh auth setup-git 2>/dev/null || true
+              git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+              git config --global user.email "${LI_GIT_USER_EMAIL:-world-studio@li-langverse.dev}"
+              git config --global user.name "${LI_GIT_USER_NAME:-li-world-studio}"
+
+              STUDIO_ROOT="${LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_STUDIO_ROOT:-/workspace/studio}"
+              LIC_ROOT="${LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_LIC_ROOT:-/workspace/lic}"
+              GOAL_FILE_REL="${LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_GOAL_FILE:-data/goal-directed-sprints/world-studio-gui-product-visual.md}"
+              AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
+
+              cd "$STUDIO_ROOT"
+              # Ensure goal file exists in studio repo.
+              test -f "$GOAL_FILE_REL"
+
+              # Keep repos aligned to their target branches (create if missing).
+              studio_branch="${LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_STUDIO_BRANCH:-cursor/world-studio-gui-product-visual}"
+              lic_branch="${LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_LIC_BRANCH:-cursor/world-studio-gui-product-visual}"
+
+              git -C "$STUDIO_ROOT" fetch origin --prune
+              git -C "$LIC_ROOT" fetch origin --prune
+              if git -C "$STUDIO_ROOT" show-ref --verify --quiet "refs/remotes/origin/${studio_branch}"; then
+                git -C "$STUDIO_ROOT" checkout -B "$studio_branch" "origin/${studio_branch}"
+                git -C "$STUDIO_ROOT" reset --hard "origin/${studio_branch}"
+              else
+                git -C "$STUDIO_ROOT" checkout -B "$studio_branch"
+              fi
+
+              if git -C "$LIC_ROOT" show-ref --verify --quiet "refs/remotes/origin/${lic_branch}"; then
+                git -C "$LIC_ROOT" checkout -B "$lic_branch" "origin/${lic_branch}"
+                git -C "$LIC_ROOT" reset --hard "origin/${lic_branch}"
+              else
+                git -C "$LIC_ROOT" checkout -B "$lic_branch"
+              fi
+
+              export LIC_ROOT
+              export LI_CURSOR_AGENTS_ROOT="$AGENTS_ROOT"
+              export LI_GOAL_LOOP_GATE_ONLY="${LI_GOAL_LOOP_GATE_ONLY:-1}"
+              export LI_GOAL_GATE_PREFER_CWD="${LI_GOAL_GATE_PREFER_CWD:-1}"
+
+              exec "$AGENTS_ROOT/scripts/goal-directed-loop.sh" \
+                --agent "${LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_AGENT:-world_studio_builder}" \
+                --workflow-repo studio \
+                --cwd "$STUDIO_ROOT" \
+                --goal-file "$STUDIO_ROOT/$GOAL_FILE_REL" \
+                --max 0
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "2Gi"
+            limits:
+              cpu: "8"
+              memory: "12Gi"
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+      volumes:
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: li-world-studio-gui-product-visual-workspace
+
