@@ -32,12 +32,12 @@ Update each iteration. Mark `| **DONE** |` only when every `wsp-w*` todo in that
 
 | Phase | Scope | Status |
 |-------|-------|--------|
-| **W0** | Visual baseline — typography readable, token contrast, anti-wireframe pass on paint_fb / li-ui | pending |
-| **W1** | Real labels & icons — glyph pipeline, inspector text, viewport overlays | pending |
-| **W2** | Interaction feel — hover/focus states, keyboard feedback visible | pending |
-| **W3** | Viewport quality — grid, particles, sim viz not placeholder | pending |
-| **W4** | Slick pass — gradients, shadows, spacing rhythm (still native Li) | pending |
-| **W5** | Screenshot gate — mandatory PNGs per vertical + 1280×720 game; no HTML proof | pending |
+| **W0** | Visual baseline — typography readable, token contrast, anti-wireframe pass on paint_fb / li-ui | **DONE** |
+| **W1** | Real labels & icons — glyph pipeline, inspector text, viewport overlays | **DONE** |
+| **W2** | Interaction feel — hover/focus states, keyboard feedback visible | **DONE** |
+| **W3** | Viewport quality — grid, particles, sim viz not placeholder | **DONE** |
+| **W4** | Slick pass — gradients, shadows, spacing rhythm (still native Li) | **DONE** |
+| **W5** | Screenshot gate — mandatory PNGs per vertical + 1280×720 game; no HTML proof | **DONE** |
 
 ## Progress gate
 
