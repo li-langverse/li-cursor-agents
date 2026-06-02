@@ -19,7 +19,7 @@ import {
   orgPlannerIssuesPerRun,
 } from "./org-planner-supervisor-config.js";
 import type { PlannerWorkKind } from "./org-planner-coordination.js";
-import { sprintDataDir } from "./org-planner-coordination.js";
+import { sprintDataDir, setPlannerBackoff } from "./org-planner-coordination.js";
 
 export interface OrgPlannerRunOptions {
   planRef: string;
@@ -214,7 +214,20 @@ export async function runOrgPlannerCycle(
       issue = await fetchGitHubIssue(parsed.org, parsed.repo, parsed.number);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      return {
+if (/rate limit exceeded|secondary rate limit/i.test(msg)) {
+  const ms = Number(process.env.LI_ORG_PLANNER_GH_BACKOFF_MS || 15 * 60_000);
+  const until = new Date(Date.now() + (Number.isFinite(ms) ? ms : 15 * 60_000)).toISOString();
+  setPlannerBackoff(until, "github_rate_limited");
+  return {
+    ok: true,
+    status: "completed",
+    agentId,
+    kind: options.kind,
+    planReady: false,
+    outputTail: "GitHub rate limited - backoff until " + until,
+  };
+}
+return {
         ok: false,
         status: "failed",
         agentId,

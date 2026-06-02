@@ -267,3 +267,33 @@ export function pruneTerminalActiveEntries(root = agentsPackageRoot()): number {
   }, root);
   return removed;
 }
+
+export interface PlannerBackoffState {
+  until: string;
+  reason?: string;
+}
+
+export function plannerBackoffPath(root = agentsPackageRoot()): string {
+  return join(sprintDataDir(root), "org-planner-gh-backoff.json");
+}
+
+export function getPlannerBackoff(root = agentsPackageRoot()): PlannerBackoffState | null {
+  const path = plannerBackoffPath(root);
+  if (!existsSync(path)) return null;
+  try {
+    const parsed = JSON.parse(readFileSync(path, "utf8")) as PlannerBackoffState;
+    if (!parsed?.until) return null;
+    if (!Number.isFinite(Date.parse(parsed.until))) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function setPlannerBackoff(untilIso: string, reason?: string, root = agentsPackageRoot()): void {
+  const path = plannerBackoffPath(root);
+  mkdirSync(dirname(path), { recursive: true });
+  const tmp = `${path}.${process.pid}.tmp`;
+  writeFileSync(tmp, JSON.stringify({ until: untilIso, reason }, null, 2), "utf8");
+  renameSync(tmp, path);
+}

@@ -16,6 +16,7 @@ import {
   readActiveState,
   readPlannerWorkQueue,
   updatePlanStatus,
+  getPlannerBackoff,
 } from "./org-planner-coordination.js";
 import { refreshPlannerQueue, issuePlanRef } from "./org-planner-queue.js";
 import {
@@ -69,6 +70,18 @@ export interface PlannerSupervisorTickResult {
 export async function orgPlannerSupervisorTick(): Promise<PlannerSupervisorTickResult> {
   const root = agentsPackageRoot();
   pruneTerminalActiveEntries(root);
+
+  const backoff = getPlannerBackoff(root);
+  const untilMs = backoff?.until ? Date.parse(backoff.until) : NaN;
+  if (Number.isFinite(untilMs) && Date.now() < untilMs) {
+    return {
+      openCount: 0,
+      desiredWorkers: 0,
+      activeWorkers: 0,
+      spawned: 0,
+      message: `GitHub rate limit backoff until ${backoff!.until}${backoff?.reason ? ` (${backoff.reason})` : ""}`,
+    };
+  }
 
   const classify = runPython("org-classify-open-issues.py");
   if (!classify.ok) {
@@ -250,3 +263,5 @@ export async function runOrgPlannerSupervisorLoop(signal?: AbortSignal): Promise
     await sleep(intervalMs, signal);
   }
 }
+
+
