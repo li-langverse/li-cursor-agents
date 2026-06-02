@@ -31,7 +31,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: li-agents-secrets
-                  key: GH_TOKEN
+                  key: GH_SWARM_TOKEN
           resources:
             requests:
               cpu: "250m"

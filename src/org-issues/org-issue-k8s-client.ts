@@ -197,7 +197,7 @@ export async function createImplementerJob(options: {
               env: [
                 {
                   name: "GH_TOKEN",
-                  valueFrom: { secretKeyRef: { name: "li-agents-secrets", key: "GH_TOKEN" } },
+                  valueFrom: { secretKeyRef: { name: "li-agents-secrets", key: "GH_SWARM_TOKEN" } },
                 },
                 {
                   name: "CURSOR_API_KEY",

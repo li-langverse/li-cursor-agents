@@ -10,7 +10,11 @@ export interface GitHubIssue {
 }
 
 export function ghToken(): string | undefined {
-  return process.env.GH_TOKEN?.trim() || process.env.GITHUB_TOKEN?.trim();
+  return (
+    process.env.GH_SWARM_TOKEN?.trim() ||
+    process.env.GH_TOKEN?.trim() ||
+    process.env.GITHUB_TOKEN?.trim()
+  );
 }
 
 function ghRequest<T>(

@@ -29,6 +29,16 @@ spec:
             - configMapRef:
                 name: li-org-research-supervisor
           env:
+            - name: GH_SWARM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_SWARM_TOKEN
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_SWARM_TOKEN
             - name: SUPABASE_URL
               valueFrom:
                 secretKeyRef:

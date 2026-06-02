@@ -6,6 +6,10 @@ ORG="${LI_GITHUB_ORG:-li-langverse}"
 LIC_ROOT="${LIC_ROOT:-/workspace/lic}"
 BENCHMARKS_ROOT="${BENCHMARKS_ROOT:-/workspace/benchmarks}"
 
+if [[ -n "${GH_SWARM_TOKEN:-}" ]]; then
+  export GH_TOKEN="$GH_SWARM_TOKEN"
+fi
+
 if [[ -n "${GH_TOKEN:-}" ]]; then
   export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
   echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true

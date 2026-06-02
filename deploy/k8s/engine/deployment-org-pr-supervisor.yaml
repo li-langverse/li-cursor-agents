@@ -33,7 +33,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: li-agents-secrets
-                  key: GH_TOKEN
+                  key: GH_SWARM_TOKEN
             - name: SUPABASE_URL
               valueFrom:
                 secretKeyRef:

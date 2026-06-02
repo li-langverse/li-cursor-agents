@@ -44,10 +44,11 @@ PRESETS: dict[str, dict] = {
 }
 
 
+from _gh_token import gh_token
+
+
 def headers() -> dict[str, str]:
-    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
-    if not token:
-        raise SystemExit("GH_TOKEN required")
+    token = gh_token()
     return {
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github+json",
