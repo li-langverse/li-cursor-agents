@@ -85,18 +85,15 @@ spec:
           volumeMounts:
             - name: workspace
               mountPath: /workspace
-            - name: loop-state
+            - name: workspace
               mountPath: /app/data/li-toml-config-loop
+              subPath: li-toml-config-loop
             - name: config-bundle
               mountPath: /config
       volumes:
         - name: workspace
           persistentVolumeClaim:
             claimName: li-li-toml-config-workspace
-        - name: loop-state
-          persistentVolumeClaim:
-            claimName: li-li-toml-config-workspace
-            subPath: li-toml-config-loop
         - name: config-bundle
           configMap:
             name: li-li-toml-config-bundle

@@ -34,7 +34,7 @@ foreach ($envFile in @(
 if (-not $env:GH_TOKEN -and $env:GITHUB_TOKEN) { $env:GH_TOKEN = $env:GITHUB_TOKEN }
 if (-not $env:GH_TOKEN) { Write-Error "GH_TOKEN required" }
 if (-not $env:CURSOR_API_KEY -and -not $env:CURSOR_SDK_KEY) {
-    Write-Warning "CURSOR_API_KEY not set — pod may fail agent runs"
+    Write-Warning "CURSOR_API_KEY not set - pod may fail agent runs"
 }
 
 $env:KUBECONFIG = $KubeConfig
