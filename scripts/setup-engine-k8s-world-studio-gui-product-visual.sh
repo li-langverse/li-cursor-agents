@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
-# Deploy World Studio GUI product-visual goal-directed worker on engine cluster (runs until completion gate passes).
-# Note: keep this file with LF line endings (bash).
+# Deploy World Studio GUI product-visual goal-directed worker on engine cluster
+# (runs until completion gate passes).
+#
+# Important: keep this file with LF line endings (bash).
 set -euo pipefail
+
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-NS=li-swarm
+NS="li-swarm"
 K8S="$ROOT/deploy/k8s/engine"
 
 if ! kubectl config current-context &>/dev/null; then
@@ -11,6 +14,7 @@ if ! kubectl config current-context &>/dev/null; then
   echo "  export KUBECONFIG=/path/to/engine-kubeconfig" >&2
   exit 1
 fi
+
 if [[ -z "${GH_TOKEN:-}" && -z "${GITHUB_TOKEN:-}" ]]; then
   echo "ERROR: GH_TOKEN or GITHUB_TOKEN required for li-agents-secrets" >&2
   exit 1
@@ -30,6 +34,7 @@ fi
 if [[ -n "${CURSOR_SDK_KEY:-}" ]]; then
   SECRET_ARGS+=(--from-literal=CURSOR_SDK_KEY="$CURSOR_SDK_KEY")
 fi
+
 kubectl -n "$NS" create secret generic li-agents-secrets \
   "${SECRET_ARGS[@]}" \
   --dry-run=client -o yaml | kubectl apply -f -
