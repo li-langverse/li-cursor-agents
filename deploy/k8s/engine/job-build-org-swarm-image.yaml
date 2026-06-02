@@ -1,0 +1,106 @@
+# Clone li-cursor-agents, build org swarm image with Podman, push or sideload into k3s on engine.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: build-org-swarm-image
+  namespace: li-swarm
+  labels:
+    app: li-org-swarm
+    app.kubernetes.io/component: image-build
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: build-org-swarm-image
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/hostname: engine
+      volumes:
+        - name: workspace
+          emptyDir: {}
+        - name: podman-storage
+          emptyDir: {}
+        - name: k3s-bin
+          hostPath:
+            path: /var/lib/rancher/k3s/data/current/bin
+            type: Directory
+        - name: containerd-sock
+          hostPath:
+            path: /run/k3s/containerd/containerd.sock
+            type: Socket
+      initContainers:
+        - name: git-clone
+          image: alpine/git:latest
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_SWARM_TOKEN
+            - name: GIT_REF
+              value: "cursor/proof-explorer-phase9-handoff"
+            - name: GIT_REPO
+              value: "https://github.com/li-langverse/li-cursor-agents.git"
+          command:
+            - sh
+            - -lc
+            - |
+              set -eu
+              ref="${GIT_REF:-main}"
+              dest=/workspace/li-cursor-agents
+              url="${GIT_REPO/https:\/\//https://x-access-token:${GH_TOKEN}@}"
+              git clone --depth 1 --branch "$ref" "$url" "$dest" \
+                || git clone --depth 1 "$url" "$dest"
+              test -f "$dest/deploy/Dockerfile"
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+      containers:
+        - name: podman
+          image: quay.io/podman/stable:v5.4.2
+          securityContext:
+            privileged: true
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_SWARM_TOKEN
+            - name: IMAGE
+              value: ghcr.io/li-langverse/li-cursor-agents:latest
+            - name: GHCR_USER
+              value: cap-jmk-real
+            - name: STORAGE_DRIVER
+              value: vfs
+            - name: BUILDAH_ISOLATION
+              value: chroot
+          command:
+            - bash
+            - -lc
+            - |
+              set -euo pipefail
+              cd /workspace/li-cursor-agents
+              echo "$GH_TOKEN" | podman login ghcr.io -u "$GHCR_USER" --password-stdin || true
+              podman build -f deploy/Dockerfile -t "$IMAGE" .
+              if podman push "$IMAGE"; then
+                echo "pushed to ghcr.io"
+                exit 0
+              fi
+              echo "ghcr push failed - sideloading into k3s containerd"
+              tar=/tmp/org-swarm-image.tar
+              podman save -o "$tar" "$IMAGE"
+              /k3s-bin/ctr --address /run/k3s/containerd/containerd.sock -n k8s.io images import "$tar"
+              echo "imported into k3s"
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: podman-storage
+              mountPath: /var/lib/containers
+            - name: k3s-bin
+              mountPath: /k3s-bin
+              readOnly: true
+            - name: containerd-sock
+              mountPath: /run/k3s/containerd/containerd.sock
