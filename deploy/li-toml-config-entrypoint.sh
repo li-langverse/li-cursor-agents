@@ -84,11 +84,38 @@ export LI_TOML_ROOT="$TOML_ROOT"
 export LI_CURSOR_AGENTS_ROOT="$AGENTS_ROOT"
 export LI_GOAL_LOOP_SLEEP_SEC="$LOOP_SLEEP"
 
+sync_repo() {
+  local dir="$1" branch="$2"
+  [[ -d "$dir/.git" ]] || return 0
+  git -C "$dir" fetch origin --prune >/dev/null 2>&1 || true
+  if git -C "$dir" show-ref --verify --quiet "refs/remotes/origin/${branch}"; then
+    git -C "$dir" reset --hard "origin/${branch}" >/dev/null 2>&1 || true
+  fi
+}
+
 cd "$AGENTS_ROOT"
-exec ./scripts/goal-directed-loop.sh \
-  --agent "$AGENT" \
-  --workflow-repo li-httpd \
-  --cwd "$HTTPD_ROOT" \
-  --benchmarks "$BENCH_ROOT" \
-  --goal-file "$GOAL_FILE" \
-  --max "$LOOP_MAX"
+while true; do
+  # Keep /workspace clones current so gates evaluate the latest pushed commits.
+  sync_repo "$HTTPD_ROOT" "$BRANCH_HTTPD"
+  sync_repo "$BENCH_ROOT" "$BRANCH_BENCH"
+  sync_repo "$TOML_ROOT" "$BRANCH_TOML"
+
+  set +e
+  ./scripts/goal-directed-loop.sh \
+    --agent "$AGENT" \
+    --workflow-repo li-httpd \
+    --cwd "$HTTPD_ROOT" \
+    --benchmarks "$BENCH_ROOT" \
+    --goal-file "$GOAL_FILE" \
+    --max 1 \
+    --sleep 0 \
+    --once
+  rc=$?
+  set -e
+
+  if [[ "$rc" == "0" ]]; then
+    exit 0
+  fi
+
+  sleep "$LOOP_SLEEP"
+done
