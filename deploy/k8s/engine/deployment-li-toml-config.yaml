@@ -1,0 +1,103 @@
+# Goal-directed agent: Li-native TOML + httpd config migration (engine node).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: li-li-toml-config-workspace
+  namespace: li-swarm
+  labels:
+    app: li-li-toml-config
+    li-langverse.io/sprint: li-toml-config-migration
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: li-li-toml-config
+  namespace: li-swarm
+  labels:
+    app: li-li-toml-config
+    app.kubernetes.io/name: li-li-toml-config
+    app.kubernetes.io/component: goal-directed-agent
+    app.kubernetes.io/part-of: li-langverse
+    li-langverse.io/sprint: li-toml-config-migration
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: li-li-toml-config
+  template:
+    metadata:
+      labels:
+        app: li-li-toml-config
+        app.kubernetes.io/name: li-li-toml-config
+        app.kubernetes.io/component: goal-directed-agent
+        li-langverse.io/sprint: li-toml-config-migration
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: engine
+      imagePullSecrets:
+        - name: ghcr-li-langverse
+      containers:
+        - name: agent
+          image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "/config/entrypoint.sh"]
+          envFrom:
+            - configMapRef:
+                name: li-li-toml-config
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+            - name: CURSOR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: CURSOR_API_KEY
+                  optional: true
+            - name: CURSOR_SDK_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: CURSOR_SDK_KEY
+                  optional: true
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "4"
+              memory: "4Gi"
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: loop-state
+              mountPath: /app/data/li-toml-config-loop
+            - name: config-bundle
+              mountPath: /config
+      volumes:
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: li-li-toml-config-workspace
+        - name: loop-state
+          persistentVolumeClaim:
+            claimName: li-li-toml-config-workspace
+            subPath: li-toml-config-loop
+        - name: config-bundle
+          configMap:
+            name: li-li-toml-config-bundle
+            defaultMode: 0644

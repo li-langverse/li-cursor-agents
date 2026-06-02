@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: li-li-toml-config
+  namespace: li-swarm
+  labels:
+    app: li-li-toml-config
+    app.kubernetes.io/name: li-li-toml-config
+    app.kubernetes.io/component: goal-directed-agent
+    li-langverse.io/sprint: li-toml-config-migration
+data:
+  LI_GOAL_WORKSPACE: "/workspace"
+  LI_GOAL_FILE: "data/goal-directed-sprints/li-toml-config-migration.md"
+  LI_GOAL_BRANCH_HTTPD: "cursor/li-toml-config-migration"
+  LI_GOAL_BRANCH_BENCHMARKS: "feat/li-toml-config-pipeline"
+  LI_GOAL_BRANCH_LI_TOML: "cursor/li-toml-config-migration"
+  LI_GOAL_AGENT: "code_implementer"
+  LI_GOAL_LOOP_MAX: "0"
+  LI_GOAL_LOOP_SLEEP_SEC: "120"
+  LI_GITHUB_ORG: "li-langverse"
+  LI_CURSOR_AGENTS_ROOT: "/app"
+  LI_CONTROL_PLANE_STORE: "disk"
+  LI_SDK_TERMINAL_STREAM: "1"
+  LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE: "1"
+  NODE_ENV: "production"

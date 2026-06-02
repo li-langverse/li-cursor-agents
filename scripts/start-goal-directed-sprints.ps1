@@ -3,7 +3,7 @@
 param(
     [int]$Max = 0,  # 0 = no iteration cap; stop on completion gate only
     [string]$UntilLocal = "",
-    [ValidateSet("all", "studio", "lig", "ph-ml", "world-studio", "world-studio-runnable", "world-studio-gui-library", "world-studio-gui-polish", "benchmarks", "benchmarks-dashboard", "swarm", "org-prs", "org-prs-dirty", "org-prs-ci")]
+    [ValidateSet("all", "studio", "lig", "ph-ml", "world-studio", "world-studio-runnable", "world-studio-gui-library", "world-studio-gui-polish", "benchmarks", "benchmarks-dashboard", "li-toml-config", "swarm", "org-prs", "org-prs-dirty", "org-prs-ci")]
     [string]$Sprint = "all",
     [switch]$DryRun,
     [switch]$BuildOnly
@@ -177,6 +177,17 @@ $sprints = @(
         ExtraEnv = @{
             LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE = "1"
             LI_STACK_SKIP_SUPABASE = "1"
+        }
+    },    @{
+        Id       = "li-toml-config"
+        Agent    = "code_implementer"
+        Repo     = "li-httpd"
+        Cwd      = "../li-httpd"
+        GoalRel  = "../data/goal-directed-sprints/li-toml-config-migration.md"
+        ExtraEnv = @{
+            LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE = "1"
+            LI_GOAL_LOOP_SLEEP_SEC             = "120"
+            LI_TOML_ROOT                       = "../li-toml"
         }
     },
     @{

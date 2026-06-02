@@ -1,0 +1,7 @@
+{
+  "sprint": "li-toml-config-migration",
+  "phase": "phase-0-prep",
+  "branch": "cursor/li-toml-config-migration",
+  "started_at": "2026-06-02T00:00:00Z",
+  "notes": "K8s goal-directed sprint; read data/goal-directed-sprints/li-toml-config-migration.md"
+}
