@@ -51,15 +51,32 @@ function Convert-ShToLf([string]$src, [string]$dest) {
 }
 
 $bundleDir = Join-Path $env:TEMP "li-ws-pv-bundle"
-New-Item -ItemType Directory -Force -Path $bundleDir | Out-Null
-Convert-ShToLf (Join-Path $Root "deploy\world-studio-gui-product-visual-entrypoint.sh") (Join-Path $bundleDir "entrypoint.sh")
-Convert-ShToLf (Join-Path $Root "scripts\goal-directed-loop.sh") (Join-Path $bundleDir "goal-directed-loop.sh")
-Convert-ShToLf (Join-Path $Root "scripts\goal-loop-self-unblock.sh") (Join-Path $bundleDir "goal-loop-self-unblock.sh")
-$bundleYaml = Join-Path $env:TEMP "li-world-studio-gui-product-visual-bundle.yaml"
-kubectl -n $Namespace create configmap li-world-studio-gui-product-visual-bundle `
-    --from-file=$bundleDir `
-    --dry-run=client -o yaml | Out-File -FilePath $bundleYaml -Encoding utf8
-kubectl apply -f $bundleYaml
+python -c @"
+import pathlib, subprocess, os, sys
+root = pathlib.Path(r'$Root').resolve()
+bundle = pathlib.Path(r'$bundleDir')
+bundle.mkdir(parents=True, exist_ok=True)
+pairs = [
+    ('entrypoint.sh', root / 'deploy' / 'world-studio-gui-product-visual-entrypoint.sh'),
+    ('goal-directed-loop.sh', root / 'scripts' / 'goal-directed-loop.sh'),
+    ('goal-loop-self-unblock.sh', root / 'scripts' / 'goal-loop-self-unblock.sh'),
+]
+for name, src in pairs:
+    (bundle / name).write_bytes(src.read_bytes().replace(b'\r\n', b'\n'))
+env = {**os.environ, 'KUBECONFIG': os.environ.get('KUBECONFIG', '')}
+proc = subprocess.run(
+    ['kubectl', '-n', '$Namespace', 'apply', '-f', '-'],
+    input=subprocess.check_output([
+        'kubectl', '-n', '$Namespace', 'create', 'configmap',
+        'li-world-studio-gui-product-visual-bundle',
+        '--from-file', str(bundle),
+        '--dry-run=client', '-o', 'yaml',
+    ]),
+    env=env,
+)
+sys.exit(proc.returncode)
+"@
+if ($LASTEXITCODE -ne 0) { throw "configmap bundle apply failed" }
 
 $secretArgs = @(
     "create", "secret", "generic", "li-agents-secrets",
