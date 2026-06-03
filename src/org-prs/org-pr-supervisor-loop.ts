@@ -23,6 +23,7 @@ import {
   orgPrSupervisorMaxWorkers,
   prRef,
 } from "./org-pr-supervisor-config.js";
+import { runOrgLaneObserverTick } from "../org/org-lane-observer-tick.js";
 import { parsePrOpenCount, refreshPrMergeQueue, runPython, sleep } from "./org-pr-supervisor-shared.js";
 
 export interface PrSupervisorTickResult {
@@ -115,6 +116,13 @@ export async function orgPrSupervisorTick(): Promise<PrSupervisorTickResult> {
   }).catch((err) => {
     workerConsole("org-pr-supervisor", "warn", `db sync failed: ${String(err)}`);
   });
+
+  const observer = await runOrgLaneObserverTick("pr").catch(() => ({
+    message: "",
+    demoted: [],
+    metaScheduled: false,
+  }));
+  if (observer.message) workerConsole("org-pr-supervisor", "info", `observer ${observer.message}`);
 
   return { openCount, desiredWorkers, activeWorkers, spawned, message: msg };
 }

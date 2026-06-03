@@ -227,13 +227,26 @@ export async function runOrgIssueImplementCycle(
     /* best-effort */
   }
 
+  const output = agentResult.outputText ?? agentResult.error ?? "";
+  const prMention =
+    /github\.com\/[^\s/]+\/[^\s/]+\/pull\/\d+/i.test(output) ||
+    /\bPR\s*#\s*\d+/i.test(output);
   const agentOk = agentResult.status === "finished";
-  const ok = agentOk || issueClosed;
+  const partialSuccess = !agentOk && !issueClosed && prMention;
+  const ok = agentOk || issueClosed || partialSuccess;
+
+  if (partialSuccess) {
+    workerConsole(
+      "org-issue-implementer",
+      "warn",
+      `${options.issueRef} agent ${agentResult.status} but PR linked in output — partial success`,
+    );
+  }
 
   if (issueClosed) {
     workerConsole("org-issue-implementer", "info", `${options.issueRef} closed on GitHub`);
     removeClosedIssueFromQueue(parsed.repo, parsed.number);
-  } else if (!agentOk) {
+  } else if (!agentOk && !partialSuccess) {
     workerConsole(
       "org-issue-implementer",
       "warn",
@@ -249,7 +262,9 @@ export async function runOrgIssueImplementCycle(
     issueWasOpen: true,
     agentStatus: agentResult.status,
     durationMs: Date.now() - started,
-    outputTail: outputTail(agentResult.outputText ?? agentResult.error),
-    error: ok ? undefined : agentResult.error ?? `agent status ${agentResult.status}`,
+    outputTail: outputTail(output),
+    error: ok
+      ? undefined
+      : agentResult.error ?? `agent status ${agentResult.status}${partialSuccess ? " (partial)" : ""}`,
   };
 }

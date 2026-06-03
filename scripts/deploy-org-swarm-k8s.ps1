@@ -33,7 +33,6 @@ foreach ($envFile in @(
     Load-EnvFile $envFile
 }
 
-if (-not $env:GH_SWARM_TOKEN) { Write-Error "GH_SWARM_TOKEN required (set in li/.env)" }
 if (-not $env:CURSOR_API_KEY) { Write-Warning "CURSOR_API_KEY not set — implementer jobs may fail" }
 
 function Resolve-ContainerCli {
@@ -89,9 +88,14 @@ Write-Host "==> kubectl apply org swarm manifests (namespace=$Namespace)"
 kubectl label node $EngineNode li-langverse.io/node-pool=engine --overwrite 2>$null
 kubectl apply -f (Join-Path $K8s "namespace.yaml")
 
+$swarmTok = $env:GH_SWARM_TOKEN
+if (-not $swarmTok) { $swarmTok = $env:GH_TOKEN }
+if (-not $swarmTok) { Write-Error "GH_SWARM_TOKEN required (set in li/.env)" }
+
 $secretArgs = @(
     "create", "secret", "generic", "li-agents-secrets",
-    "--from-literal=GH_SWARM_TOKEN=$($env:GH_SWARM_TOKEN)",
+    "--from-literal=GH_SWARM_TOKEN=$swarmTok",
+    "--from-literal=GH_TOKEN=$swarmTok",
     "-n", $Namespace, "--dry-run=client", "-o", "yaml"
 )
 if ($env:CURSOR_API_KEY) { $secretArgs += "--from-literal=CURSOR_API_KEY=$($env:CURSOR_API_KEY)" }

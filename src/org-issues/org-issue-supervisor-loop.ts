@@ -6,6 +6,12 @@ import { agentLog } from "../agent-log.js";
 import { saveOrgSupervisorCycle } from "../db/org-supervisor-cycle.js";
 import { workerConsole } from "../worker/worker-console.js";
 import { agentsPackageRoot } from "../runner.js";
+import { runOrgLaneObserverTick } from "../org/org-lane-observer-tick.js";
+import {
+  applyIssueFailurePolicy,
+  isIssueSkipped,
+  issueRefFromQueue,
+} from "./org-issue-failure-policy.js";
 import {
   activeClaimsForDb,
   activeIssueRefs,
@@ -92,6 +98,15 @@ export async function orgIssueSupervisorTick(): Promise<SupervisorTickResult> {
     workerConsole("org-issue-supervisor", "warn", `classify failed: ${classify.tail.slice(-200)}`);
   }
 
+  const policy = applyIssueFailurePolicy(root);
+  if (policy.demoted.length) {
+    workerConsole(
+      "org-issue-supervisor",
+      "info",
+      `failure policy demoted ${policy.demoted.length} issue(s)`,
+    );
+  }
+
   const implementCount = readImplementQueueCount(root);
   const desiredWorkers = computeDesiredWorkers(implementCount, orgIssueSupervisorMaxWorkers());
   const state = readActiveState(root);
@@ -123,7 +138,11 @@ export async function orgIssueSupervisorTick(): Promise<SupervisorTickResult> {
 
   for (const issue of queued) {
     if (spawned >= slots) break;
-    const ref = issueRef(issue.repo, issue.number);
+    const ref = issueRefFromQueue(issue.repo, issue.number);
+    if (isIssueSkipped(ref, root)) {
+      workerConsole("org-issue-supervisor", "info", `skip cooldown ${ref}`);
+      continue;
+    }
     if (activeSet.has(ref)) continue;
 
     const workerId = randomBytes(4).toString("hex");
@@ -165,6 +184,14 @@ export async function orgIssueSupervisorTick(): Promise<SupervisorTickResult> {
   }).catch((err) => {
     workerConsole("org-issue-supervisor", "warn", `db sync failed: ${String(err)}`);
   });
+
+  const observer = await runOrgLaneObserverTick("issue").catch((err) => {
+    workerConsole("org-issue-supervisor", "warn", `observer: ${String(err)}`);
+    return { message: "observer error", demoted: [], metaScheduled: false };
+  });
+  if (observer.message) {
+    workerConsole("org-issue-supervisor", "info", `observer ${observer.message}`);
+  }
 
   return { openCount, implementCount, desiredWorkers, activeWorkers, spawned, message: msg };
 }
