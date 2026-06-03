@@ -4,7 +4,7 @@ param(
     [string]$Namespace = "li-swarm",
     [ValidateSet("0", "1")]
     [string]$Replicas = "0",
-    [ValidateSet("all", "world-studio", "typography-fx", "li-toml", "proof-explorer")]
+    [ValidateSet("all", "world-studio", "typography-fx", "demo-recorder", "li-toml", "proof-explorer")]
     [string]$Worker = "all"
 )
 
@@ -14,6 +14,7 @@ $env:KUBECONFIG = $KubeConfig
 $map = @{
     "world-studio"   = "li-world-studio-gui-product-visual"
     "typography-fx"  = "li-world-studio-typography-fx-animation"
+    "demo-recorder"  = "li-world-studio-gui-demo-recorder"
     "li-toml"        = "li-li-toml-config"
     "proof-explorer" = "li-proof-explorer"
 }

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: li-world-studio-gui-demo-recorder-workspace
+  namespace: li-swarm
+  labels:
+    app: li-world-studio-gui-demo-recorder
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: local-path
