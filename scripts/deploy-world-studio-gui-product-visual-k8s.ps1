@@ -55,9 +55,11 @@ New-Item -ItemType Directory -Force -Path $bundleDir | Out-Null
 Convert-ShToLf (Join-Path $Root "deploy\world-studio-gui-product-visual-entrypoint.sh") (Join-Path $bundleDir "entrypoint.sh")
 Convert-ShToLf (Join-Path $Root "scripts\goal-directed-loop.sh") (Join-Path $bundleDir "goal-directed-loop.sh")
 Convert-ShToLf (Join-Path $Root "scripts\goal-loop-self-unblock.sh") (Join-Path $bundleDir "goal-loop-self-unblock.sh")
+$bundleYaml = Join-Path $env:TEMP "li-world-studio-gui-product-visual-bundle.yaml"
 kubectl -n $Namespace create configmap li-world-studio-gui-product-visual-bundle `
     --from-file=$bundleDir `
-    --dry-run=client -o yaml | kubectl apply -f -
+    --dry-run=client -o yaml | Out-File -FilePath $bundleYaml -Encoding utf8
+kubectl apply -f $bundleYaml
 
 $secretArgs = @(
     "create", "secret", "generic", "li-agents-secrets",
