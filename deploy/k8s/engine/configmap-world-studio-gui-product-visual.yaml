@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: li-world-studio-gui-product-visual
+  namespace: li-swarm
+  labels:
+    app: li-world-studio-gui-product-visual
+    app.kubernetes.io/name: li-world-studio-gui-product-visual
+    app.kubernetes.io/component: goal-directed-agent
+data:
+  LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_ALWAYS_ON: "1"
+  LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_LOOP_SLEEP_SEC: "60"
+
+  # Goal + repos
+  LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_GOAL_FILE: "data/goal-directed-sprints/world-studio-gui-product-visual.md"
+  LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_WORKFLOW_REPO: "studio"
+  LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_AGENT: "world_studio_builder"
+
+  # Branches the agent should operate on (create/update PRs as needed)
+  LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_STUDIO_BRANCH: "cursor/world-studio-gui-product-visual"
+  LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_LIC_BRANCH: "cursor/world-studio-gui-product-visual"
+
+  # Workspace layout inside the container
+  LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_STUDIO_ROOT: "/workspace/studio"
+  LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_LIC_ROOT: "/workspace/lic"
+  LI_CURSOR_AGENTS_ROOT: "/app"
+
+  # Goal-directed loop mode
+  LI_GOAL_LOOP_GATE_ONLY: "1"
+  # Gates run in the agent clone (same branch as origin); PVC --cwd syncs after each push.
+  LI_GOAL_GATE_PREFER_CWD: "0"
+  LI_GOAL_SYNC_CWD_AFTER_RUN: "1"
+  LI_GOAL_SELF_UNBLOCK: "1"
+  LI_REPO_WORKFLOW_TRACK_REMOTE: "1"
+  LI_GOAL_STUCK_THRESHOLD: "5"
+  LI_GOAL_SCALE_DOWN_ON_COMPLETE: "1"
+  LI_GOAL_DEPLOYMENT_NAME: "li-world-studio-gui-product-visual"
+  LI_GOAL_NAMESPACE: "li-swarm"
+
+  # K8s worker should not depend on local fixture files.
+  LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE: "1"
+  LI_SDK_TERMINAL_STREAM: "1"
+
+  NODE_ENV: "production"
+

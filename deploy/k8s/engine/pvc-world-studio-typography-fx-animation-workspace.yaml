@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: li-world-studio-typography-fx-animation-workspace
+  namespace: li-swarm
+  labels:
+    app: li-world-studio-typography-fx-animation
+    app.kubernetes.io/name: li-world-studio-typography-fx-animation
+    app.kubernetes.io/component: goal-directed-agent
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: local-path

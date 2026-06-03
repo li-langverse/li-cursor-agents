@@ -11,7 +11,8 @@ import {
   proofExplorerLoopMax,
   proofExplorerLoopSleepSec,
   proofExplorerWorkflowRepo,
-  proofExplorerRepoWorkflowEnv,
+  proofExplorerGoalLoopEnv,
+  proofExplorerTrackedBranch,
 } from "./proof-explorer-worker-config.js";
 import { syncProofExplorerLicFromOrigin } from "./proof-explorer-lic-sync.js";
 import { sweepModeAllowsHandoff } from "./proof-explorer-sweep-mode.js";
@@ -84,7 +85,8 @@ function runGoalDirectedLoopOnce(goalRel: string): Promise<number> {
       env: {
         ...process.env,
         LI_GOAL_CWD: licRoot,
-        ...proofExplorerRepoWorkflowEnv(),
+        LI_GOAL_FILE: goalPath,
+        ...proofExplorerGoalLoopEnv(),
         LIC_ROOT: licRoot,
         LI_CURSOR_AGENTS_ROOT: agentsRoot,
       },
@@ -104,7 +106,7 @@ async function proofExplorerWorkerLoop(signal: AbortSignal): Promise<void> {
   workerConsole(
     "li-proof-explorer",
     "info",
-    `always-on loop started sleep_sec=${sleepSec} lic=${proofExplorerLicRoot()} handoff=${process.env.LI_PROOF_EXPLORER_PHASE_HANDOFF ?? "1"}`,
+    `always-on loop started sleep_sec=${sleepSec} lic=${proofExplorerLicRoot()} branch=${proofExplorerTrackedBranch()} handoff=${process.env.LI_PROOF_EXPLORER_PHASE_HANDOFF ?? "1"}`,
   );
 
   while (!signal.aborted) {
@@ -112,6 +114,9 @@ async function proofExplorerWorkerLoop(signal: AbortSignal): Promise<void> {
       const active = await resolveActivePhase();
       if (active.allComplete) {
         workerConsole("li-proof-explorer", "info", "program complete — all phase gates passed");
+        if (process.env.LI_PROOF_EXPLORER_EXIT_ON_COMPLETE === "1") {
+          process.exit(0);
+        }
         break;
       }
 
@@ -131,6 +136,9 @@ async function proofExplorerWorkerLoop(signal: AbortSignal): Promise<void> {
         const next = await resolveActivePhase();
         if (next.allComplete) {
           workerConsole("li-proof-explorer", "info", "program complete — all phase gates passed");
+          if (process.env.LI_PROOF_EXPLORER_EXIT_ON_COMPLETE === "1") {
+            process.exit(0);
+          }
           break;
         }
         if (next.phase?.id !== activePhaseId) {

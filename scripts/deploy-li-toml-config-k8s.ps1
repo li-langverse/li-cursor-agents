@@ -2,15 +2,14 @@
 param(
     [string]$KubeConfig = "$env:USERPROFILE\.kube\config-homelab",
     [string]$Namespace = "li-swarm",
-    [string]$EngineNode = "engine",
-    [string]$GitRef = "main",
-    [switch]$SkipPush
+    [string]$EngineNode = "engine"
 )
 
 $ErrorActionPreference = "Stop"
 $Root = Split-Path $PSScriptRoot -Parent
 $K8s = Join-Path $Root "deploy\k8s\engine"
 $Workspace = Split-Path $Root -Parent
+$BundleScript = Join-Path $Root "scripts\Invoke-K8sGoalLoopBundle.ps1"
 
 foreach ($envFile in @(
         (Join-Path $Workspace ".env.github"),
@@ -38,25 +37,34 @@ if (-not $env:CURSOR_API_KEY -and -not $env:CURSOR_SDK_KEY) {
 }
 
 $env:KUBECONFIG = $KubeConfig
-Write-Host "==> kubectl apply li-li-toml-config (namespace=$Namespace ref=$GitRef)"
+Write-Host "==> kubectl apply li-li-toml-config (namespace=$Namespace)"
 
 kubectl label node $EngineNode li-langverse.io/node-pool=engine --overwrite 2>$null
 
 kubectl apply -f (Join-Path $K8s "namespace.yaml")
+kubectl apply -f (Join-Path $K8s "rbac-goal-workers-scale.yaml")
 kubectl apply -f (Join-Path $K8s "configmap-li-toml-config.yaml")
 kubectl apply -f (Join-Path $K8s "deployment-li-toml-config.yaml")
 
 $goal = Join-Path $Root "data\goal-directed-sprints\li-toml-config-migration.md"
 $state = Join-Path $Root "data\li-toml-config-loop\state.json"
 $log = Join-Path $Root "data\li-toml-config-loop\iteration-log.md"
-$entry = Join-Path $Root "deploy\li-toml-config-entrypoint.sh"
+if (-not (Test-Path $state)) {
+    $stateDir = Split-Path $state -Parent
+    New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
+    '{"phase":"phase-0-prep"}' | Set-Content -Encoding utf8 $state
+}
+if (-not (Test-Path $log)) {
+    "# li-toml config loop`n" | Set-Content -Encoding utf8 $log
+}
 
-kubectl -n $Namespace create configmap li-li-toml-config-bundle `
-    --from-file=entrypoint.sh=$entry `
-    --from-file=li-toml-config-migration.md=$goal `
-    --from-file=state.json=$state `
-    --from-file=iteration-log.md=$log `
-    --dry-run=client -o yaml | kubectl apply -f -
+$extra = @{
+    "entrypoint.sh"                 = (Join-Path $Root "deploy\li-toml-config-entrypoint.sh")
+    "li-toml-config-migration.md"   = $goal
+    "state.json"                    = $state
+    "iteration-log.md"              = $log
+}
+. $BundleScript -Root $Root -Namespace $Namespace -ConfigMapName "li-li-toml-config-bundle" -ExtraFiles $extra
 
 $secretArgs = @(
     "create", "secret", "generic", "li-agents-secrets",

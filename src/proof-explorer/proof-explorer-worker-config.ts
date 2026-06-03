@@ -57,3 +57,19 @@ export function proofExplorerRepoWorkflowEnv(): Record<string, string> {
     LI_REPO_WORKFLOW_OPEN_PR: "0",
   };
 }
+
+export function proofExplorerGoalLoopEnv(): Record<string, string> {
+  return {
+    ...proofExplorerRepoWorkflowEnv(),
+    LI_GOAL_SELF_UNBLOCK: process.env.LI_GOAL_SELF_UNBLOCK?.trim() || "1",
+    LI_GOAL_SYNC_CWD_AFTER_RUN: process.env.LI_GOAL_SYNC_CWD_AFTER_RUN?.trim() || "1",
+    LI_GOAL_GATE_PREFER_CWD: process.env.LI_GOAL_GATE_PREFER_CWD?.trim() || "0",
+    LI_GOAL_LOOP_GATE_ONLY: process.env.LI_GOAL_LOOP_GATE_ONLY?.trim() || "1",
+    LI_GOAL_STUCK_THRESHOLD: process.env.LI_GOAL_STUCK_THRESHOLD?.trim() || "5",
+  };
+}
+
+export function proofExplorerIdleRecheckSec(): number {
+  const n = Number(process.env.LI_PROOF_EXPLORER_IDLE_RECHECK_SEC ?? 300);
+  return Number.isFinite(n) && n >= 60 ? n : 300;
+}

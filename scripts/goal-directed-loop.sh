@@ -147,6 +147,108 @@ resolve_goal_file_for_gate() {
 
 GATE_GOAL_FILE="$(resolve_goal_file_for_gate)"
 
+SELF_UNBLOCK_SCRIPT="$ROOT/scripts/goal-loop-self-unblock.sh"
+if [[ -f "$SELF_UNBLOCK_SCRIPT" ]]; then
+  # shellcheck source=goal-loop-self-unblock.sh
+  source "$SELF_UNBLOCK_SCRIPT"
+fi
+
+if [[ -f "${GATE_GOAL_FILE:-}" && -z "${LI_REPO_WORKFLOW_BRANCH:-}" ]]; then
+  branch_from_goal="$(python3 - "$GATE_GOAL_FILE" <<'PY'
+import re, sys
+from pathlib import Path
+text = Path(sys.argv[1]).read_text(encoding="utf-8")
+fm = re.match(r"^---\r?\n([\s\S]*?)\r?\n---", text)
+if fm:
+    m = re.search(r"^branch:\s*(\S+)\s*$", fm.group(1), re.M)
+    if m:
+        print(m.group(1))
+        sys.exit(0)
+for pat in (
+    r"\*\*Branch:\*\*\s*`([^`]+)`",
+    r"\*\*Branch:\*\*\s*(\S+)",
+):
+    m = re.search(pat, text, re.I)
+    if m:
+        print(m.group(1).strip())
+        sys.exit(0)
+sys.exit(1)
+PY
+  )" || true
+  if [[ -n "$branch_from_goal" ]]; then
+    export LI_REPO_WORKFLOW_BRANCH="$branch_from_goal"
+    export LI_REPO_WORKFLOW_TRACK_REMOTE="${LI_REPO_WORKFLOW_TRACK_REMOTE:-1}"
+    echo "goal-directed-loop: repo branch=$LI_REPO_WORKFLOW_BRANCH (from goal file)" >&2
+  fi
+fi
+
+GOAL_PLAN_FILE=""
+if [[ "${LI_GOAL_SELF_UNBLOCK:-1}" == "1" && -f "${GATE_GOAL_FILE:-}" ]]; then
+  GOAL_PLAN_FILE="$(goal_loop_resolve_plan_file "$GATE_GOAL_FILE" "$(cd "$CWD" && pwd)" 2>/dev/null || true)"
+  [[ -n "$GOAL_PLAN_FILE" ]] && export LI_GOAL_PLAN_FILE="$GOAL_PLAN_FILE"
+fi
+
+build_agent_extra_instruction() {
+  local iter="$1"
+  local gaps_tail="${2:-}"
+  local gate_note="${3:-}"
+  local plan_ctx="" stuck_ctx="" branch_note=""
+  local next_todo="" pending_list="" stuck_flag="0"
+
+  if [[ -n "${LI_REPO_WORKFLOW_BRANCH:-}" ]]; then
+    branch_note="Work on branch \`${LI_REPO_WORKFLOW_BRANCH}\` (track \`origin/${LI_REPO_WORKFLOW_BRANCH}\`). Do **not** use ephemeral \`chore/agent-*\` branches."
+  fi
+
+  if [[ -n "${GOAL_PLAN_FILE:-}" && -f "$GOAL_PLAN_FILE" ]]; then
+    plan_ctx="$(goal_loop_plan_todos "$GOAL_PLAN_FILE" 2>/dev/null || true)"
+    pending_list="$(echo "$plan_ctx" | sed -n 's/^pending=//p')"
+    next_todo="$(echo "$plan_ctx" | sed -n 's/^next=//p')"
+    if [[ -n "$pending_list" ]]; then
+      local state_file stuck_out
+      state_file="$(goal_loop_stuck_state_file "$ROOT" "$GATE_GOAL_FILE")"
+      stuck_out="$(goal_loop_stuck_check "$state_file" "$pending_list" "$iter" 2>/dev/null || true)"
+      stuck_flag="$(echo "$stuck_out" | sed -n 's/^stuck=//p')"
+    fi
+  fi
+
+  if [[ "$stuck_flag" == "1" ]]; then
+    stuck_ctx="$(cat <<STUCK
+
+## Self-unblock (required — loop is stuck)
+
+The same plan todos have been pending for several iterations. **Stop** re-running gates only or updating \`latest-iteration-assessment.json\` / manifest timestamps without code changes.
+
+**Implement now:** \`${next_todo:-next pending wsv/wsp/wsg todo}\` in native Li on \`${LI_REPO_WORKFLOW_BRANCH:-sprint branch}\`.
+- Edit \`docs/superpowers/plans/*-loop.md\` → set this todo \`status: done\` only after real implementation.
+- Run progress + completion gate bash blocks from the goal file yourself.
+- Push to \`origin/${LI_REPO_WORKFLOW_BRANCH:-HEAD}\`; do not claim sprint complete in JSON alone.
+STUCK
+)"
+  fi
+
+  cat <<EOF
+## Goal-directed loop — iteration $iter
+
+${branch_note}
+
+Pick the **first pending** plan todo and implement it in code (not metadata-only commits).
+Success = \`## Completion gate\` bash exits 0. Assessment JSON / manifest alone never completes the sprint.
+
+${plan_ctx:+Plan todos:
+\`\`\`
+${plan_ctx}
+\`\`\`
+Next todo: \`${next_todo:-unknown}\`}
+
+Gate status:
+${gate_note:-_(gate check failed)_}
+
+Prior agent gaps:
+${gaps_tail:-_(none)_}
+${stuck_ctx}
+EOF
+}
+
 # Completion/progress gates must run in the agent's isolated clone when present;
 # --cwd ../studio (sibling checkout) stays stale while the agent marks todos in data/workspaces/.
 # Set LI_GOAL_GATE_PREFER_CWD=1 to force sibling --cwd (e.g. after manual branch sync).
@@ -224,6 +326,10 @@ past_deadline() {
 
 stop_success() {
   echo "goal-directed-loop: GOAL COMPLETE (exit 0)"
+  if [[ "${LI_GOAL_LOOP_IDLE_ON_COMPLETE:-0}" == "1" ]]; then
+    echo "goal-directed-loop: idling (LI_GOAL_LOOP_IDLE_ON_COMPLETE=1)"
+    exec sleep infinity
+  fi
   exit 0
 }
 
@@ -254,12 +360,14 @@ while :; do
   iter=$((iter + 1))
   echo "==> iteration $iter"
 
-  if [[ "$iter" -gt 1 ]]; then
-    gaps_tail=""
-    [[ -f "$LAST_GAPS_FILE" ]] && gaps_tail="$(head -c 2000 "$LAST_GAPS_FILE" 2>/dev/null || true)"
-    gate_note="$(gate_status 2>&1 | tail -4 || true)"
+  gaps_tail=""
+  [[ -f "$LAST_GAPS_FILE" ]] && gaps_tail="$(head -c 2000 "$LAST_GAPS_FILE" 2>/dev/null || true)"
+  gate_note="$(gate_status 2>&1 | tail -4 || true)"
+  if [[ "${LI_GOAL_SELF_UNBLOCK:-1}" == "1" ]]; then
+    export LI_AGENT_EXTRA_INSTRUCTION="$(build_agent_extra_instruction "$iter" "$gaps_tail" "$gate_note")"
+  elif [[ "$iter" -gt 1 ]]; then
     export LI_AGENT_EXTRA_INSTRUCTION="$(cat <<EOF
-## Goal-directed loop â€” iteration $iter
+## Goal-directed loop — iteration $iter
 
 Implement the full plan until the ## Completion gate passes.
 Mark phases | **DONE** | in the status table only when truly finished.
@@ -277,11 +385,16 @@ EOF
   fi
 
   export LI_GOAL_LOOP_STRICT_EXIT=1
+  [[ -n "${GATE_GOAL_FILE:-}" ]] && export LI_GOAL_FILE="$GATE_GOAL_FILE"
   set +e
   ROOT="$ROOT" "${RUN_ARGS[@]}"
   code=$?
   set -e
   record_gaps_from_run
+
+  if [[ "${LI_GOAL_SYNC_CWD_AFTER_RUN:-0}" == "1" && -n "${LI_REPO_WORKFLOW_BRANCH:-}" ]]; then
+    goal_loop_sync_cwd_from_origin "$(cd "$CWD" && pwd)" "$LI_REPO_WORKFLOW_BRANCH" || true
+  fi
 
   if gate_status; then stop_success; fi
 

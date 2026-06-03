@@ -38,6 +38,7 @@ import {
   formatWorkspaceSweepReport,
   runWorkspaceDirtySweep,
 } from "./repo-workflow/workspace-sweep.js";
+import { resolveBranchFromGoalFile } from "./agents/resolve-goal-metadata.js";
 import {
   agentUsesGuaranteedPush,
   beginRepoWorkflowSession,
@@ -205,9 +206,24 @@ async function runAgentBody(
   const workflowRunId = options.runId ?? allocateRunId(definition.id);
 
   if (agentUsesGuaranteedPush(definition)) {
+    const goalFile = process.env.LI_GOAL_FILE?.trim();
+    if (goalFile && !process.env.LI_REPO_WORKFLOW_BRANCH?.trim()) {
+      try {
+        const branch = resolveBranchFromGoalFile(goalFile);
+        if (branch) {
+          process.env.LI_REPO_WORKFLOW_BRANCH = branch;
+          if (!process.env.LI_REPO_WORKFLOW_TRACK_REMOTE?.trim()) {
+            process.env.LI_REPO_WORKFLOW_TRACK_REMOTE = "1";
+          }
+        }
+      } catch {
+        /* goal file unreadable — fall back to per-run branch */
+      }
+    }
     workflowSession = beginRepoWorkflowSession({
       agentId: definition.id,
       repo: options.workflowRepo,
+      branchName: process.env.LI_REPO_WORKFLOW_BRANCH?.trim(),
       runId: workflowRunId,
       dryRun: options.dryRun,
       skipPush: mock || options.dryRun || process.env.LI_REPO_WORKFLOW_SKIP_PUSH === "1",

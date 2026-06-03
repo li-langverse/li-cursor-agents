@@ -28,6 +28,7 @@ import {
   orgReviewerSupervisorMaxWorkers,
   prRef,
 } from "./org-pr-supervisor-config.js";
+import { runOrgLaneObserverTick } from "../org/org-lane-observer-tick.js";
 import { parsePrOpenCount, refreshPrMergeQueue, runPython, sleep } from "./org-pr-supervisor-shared.js";
 
 export interface ReviewerSupervisorTickResult {
@@ -48,6 +49,8 @@ export async function orgReviewerSupervisorTick(): Promise<ReviewerSupervisorTic
   const refresh = refreshPrMergeQueue();
   if (refresh.ok) {
     openCount = readQueueOpenTotal(root) || openCount;
+  } else {
+    workerConsole("org-reviewer-supervisor", "warn", `merge queue refresh failed: ${refresh.tail.slice(-200)}`);
   }
 
   const reviewQueue = readReviewQueuePrs(root);
@@ -122,6 +125,21 @@ export async function orgReviewerSupervisorTick(): Promise<ReviewerSupervisorTic
   }).catch((err) => {
     workerConsole("org-reviewer-supervisor", "warn", `db sync failed: ${String(err)}`);
   });
+
+  if (reviewOpen === 0 && openCount > 0) {
+    workerConsole(
+      "org-reviewer-supervisor",
+      "warn",
+      `review_queue empty but org has ${openCount} open PRs — check org-pr-merge-queue.json green/blocked buckets`,
+    );
+  }
+
+  const observer = await runOrgLaneObserverTick("review").catch(() => ({
+    message: "",
+    demoted: [],
+    metaScheduled: false,
+  }));
+  if (observer.message) workerConsole("org-reviewer-supervisor", "info", `observer ${observer.message}`);
 
   return { openCount: reviewOpen, desiredWorkers, activeWorkers, spawned, message: msg };
 }

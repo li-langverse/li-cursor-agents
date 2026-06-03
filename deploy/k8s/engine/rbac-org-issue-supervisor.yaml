@@ -1,4 +1,4 @@
-﻿# RBAC for org-issue supervisor (create/list Jobs) and wake CronJob (scale Deployment).
+# RBAC for org-issue supervisor (create/list Jobs) and wake CronJob (scale Deployment).
 ---
 apiVersion: v1
 kind: ServiceAccount

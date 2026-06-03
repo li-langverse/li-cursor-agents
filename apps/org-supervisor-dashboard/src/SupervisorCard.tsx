@@ -29,7 +29,7 @@ export function SupervisorCard({ supervisor, audits, active }: Props) {
 
       <div className="metrics">
         <div className="metric">
-          <div className="label">Open</div>
+          <div className="label">Open{supervisor.openCountSource ? ` (${supervisor.openCountSource})` : ""}</div>
           <div className="value">{supervisor.openCount}</div>
         </div>
         <div className="metric">

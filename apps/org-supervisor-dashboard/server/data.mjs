@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
@@ -52,9 +52,46 @@ function tailJsonl(path, limit = 40) {
     .reverse();
 }
 
+const GH_COUNT_CACHE_MS = Number(process.env.LI_ORG_DASHBOARD_GH_CACHE_MS || 10 * 60 * 1000);
+const GH_COUNT_BACKOFF_MS = Number(process.env.LI_ORG_DASHBOARD_GH_BACKOFF_MS || 15 * 60 * 1000);
+
+function ghCountCachePath() {
+  const fromEnv = process.env.LI_ORG_DASHBOARD_GH_CACHE_FILE?.trim();
+  if (fromEnv) return fromEnv;
+  // Sprint PVC is read-only in-cluster; keep cache on local disk.
+  return join(agentsRoot(), "data", ".org-open-count-cache.json");
+}
+
+function readGhCountCache() {
+  return readJson(ghCountCachePath()) ?? {};
+}
+
+function writeGhCountCache(patch) {
+  const path = ghCountCachePath();
+  try {
+    mkdirSync(dirname(path), { recursive: true });
+    const prev = readGhCountCache();
+    writeFileSync(path, JSON.stringify({ ...prev, ...patch, updatedAt: new Date().toISOString() }, null, 2));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    // Read-only sprint mount or missing permissions — skip cache write.
+    if (!message.includes("EROFS") && !message.includes("EACCES")) throw err;
+  }
+}
+
+function isRateLimitOutput(tail) {
+  const t = tail.toLowerCase();
+  return (
+    t.includes("rate limit") ||
+    t.includes("403") ||
+    t.includes("429") ||
+    t.includes("abuse detection")
+  );
+}
+
 function runCountScript(scriptName, pattern) {
   const script = join(agentsRoot(), "scripts", scriptName);
-  if (!existsSync(script)) return null;
+  if (!existsSync(script)) return { count: null, rateLimited: false, tail: "missing script" };
   const py = process.platform === "win32" ? "python" : "python3";
   const proc = spawnSync(py, [script], {
     cwd: agentsRoot(),
@@ -64,15 +101,95 @@ function runCountScript(scriptName, pattern) {
   });
   const tail = `${proc.stdout ?? ""}${proc.stderr ?? ""}`;
   const m = pattern.exec(tail);
-  return m ? Number(m[1]) : null;
+  const rateLimited = proc.status !== 0 && isRateLimitOutput(tail);
+  return { count: m ? Number(m[1]) : null, rateLimited, tail };
 }
 
-function queueOpenTotal(queueFile, bucketKey) {
-  const q = readJson(join(sprintDir(), queueFile));
+function queueOpenTotal(queueFile, kind) {
+  const path = join(sprintDir(), queueFile);
+  const q = readJson(path);
   if (!q) return null;
   if (typeof q.report?.total_open === "number") return q.report.total_open;
-  if (bucketKey && Array.isArray(q[bucketKey])) return q[bucketKey].length;
+  if (typeof q.report?.total === "number") return q.report.total;
+  if (kind === "review") {
+    const review = Array.isArray(q.review)
+      ? q.review.length
+      : Array.isArray(q.green)
+        ? q.green.length
+        : null;
+    if (review != null) return review;
+  }
   return null;
+}
+
+function queueUpdatedAt(queueFile) {
+  const path = join(sprintDir(), queueFile);
+  if (!existsSync(path)) return null;
+  try {
+    return new Date(statSync(path).mtimeMs).toISOString();
+  } catch {
+    return null;
+  }
+}
+
+/** Prefer local queue; refresh GitHub counts at most once per cache window. */
+function resolveOpenCount(kind, meta, notes) {
+  const cacheKey = kind === "review" ? "pr" : kind;
+  const queueCount = queueOpenTotal(meta.queueFile, kind);
+  const cache = readGhCountCache();
+  const cached = cache[cacheKey] ?? {};
+  const now = Date.now();
+
+  if (cached.backoffUntilMs && now < cached.backoffUntilMs) {
+    if (queueCount != null) {
+      notes.push(`${meta.label}: GitHub rate-limited; using queue (${queueCount} open).`);
+      return { count: queueCount, source: "queue" };
+    }
+    if (typeof cached.count === "number") {
+      notes.push(`${meta.label}: GitHub rate-limited; using cached count (${cached.count}).`);
+      return { count: cached.count, source: "cache" };
+    }
+    notes.push(`${meta.label}: GitHub rate-limited and no local queue/cache.`);
+    return { count: 0, source: "none" };
+  }
+
+  const cacheAge = cached.fetchedAtMs ? now - cached.fetchedAtMs : Infinity;
+  const shouldFetchGh =
+    meta.countScript &&
+    meta.openCountPattern &&
+    cacheAge >= GH_COUNT_CACHE_MS;
+
+  if (shouldFetchGh) {
+    const gh = runCountScript(meta.countScript, meta.openCountPattern);
+    if (gh.count != null) {
+      writeGhCountCache({
+        [cacheKey]: { count: gh.count, fetchedAtMs: now, backoffUntilMs: null },
+      });
+      if (queueCount != null && queueCount !== gh.count) {
+        const queueAge = queueUpdatedAt(meta.queueFile);
+        notes.push(
+          `${meta.label}: queue=${queueCount} vs GitHub=${gh.count}` +
+            (queueAge ? ` (queue mtime ${queueAge})` : "") +
+            "; showing GitHub.",
+        );
+      }
+      return { count: gh.count, source: "github" };
+    }
+    if (gh.rateLimited) {
+      writeGhCountCache({
+        [cacheKey]: {
+          count: cached.count ?? queueCount ?? null,
+          fetchedAtMs: cached.fetchedAtMs ?? now,
+          backoffUntilMs: now + GH_COUNT_BACKOFF_MS,
+        },
+      });
+      notes.push(`${meta.label}: GitHub rate limit hit; backing off ${Math.round(GH_COUNT_BACKOFF_MS / 60000)}m.`);
+    }
+  }
+
+  if (queueCount != null) return { count: queueCount, source: "queue" };
+  if (typeof cached.count === "number") return { count: cached.count, source: "cache" };
+  return { count: 0, source: "none" };
 }
 
 function readIssueActiveClaims() {
@@ -208,7 +325,14 @@ async function loadFromSupabase() {
   for (const kind of KINDS) {
     const row = byKind[kind];
     const meta = META[kind];
-    const openCount = Number(row?.open_count) || 0;
+    const queueCount = queueOpenTotal(meta.queueFile, kind);
+    const supabaseCount = Number(row?.open_count) || 0;
+    const openCount =
+      queueCount != null ? Math.min(supabaseCount, queueCount) : supabaseCount;
+    const openCountSource =
+      queueCount != null && openCount === queueCount && openCount < supabaseCount
+        ? "queue"
+        : "supabase";
     const desiredWorkers = Number(row?.desired_workers) ?? computeDesiredWorkers(openCount);
     const lastCycleAt = row?.last_cycle_at ?? null;
     const lastError = row?.last_error ?? null;
@@ -228,6 +352,7 @@ async function loadFromSupabase() {
       label: meta.label,
       health: deriveHealth({ lastError, lastCycleAt, openCount, desiredWorkers }),
       openCount,
+      openCountSource,
       desiredWorkers,
       activeClaims,
       lastCycleAt,
@@ -247,23 +372,23 @@ async function loadFromSupabase() {
 
 function loadFromFiles() {
   const supervisors = {};
-  const issueOpen =
-    runCountScript(META.issue.countScript, META.issue.openCountPattern) ??
-    queueOpenTotal(META.issue.queueFile, "implement") ??
-    0;
-  const prOpen =
-    runCountScript(META.pr.countScript, META.pr.openCountPattern) ??
-    queueOpenTotal(META.pr.queueFile) ??
-    0;
-  const reviewQueue = readJson(join(sprintDir(), META.review.queueFile));
-  const reviewOpen = Array.isArray(reviewQueue?.review)
-    ? reviewQueue.review.length
-    : Array.isArray(reviewQueue?.green)
-      ? reviewQueue.green.length
-      : 0;
-
+  const countNotes = [];
+  const issueResolved = resolveOpenCount("issue", META.issue, countNotes);
+  const prResolved = resolveOpenCount("pr", META.pr, countNotes);
+  const reviewResolved = resolveOpenCount("review", META.review, countNotes);
   const researchOpen = countOpenResearchGoals();
-  const openByKind = { issue: issueOpen, pr: prOpen, review: reviewOpen, research: researchOpen };
+  const openByKind = {
+    issue: issueResolved.count,
+    pr: prResolved.count,
+    review: reviewResolved.count,
+    research: researchOpen,
+  };
+  const countSources = {
+    issue: issueResolved.source,
+    pr: prResolved.source,
+    review: reviewResolved.source,
+    research: "local",
+  };
 
   for (const kind of KINDS) {
     const meta = META[kind];
@@ -288,6 +413,7 @@ function loadFromFiles() {
         desiredWorkers,
       }),
       openCount,
+      openCountSource: countSources[kind] ?? "unknown",
       desiredWorkers,
       activeClaims,
       lastCycleAt: activeUpdated,
@@ -302,6 +428,7 @@ function loadFromFiles() {
       },
     };
   }
+  supervisors._countNotes = countNotes;
   return supervisors;
 }
 
@@ -351,6 +478,8 @@ export async function buildPayload() {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     supervisors = loadFromFiles();
+    const countNotes = supervisors._countNotes ?? [];
+    delete supervisors._countNotes;
     return {
       source: "files",
       refreshedAt: new Date().toISOString(),
@@ -358,11 +487,22 @@ export async function buildPayload() {
       sprintDir: sprintDir(),
       supervisors,
       audits: loadAudits(),
-      notes: [`Supabase read failed (${message}); showing local sprint files.`],
+      notes: [`Supabase read failed (${message}); showing local sprint files.`, ...countNotes],
     };
   }
 
   if (!supervisors) supervisors = loadFromFiles();
+
+  const countNotes = supervisors._countNotes ?? [];
+  delete supervisors._countNotes;
+
+  const baseNotes =
+    source === "supabase"
+      ? ["Production view: org_supervisor_cycles in Supabase."]
+      : [
+          "No Supabase rows yet; counts from queue files / count scripts / active JSON.",
+          "Homelab supervisors write cycles when SUPABASE_URL is configured in-cluster.",
+        ];
 
   return {
     source,
@@ -371,12 +511,6 @@ export async function buildPayload() {
     sprintDir: sprintDir(),
     supervisors,
     audits: loadAudits(),
-    notes:
-      source === "supabase"
-        ? ["Production view: org_supervisor_cycles in Supabase."]
-        : [
-            "No Supabase rows yet; counts from queue files / count scripts / active JSON.",
-            "Homelab supervisors write cycles when SUPABASE_URL is configured in-cluster.",
-          ],
+    notes: [...baseNotes, ...countNotes],
   };
 }

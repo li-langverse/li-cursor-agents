@@ -1,0 +1,44 @@
+# RBAC: goal-directed workers may scale their own Deployment to 0 on GOAL_COMPLETE.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: li-goal-worker
+  namespace: li-swarm
+  labels:
+    app.kubernetes.io/part-of: li-langverse
+    app.kubernetes.io/component: goal-directed-agent
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: li-goal-worker-scale
+  namespace: li-swarm
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get"]
+    resourceNames:
+      - li-world-studio-gui-product-visual
+      - li-li-toml-config
+      - li-proof-explorer
+  - apiGroups: ["apps"]
+    resources: ["deployments/scale"]
+    verbs: ["get", "patch", "update"]
+    resourceNames:
+      - li-world-studio-gui-product-visual
+      - li-li-toml-config
+      - li-proof-explorer
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: li-goal-worker-scale
+  namespace: li-swarm
+subjects:
+  - kind: ServiceAccount
+    name: li-goal-worker
+    namespace: li-swarm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: li-goal-worker-scale

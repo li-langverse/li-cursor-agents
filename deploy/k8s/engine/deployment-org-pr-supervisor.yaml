@@ -23,7 +23,7 @@ spec:
       containers:
         - name: supervisor
           image: ghcr.io/li-langverse/li-cursor-agents:latest
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           command: ["node", "dist/cli/org-pr-supervisor.js", "supervise"]
           envFrom:
             - configMapRef:
@@ -33,7 +33,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: li-agents-secrets
-                  key: GH_TOKEN
+                  key: GH_SWARM_TOKEN
             - name: SUPABASE_URL
               valueFrom:
                 secretKeyRef:

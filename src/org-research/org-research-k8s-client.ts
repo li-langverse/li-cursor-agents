@@ -186,8 +186,9 @@ export async function createResearcherJob(options: {
             {
               name: "researcher",
               image,
-              imagePullPolicy: "Always",
+              imagePullPolicy: "IfNotPresent",
               command: [
+                "/app/deploy/org-worker-entrypoint.sh",
                 "node",
                 "dist/cli/org-researcher.js",
                 "--research",
@@ -197,6 +198,10 @@ export async function createResearcherJob(options: {
               ],
               envFrom: [{ configMapRef: { name: "li-org-research-supervisor" } }],
               env: [
+                {
+                  name: "GH_TOKEN",
+                  valueFrom: { secretKeyRef: { name: "li-agents-secrets", key: "GH_SWARM_TOKEN" } },
+                },
                 {
                   name: "CURSOR_API_KEY",
                   valueFrom: {

@@ -1,4 +1,4 @@
-﻿# Long-running supervisor: classifies queue, spawns up to 3 implementer Jobs while issues remain open.
+# Long-running supervisor: classifies queue, spawns up to 3 implementer Jobs while issues remain open.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -23,7 +23,7 @@ spec:
       containers:
         - name: supervisor
           image: ghcr.io/li-langverse/li-cursor-agents:latest
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           command: ["node", "dist/cli/org-issue-supervisor.js", "supervise"]
           envFrom:
             - configMapRef:
@@ -33,7 +33,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: li-agents-secrets
-                  key: GH_TOKEN
+                  key: GH_SWARM_TOKEN
             - name: SUPABASE_URL
               valueFrom:
                 secretKeyRef:

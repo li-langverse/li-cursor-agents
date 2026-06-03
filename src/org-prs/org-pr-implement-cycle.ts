@@ -6,6 +6,7 @@ import { workerConsole } from "../worker/worker-console.js";
 import type { AgentId } from "../types.js";
 import { sprintDataDir } from "../org-issues/org-issue-coordination.js";
 import type { QueuedOrgPr } from "./org-pr-coordination.js";
+import { removeClosedPrFromQueue } from "./org-pr-coordination.js";
 import { fetchGitHubPullRequest, postGitHubPrComment } from "./org-pr-github.js";
 import { orgName, parsePrRef } from "./org-pr-supervisor-config.js";
 
@@ -22,6 +23,7 @@ export interface OrgPrImplementResult {
   agentId: string;
   prMerged: boolean;
   prWasOpen: boolean;
+  partialSuccess?: boolean;
   error?: string;
   agentStatus?: string;
   durationMs?: number;
@@ -155,6 +157,7 @@ export async function runOrgPrImplementCycle(
   }
 
   if (pr.state === "closed") {
+    removeClosedPrFromQueue(parsed.repo, parsed.number);
     return {
       ok: true,
       status: "completed",
@@ -165,6 +168,7 @@ export async function runOrgPrImplementCycle(
     };
   }
 
+  const beforeHeadSha = pr.headSha;
   const agentId = orgPrImplementerAgentId();
   const queueEntry = queueEntryForPr(parsed.repo, parsed.number);
   const instruction = buildPrImplementInstruction(options.prRef, pr, options.workerId, queueEntry);
@@ -221,13 +225,32 @@ export async function runOrgPrImplementCycle(
     after = pr;
   }
 
-  const ok = agentResult.status === "finished";
+  const prMerged = after.state === "closed";
+  if (prMerged) {
+    removeClosedPrFromQueue(parsed.repo, parsed.number);
+  }
+
+  const headChanged =
+    Boolean(beforeHeadSha && after.headSha && beforeHeadSha !== after.headSha);
+  const agentOk = agentResult.status === "finished";
+  const partialSuccess = !agentOk && !prMerged && headChanged;
+  const ok = agentOk || prMerged || partialSuccess;
+
+  if (partialSuccess) {
+    workerConsole(
+      "org-pr-implementer",
+      "warn",
+      `${options.prRef} agent incomplete but head moved ${beforeHeadSha?.slice(0, 7)}→${after.headSha?.slice(0, 7)} — partial success`,
+    );
+  }
+
   return {
     ok,
     status: ok ? "completed" : "failed",
     agentId,
-    prMerged: after.state === "closed",
+    prMerged,
     prWasOpen: pr.state === "open",
+    partialSuccess,
     agentStatus: agentResult.status,
     durationMs: Date.now() - started,
     outputTail: outputTail(agentResult.outputText ?? agentResult.error),

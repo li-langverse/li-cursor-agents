@@ -15,10 +15,12 @@
 
 ## Mission
 
-1. Ship the **current plan-loop todo** (`wsm-w*`) from `lic/docs/superpowers/plans/2026-05-29-world-studio-master-plan-loop.md`.
-2. Map work to **WP IDs** in `studio-full-implementation-plan.md`.
-3. Run `./scripts/world-studio-plan-gates.sh` before claiming done.
-4. **`lic build`** before any export/publish/MCP ship path.
+1. Ship the **current plan-loop todo** from the goal file’s **Plan loop** doc (`wsv-w*` product-visual, `wsp-w*` polish, `wsm-w*` master plan, etc.).
+2. Work on the goal’s **`**Branch:**`** (e.g. `cursor/world-studio-gui-product-visual`) — never ephemeral `chore/agent-*` branches.
+3. **Success = completion gate bash exits 0** — not assessment JSON, not manifest-only commits.
+4. Map work to **WP IDs** in `studio-full-implementation-plan.md` when applicable.
+5. Run progress + completion gate scripts from the goal file before claiming done.
+6. **`lic build`** before any export/publish/MCP ship path.
 
 ## Native-only policy
 

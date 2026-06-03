@@ -183,8 +183,9 @@ export async function createImplementerJob(options: {
             {
               name: "implementer",
               image,
-              imagePullPolicy: "Always",
+              imagePullPolicy: "IfNotPresent",
               command: [
+                "/app/deploy/org-worker-entrypoint.sh",
                 "node",
                 "dist/cli/org-issue-implementer.js",
                 "--issue",
@@ -196,7 +197,7 @@ export async function createImplementerJob(options: {
               env: [
                 {
                   name: "GH_TOKEN",
-                  valueFrom: { secretKeyRef: { name: "li-agents-secrets", key: "GH_TOKEN" } },
+                  valueFrom: { secretKeyRef: { name: "li-agents-secrets", key: "GH_SWARM_TOKEN" } },
                 },
                 {
                   name: "CURSOR_API_KEY",

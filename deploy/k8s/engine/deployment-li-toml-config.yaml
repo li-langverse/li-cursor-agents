@@ -40,6 +40,7 @@ spec:
         app.kubernetes.io/component: goal-directed-agent
         li-langverse.io/sprint: li-toml-config-migration
     spec:
+      serviceAccountName: li-goal-worker
       nodeSelector:
         kubernetes.io/hostname: engine
       imagePullSecrets:
@@ -97,4 +98,4 @@ spec:
         - name: config-bundle
           configMap:
             name: li-li-toml-config-bundle
-            defaultMode: 0644
+            defaultMode: 0755

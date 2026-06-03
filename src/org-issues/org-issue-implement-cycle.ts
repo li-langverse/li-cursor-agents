@@ -5,7 +5,7 @@ import { runAgent, agentsPackageRoot, shouldUseMock } from "../runner.js";
 import { workerConsole } from "../worker/worker-console.js";
 import type { AgentId } from "../types.js";
 import type { QueuedOrgIssue } from "./org-issue-coordination.js";
-import { sprintDataDir } from "./org-issue-coordination.js";
+import { removeClosedIssueFromQueue, sprintDataDir } from "./org-issue-coordination.js";
 import { fetchGitHubIssue, postGitHubIssueComment } from "./org-issue-github.js";
 import { orgName, parseIssueRef } from "./org-issue-supervisor-config.js";
 
@@ -159,8 +159,9 @@ export async function runOrgIssueImplementCycle(
     workerConsole(
       "org-issue-implementer",
       "info",
-      `${options.issueRef} already closed â€” marking completed`,
+      `${options.issueRef} already closed — marking completed`,
     );
+    removeClosedIssueFromQueue(parsed.repo, parsed.number);
     return {
       ok: true,
       status: "completed",
@@ -226,12 +227,26 @@ export async function runOrgIssueImplementCycle(
     /* best-effort */
   }
 
+  const output = agentResult.outputText ?? agentResult.error ?? "";
+  const prMention =
+    /github\.com\/[^\s/]+\/[^\s/]+\/pull\/\d+/i.test(output) ||
+    /\bPR\s*#\s*\d+/i.test(output);
   const agentOk = agentResult.status === "finished";
-  const ok = agentOk || issueClosed;
+  const partialSuccess = !agentOk && !issueClosed && prMention;
+  const ok = agentOk || issueClosed || partialSuccess;
+
+  if (partialSuccess) {
+    workerConsole(
+      "org-issue-implementer",
+      "warn",
+      `${options.issueRef} agent ${agentResult.status} but PR linked in output — partial success`,
+    );
+  }
 
   if (issueClosed) {
     workerConsole("org-issue-implementer", "info", `${options.issueRef} closed on GitHub`);
-  } else if (!agentOk) {
+    removeClosedIssueFromQueue(parsed.repo, parsed.number);
+  } else if (!agentOk && !partialSuccess) {
     workerConsole(
       "org-issue-implementer",
       "warn",
@@ -247,7 +262,9 @@ export async function runOrgIssueImplementCycle(
     issueWasOpen: true,
     agentStatus: agentResult.status,
     durationMs: Date.now() - started,
-    outputTail: outputTail(agentResult.outputText ?? agentResult.error),
-    error: ok ? undefined : agentResult.error ?? `agent status ${agentResult.status}`,
+    outputTail: outputTail(output),
+    error: ok
+      ? undefined
+      : agentResult.error ?? `agent status ${agentResult.status}${partialSuccess ? " (partial)" : ""}`,
   };
 }

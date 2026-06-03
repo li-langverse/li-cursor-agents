@@ -6,6 +6,12 @@ import { agentLog } from "../agent-log.js";
 import { saveOrgSupervisorCycle } from "../db/org-supervisor-cycle.js";
 import { workerConsole } from "../worker/worker-console.js";
 import { agentsPackageRoot } from "../runner.js";
+import { runOrgLaneObserverTick } from "../org/org-lane-observer-tick.js";
+import {
+  applyIssueFailurePolicy,
+  isIssueSkipped,
+  issueRefFromQueue,
+} from "./org-issue-failure-policy.js";
 import {
   activeClaimsForDb,
   activeIssueRefs,
@@ -13,6 +19,7 @@ import {
   countActiveWorkers,
   pruneTerminalActiveEntries,
   readActiveState,
+  readImplementQueueCount,
   readImplementQueueIssues,
   updateIssueStatus,
 } from "./org-issue-coordination.js";
@@ -70,6 +77,7 @@ function readQueueOpenTotal(root: string): number {
 
 export interface SupervisorTickResult {
   openCount: number;
+  implementCount: number;
   desiredWorkers: number;
   activeWorkers: number;
   spawned: number;
@@ -90,7 +98,17 @@ export async function orgIssueSupervisorTick(): Promise<SupervisorTickResult> {
     workerConsole("org-issue-supervisor", "warn", `classify failed: ${classify.tail.slice(-200)}`);
   }
 
-  const desiredWorkers = computeDesiredWorkers(openCount, orgIssueSupervisorMaxWorkers());
+  const policy = applyIssueFailurePolicy(root);
+  if (policy.demoted.length) {
+    workerConsole(
+      "org-issue-supervisor",
+      "info",
+      `failure policy demoted ${policy.demoted.length} issue(s)`,
+    );
+  }
+
+  const implementCount = readImplementQueueCount(root);
+  const desiredWorkers = computeDesiredWorkers(implementCount, orgIssueSupervisorMaxWorkers());
   const state = readActiveState(root);
   const activeRefs = activeIssueRefs(state);
   let activeWorkers = countActiveWorkers(state);
@@ -120,7 +138,11 @@ export async function orgIssueSupervisorTick(): Promise<SupervisorTickResult> {
 
   for (const issue of queued) {
     if (spawned >= slots) break;
-    const ref = issueRef(issue.repo, issue.number);
+    const ref = issueRefFromQueue(issue.repo, issue.number);
+    if (isIssueSkipped(ref, root)) {
+      workerConsole("org-issue-supervisor", "info", `skip cooldown ${ref}`);
+      continue;
+    }
     if (activeSet.has(ref)) continue;
 
     const workerId = randomBytes(4).toString("hex");
@@ -149,7 +171,7 @@ export async function orgIssueSupervisorTick(): Promise<SupervisorTickResult> {
     workerConsole("org-issue-supervisor", "info", `spawned job ${created.jobName} for ${ref}`);
   }
 
-  const msg = `open=${openCount} desired=${desiredWorkers} active=${activeWorkers} spawned=${spawned}`;
+  const msg = `open=${openCount} implement=${implementCount} desired=${desiredWorkers} active=${activeWorkers} spawned=${spawned}`;
   workerConsole("org-issue-supervisor", "info", msg);
   agentLog("org-issue-supervisor", "info", msg);
 
@@ -163,7 +185,15 @@ export async function orgIssueSupervisorTick(): Promise<SupervisorTickResult> {
     workerConsole("org-issue-supervisor", "warn", `db sync failed: ${String(err)}`);
   });
 
-  return { openCount, desiredWorkers, activeWorkers, spawned, message: msg };
+  const observer = await runOrgLaneObserverTick("issue").catch((err) => {
+    workerConsole("org-issue-supervisor", "warn", `observer: ${String(err)}`);
+    return { message: "observer error", demoted: [], metaScheduled: false };
+  });
+  if (observer.message) {
+    workerConsole("org-issue-supervisor", "info", `observer ${observer.message}`);
+  }
+
+  return { openCount, implementCount, desiredWorkers, activeWorkers, spawned, message: msg };
 }
 
 export async function runOrgIssueSupervisorLoop(signal?: AbortSignal): Promise<void> {
@@ -185,7 +215,11 @@ export async function runOrgIssueSupervisorLoop(signal?: AbortSignal): Promise<v
         workerConsole("org-issue-supervisor", "info", "no open issues — exiting");
         break;
       }
-      if (tick.desiredWorkers === 0 || (tick.activeWorkers === 0 && tick.spawned === 0)) {
+      if (
+        tick.implementCount <= 0 ||
+        tick.desiredWorkers === 0 ||
+        (tick.activeWorkers === 0 && tick.spawned === 0)
+      ) {
         idleCycles++;
         if (idleCycles >= maxIdle) {
           workerConsole("org-issue-supervisor", "info", `idle limit reached (${maxIdle}) — exiting`);
