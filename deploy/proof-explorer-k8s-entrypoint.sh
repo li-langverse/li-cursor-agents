@@ -66,5 +66,15 @@ export LI_GOAL_SYNC_CWD_AFTER_RUN="${LI_GOAL_SYNC_CWD_AFTER_RUN:-1}"
 export LI_GOAL_GATE_PREFER_CWD="${LI_GOAL_GATE_PREFER_CWD:-0}"
 export LI_PROOF_EXPLORER_IDLE_RECHECK_SEC="${LI_PROOF_EXPLORER_IDLE_RECHECK_SEC:-300}"
 
-echo "proof-explorer-k8s-entrypoint: starting worker"
-exec node "${AGENTS_ROOT}/dist/cli/proof-explorer-worker.js" start
+echo "proof-explorer-k8s-entrypoint: starting resilient worker loop"
+while true; do
+  sync_lic_repo
+
+  set +e
+  node "${AGENTS_ROOT}/dist/cli/proof-explorer-worker.js" start
+  rc=$?
+  set -e
+
+  echo "proof-explorer-k8s-entrypoint: worker exited (rc=${rc}) — recheck in ${LI_PROOF_EXPLORER_IDLE_RECHECK_SEC}s"
+  sleep "$LI_PROOF_EXPLORER_IDLE_RECHECK_SEC"
+done
