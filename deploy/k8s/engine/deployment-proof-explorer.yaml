@@ -31,6 +31,7 @@ spec:
         prometheus.io/scrape: "false"
         li-langverse.io/curator: julianmkleber.com
     spec:
+      serviceAccountName: li-goal-worker
       nodeSelector:
         kubernetes.io/hostname: engine
       imagePullSecrets:

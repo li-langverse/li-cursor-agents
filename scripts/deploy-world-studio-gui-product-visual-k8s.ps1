@@ -41,6 +41,7 @@ Write-Host "==> kubectl apply li-world-studio-gui-product-visual (namespace=$Nam
 kubectl label node $EngineNode li-langverse.io/node-pool=engine --overwrite 2>$null
 
 kubectl apply -f (Join-Path $K8s "namespace.yaml")
+kubectl apply -f (Join-Path $K8s "rbac-goal-workers-scale.yaml")
 kubectl apply -f (Join-Path $K8s "pvc-world-studio-gui-product-visual-workspace.yaml")
 kubectl apply -f (Join-Path $K8s "configmap-world-studio-gui-product-visual.yaml")
 kubectl apply -f (Join-Path $K8s "deployment-world-studio-gui-product-visual.yaml")

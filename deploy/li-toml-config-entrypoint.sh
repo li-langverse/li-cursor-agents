@@ -14,7 +14,6 @@ BRANCH_TOML="${LI_GOAL_BRANCH_LI_TOML:-cursor/li-toml-config-migration}"
 GOAL_FILE_REL="${LI_GOAL_FILE:-data/goal-directed-sprints/li-toml-config-migration.md}"
 AGENT="${LI_GOAL_AGENT:-code_implementer}"
 LOOP_SLEEP="${LI_GOAL_LOOP_SLEEP_SEC:-120}"
-IDLE_RECHECK_SEC="${LI_GOAL_IDLE_RECHECK_SEC:-300}"
 
 HTTPD_ROOT="${WORKSPACE}/li-httpd"
 BENCH_ROOT="${WORKSPACE}/benchmarks"
@@ -23,17 +22,17 @@ TOML_ROOT="${WORKSPACE}/li-toml"
 
 echo "li-toml-config-entrypoint: workspace=${WORKSPACE} branch_httpd=${BRANCH_HTTPD}"
 
+if [[ -f /config/k8s-goal-loop-common.sh ]]; then
+  # shellcheck source=/dev/null
+  source /config/k8s-goal-loop-common.sh
+fi
+
 export GH_TOKEN GITHUB_TOKEN
 echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
 gh auth setup-git 2>/dev/null || true
 git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
 git config --global user.email "${LI_GIT_USER_EMAIL:-li-toml-agent@li-langverse.dev}"
 git config --global user.name "${LI_GIT_USER_NAME:-li-toml-config-agent}"
-
-if [[ -f /config/k8s-goal-loop-common.sh ]]; then
-  # shellcheck source=/dev/null
-  source /config/k8s-goal-loop-common.sh
-fi
 
 clone_or_sync() {
   local org_repo="$1" dest="$2" branch="$3"
@@ -128,20 +127,7 @@ while true; do
   set -e
 
   if [[ "$rc" -eq 0 ]]; then
-    echo "li-toml-config-entrypoint: GOAL COMPLETE — idle recheck every ${IDLE_RECHECK_SEC}s"
-    while true; do
-      sleep "$IDLE_RECHECK_SEC"
-      sync_workspace || {
-        echo "li-toml-config-entrypoint: sync failed during idle recheck (retrying)" >&2
-        continue
-      }
-      if ! run_goal_completion_gate "$AGENTS_ROOT" "$GOAL_PATH" "$HTTPD_ROOT"; then
-        echo "li-toml-config-entrypoint: completion gate no longer passes — resuming sprint"
-        break
-      fi
-      echo "li-toml-config-entrypoint: still complete after recheck"
-    done
-    continue
+    finish_on_goal_complete
   fi
 
   echo "li-toml-config-entrypoint: loop stopped without completion (exit $rc) — retry in ${LOOP_SLEEP}s" >&2

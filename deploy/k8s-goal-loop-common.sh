@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Shared helpers for K8s goal-directed workers (install loop scripts, self-unblock env, idle recheck).
+# Shared helpers for K8s goal-directed workers (install loop scripts, self-unblock env, stop on complete).
 set -euo pipefail
 
 install_goal_loop_scripts() {
@@ -34,28 +34,31 @@ run_goal_completion_gate() {
   node "${agents_root}/dist/cli/goal-completion-gate.js" --goal-file "$goal_file" --cwd "$gate_cwd"
 }
 
-idle_until_goal_gate_fails() {
-  local agents_root="$1"
-  local goal_file="$2"
-  local gate_cwd="$3"
-  local recheck_sec="${4:-300}"
-  local sync_fn="${5:-}"
+# Stop all agent work when the sprint is done: scale Deployment to 0 (preferred) or sleep forever.
+finish_on_goal_complete() {
+  local deploy="${LI_GOAL_DEPLOYMENT_NAME:-}"
+  local ns="${LI_GOAL_NAMESPACE:-li-swarm}"
 
-  echo "k8s-goal-loop: GOAL COMPLETE — idle recheck every ${recheck_sec}s"
-  while true; do
-    sleep "$recheck_sec"
-    if [[ -n "$sync_fn" ]]; then
-      # shellcheck disable=SC1090
-      source /dev/null
-      "$sync_fn" || {
-        echo "k8s-goal-loop: sync failed during idle recheck (retrying)" >&2
-        continue
-      }
+  echo "k8s-goal-loop: GOAL COMPLETE — stopping worker (no further agent runs)"
+
+  if [[ "${LI_GOAL_SCALE_DOWN_ON_COMPLETE:-1}" == "1" && -n "$deploy" ]]; then
+    local token="/var/run/secrets/kubernetes.io/serviceaccount/token"
+    local ca="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+    if [[ -f "$token" && -n "${KUBERNETES_SERVICE_HOST:-}" && -n "${KUBERNETES_SERVICE_PORT:-}" ]]; then
+      local api="https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"
+      if curl -sf --connect-timeout 5 --cacert "$ca" \
+        -H "Authorization: Bearer $(tr -d '\n' <"$token")" \
+        -H "Content-Type: application/strategic-merge-patch+json" \
+        -X PATCH "${api}/apis/apps/v1/namespaces/${ns}/deployments/${deploy}/scale" \
+        -d '{"spec":{"replicas":0}}' >/dev/null; then
+        echo "k8s-goal-loop: scaled deployment/${deploy} to 0 in ${ns}"
+        sleep 10
+        exit 0
+      fi
+      echo "k8s-goal-loop: scale-down API call failed (check RBAC)" >&2
     fi
-    if ! run_goal_completion_gate "$agents_root" "$goal_file" "$gate_cwd"; then
-      echo "k8s-goal-loop: completion gate no longer passes — resuming sprint"
-      return 0
-    fi
-    echo "k8s-goal-loop: still complete after recheck"
-  done
+  fi
+
+  echo "k8s-goal-loop: sleeping forever — no agent loops (scale deploy to 0 manually to free the pod)"
+  exec sleep infinity
 }

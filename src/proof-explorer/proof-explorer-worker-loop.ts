@@ -7,7 +7,6 @@ import { resolveActivePhase } from "./proof-explorer-phase-handoff.js";
 import {
   isProofExplorerWorkerAlwaysOn,
   proofExplorerAgentsRoot,
-  proofExplorerIdleRecheckSec,
   proofExplorerLicRoot,
   proofExplorerLoopMax,
   proofExplorerLoopSleepSec,
@@ -102,27 +101,6 @@ function runGoalDirectedLoopOnce(goalRel: string): Promise<number> {
   });
 }
 
-async function idleUntilProgramIncomplete(signal: AbortSignal): Promise<boolean> {
-  const recheckSec = proofExplorerIdleRecheckSec();
-  workerConsole(
-    "li-proof-explorer",
-    "info",
-    `program gate complete — idle recheck every ${recheckSec}s`,
-  );
-  while (!signal.aborted) {
-    await sleepUntil(signal, recheckSec * 1000);
-    if (signal.aborted) return false;
-    await syncProofExplorerLicFromOrigin();
-    const active = await resolveActivePhase();
-    if (!active.allComplete) {
-      workerConsole("li-proof-explorer", "info", "program no longer complete — resuming");
-      return true;
-    }
-    workerConsole("li-proof-explorer", "info", "still complete after origin sync");
-  }
-  return false;
-}
-
 async function proofExplorerWorkerLoop(signal: AbortSignal): Promise<void> {
   const sleepSec = proofExplorerLoopSleepSec();
   workerConsole(
@@ -135,11 +113,11 @@ async function proofExplorerWorkerLoop(signal: AbortSignal): Promise<void> {
     try {
       const active = await resolveActivePhase();
       if (active.allComplete) {
-        const resume = await idleUntilProgramIncomplete(signal);
-        if (resume) continue;
-        workerConsole("li-proof-explorer", "info", "program complete — idling until abort");
-        await sleepUntil(signal, proofExplorerIdleRecheckSec() * 1000);
-        continue;
+        workerConsole("li-proof-explorer", "info", "program complete — all phase gates passed");
+        if (process.env.LI_PROOF_EXPLORER_EXIT_ON_COMPLETE === "1") {
+          process.exit(0);
+        }
+        break;
       }
 
       activePhaseId = active.phase?.id ?? null;
@@ -157,11 +135,11 @@ async function proofExplorerWorkerLoop(signal: AbortSignal): Promise<void> {
         );
         const next = await resolveActivePhase();
         if (next.allComplete) {
-          const resume = await idleUntilProgramIncomplete(signal);
-          if (resume) continue;
-          workerConsole("li-proof-explorer", "info", "program complete after handoff check — idling");
-          await sleepUntil(signal, proofExplorerIdleRecheckSec() * 1000);
-          continue;
+          workerConsole("li-proof-explorer", "info", "program complete — all phase gates passed");
+          if (process.env.LI_PROOF_EXPLORER_EXIT_ON_COMPLETE === "1") {
+            process.exit(0);
+          }
+          break;
         }
         if (next.phase?.id !== activePhaseId) {
           workerConsole("li-proof-explorer", "info", `handoff → phase ${next.phase?.id}`);

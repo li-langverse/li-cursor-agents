@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# K8s entrypoint: sync lic workspace, install goal-loop scripts, start proof-explorer worker.
+# K8s entrypoint: sync lic workspace, run proof-explorer worker once per deploy, scale down when done.
 set -euo pipefail
 
 : "${GH_TOKEN:?GH_TOKEN required for clone and push}"
@@ -61,20 +61,15 @@ export LI_PROOF_EXPLORER_LIC_ROOT="$LIC_ROOT"
 export LI_CURSOR_AGENTS_ROOT="$AGENTS_ROOT"
 export LIC_ROOT="$LIC_ROOT"
 export LI_PROOF_EXPLORER_ALWAYS_ON="${LI_PROOF_EXPLORER_ALWAYS_ON:-1}"
-export LI_GOAL_SELF_UNBLOCK="${LI_GOAL_SELF_UNBLOCK:-1}"
-export LI_GOAL_SYNC_CWD_AFTER_RUN="${LI_GOAL_SYNC_CWD_AFTER_RUN:-1}"
-export LI_GOAL_GATE_PREFER_CWD="${LI_GOAL_GATE_PREFER_CWD:-0}"
-export LI_PROOF_EXPLORER_IDLE_RECHECK_SEC="${LI_PROOF_EXPLORER_IDLE_RECHECK_SEC:-300}"
 
-echo "proof-explorer-k8s-entrypoint: starting resilient worker loop"
-while true; do
-  sync_lic_repo
+set +e
+node "${AGENTS_ROOT}/dist/cli/proof-explorer-worker.js" start
+rc=$?
+set -e
 
-  set +e
-  node "${AGENTS_ROOT}/dist/cli/proof-explorer-worker.js" start
-  rc=$?
-  set -e
+if [[ "$rc" -eq 0 ]]; then
+  finish_on_goal_complete
+fi
 
-  echo "proof-explorer-k8s-entrypoint: worker exited (rc=${rc}) — recheck in ${LI_PROOF_EXPLORER_IDLE_RECHECK_SEC}s"
-  sleep "$LI_PROOF_EXPLORER_IDLE_RECHECK_SEC"
-done
+echo "proof-explorer-k8s-entrypoint: worker exited without completion (rc=${rc})" >&2
+exit "$rc"

@@ -42,6 +42,7 @@ Write-Host "==> kubectl apply li-proof-explorer (namespace=$Namespace)"
 kubectl label node $EngineNode li-langverse.io/node-pool=engine --overwrite 2>$null
 
 kubectl apply -f (Join-Path $K8s "namespace.yaml")
+kubectl apply -f (Join-Path $K8s "rbac-goal-workers-scale.yaml")
 kubectl apply -f (Join-Path $K8s "pvc-proof-explorer-workspace.yaml")
 kubectl apply -f (Join-Path $K8s "configmap-proof-explorer.yaml")
 kubectl apply -f (Join-Path $K8s "deployment-proof-explorer.yaml")
