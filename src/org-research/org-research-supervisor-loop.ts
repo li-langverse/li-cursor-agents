@@ -3,6 +3,7 @@ import { agentLog } from "../agent-log.js";
 import { saveOrgSupervisorCycle } from "../db/org-supervisor-cycle.js";
 import { workerConsole } from "../worker/worker-console.js";
 import { agentsPackageRoot } from "../runner.js";
+import { reconcileOrphanedK8sJobs } from "../org/k8s-job-reconcile.js";
 import {
   activeClaimsForDb,
   activeDimensions,
@@ -75,6 +76,13 @@ export async function orgResearchSupervisorTick(): Promise<SupervisorTickResult>
           );
         }
       }
+    }
+
+    const reconciled = reconcileOrphanedK8sJobs(state.research, jobs, (ref) =>
+      updateResearchStatus(ref, "failed", "job missing (reconciled)", root),
+    );
+    if (reconciled) {
+      workerConsole("org-research-supervisor", "info", `reconciled ${reconciled} orphaned job claim(s)`);
     }
     state = readActiveState(root);
   }

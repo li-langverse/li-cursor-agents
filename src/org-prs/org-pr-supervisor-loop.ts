@@ -23,6 +23,7 @@ import {
   orgPrSupervisorMaxWorkers,
   prRef,
 } from "./org-pr-supervisor-config.js";
+import { reconcileOrphanedK8sJobs } from "../org/k8s-job-reconcile.js";
 import { runOrgLaneObserverTick } from "../org/org-lane-observer-tick.js";
 import { parsePrOpenCount, refreshPrMergeQueue, runPython, sleep } from "./org-pr-supervisor-shared.js";
 
@@ -67,6 +68,12 @@ export async function orgPrSupervisorTick(): Promise<PrSupervisorTickResult> {
           );
         }
       }
+    }
+    const reconciled = reconcileOrphanedK8sJobs(state.prs, jobs, (ref) =>
+      updatePrStatus(ref, "failed", "job missing (reconciled)", root),
+    );
+    if (reconciled) {
+      workerConsole("org-pr-supervisor", "info", `reconciled ${reconciled} orphaned job claim(s)`);
     }
   }
 

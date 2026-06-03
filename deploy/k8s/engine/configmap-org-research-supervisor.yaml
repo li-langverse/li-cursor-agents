@@ -16,4 +16,6 @@ data:
   BENCHMARKS_ROOT: "/workspace/benchmarks"
   LI_ORG_SYNC_LIC: "1"
   LI_ORG_SYNC_BENCHMARKS: "1"
+  LI_ORG_LANE_OBSERVER_DISABLE: "0"
+  LI_ORG_SCHEDULE_SWARM_OBSERVER: "1"
   NODE_ENV: "production"

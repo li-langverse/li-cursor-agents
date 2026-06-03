@@ -6,6 +6,7 @@ import { agentLog } from "../agent-log.js";
 import { saveOrgSupervisorCycle } from "../db/org-supervisor-cycle.js";
 import { workerConsole } from "../worker/worker-console.js";
 import { agentsPackageRoot } from "../runner.js";
+import { reconcileOrphanedK8sJobs } from "../org/k8s-job-reconcile.js";
 import { runOrgLaneObserverTick } from "../org/org-lane-observer-tick.js";
 import {
   applyIssueFailurePolicy,
@@ -128,6 +129,16 @@ export async function orgIssueSupervisorTick(): Promise<SupervisorTickResult> {
           );
         }
       }
+    }
+    const reconciled = reconcileOrphanedK8sJobs(state.issues, jobs, (ref) =>
+      updateIssueStatus(ref, "failed", "job missing (reconciled)", root),
+    );
+    if (reconciled) {
+      workerConsole(
+        "org-issue-supervisor",
+        "info",
+        `reconciled ${reconciled} orphaned job claim(s)`,
+      );
     }
   }
 

@@ -154,6 +154,9 @@ foreach ($d in $deploys) {
 Write-Host "==> org swarm deployed; image=$Image"
 
 if (-not $SkipCleanup) {
+    Write-Host "==> cleanup failed/stuck k8s jobs"
+    & (Join-Path $PSScriptRoot "org-cleanup-failed-k8s-jobs.ps1") -KubeConfig $KubeConfig -Namespace $Namespace -IncludeStuckActive
+
     Write-Host "==> duplicate PR cleanup (GH_SWARM_TOKEN)"
     $env:GH_SWARM_TOKEN = $env:GH_SWARM_TOKEN
     Push-Location $Root
