@@ -64,9 +64,11 @@ if (-not $SkipBuild) {
         Pop-Location
     }
 
-    $loginToken = $env:GH_TOKEN
+    $loginToken = $env:GHCR_PUSH_TOKEN
+    if (-not $loginToken) { $loginToken = $env:GH_TOKEN }
+    if (-not $loginToken) { $loginToken = $env:GH_TOKEN_OVERVIEW_PAGE }
     if (-not $loginToken) { $loginToken = $env:GH_SWARM_TOKEN }
-    if (-not $loginToken) { Write-Error "GH_TOKEN or GH_SWARM_TOKEN required for ghcr push" }
+    if (-not $loginToken) { Write-Error "GHCR_PUSH_TOKEN (write:packages) or GH_TOKEN required for ghcr push" }
     Write-Host "==> $cli login ghcr.io"
     $loginToken | & $cli login ghcr.io -u "li-langverse" --password-stdin 2>&1 | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "ghcr login failed" }

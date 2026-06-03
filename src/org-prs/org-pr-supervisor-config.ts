@@ -52,7 +52,7 @@ export function orgReviewerSupervisorMaxWorkers(): number {
 export function orgPrSupervisorImage(): string {
   return (
     process.env.LI_ORG_PR_SUPERVISOR_IMAGE?.trim() ||
-    "ghcr.io/li-langverse/li-cursor-agents:swarm-20260602"
+    "ghcr.io/li-langverse/li-cursor-agents:latest"
   );
 }
 

@@ -68,11 +68,18 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: li-agents-secrets
+                  key: GHCR_PUSH_TOKEN
+                  optional: true
+            - name: GH_SWARM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
                   key: GH_SWARM_TOKEN
+                  optional: true
             - name: IMAGE
-              value: ghcr.io/li-langverse/li-cursor-agents:swarm-20260602
+              value: ghcr.io/li-langverse/li-cursor-agents:latest
             - name: GHCR_USER
-              value: cap-jmk-real
+              value: li-langverse
             - name: STORAGE_DRIVER
               value: vfs
             - name: BUILDAH_ISOLATION
@@ -83,10 +90,11 @@ spec:
             - |
               set -euo pipefail
               cd /workspace/li-cursor-agents
-              echo "$GH_TOKEN" | podman login ghcr.io -u "$GHCR_USER" --password-stdin || true
+              token="${GH_TOKEN:-$GH_SWARM_TOKEN}"
+              echo "$token" | podman login ghcr.io -u "$GHCR_USER" --password-stdin || true
               podman build -f deploy/Dockerfile -t "$IMAGE" .
               if podman push "$IMAGE"; then
-                echo "pushed to ghcr.io"
+                echo "pushed $IMAGE to ghcr.io"
                 exit 0
               fi
               echo "ghcr push failed - sideloading into k3s containerd"

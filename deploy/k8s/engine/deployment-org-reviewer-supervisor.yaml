@@ -22,7 +22,7 @@ spec:
         li-langverse.io/node-pool: engine
       containers:
         - name: supervisor
-          image: ghcr.io/li-langverse/li-cursor-agents:swarm-20260602
+          image: ghcr.io/li-langverse/li-cursor-agents:latest
           imagePullPolicy: IfNotPresent
           command: ["node", "dist/cli/org-reviewer-supervisor.js", "supervise"]
           envFrom:

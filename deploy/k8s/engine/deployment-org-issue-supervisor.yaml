@@ -1,4 +1,4 @@
-﻿# Long-running supervisor: classifies queue, spawns up to 3 implementer Jobs while issues remain open.
+# Long-running supervisor: classifies queue, spawns up to 3 implementer Jobs while issues remain open.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -22,7 +22,7 @@ spec:
         li-langverse.io/node-pool: engine
       containers:
         - name: supervisor
-          image: ghcr.io/li-langverse/li-cursor-agents:swarm-20260602
+          image: ghcr.io/li-langverse/li-cursor-agents:latest
           imagePullPolicy: IfNotPresent
           command: ["node", "dist/cli/org-issue-supervisor.js", "supervise"]
           envFrom:

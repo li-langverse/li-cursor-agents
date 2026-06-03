@@ -186,7 +186,7 @@ export async function createResearcherJob(options: {
             {
               name: "researcher",
               image,
-              imagePullPolicy: "Always",
+              imagePullPolicy: "IfNotPresent",
               command: [
                 "/app/deploy/org-worker-entrypoint.sh",
                 "node",

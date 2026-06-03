@@ -9,5 +9,6 @@ data:
   LI_ORG_PR_SUPERVISOR_MAX_IDLE_CYCLES: "3"
   LI_ORG_PR_SUPERVISOR_MAX_WORKERS: "3"
   LI_ORG_PR_SUPERVISOR_NAMESPACE: "li-swarm"
+  LI_ORG_PR_SUPERVISOR_IMAGE: "ghcr.io/li-langverse/li-cursor-agents:latest"
   LI_CONTROL_PLANE_STORE: "supabase"
   NODE_ENV: "production"

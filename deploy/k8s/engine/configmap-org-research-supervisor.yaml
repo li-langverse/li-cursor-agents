@@ -9,6 +9,7 @@ data:
   LI_ORG_RESEARCH_SUPERVISOR_MAX_IDLE_CYCLES: "3"
   LI_ORG_RESEARCH_SUPERVISOR_MAX_WORKERS: "3"
   LI_ORG_RESEARCH_SUPERVISOR_NAMESPACE: "li-swarm"
+  LI_ORG_RESEARCH_SUPERVISOR_IMAGE: "ghcr.io/li-langverse/li-cursor-agents:latest"
   LI_ORG_RESEARCH_DIMENSIONS: "security,performance,ux,api-coverage"
   LI_CONTROL_PLANE_STORE: "supabase"
   LIC_ROOT: "/workspace/lic"

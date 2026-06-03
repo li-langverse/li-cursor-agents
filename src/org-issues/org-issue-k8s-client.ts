@@ -183,7 +183,7 @@ export async function createImplementerJob(options: {
             {
               name: "implementer",
               image,
-              imagePullPolicy: "Always",
+              imagePullPolicy: "IfNotPresent",
               command: [
                 "/app/deploy/org-worker-entrypoint.sh",
                 "node",

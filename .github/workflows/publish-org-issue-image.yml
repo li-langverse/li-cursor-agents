@@ -2,6 +2,12 @@ name: Publish org-issue worker image
 
 on:
   workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref to build (branch, tag, or SHA)
+        required: false
+        default: main
+        type: string
   push:
     branches: [main]
     paths:
@@ -19,6 +25,8 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
 
       - name: Log in to GHCR
         uses: docker/login-action@v3

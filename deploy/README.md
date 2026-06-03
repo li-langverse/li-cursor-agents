@@ -7,6 +7,28 @@
 
 CI publishes `:latest` via [publish-org-issue-image.yml](../.github/workflows/publish-org-issue-image.yml) (`workflow_dispatch` or push to `main`).
 
+### Easiest: publish from GitHub Actions (no `write:packages` on your machine)
+
+```powershell
+.\scripts\publish-org-image-via-actions.ps1 -Ref main
+```
+
+Or open **Actions → Publish org-issue worker image → Run workflow** (pick branch/ref). Uses `GITHUB_TOKEN` with `packages: write` in the workflow.
+
+### Local push (needs classic PAT with `write:packages`)
+
+Add to `li/.env.github`:
+
+```env
+GHCR_PUSH_TOKEN=ghp_...
+```
+
+Then:
+
+```powershell
+.\scripts\push-org-image-latest.ps1
+```
+
 ## Local build (Windows + Podman)
 
 Native Windows `podman` can fail on `known_hosts` when talking to GHCR. Use the Podman machine VM:
