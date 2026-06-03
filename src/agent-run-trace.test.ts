@@ -5,7 +5,9 @@ import {
   buildMockTrace,
   buildRunInput,
   extractFileEdits,
+  computeTokenUsageFromTrace,
   createTraceCollector,
+  estimateTokensFromChars,
 } from "./agent-run-trace.js";
 
 describe("agent-run-trace", () => {
@@ -76,5 +78,25 @@ describe("agent-run-trace", () => {
     assert.equal(trace.assistant_text, "hello");
     assert.equal(trace.deltas.length, 1);
     assert.equal(trace.steps.length, 1);
+    assert.ok(trace.token_usage);
+  });
+
+  it("accumulates thinking tokens", () => {
+    const c = createTraceCollector();
+    c.onDelta({
+      update: { type: "thinking-delta", text: "plan" } as import("@cursor/sdk").InteractionUpdate,
+    });
+    const trace = c.finalize("");
+    assert.ok((trace.token_usage?.thinking_tokens ?? 0) > 0);
+  });
+
+  it("computeTokenUsageFromTrace on mock", () => {
+    const trace = buildMockTrace({
+      definitionId: "x",
+      assistantText: "ok",
+      userMessage: "u",
+      cwd: "/tmp",
+    });
+    assert.ok(computeTokenUsageFromTrace(trace).output_tokens > 0);
   });
 });

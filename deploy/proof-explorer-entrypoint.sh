@@ -51,7 +51,7 @@ sync_lic_repo() {
 
 sync_lic_repo
 
-test -f "${LIC_ROOT}/data/goal-directed-sprints/proof-explorer-program.md" || {
+GOAL_REL="${LI_PROOF_EXPLORER_GOAL_FILE:-data/goal-directed-sprints/proof-explorer-program.md}"; test -f "${LIC_ROOT}/${GOAL_REL}" || {
   echo "proof-explorer-entrypoint: missing goal file in lic repo" >&2
   exit 1
 }

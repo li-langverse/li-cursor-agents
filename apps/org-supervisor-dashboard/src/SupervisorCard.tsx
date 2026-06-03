@@ -3,6 +3,7 @@ import { formatWhen, healthChip, refLabel, statusClass } from "./format";
 
 export const AUDIT_KEYS: Record<SupervisorKind, keyof import("./types").DashboardPayload["audits"]> = {
   issue: "issue",
+  planner: "planner",
   pr: "pr-implement",
   review: "pr-review",
   research: "research",

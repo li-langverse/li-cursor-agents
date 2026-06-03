@@ -1,6 +1,6 @@
-# li-cursor-agents
+﻿# li-cursor-agents
 
-Local **Cursor SDK** (`@cursor/sdk`) runner for li-langverse automations. **CI uses a mock backend** — no API key, no LLM.
+Local **Cursor SDK** (`@cursor/sdk`) runner for li-langverse automations. **CI uses a mock backend** â€” no API key, no LLM.
 
 Benchmarks repo keeps **preflight scripts** (`agent-briefing.py`); this repo runs **agents**.
 
@@ -15,9 +15,9 @@ This repo uses the same **roadmap `agent-kit/`** as lic/benchmarks (PR-only, eco
 
 Org drift audit (feeds **agent_kit_maintainer**): `python3 ../benchmarks/scripts/ensure-org-agent-kit.py --local-only`
 
-## Repo workflow (clone → PR)
+## Repo workflow (clone â†’ PR)
 
-Platform agents (`agent_kit_maintainer`, `ci_maintainer`, `docs_maintainer`) use **isolated workspaces** under `data/workspaces/` — not your sibling checkout.
+Platform agents (`agent_kit_maintainer`, `ci_maintainer`, `docs_maintainer`) use **isolated workspaces** under `data/workspaces/` â€” not your sibling checkout.
 
 Stale clones are pruned automatically (default: **20** max per repo, **5** always kept, delete older than **7 days**). Manual: `npm run workspace:prune` (`--dry-run`, `--force` for dirty clones).
 
@@ -28,7 +28,7 @@ npm run repo-workflow -- agent-kit-rollout --dry-run
 ./scripts/agent-repo-workflow.sh agent-kit-rollout
 ```
 
-Manual steps: `prepare` → edit clone → `commit-pr` (documented in `prompts/repo-workflow-tools.md`).
+Manual steps: `prepare` â†’ edit clone â†’ `commit-pr` (documented in `prompts/repo-workflow-tools.md`).
 
 ## Machine setup (recommended once)
 
@@ -64,7 +64,7 @@ npm ci
 ./scripts/sync-prompts.sh   # from ../benchmarks/.cursor/automations
 npm run build
 
-# Real SDK (default) — put CURSOR_API_KEY in .env
+# Real SDK (default) â€” put CURSOR_API_KEY in .env
 cp .env.example .env
 npm run agent -- --agent pr_reviewer --benchmarks ../benchmarks
 
@@ -92,7 +92,7 @@ npm run list
 | `plan_verifier` | Open plans / PH trackers vs reality | no |
 | `gap_explorer` | Ecosystem + HPC + Reddit/SOTA gaps | **yes** |
 | `implementation_gaps` | Plan vs code drift | yes |
-| `issue_planner` | Issues → implementation plans | no |
+| `issue_planner` | Issues â†’ implementation plans | no |
 | `pr_branch_opener` | Open PRs for branches with no pull request | no |
 | `pr_alignment` | PRs vs vision / roadmap; close superseded PRs | no |
 | `pr_reviewer` | Standards review before merge-approved | no |
@@ -100,19 +100,19 @@ npm run list
 | `numerics_researcher` | Existing algos (books, libs, papers) | **yes** |
 | `autoresearch` | Novel algos + bench proof | **yes** |
 | `bench_improver` | Fix red dashboard rows in lic | no |
-| `docs_maintainer` | Missing docs → implement | no |
+| `docs_maintainer` | Missing docs â†’ implement | no |
 | `ci_maintainer` | Missing org CI workflows | no |
-| `agent_kit_maintainer` | Isolated clone → install agent-kit → open PRs | no |
+| `agent_kit_maintainer` | Isolated clone â†’ install agent-kit â†’ open PRs | no |
 | `orchestrator` | Route from briefing | no |
 
-Legacy briefing ids (`ecosystem_explorer`, `plan_completion`, …) still resolve via aliases.
+Legacy briefing ids (`ecosystem_explorer`, `plan_completion`, â€¦) still resolve via aliases.
 
 ## Cursor SDK API key (where to set it)
 
 | Location | When |
 |----------|------|
 | **`li-cursor-agents/.env`** | Local / overnight on your machine (`cp .env.example .env`) |
-| **Cursor → Cloud / Background Agent → Environment variables** | Overnight in a Cloud Agent VM — **restart the VM** after adding |
+| **Cursor â†’ Cloud / Background Agent â†’ Environment variables** | Overnight in a Cloud Agent VM â€” **restart the VM** after adding |
 | **Shell export** | Ad hoc: `export CURSOR_API_KEY=...` in the same terminal as `npm run supervisor` |
 
 Supported names (first match wins): `CURSOR_API_KEY`, `CURSOR_SDK_KEY`, `CURSOR_SDK`, `CURSOR_API_TOKEN`.
@@ -138,7 +138,7 @@ npm run test:playwright:mock        # browser: live stream UI (mocked API)
 LI_PLAYWRIGHT_USE_SUPABASE=1 npm run test:playwright:integration   # browser + local test DB
 ```
 
-Covers: heap caps → preflight → task queue → agent runs → report/interventions → anti-cycle → goal shift → **agent-matrix** (mock per leaf) → dashboard `/api/report` + `/api/heap`.
+Covers: heap caps â†’ preflight â†’ task queue â†’ agent runs â†’ report/interventions â†’ anti-cycle â†’ goal shift â†’ **agent-matrix** (mock per leaf) â†’ dashboard `/api/report` + `/api/heap`.
 
 ## Environment
 
@@ -159,7 +159,7 @@ Covers: heap caps → preflight → task queue → agent runs → report/interve
 
 ## Heap orchestration (Agentron-style)
 
-The root **orchestrator** never dispatches more than **10 leaf agents** at once. Work is grouped into **sub-coordinators** (each ≤10 agents):
+The root **orchestrator** never dispatches more than **10 leaf agents** at once. Work is grouped into **sub-coordinators** (each â‰¤10 agents):
 
 | Coordinator | Leaf agents |
 |-------------|-------------|
@@ -179,7 +179,7 @@ Agents run **continuously** with **no briefing cycles**: the supervisor polls pr
 cd li-cursor-agents
 npm run build
 npm run dashboard
-# → http://127.0.0.1:9477/
+# â†’ http://127.0.0.1:9477/
 ```
 
 **Async lanes (footer):**
@@ -187,14 +187,14 @@ npm run dashboard
 | Button | Action |
 |--------|--------|
 | **Research lane** | Goal-directed research (session-first); `npm run agents:research-lane` |
-| **Implement lane** | Handoff gate: `package_architect` → `code_implementer`; `npm run agents:implement-lane` |
-| **Run all (handoff)** | One tick each: research → implement (set `LI_SWARM_HANDOFF_PHASES=0` for legacy parallel spawn) |
+| **Implement lane** | Handoff gate: `package_architect` â†’ `code_implementer`; `npm run agents:implement-lane` |
+| **Run all (handoff)** | One tick each: research â†’ implement (set `LI_SWARM_HANDOFF_PHASES=0` for legacy parallel spawn) |
 
 **Dashboard controls (footer):**
 
 | Button | Action |
 |--------|--------|
-| **Supervisor mode** | Continuous loop: preflight → up to 3 agents per tick (sequential). Click again to stop. |
+| **Supervisor mode** | Continuous loop: preflight â†’ up to 3 agents per tick (sequential). Click again to stop. |
 | **Run all (handoff)** | Phased handoffs (see above). |
 
 Each **leaf/root** card has **Start** / **Stop** / **Resume**. Stop kills a running process and excludes the agent until Resume.
@@ -208,7 +208,7 @@ npm run agents:keep   # dashboard + supervisor (cursor-sdk if .env has key)
 
 | Piece | Role |
 |-------|------|
-| `npm run supervisor` | Loop: preflight → interventions → run up to 2 agents/tick |
+| `npm run supervisor` | Loop: preflight â†’ interventions â†’ run up to 2 agents/tick |
 | `npm run dashboard` | Web UI: interventions first, report, recent runs |
 | `data/control-plane/latest-report.json` | Full report for the web UI |
 | `data/control-plane/interventions.json` | Human intervention queue |
@@ -235,7 +235,7 @@ Env: `LI_OBSERVER_MAX_RETRIES_PER_AGENT`, `LI_OBSERVER_MAX_REMEDIATIONS_PER_TICK
 
 `GET /api/swarm/health` returns `swarm_degraded`, `degraded_reasons`, `failure_classes`, and `observer_retry_counts` for the dashboard.
 
-**Dashboard → Settings** edits all runtime knobs (supervisor, observer, SDK, local CI, lanes, …). Values persist to `data/control-plane/runtime-settings.json` and apply immediately to the running ops server (restart only for port / store).
+**Dashboard â†’ Settings** edits all runtime knobs (supervisor, observer, SDK, local CI, lanes, â€¦). Values persist to `data/control-plane/runtime-settings.json` and apply immediately to the running ops server (restart only for port / store).
 
 Env fallbacks: `LI_SUPERVISOR_INTERVAL_MS`, `LI_AGENTS_COOLDOWN_MS`, `LI_AGENT_DASHBOARD_PORT` (9477).
 
@@ -253,3 +253,7 @@ npm run supervisor -- --once --benchmarks ../benchmarks --mock
 ```bash
 gh repo create li-langverse/li-cursor-agents --public --source=. --remote=origin
 ```
+
+## License
+
+Copyright (C) 2026 Julian. Licensed under the [GNU General Public License v3.0](LICENSE).

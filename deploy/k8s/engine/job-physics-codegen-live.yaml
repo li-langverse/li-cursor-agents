@@ -1,0 +1,85 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: li-physics-codegen-live
+  namespace: li-swarm
+  labels:
+    app: li-physics-codegen-live
+    li-langverse.io/sprint: physics-codegen-matrix
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 86400
+  ttlSecondsAfterFinished: 604800
+  template:
+    metadata:
+      labels:
+        app: li-physics-codegen-live
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/hostname: engine
+      imagePullSecrets:
+        - name: ghcr-li-langverse
+      containers:
+        - name: live-matrix
+          image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/bash
+            - -ec
+            - |
+              set -euo pipefail
+              export LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE=1
+              export LI_SDK_LOG_SKIP_TOKEN_DELTAS=0
+              export LI_CURSOR_AGENTS_ROOT=/app
+              export LIC_ROOT=/workspace/lic
+              export BENCHMARKS_ROOT=/workspace/benchmarks
+              export PHYSICS_CODEGEN_PILOT="${PHYSICS_CODEGEN_PILOT:-0}"
+              export PHYSICS_CODEGEN_RESUME=1
+              export PHYSICS_CODEGEN_MODELS="${PHYSICS_CODEGEN_MODELS:-default,qwen-3.5-9b,qwen-3.5-20b}"
+              # Sync workspace (reuse PVC from always-on worker)
+              if [[ ! -d /workspace/lic/.git ]]; then
+                gh repo clone li-langverse/lic /workspace/lic || true
+              fi
+              if [[ ! -d /workspace/benchmarks/.git ]]; then
+                gh repo clone li-langverse/benchmarks /workspace/benchmarks || true
+              fi
+              cd /workspace/benchmarks/scripts/physics-codegen-matrix
+              node run-matrix-live.mjs 2>&1 | tee /workspace/benchmarks/results/physics-codegen-live.log
+          envFrom:
+            - configMapRef:
+                name: li-physics-codegen-matrix
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+            - name: CURSOR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: CURSOR_API_KEY
+            - name: PHYSICS_CODEGEN_PILOT
+              value: "0"
+            - name: PHYSICS_CODEGEN_RESUME
+              value: "1"
+          resources:
+            requests:
+              cpu: "1"
+              memory: "2Gi"
+            limits:
+              cpu: "8"
+              memory: "8Gi"
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+      volumes:
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: li-physics-codegen-matrix-workspace

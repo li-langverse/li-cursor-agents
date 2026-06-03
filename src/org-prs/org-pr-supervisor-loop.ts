@@ -13,6 +13,9 @@ import {
   readImplementQueuePrs,
   readQueueOpenTotal,
   updatePrStatus,
+  getPrBackoff,
+  cooldownUntilForPr,
+  setPrCooldown,
 } from "./org-pr-coordination.js";
 import { createPrImplementerJob, isInKubernetesCluster, listPrImplementerJobs } from "./org-pr-k8s-client.js";
 import {
@@ -37,6 +40,18 @@ export interface PrSupervisorTickResult {
 export async function orgPrSupervisorTick(): Promise<PrSupervisorTickResult> {
   const root = agentsPackageRoot();
   pruneTerminalActiveEntries(root);
+
+  const backoff = getPrBackoff(root);
+  const untilMs = backoff?.until ? Date.parse(backoff.until) : NaN;
+  if (Number.isFinite(untilMs) && Date.now() < untilMs) {
+    return {
+      openCount: 0,
+      desiredWorkers: 0,
+      activeWorkers: 0,
+      spawned: 0,
+      message: `GitHub rate limit backoff until ${backoff!.until}${backoff?.reason ? ` (${backoff.reason})` : ""}`,
+    };
+  }
 
   const countRes = runPython("org-pr-open-count.py");
   let openCount = parsePrOpenCount(countRes.tail) ?? 0;
@@ -78,9 +93,14 @@ export async function orgPrSupervisorTick(): Promise<PrSupervisorTickResult> {
   for (const row of queued) {
     if (spawned >= slots) break;
     const ref = prRef(row.repo, row.number);
+    const until = cooldownUntilForPr(ref, root);
+    if (until) continue;
     if (activeSet.has(ref)) continue;
 
     const workerId = randomBytes(4).toString("hex");
+    const cooldownMs = Number(process.env.LI_ORG_PR_REF_COOLDOWN_MS || 10 * 60_000);
+    const cooldownUntil = new Date(Date.now() + (Number.isFinite(cooldownMs) ? cooldownMs : 10 * 60_000)).toISOString();
+    setPrCooldown(ref, cooldownUntil, root);
     if (!claimPr(ref, row.repo, row.number, "implementer", workerId, undefined, root)) continue;
 
     if (!isInKubernetesCluster()) {

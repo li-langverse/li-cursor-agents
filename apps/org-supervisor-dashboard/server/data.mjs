@@ -200,6 +200,14 @@ function readIssueActiveClaims() {
   );
 }
 
+function readPlannerActiveClaims() {
+  const state = readJson(join(sprintDir(), META.planner.activeFile));
+  if (!state?.plans) return [];
+  return Object.values(state.plans).filter(
+    (e) => e.status === "claimed" || e.status === "running",
+  );
+}
+
 function readPrActiveClaims(role) {
   const state = readJson(join(sprintDir(), META.pr.activeFile));
   if (!state?.prs) return [];
@@ -250,7 +258,8 @@ function deriveHealth({ lastError, lastCycleAt, openCount, desiredWorkers }) {
 
 function mockSupervisor(kind) {
   const meta = META[kind];
-  const openCount = kind === "issue" ? 12 : kind === "pr" ? 8 : kind === "research" ? 5 : 3;
+  const openCount =
+    kind === "planner" ? 73 : kind === "issue" ? 12 : kind === "pr" ? 8 : kind === "research" ? 5 : 3;
   const desiredWorkers = computeDesiredWorkers(openCount);
   const now = new Date().toISOString();
   return {
@@ -260,7 +269,16 @@ function mockSupervisor(kind) {
     openCount,
     desiredWorkers,
     activeClaims:
-      kind === "research"
+      kind === "planner"
+        ? [
+            {
+              planRef: "li-langverse/lic#42",
+              kind: "issue_plan",
+              status: "running",
+              workerId: "p1",
+            },
+          ]
+        : kind === "research"
         ? [
             {
               researchRef: "numerics_sota@security",
@@ -341,7 +359,9 @@ async function loadFromSupabase() {
       activeClaims =
         kind === "issue"
           ? readIssueActiveClaims()
-          : kind === "pr"
+          : kind === "planner"
+            ? readPlannerActiveClaims()
+            : kind === "pr"
             ? readPrActiveClaims("implementer")
             : kind === "research"
               ? readResearchActiveClaims()
@@ -374,17 +394,20 @@ function loadFromFiles() {
   const supervisors = {};
   const countNotes = [];
   const issueResolved = resolveOpenCount("issue", META.issue, countNotes);
+  const plannerResolved = resolveOpenCount("planner", META.planner, countNotes);
   const prResolved = resolveOpenCount("pr", META.pr, countNotes);
   const reviewResolved = resolveOpenCount("review", META.review, countNotes);
   const researchOpen = countOpenResearchGoals();
   const openByKind = {
     issue: issueResolved.count,
+    planner: plannerResolved.count,
     pr: prResolved.count,
     review: reviewResolved.count,
     research: researchOpen,
   };
   const countSources = {
     issue: issueResolved.source,
+    planner: plannerResolved.source,
     pr: prResolved.source,
     review: reviewResolved.source,
     research: "local",
@@ -397,7 +420,9 @@ function loadFromFiles() {
     const activeClaims =
       kind === "issue"
         ? readIssueActiveClaims()
-        : kind === "pr"
+        : kind === "planner"
+          ? readPlannerActiveClaims()
+          : kind === "pr"
           ? readPrActiveClaims("implementer")
           : kind === "research"
             ? readResearchActiveClaims()
@@ -436,6 +461,7 @@ function loadAudits() {
   const dir = sprintDir();
   return {
     issue: tailJsonl(join(dir, META.issue.auditFile)),
+    planner: tailJsonl(join(dir, META.planner.auditFile)),
     "pr-implement": tailJsonl(join(dir, META.pr.auditFile)),
     "pr-review": tailJsonl(join(dir, META.review.auditFile)),
     research: tailJsonl(join(dir, META.research.auditFile)),
@@ -460,6 +486,7 @@ export async function buildPayload() {
             workerId: "mock",
           },
         ],
+        planner: [],
         "pr-implement": [],
         "pr-review": [],
         research: [],

@@ -14,6 +14,7 @@ import {
 import { advanceResearchSession, loadResearchSession } from "../research-sessions/session-store.js";
 import { loadResearchGoals, northStarFitForGoal } from "../research-goals/load-goals.js";
 import { enqueueImplementationHandoff } from "./implementation-handoff.js";
+import { enqueueResearchPlanningHandoff } from "./planner-handoff.js";
 import { enqueueUxRemediationHandoff } from "./ui-ux-remediation.js";
 import { applyOrgRepoOnboarderPostRun } from "./org-repo-onboarding.js";
 import {
@@ -113,6 +114,13 @@ export async function applyResearchPostRun(result: AgentRunResult, briefingHash?
         briefingHash,
         runId,
       );
+      await enqueueResearchPlanningHandoff({
+        fromAgent: result.agentId,
+        goalId: session.goal_id,
+        sessionId: session.session_id,
+        briefingHash,
+        sourceRunId: runId,
+      });
       await enqueueImplementationHandoff({
         fromAgent: result.agentId,
         goalId: session.goal_id,

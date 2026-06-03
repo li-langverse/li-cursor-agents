@@ -1,0 +1,42 @@
+# Wake planner supervisor Deployment every 30m if scaled down or pod exited.
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: li-org-planner-supervisor-wake
+  namespace: li-swarm
+  labels:
+    app: li-org-planner-supervisor-wake
+spec:
+  schedule: "*/30 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 3600
+      backoffLimit: 1
+      activeDeadlineSeconds: 300
+      template:
+        metadata:
+          labels:
+            app: li-org-planner-supervisor-wake
+        spec:
+          serviceAccountName: li-org-planner-supervisor
+          restartPolicy: OnFailure
+          nodeSelector:
+            li-langverse.io/node-pool: engine
+          containers:
+            - name: wake
+              image: ghcr.io/li-langverse/li-cursor-agents:latest
+              imagePullPolicy: Always
+              command: ["node", "dist/cli/org-planner-supervisor.js", "wake"]
+              envFrom:
+                - configMapRef:
+                    name: li-org-planner-supervisor
+              resources:
+                requests:
+                  cpu: "50m"
+                  memory: "128Mi"
+                limits:
+                  cpu: "500m"
+                  memory: "256Mi"

@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: li-physics-codegen-matrix
+  namespace: li-swarm
+  labels:
+    app: li-physics-codegen-matrix
+    app.kubernetes.io/name: li-physics-codegen-matrix
+    app.kubernetes.io/component: goal-directed-agent
+    li-langverse.io/sprint: physics-codegen-matrix
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: li-physics-codegen-matrix
+  template:
+    metadata:
+      labels:
+        app: li-physics-codegen-matrix
+        app.kubernetes.io/name: li-physics-codegen-matrix
+        app.kubernetes.io/component: goal-directed-agent
+        li-langverse.io/sprint: physics-codegen-matrix
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: engine
+      imagePullSecrets:
+        - name: ghcr-li-langverse
+      containers:
+        - name: physics-codegen-matrix
+          image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: li-physics-codegen-matrix
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+            - name: CURSOR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: CURSOR_API_KEY
+                  optional: true
+            - name: CURSOR_SDK_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: CURSOR_SDK_KEY
+                  optional: true
+          resources:
+            requests:
+              cpu: "1"
+              memory: "2Gi"
+            limits:
+              cpu: "8"
+              memory: "8Gi"
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: sprint-goal
+              mountPath: /workspace/lic/data/goal-directed-sprints/physics-codegen-matrix.md
+              subPath: physics-codegen-matrix.md
+              readOnly: true
+      volumes:
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: li-physics-codegen-matrix-workspace
+        - name: sprint-goal
+          configMap:
+            name: li-physics-codegen-matrix-goal

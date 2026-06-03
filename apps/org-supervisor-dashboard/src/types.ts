@@ -1,4 +1,4 @@
-﻿export type SupervisorKind = "issue" | "pr" | "review" | "research";
+﻿export type SupervisorKind = "issue" | "planner" | "pr" | "review" | "research";
 
 export type Health = "healthy" | "degraded" | "idle" | "unknown";
 
@@ -32,6 +32,7 @@ export interface DashboardPayload {
   supervisors: Record<SupervisorKind, SupervisorSnapshot>;
   audits: {
     issue: AuditRow[];
+    planner: AuditRow[];
     "pr-implement": AuditRow[];
     "pr-review": AuditRow[];
     research: AuditRow[];

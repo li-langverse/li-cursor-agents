@@ -1,6 +1,6 @@
-﻿/** @typedef {'issue' | 'pr' | 'review' | 'research'} SupervisorKind */
+﻿/** @typedef {'issue' | 'planner' | 'pr' | 'review' | 'research'} SupervisorKind */
 
-export const KINDS = /** @type {const} */ (["issue", "pr", "review", "research"]);
+export const KINDS = /** @type {const} */ (["issue", "planner", "pr", "review", "research"]);
 
 export const META = {
   issue: {
@@ -16,6 +16,20 @@ export const META = {
       'kubectl -n li-swarm logs deploy/li-org-issue-supervisor -f --tail=100',
     kubectlJobs:
       'kubectl -n li-swarm get jobs -l li-langverse.io/org-issue',
+  },
+  planner: {
+    label: "Planner",
+    deployment: "li-org-planner-supervisor",
+    activeFile: "org-planner-active.json",
+    auditKey: "planner",
+    auditFile: "org-planner-audit.jsonl",
+    queueFile: "org-planner-queue.json",
+    countScript: null,
+    openCountPattern: null,
+    kubectlLogs:
+      'kubectl -n li-swarm logs deploy/li-org-planner-supervisor -f --tail=100',
+    kubectlJobs:
+      'kubectl -n li-swarm get jobs -l li-langverse.io/managed-by=org-planner-supervisor',
   },
   pr: {
     label: "PR implementer",

@@ -6,6 +6,7 @@ import { workerConsole } from "../worker/worker-console.js";
 import type { AgentId } from "../types.js";
 import { sprintDataDir } from "../org-issues/org-issue-coordination.js";
 import type { QueuedOrgPr } from "./org-pr-coordination.js";
+import { setPrBackoff, setPrCooldown } from "./org-pr-coordination.js";
 import { fetchGitHubPullRequest, postGitHubPrComment } from "./org-pr-github.js";
 import { parsePrRef } from "./org-pr-supervisor-config.js";
 
@@ -119,6 +120,20 @@ export async function runOrgPrReviewCycle(
     pr = await fetchGitHubPullRequest(parsed.org, parsed.repo, parsed.number);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+    if (/rate limit exceeded|secondary rate limit/i.test(msg)) {
+      const ms = Number(process.env.LI_GH_BACKOFF_MS || 15 * 60_000);
+      const until = new Date(Date.now() + (Number.isFinite(ms) ? ms : 15 * 60_000)).toISOString();
+      setPrBackoff(until, "github_rate_limited");
+      setPrCooldown(options.prRef, until);
+      return {
+        ok: true,
+        status: "completed",
+        agentId: orgPrReviewerAgentId(),
+        
+        outputTail: "GitHub rate limited - backoff until " + until,
+      };
+    }
+
     return { ok: false, status: "failed", agentId: orgPrReviewerAgentId(), error: msg };
   }
 

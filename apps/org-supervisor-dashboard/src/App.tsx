@@ -3,9 +3,10 @@ import type { DashboardPayload, SupervisorKind } from "./types";
 import { AUDIT_KEYS, SupervisorCard } from "./SupervisorCard";
 import { formatWhen } from "./format";
 
-const KINDS: SupervisorKind[] = ["issue", "pr", "review", "research"];
+const KINDS: SupervisorKind[] = ["issue", "planner", "pr", "review", "research"];
 const TAB_LABELS: Record<SupervisorKind, string> = {
   issue: "Issue",
+  planner: "Planner",
   pr: "PR implement",
   review: "Review",
   research: "Research",
