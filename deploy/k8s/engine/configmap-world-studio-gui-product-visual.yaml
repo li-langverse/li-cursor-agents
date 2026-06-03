@@ -27,7 +27,12 @@ data:
 
   # Goal-directed loop mode
   LI_GOAL_LOOP_GATE_ONLY: "1"
-  LI_GOAL_GATE_PREFER_CWD: "1"
+  # Gates run in the agent clone (same branch as origin); PVC --cwd syncs after each push.
+  LI_GOAL_GATE_PREFER_CWD: "0"
+  LI_GOAL_SYNC_CWD_AFTER_RUN: "1"
+  LI_GOAL_SELF_UNBLOCK: "1"
+  LI_REPO_WORKFLOW_TRACK_REMOTE: "1"
+  LI_GOAL_STUCK_THRESHOLD: "5"
   LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_IDLE_RECHECK_SEC: "300"
 
   # K8s worker should not depend on local fixture files.

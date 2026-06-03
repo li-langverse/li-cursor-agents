@@ -61,10 +61,25 @@ sync_workspace() {
   test -f "$STUDIO_ROOT/$GOAL_FILE_REL"
 }
 
+install_bundled_scripts() {
+  for script in goal-directed-loop.sh goal-loop-self-unblock.sh; do
+    if [[ -f "/config/${script}" ]]; then
+      cp "/config/${script}" "${AGENTS_ROOT}/scripts/${script}"
+      chmod +x "${AGENTS_ROOT}/scripts/${script}"
+      echo "world-studio-gui-product-visual-entrypoint: installed /config/${script}"
+    fi
+  done
+}
+
 run_goal_loop() {
+  install_bundled_scripts
   export LI_CURSOR_AGENTS_ROOT="$AGENTS_ROOT"
   export LI_GOAL_LOOP_GATE_ONLY="${LI_GOAL_LOOP_GATE_ONLY:-1}"
-  export LI_GOAL_GATE_PREFER_CWD="${LI_GOAL_GATE_PREFER_CWD:-1}"
+  export LI_REPO_WORKFLOW_BRANCH="${LI_REPO_WORKFLOW_BRANCH:-$STUDIO_BRANCH}"
+  export LI_REPO_WORKFLOW_TRACK_REMOTE="${LI_REPO_WORKFLOW_TRACK_REMOTE:-1}"
+  export LI_GOAL_GATE_PREFER_CWD="${LI_GOAL_GATE_PREFER_CWD:-0}"
+  export LI_GOAL_SYNC_CWD_AFTER_RUN="${LI_GOAL_SYNC_CWD_AFTER_RUN:-1}"
+  export LI_GOAL_SELF_UNBLOCK="${LI_GOAL_SELF_UNBLOCK:-1}"
   "$AGENTS_ROOT/scripts/goal-directed-loop.sh" \
     --agent "$AGENT" \
     --workflow-repo studio \

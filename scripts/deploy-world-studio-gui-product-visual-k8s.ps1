@@ -45,11 +45,17 @@ kubectl apply -f (Join-Path $K8s "pvc-world-studio-gui-product-visual-workspace.
 kubectl apply -f (Join-Path $K8s "configmap-world-studio-gui-product-visual.yaml")
 kubectl apply -f (Join-Path $K8s "deployment-world-studio-gui-product-visual.yaml")
 
-$entry = Join-Path $Root "deploy\world-studio-gui-product-visual-entrypoint.sh"
-$entryLf = Join-Path $env:TEMP "world-studio-gui-product-visual-entrypoint.sh"
-(Get-Content -Raw $entry) -replace "`r`n", "`n" | Set-Content -NoNewline -Encoding utf8 $entryLf
+function Convert-ShToLf([string]$src, [string]$dest) {
+    (Get-Content -Raw $src) -replace "`r`n", "`n" | Set-Content -NoNewline -Encoding utf8 $dest
+}
+
+$bundleDir = Join-Path $env:TEMP "li-ws-pv-bundle"
+New-Item -ItemType Directory -Force -Path $bundleDir | Out-Null
+Convert-ShToLf (Join-Path $Root "deploy\world-studio-gui-product-visual-entrypoint.sh") (Join-Path $bundleDir "entrypoint.sh")
+Convert-ShToLf (Join-Path $Root "scripts\goal-directed-loop.sh") (Join-Path $bundleDir "goal-directed-loop.sh")
+Convert-ShToLf (Join-Path $Root "scripts\goal-loop-self-unblock.sh") (Join-Path $bundleDir "goal-loop-self-unblock.sh")
 kubectl -n $Namespace create configmap li-world-studio-gui-product-visual-bundle `
-    --from-file=entrypoint.sh=$entryLf `
+    --from-file=$bundleDir `
     --dry-run=client -o yaml | kubectl apply -f -
 
 $secretArgs = @(

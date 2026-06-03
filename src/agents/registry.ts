@@ -420,6 +420,8 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     promptFile: "world-studio-builder.md",
     skills: [
       "explore-li-ecosystem",
+      "agent-self-unblock",
+      "run-goal-directed-loop",
       "studio-design-review",
       "studio-agentic-ux",
       "studio-ui-ux-rubric",
