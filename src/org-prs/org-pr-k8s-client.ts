@@ -193,7 +193,7 @@ async function createPrWorkerJob(options: {
             {
               name: "worker",
               image: orgPrSupervisorImage(),
-              imagePullPolicy: "IfNotPresent",
+              imagePullPolicy: "Always",
               command: [
                 "/app/deploy/org-worker-entrypoint.sh",
                 "node",

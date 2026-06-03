@@ -25,7 +25,7 @@ RUN npm run build \
   && npm --prefix apps/org-supervisor-dashboard prune --omit=dev
 
 COPY deploy/org-worker-entrypoint.sh /app/deploy/org-worker-entrypoint.sh
-RUN chmod +x /app/deploy/org-worker-entrypoint.sh
+RUN sed -i 's/\r$//' /app/deploy/org-worker-entrypoint.sh && chmod +x /app/deploy/org-worker-entrypoint.sh
 
 ENV NODE_ENV=production
 # Default: org-issue worker one-shot (CronJob overrides command).
