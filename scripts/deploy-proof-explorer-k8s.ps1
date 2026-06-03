@@ -1,4 +1,4 @@
-# Deploy li-world-studio-gui-product-visual goal-directed agent on homelab engine cluster.
+# Deploy li-proof-explorer goal-directed agent on homelab engine cluster.
 param(
     [string]$KubeConfig = "$env:USERPROFILE\.kube\config-homelab",
     [string]$Namespace = "li-swarm",
@@ -9,6 +9,7 @@ $ErrorActionPreference = "Stop"
 $Root = Split-Path $PSScriptRoot -Parent
 $K8s = Join-Path $Root "deploy\k8s\engine"
 $Workspace = Split-Path $Root -Parent
+$BundleScript = Join-Path $Root "scripts\Invoke-K8sGoalLoopBundle.ps1"
 
 foreach ($envFile in @(
         (Join-Path $Workspace ".env.github"),
@@ -36,21 +37,19 @@ if (-not $env:CURSOR_API_KEY -and -not $env:CURSOR_SDK_KEY) {
 }
 
 $env:KUBECONFIG = $KubeConfig
-Write-Host "==> kubectl apply li-world-studio-gui-product-visual (namespace=$Namespace)"
+Write-Host "==> kubectl apply li-proof-explorer (namespace=$Namespace)"
 
 kubectl label node $EngineNode li-langverse.io/node-pool=engine --overwrite 2>$null
 
 kubectl apply -f (Join-Path $K8s "namespace.yaml")
-kubectl apply -f (Join-Path $K8s "pvc-world-studio-gui-product-visual-workspace.yaml")
-kubectl apply -f (Join-Path $K8s "configmap-world-studio-gui-product-visual.yaml")
-kubectl apply -f (Join-Path $K8s "deployment-world-studio-gui-product-visual.yaml")
+kubectl apply -f (Join-Path $K8s "pvc-proof-explorer-workspace.yaml")
+kubectl apply -f (Join-Path $K8s "configmap-proof-explorer.yaml")
+kubectl apply -f (Join-Path $K8s "deployment-proof-explorer.yaml")
 
 $extra = @{
-    "entrypoint.sh" = (Join-Path $Root "deploy\world-studio-gui-product-visual-entrypoint.sh")
+    "entrypoint.sh" = (Join-Path $Root "deploy\proof-explorer-k8s-entrypoint.sh")
 }
-. (Join-Path $Root "scripts\Invoke-K8sGoalLoopBundle.ps1") `
-    -Root $Root -Namespace $Namespace -ConfigMapName "li-world-studio-gui-product-visual-bundle" `
-    -ExtraFiles $extra
+. $BundleScript -Root $Root -Namespace $Namespace -ConfigMapName "li-proof-explorer-bundle" -ExtraFiles $extra
 
 $secretArgs = @(
     "create", "secret", "generic", "li-agents-secrets",
@@ -67,10 +66,10 @@ kubectl -n $Namespace create secret docker-registry ghcr-li-langverse `
     --docker-password=$env:GH_TOKEN `
     --dry-run=client -o yaml | kubectl apply -f -
 
-kubectl -n $Namespace rollout restart deploy/li-world-studio-gui-product-visual 2>$null
-kubectl -n $Namespace rollout status deploy/li-world-studio-gui-product-visual --timeout=180s
+kubectl -n $Namespace rollout restart deploy/li-proof-explorer 2>$null
+kubectl -n $Namespace rollout status deploy/li-proof-explorer --timeout=180s
 
 Write-Host ""
-Write-Host "=== li-world-studio-gui-product-visual deployed ==="
-Write-Host "  kubectl -n $Namespace get pods -l app=li-world-studio-gui-product-visual -w"
-Write-Host "  kubectl -n $Namespace logs deploy/li-world-studio-gui-product-visual --tail=80 -f"
+Write-Host "=== li-proof-explorer deployed ==="
+Write-Host "  kubectl -n $Namespace get pods -l app=li-proof-explorer -w"
+Write-Host "  kubectl -n $Namespace logs deploy/li-proof-explorer --tail=80 -f"

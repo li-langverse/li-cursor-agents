@@ -97,4 +97,4 @@ spec:
         - name: config-bundle
           configMap:
             name: li-li-toml-config-bundle
-            defaultMode: 0644
+            defaultMode: 0755
