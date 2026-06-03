@@ -46,7 +46,8 @@ kubectl apply -f (Join-Path $K8s "configmap-world-studio-gui-product-visual.yaml
 kubectl apply -f (Join-Path $K8s "deployment-world-studio-gui-product-visual.yaml")
 
 function Convert-ShToLf([string]$src, [string]$dest) {
-    (Get-Content -Raw $src) -replace "`r`n", "`n" | Set-Content -NoNewline -Encoding utf8 $dest
+    $text = (Get-Content -Raw $src) -replace "`r`n", "`n"
+    [System.IO.File]::WriteAllText($dest, $text, (New-Object System.Text.UTF8Encoding $false))
 }
 
 $bundleDir = Join-Path $env:TEMP "li-ws-pv-bundle"
