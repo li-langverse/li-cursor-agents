@@ -4,7 +4,7 @@ param(
     [string]$Namespace = "li-swarm",
     [ValidateSet("0", "1")]
     [string]$Replicas = "0",
-    [ValidateSet("all", "world-studio", "li-toml", "proof-explorer")]
+    [ValidateSet("all", "world-studio", "typography-fx", "li-toml", "proof-explorer")]
     [string]$Worker = "all"
 )
 
@@ -13,6 +13,7 @@ $env:KUBECONFIG = $KubeConfig
 
 $map = @{
     "world-studio"   = "li-world-studio-gui-product-visual"
+    "typography-fx"  = "li-world-studio-typography-fx-animation"
     "li-toml"        = "li-li-toml-config"
     "proof-explorer" = "li-proof-explorer"
 }
@@ -24,4 +25,4 @@ foreach ($deploy in $targets) {
     kubectl -n $Namespace scale "deployment/${deploy}" --replicas=$Replicas
 }
 
-kubectl -n $Namespace get pods -l 'app in (li-world-studio-gui-product-visual,li-li-toml-config,li-proof-explorer)'
+kubectl -n $Namespace get pods -l 'app in (li-world-studio-gui-product-visual,li-world-studio-typography-fx-animation,li-li-toml-config,li-proof-explorer)'
