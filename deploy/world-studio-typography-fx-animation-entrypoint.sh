@@ -28,15 +28,24 @@ git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".instead
 git config --global user.email "${LI_GIT_USER_EMAIL:-world-studio@li-langverse.dev}"
 git config --global user.name "${LI_GIT_USER_NAME:-li-world-studio}"
 
+auth_git_url() {
+  echo "$1" | sed "s#https://#https://x-access-token:${GH_TOKEN}@#"
+}
+
 sync_repo() {
   local root="$1"
   local branch="$2"
   [[ -d "$root/.git" ]] || return 0
-  git -C "$root" fetch origin --prune
+  local url
+  url="$(git -C "$root" remote get-url origin)"
+  url="$(echo "$url" | sed 's#https://x-access-token:[^@]*@#https://#')"
+  git -C "$root" remote set-url origin "$(auth_git_url "$url")"
+  git -C "$root" fetch origin --prune "refs/heads/${branch}:refs/remotes/origin/${branch}" || git -C "$root" fetch origin --prune
   if git -C "$root" show-ref --verify --quiet "refs/remotes/origin/${branch}"; then
     git -C "$root" checkout -B "$branch" "origin/${branch}"
     git -C "$root" reset --hard "origin/${branch}"
   else
+    echo "world-studio-typography-fx-animation-entrypoint: WARN origin/${branch} missing in ${root}" >&2
     git -C "$root" checkout -B "$branch"
   fi
 }
@@ -53,7 +62,14 @@ sync_workspace() {
   sync_repo "$LIC_ROOT" "$LIC_BRANCH"
   export LIC_ROOT
   ensure_fixtures
-  test -f "$STUDIO_ROOT/$GOAL_FILE_REL"
+  if [[ ! -f "$STUDIO_ROOT/$GOAL_FILE_REL" ]]; then
+    echo "world-studio-typography-fx-animation-entrypoint: missing goal $STUDIO_ROOT/$GOAL_FILE_REL" >&2
+    ls -la "$STUDIO_ROOT/data/goal-directed-sprints/" 2>&1 >&2 || true
+    git -C "$STUDIO_ROOT" rev-parse --abbrev-ref HEAD >&2 || true
+    git -C "$STUDIO_ROOT" log -1 --oneline >&2 || true
+    exit 1
+  fi
+  echo "world-studio-typography-fx-animation-entrypoint: goal file ok"
 }
 
 run_goal_loop() {
