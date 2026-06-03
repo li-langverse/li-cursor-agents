@@ -51,6 +51,11 @@ const DEFAULT_PHASES: ProofExplorerPhase[] = [
     goalRel: "data/goal-directed-sprints/proof-explorer-phase9-compiler-gaps.md",
     gateRel: "scripts/proof-explorer-phase9-completion-gate.sh",
   },
+  {
+    id: "phase10",
+    goalRel: "data/goal-directed-sprints/proof-explorer-phase10-axiom-layer.md",
+    gateRel: "scripts/proof-explorer-phase10-completion-gate.sh",
+  },
 ];
 
 export function isPhaseHandoffEnabled(): boolean {
@@ -91,7 +96,8 @@ const PHASE_HANDOFF_META: Record<string, { nextPhase: number; nextWp: string }> 
   phase6: { nextPhase: 7, nextWp: "wp-rs-01" },
   phase7: { nextPhase: 8, nextWp: "wp-bc-01" },
   phase8: { nextPhase: 9, nextWp: "wp-cg-01" },
-  phase9: { nextPhase: 10, nextWp: "complete" },
+  phase9: { nextPhase: 10, nextWp: "wp-ax-01" },
+  phase10: { nextPhase: 11, nextWp: "complete" },
 };
 
 function touchStateHandoff(licRoot: string, phaseId: string): void {
