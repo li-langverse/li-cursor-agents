@@ -39,7 +39,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: li-agents-secrets
-                  key: GH_SWARM_TOKEN
+                  key: GH_TOKEN
             - name: GIT_REF
               value: "cursor/proof-explorer-phase9-handoff"
             - name: GIT_REPO
@@ -68,14 +68,7 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: li-agents-secrets
-                  key: GHCR_PUSH_TOKEN
-                  optional: true
-            - name: GH_SWARM_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: li-agents-secrets
-                  key: GH_SWARM_TOKEN
-                  optional: true
+                  key: GH_TOKEN
             - name: IMAGE
               value: ghcr.io/li-langverse/li-cursor-agents:latest
             - name: GHCR_USER
@@ -90,7 +83,7 @@ spec:
             - |
               set -euo pipefail
               cd /workspace/li-cursor-agents
-              token="${GH_TOKEN:-$GH_SWARM_TOKEN}"
+              token="${GH_TOKEN}"
               echo "$token" | podman login ghcr.io -u "$GHCR_USER" --password-stdin || true
               podman build -f deploy/Dockerfile -t "$IMAGE" .
               if podman push "$IMAGE"; then
