@@ -12,12 +12,14 @@ import { dirname, join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
 
 export type OrgIssueActiveStatus = "claimed" | "running" | "completed" | "failed";
+export type OrgIssueWorkerRole = "implementer" | "triage";
 
 export interface OrgIssueActiveEntry {
   issueRef: string;
   repo: string;
   number: number;
   workerId: string;
+  role?: OrgIssueWorkerRole;
   jobName?: string;
   startedAt: string;
   updatedAt: string;
@@ -41,6 +43,7 @@ export interface QueuedOrgIssue {
 
 const ACTIVE_FILE = "org-issue-active.json";
 const AUDIT_FILE = "org-issue-implement-audit.jsonl";
+const TRIAGE_AUDIT_FILE = "org-issue-triage-audit.jsonl";
 
 export function sprintDataDir(root = agentsPackageRoot()): string {
   return join(root, "data", "goal-directed-sprints");
@@ -52,6 +55,10 @@ export function activeStatePath(root = agentsPackageRoot()): string {
 
 export function implementAuditPath(root = agentsPackageRoot()): string {
   return join(sprintDataDir(root), AUDIT_FILE);
+}
+
+export function triageAuditPath(root = agentsPackageRoot()): string {
+  return join(sprintDataDir(root), TRIAGE_AUDIT_FILE);
 }
 
 function emptyState(): OrgIssueActiveState {
@@ -121,16 +128,22 @@ export function mutateActiveState(
   });
 }
 
-export function activeIssueRefs(state: OrgIssueActiveState): Set<string> {
+export function activeIssueRefs(
+  state: OrgIssueActiveState,
+  role?: OrgIssueWorkerRole,
+): Set<string> {
   const active = new Set<string>();
   for (const [ref, entry] of Object.entries(state.issues)) {
-    if (entry.status === "claimed" || entry.status === "running") active.add(ref);
+    if (entry.status !== "claimed" && entry.status !== "running") continue;
+    const entryRole = entry.role ?? "implementer";
+    if (role && entryRole !== role) continue;
+    active.add(ref);
   }
   return active;
 }
 
-export function countActiveWorkers(state: OrgIssueActiveState): number {
-  return activeIssueRefs(state).size;
+export function countActiveWorkers(state: OrgIssueActiveState, role?: OrgIssueWorkerRole): number {
+  return activeIssueRefs(state, role).size;
 }
 
 export function claimIssue(
@@ -140,6 +153,7 @@ export function claimIssue(
   workerId: string,
   jobName?: string,
   root = agentsPackageRoot(),
+  role: OrgIssueWorkerRole = "implementer",
 ): boolean {
   let claimed = false;
   mutateActiveState((state) => {
@@ -153,6 +167,7 @@ export function claimIssue(
       repo,
       number,
       workerId,
+      role,
       jobName,
       startedAt: now,
       updatedAt: now,
@@ -183,9 +198,15 @@ export function updateIssueStatus(
 export function appendImplementAudit(
   row: Record<string, unknown>,
   root = agentsPackageRoot(),
-  jobName?: string,
 ): void {
-  const path = implementAuditPath(root);
+  appendIssueAudit(implementAuditPath(root), row);
+}
+
+export function appendTriageAudit(row: Record<string, unknown>, root = agentsPackageRoot()): void {
+  appendIssueAudit(triageAuditPath(root), row);
+}
+
+function appendIssueAudit(path: string, row: Record<string, unknown>): void {
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `${JSON.stringify({ ts: new Date().toISOString(), ...row })}\n`, {
     encoding: "utf8",
@@ -213,7 +234,7 @@ function readQueueBucket(
   return out;
 }
 
-/** Implement-bucket issues only — supervisor spawns real implementer Jobs for these. */
+/** Implement-bucket issues only  supervisor spawns real implementer Jobs for these. */
 export function readImplementQueueIssues(root = agentsPackageRoot()): QueuedOrgIssue[] {
   return readQueueBucket(root, "implement");
 }
@@ -228,6 +249,43 @@ export function readImplementQueueCount(root = agentsPackageRoot()): number {
   };
   if (typeof q.report?.implement === "number") return q.report.implement;
   return Array.isArray(q.implement) ? q.implement.length : 0;
+}
+
+const TRIAGE_BUCKETS_DEFAULT = ["needs_triage", "stale_needs_human"] as const;
+
+export function triageQueueBuckets(): readonly string[] {
+  const raw = process.env.LI_ORG_ISSUE_TRIAGE_BUCKETS?.trim();
+  if (!raw) return TRIAGE_BUCKETS_DEFAULT;
+  return raw.split(",").map((s) => s.trim()).filter(Boolean);
+}
+
+/** Issues awaiting triage agent (close, relabel, or route to planner/implement). */
+export function readTriageQueueIssues(root = agentsPackageRoot()): QueuedOrgIssue[] {
+  const out: QueuedOrgIssue[] = [];
+  const seen = new Set<string>();
+  for (const bucket of triageQueueBuckets()) {
+    for (const row of readQueueBucket(root, bucket)) {
+      const key = `${row.repo}#${row.number}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(row);
+    }
+  }
+  return out;
+}
+
+export function readTriageQueueCount(root = agentsPackageRoot()): number {
+  const path = join(sprintDataDir(root), "org-issue-queue.json");
+  if (!existsSync(path)) return 0;
+  const q = JSON.parse(readFileSync(path, "utf8")) as { report?: Record<string, number> };
+  const buckets = triageQueueBuckets();
+  let sum = 0;
+  for (const b of buckets) {
+    const n = q.report?.[b];
+    if (typeof n === "number") sum += n;
+  }
+  if (sum > 0) return sum;
+  return readTriageQueueIssues(root).length;
 }
 export function readQueueIssues(root = agentsPackageRoot()): QueuedOrgIssue[] {
   const path = join(sprintDataDir(root), "org-issue-queue.json");
