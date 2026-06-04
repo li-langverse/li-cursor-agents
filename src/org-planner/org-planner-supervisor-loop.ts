@@ -6,6 +6,7 @@ import { agentLog } from "../agent-log.js";
 import { saveOrgSupervisorCycle } from "../db/org-supervisor-cycle.js";
 import { workerConsole } from "../worker/worker-console.js";
 import { agentsPackageRoot } from "../runner.js";
+import { idleLimitReached } from "../org/supervisor-idle.js";
 import { issueRef } from "../org-issues/org-issue-supervisor-config.js";
 import {
   activeClaimsForDb,
@@ -254,13 +255,9 @@ export async function runOrgPlannerSupervisorLoop(signal?: AbortSignal): Promise
   while (!signal?.aborted) {
     try {
       const tick = await orgPlannerSupervisorTick();
-      if (tick.openCount <= 0) {
-        workerConsole("org-planner-supervisor", "info", "no planner queue items — exiting");
-        break;
-      }
       if (tick.desiredWorkers === 0 || (tick.activeWorkers === 0 && tick.spawned === 0)) {
         idleCycles++;
-        if (idleCycles >= maxIdle) {
+        if (idleLimitReached(idleCycles, maxIdle)) {
           workerConsole("org-planner-supervisor", "info", `idle limit reached (${maxIdle}) — exiting`);
           break;
         }

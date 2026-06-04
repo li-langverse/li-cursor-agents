@@ -1,5 +1,7 @@
 /** Config for the org-planner supervisor (K8s Deployment + wake CronJob). */
 
+import { parseMaxIdleCycles } from "../org/supervisor-idle.js";
+
 function truthyEnv(name: string): boolean {
   const v = process.env[name]?.trim().toLowerCase();
   return v === "1" || v === "true" || v === "yes";
@@ -19,8 +21,7 @@ export function orgPlannerSupervisorIntervalMs(): number {
 }
 
 export function orgPlannerSupervisorMaxIdleCycles(): number {
-  const n = Number(process.env.LI_ORG_PLANNER_SUPERVISOR_MAX_IDLE_CYCLES ?? 3);
-  return Number.isFinite(n) && n >= 1 ? n : 3;
+  return parseMaxIdleCycles(process.env.LI_ORG_PLANNER_SUPERVISOR_MAX_IDLE_CYCLES, 3);
 }
 
 export function orgPlannerSupervisorMaxWorkers(): number {

@@ -1,5 +1,7 @@
 /** Config for the org-issue supervisor (K8s Deployment + wake CronJob). */
 
+import { parseMaxIdleCycles } from "../org/supervisor-idle.js";
+
 const ORG = "li-langverse";
 
 function truthyEnv(name: string): boolean {
@@ -21,8 +23,7 @@ export function orgIssueSupervisorIntervalMs(): number {
 }
 
 export function orgIssueSupervisorMaxIdleCycles(): number {
-  const n = Number(process.env.LI_ORG_ISSUE_SUPERVISOR_MAX_IDLE_CYCLES ?? 3);
-  return Number.isFinite(n) && n >= 1 ? n : 3;
+  return parseMaxIdleCycles(process.env.LI_ORG_ISSUE_SUPERVISOR_MAX_IDLE_CYCLES, 3);
 }
 
 export function orgIssueSupervisorMaxWorkers(): number {

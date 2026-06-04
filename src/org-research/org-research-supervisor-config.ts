@@ -1,5 +1,7 @@
 /** Config for the org-research supervisor (K8s Deployment + wake CronJob). */
 
+import { parseMaxIdleCycles } from "../org/supervisor-idle.js";
+
 const DEFAULT_DIMENSIONS = ["security", "performance", "ux", "api-coverage"] as const;
 
 function truthyEnv(name: string): boolean {
@@ -21,8 +23,7 @@ export function orgResearchSupervisorIntervalMs(): number {
 }
 
 export function orgResearchSupervisorMaxIdleCycles(): number {
-  const n = Number(process.env.LI_ORG_RESEARCH_SUPERVISOR_MAX_IDLE_CYCLES ?? 3);
-  return Number.isFinite(n) && n >= 1 ? n : 3;
+  return parseMaxIdleCycles(process.env.LI_ORG_RESEARCH_SUPERVISOR_MAX_IDLE_CYCLES, 3);
 }
 
 export function orgResearchSupervisorMaxWorkers(): number {

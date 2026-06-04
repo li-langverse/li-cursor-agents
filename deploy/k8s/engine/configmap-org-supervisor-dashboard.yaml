@@ -6,7 +6,7 @@ metadata:
   labels:
     app: li-org-supervisor-dashboard
 data:
-  LI_CONTROL_PLANE_STORE: "supabase"
+  LI_CONTROL_PLANE_STORE: "disk"
   NODE_ENV: "production"
   LI_AGENTS_ROOT: "/app"
   ORG_SUPERVISOR_DASHBOARD_HOST: "0.0.0.0"

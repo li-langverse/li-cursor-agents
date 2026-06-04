@@ -31,6 +31,7 @@ import {
   orgReviewerSupervisorMaxWorkers,
   prRef,
 } from "./org-pr-supervisor-config.js";
+import { idleLimitReached } from "../org/supervisor-idle.js";
 import { runOrgLaneObserverTick } from "../org/org-lane-observer-tick.js";
 import { parsePrOpenCount, refreshPrMergeQueue, runPython, sleep } from "./org-pr-supervisor-shared.js";
 
@@ -177,13 +178,9 @@ export async function runOrgReviewerSupervisorLoop(signal?: AbortSignal): Promis
   while (!signal?.aborted) {
     try {
       const tick = await orgReviewerSupervisorTick();
-      if (tick.openCount <= 0 && tick.spawned === 0) {
-        workerConsole("org-reviewer-supervisor", "info", "no PRs in review queue — exiting");
-        break;
-      }
       if (tick.desiredWorkers === 0 || (tick.activeWorkers === 0 && tick.spawned === 0)) {
         idleCycles++;
-        if (idleCycles >= maxIdle) break;
+        if (idleLimitReached(idleCycles, maxIdle)) break;
       } else {
         idleCycles = 0;
       }

@@ -3,6 +3,7 @@ import { agentLog } from "../agent-log.js";
 import { saveOrgSupervisorCycle } from "../db/org-supervisor-cycle.js";
 import { workerConsole } from "../worker/worker-console.js";
 import { agentsPackageRoot } from "../runner.js";
+import { idleLimitReached } from "../org/supervisor-idle.js";
 import {
   activeClaimsForDb,
   activeDimensions,
@@ -158,13 +159,9 @@ export async function runOrgResearchSupervisorLoop(signal?: AbortSignal): Promis
   while (!signal?.aborted) {
     try {
       const tick = await orgResearchSupervisorTick();
-      if (tick.openCount <= 0) {
-        workerConsole("org-research-supervisor", "info", "no open research goals — exiting");
-        break;
-      }
       if (tick.desiredWorkers === 0 || (tick.activeWorkers === 0 && tick.spawned === 0)) {
         idleCycles++;
-        if (idleCycles >= maxIdle) {
+        if (idleLimitReached(idleCycles, maxIdle)) {
           workerConsole("org-research-supervisor", "info", `idle limit reached (${maxIdle}) — exiting`);
           break;
         }

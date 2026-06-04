@@ -119,11 +119,13 @@ $manifests = @(
     "configmap-org-pr-supervisor.yaml",
     "configmap-org-reviewer-supervisor.yaml",
     "configmap-org-research-supervisor.yaml",
+    "configmap-org-planner-supervisor.yaml",
     "configmap-org-supervisor-dashboard.yaml",
     "deployment-org-issue-supervisor.yaml",
     "deployment-org-pr-supervisor.yaml",
     "deployment-org-reviewer-supervisor.yaml",
     "deployment-org-research-supervisor.yaml",
+    "deployment-org-planner-supervisor.yaml",
     "deployment-org-supervisor-dashboard.yaml",
     "deployment-org-issue-worker.yaml",
     "cronjob-org-issue-worker.yaml",
@@ -143,6 +145,7 @@ $deploys = @(
     "li-org-pr-supervisor",
     "li-org-reviewer-supervisor",
     "li-org-research-supervisor",
+    "li-org-planner-supervisor",
     "li-org-supervisor-dashboard",
     "li-org-issue-worker"
 )
@@ -153,7 +156,13 @@ foreach ($d in $deploys) {
 
 Write-Host "==> org swarm deployed; image=$Image"
 
+Write-Host "==> clear issue failure skip cooldowns"
+& (Join-Path $PSScriptRoot "org-clear-issue-skip.ps1") -KubeConfig $KubeConfig -Namespace $Namespace
+
 if (-not $SkipCleanup) {
+    Write-Host "==> cleanup failed/stuck k8s jobs"
+    & (Join-Path $PSScriptRoot "org-cleanup-failed-k8s-jobs.ps1") -KubeConfig $KubeConfig -Namespace $Namespace -IncludeStuckActive
+
     Write-Host "==> duplicate PR cleanup (GH_SWARM_TOKEN)"
     $env:GH_SWARM_TOKEN = $env:GH_SWARM_TOKEN
     Push-Location $Root

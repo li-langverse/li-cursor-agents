@@ -6,6 +6,8 @@ import { agentLog } from "../agent-log.js";
 import { saveOrgSupervisorCycle } from "../db/org-supervisor-cycle.js";
 import { workerConsole } from "../worker/worker-console.js";
 import { agentsPackageRoot } from "../runner.js";
+import { reconcileOrphanedK8sJobs } from "../org/k8s-job-reconcile.js";
+import { idleLimitReached } from "../org/supervisor-idle.js";
 import { runOrgLaneObserverTick } from "../org/org-lane-observer-tick.js";
 import {
   applyIssueFailurePolicy,
@@ -129,6 +131,16 @@ export async function orgIssueSupervisorTick(): Promise<SupervisorTickResult> {
         }
       }
     }
+    const reconciled = reconcileOrphanedK8sJobs(state.issues, jobs, (ref) =>
+      updateIssueStatus(ref, "failed", "job missing (reconciled)", root),
+    );
+    if (reconciled) {
+      workerConsole(
+        "org-issue-supervisor",
+        "info",
+        `reconciled ${reconciled} orphaned job claim(s)`,
+      );
+    }
   }
 
   const slots = Math.max(0, desiredWorkers - activeWorkers);
@@ -211,17 +223,13 @@ export async function runOrgIssueSupervisorLoop(signal?: AbortSignal): Promise<v
   while (!signal?.aborted) {
     try {
       const tick = await orgIssueSupervisorTick();
-      if (tick.openCount <= 0) {
-        workerConsole("org-issue-supervisor", "info", "no open issues — exiting");
-        break;
-      }
       if (
         tick.implementCount <= 0 ||
         tick.desiredWorkers === 0 ||
         (tick.activeWorkers === 0 && tick.spawned === 0)
       ) {
         idleCycles++;
-        if (idleCycles >= maxIdle) {
+        if (idleLimitReached(idleCycles, maxIdle)) {
           workerConsole("org-issue-supervisor", "info", `idle limit reached (${maxIdle}) — exiting`);
           break;
         }
