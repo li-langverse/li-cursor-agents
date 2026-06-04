@@ -9,6 +9,8 @@ ORG="${LI_GITHUB_ORG:-li-langverse}"
 REPO_LIC="${LI_PROOF_EXPLORER_LIC_REPO:-lic}"
 BRANCH="${LI_PROOF_EXPLORER_BRANCH:-cursor/proof-explorer-program}"
 LIC_ROOT="${LI_PROOF_EXPLORER_LIC_ROOT:-/workspace/lic}"
+PL_ROOT="${LI_PROOF_LIBRARY_ROOT:-/workspace/proof-library}"
+REPO_PL="${LI_PROOF_LIBRARY_REPO:-proof-library}"
 AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
 GOAL_REL="${LI_PROOF_EXPLORER_GOAL_FILE:-data/goal-directed-sprints/proof-explorer-program.md}"
 
@@ -51,6 +53,26 @@ sync_lic_repo() {
 }
 
 sync_lic_repo
+
+sync_proof_library() {
+  mkdir -p "$(dirname "$PL_ROOT")"
+  if [[ ! -d "$PL_ROOT/.git" ]]; then
+    echo "proof-explorer-k8s-entrypoint: cloning ${ORG}/${REPO_PL}"
+    if gh repo clone "${ORG}/${REPO_PL}" "$PL_ROOT" 2>/dev/null; then
+      return 0
+    fi
+    rm -rf "$PL_ROOT"
+    git clone "https://x-access-token:${GH_TOKEN}@github.com/${ORG}/${REPO_PL}.git" "$PL_ROOT"
+    return 0
+  fi
+  echo "proof-explorer-k8s-entrypoint: updating proof-library"
+  git -C "$PL_ROOT" fetch origin --prune
+  git -C "$PL_ROOT" checkout -f main 2>/dev/null || git -C "$PL_ROOT" checkout -f master
+  git -C "$PL_ROOT" reset --hard "origin/main" 2>/dev/null || git -C "$PL_ROOT" reset --hard "origin/master"
+}
+
+sync_proof_library
+export LI_PROOF_LIBRARY_ROOT="$PL_ROOT"
 
 if [[ ! -f "${LIC_ROOT}/${GOAL_REL}" && ! -f "${AGENTS_ROOT}/${GOAL_REL}" ]]; then
   echo "proof-explorer-k8s-entrypoint: missing goal file ${GOAL_REL}" >&2
