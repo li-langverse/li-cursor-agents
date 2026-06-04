@@ -99,17 +99,26 @@ data:
     }
 
     ensure_lic_built() {
-      local lic_bin="${LIC_ROOT}/build/compiler/lic/lic"
-      if [[ -x "$lic_bin" ]]; then
-        export LIC="$lic_bin"
+      # shellcheck source=lib/lic-bin-select.sh
+      source "${LIC_ROOT}/scripts/lib/lic-bin-select.sh"
+      if lic_rel="$(li_pick_lic_bin "$LIC_ROOT" 2>/dev/null)"; then
+        case "$lic_rel" in
+          ./*) export LIC="${LIC_ROOT}/${lic_rel#./}" ;;
+          *) export LIC="$lic_rel" ;;
+        esac
         echo "ph-ml-wave13-entrypoint: lic compiler present at ${LIC}"
         return 0
       fi
       echo "ph-ml-wave13-entrypoint: building lic (LLVM 22 in-container)"
       if (cd "$LIC_ROOT" && bash scripts/build.sh); then
-        export LIC="$lic_bin"
-        echo "ph-ml-wave13-entrypoint: lic build OK ${LIC}"
-        return 0
+        if lic_rel="$(li_pick_lic_bin "$LIC_ROOT")"; then
+          case "$lic_rel" in
+            ./*) export LIC="${LIC_ROOT}/${lic_rel#./}" ;;
+            *) export LIC="$lic_rel" ;;
+          esac
+          echo "ph-ml-wave13-entrypoint: lic build OK ${LIC}"
+          return 0
+        fi
       fi
       echo "ph-ml-wave13-entrypoint: WARN lic build failed; agent loop may retry" >&2
       return 0
