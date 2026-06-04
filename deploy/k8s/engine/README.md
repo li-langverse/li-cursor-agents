@@ -113,4 +113,12 @@ kubectl -n li-swarm logs deploy/li-org-issue-supervisor --tail=50
 - Goal: `lic/data/goal-directed-sprints/pure-li-https.md`
 - Deploy: `bash scripts/setup-engine-k8s-pure-li-https.sh` (requires `KUBECONFIG`, `GH_TOKEN`, `CURSOR_API_KEY`)
 - Logs: `kubectl -n li-swarm logs -f deploy/li-pure-li-https`
+### PH-SCI simulation gap-close
+
+- Deployment: `li-ph-sci-simulation-gap-close` (namespace `li-swarm`, node `engine`)
+- PVC: `li-ph-sci-simulation-gap-close-workspace`
+- Goal: `lic/data/goal-directed-sprints/ph-sci-simulation-gap-close-plan.md`
+- Gate: `lic/scripts/ph-sci-phase0-gates.sh`
+- Deploy: `bash scripts/setup-engine-k8s-ph-sci-simulation-gap-close.sh` (requires `KUBECONFIG`, `GH_TOKEN`, `CURSOR_API_KEY`)
+- Logs: `kubectl -n li-swarm logs -f deploy/li-ph-sci-simulation-gap-close`
 
