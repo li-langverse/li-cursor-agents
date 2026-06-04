@@ -14,7 +14,7 @@ export function orgPlannerSupervisorDeploymentName(): string {
 }
 
 export function orgPlannerSupervisorIntervalMs(): number {
-  const n = Number(process.env.LI_ORG_PLANNER_SUPERVISOR_INTERVAL_MS ?? 3_600_000);
+  const n = Number(process.env.LI_ORG_PLANNER_SUPERVISOR_INTERVAL_MS ?? 900_000);
   return Number.isFinite(n) && n >= 15_000 ? n : 120_000;
 }
 
