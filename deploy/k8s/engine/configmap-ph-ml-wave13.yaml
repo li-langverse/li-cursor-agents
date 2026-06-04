@@ -7,7 +7,7 @@ metadata:
     app: li-ph-ml-wave13
     app.kubernetes.io/name: li-ph-ml-wave13
     app.kubernetes.io/component: goal-directed-agent
-    li-langverse.io/sprint: ph-ml-program-complete
+    li-langverse.io/sprint: ph-ml-hpc
   annotations:
     li-langverse.io/gate-honesty: >-
       PH_ML_REQUIRE_SB3, PH_ML_REQUIRE_RAY, PH_ML_REQUIRE_GPU are opt-in only.
@@ -16,7 +16,7 @@ metadata:
 data:
   LI_PROOF_EXPLORER_ALWAYS_ON: "1"
   LI_PROOF_EXPLORER_PHASE_HANDOFF: "0"
-  LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/ph-ml-dl-rl-llm-wave13-final.md"
+  LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/ph-ml-hpc-ai-library-complete.md"
   LI_PROOF_EXPLORER_LIC_ROOT: "/workspace/lic"
   BENCHMARKS_ROOT: "/workspace/benchmarks"
   LI_CURSOR_AGENTS_ROOT: "/app"
