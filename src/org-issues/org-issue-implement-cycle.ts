@@ -6,6 +6,8 @@ import { workerConsole } from "../worker/worker-console.js";
 import type { AgentId } from "../types.js";
 import type { QueuedOrgIssue } from "./org-issue-coordination.js";
 import { removeClosedIssueFromQueue, sprintDataDir } from "./org-issue-coordination.js";
+import { setPrBackoff } from "../org-prs/org-pr-coordination.js";
+import { setPlannerBackoff } from "../org-planner/org-planner-coordination.js";
 import { fetchGitHubIssue, postGitHubIssueComment } from "./org-issue-github.js";
 import { orgName, parseIssueRef } from "./org-issue-supervisor-config.js";
 
@@ -145,6 +147,11 @@ export async function runOrgIssueImplementCycle(
     issue = await fetchGitHubIssue(parsed.org, parsed.repo, parsed.number);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
+    if (/rate limit exceeded|secondary rate limit/i.test(msg)) {
+      const until = new Date(Date.now() + 3_600_000).toISOString();
+      setPrBackoff(until, "github_rate_limited");
+      setPlannerBackoff(until, "github_rate_limited");
+    }
     return {
       ok: false,
       status: "failed",

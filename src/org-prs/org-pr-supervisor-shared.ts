@@ -38,5 +38,8 @@ export function parsePrOpenCount(tail: string): number | null {
 }
 
 export function refreshPrMergeQueue(): { ok: boolean; tail: string } {
-  return runPython("org-merge-open-prs.py");
+  if (process.env.LI_ORG_PR_QUEUE_REFRESH_ENABLED?.trim() === "0") {
+    return { ok: true, tail: "queue refresh disabled" };
+  }
+  return runPython("org-merge-open-prs.py", ["--dry-run"]);
 }

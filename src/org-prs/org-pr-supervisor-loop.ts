@@ -65,7 +65,11 @@ export async function orgPrSupervisorTick(): Promise<PrSupervisorTickResult> {
     workerConsole("org-pr-supervisor", "warn", `queue refresh failed: ${refresh.tail.slice(-200)}`);
   }
 
-  const desiredWorkers = computeDesiredWorkers(openCount, orgPrSupervisorMaxWorkers());
+  const implementQueue = readImplementQueuePrs(root);
+  const desiredWorkers = computeDesiredWorkers(
+    implementQueue.length,
+    orgPrSupervisorMaxWorkers(),
+  );
   const state = readActiveState(root);
   let activeWorkers = countActiveWorkers(state, "implementer");
 
@@ -94,7 +98,7 @@ export async function orgPrSupervisorTick(): Promise<PrSupervisorTickResult> {
   }
 
   const slots = Math.max(0, desiredWorkers - activeWorkers);
-  const queued = readImplementQueuePrs(root);
+  const queued = implementQueue;
   const activeSet = activePrRefs(readActiveState(root));
   let spawned = 0;
 

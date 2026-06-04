@@ -7,6 +7,7 @@ import { saveOrgSupervisorCycle } from "../db/org-supervisor-cycle.js";
 import { workerConsole } from "../worker/worker-console.js";
 import { agentsPackageRoot } from "../runner.js";
 import { idleLimitReached } from "../org/supervisor-idle.js";
+import { getPrBackoff } from "../org-prs/org-pr-coordination.js";
 import { issueRef } from "../org-issues/org-issue-supervisor-config.js";
 import {
   activeClaimsForDb,
@@ -74,15 +75,27 @@ export async function orgPlannerSupervisorTick(): Promise<PlannerSupervisorTickR
   const root = agentsPackageRoot();
   pruneTerminalActiveEntries(root);
 
-  const backoff = getPlannerBackoff(root);
-  const untilMs = backoff?.until ? Date.parse(backoff.until) : NaN;
-  if (Number.isFinite(untilMs) && Date.now() < untilMs) {
+  const plannerBackoff = getPlannerBackoff(root);
+  const plannerUntilMs = plannerBackoff?.until ? Date.parse(plannerBackoff.until) : NaN;
+  if (Number.isFinite(plannerUntilMs) && Date.now() < plannerUntilMs) {
     return {
       openCount: 0,
       desiredWorkers: 0,
       activeWorkers: 0,
       spawned: 0,
-      message: `GitHub rate limit backoff until ${backoff!.until}${backoff?.reason ? ` (${backoff.reason})` : ""}`,
+      message: `GitHub rate limit backoff until ${plannerBackoff!.until}${plannerBackoff?.reason ? ` (${plannerBackoff.reason})` : ""}`,
+    };
+  }
+
+  const ghBackoff = getPrBackoff(root);
+  const ghUntilMs = ghBackoff?.until ? Date.parse(ghBackoff.until) : NaN;
+  if (Number.isFinite(ghUntilMs) && Date.now() < ghUntilMs) {
+    return {
+      openCount: 0,
+      desiredWorkers: 0,
+      activeWorkers: 0,
+      spawned: 0,
+      message: `GitHub rate limit backoff until ${ghBackoff!.until}${ghBackoff?.reason ? ` (${ghBackoff.reason})` : ""}`,
     };
   }
 

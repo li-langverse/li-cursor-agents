@@ -14,6 +14,7 @@ import {
   isIssueSkipped,
   issueRefFromQueue,
 } from "./org-issue-failure-policy.js";
+import { getPrBackoff } from "../org-prs/org-pr-coordination.js";
 import {
   activeClaimsForDb,
   activeIssueRefs,
@@ -89,6 +90,21 @@ export interface SupervisorTickResult {
 export async function orgIssueSupervisorTick(): Promise<SupervisorTickResult> {
   const root = agentsPackageRoot();
   pruneTerminalActiveEntries(root);
+
+  const backoff = getPrBackoff(root);
+  const backoffUntilMs = backoff?.until ? Date.parse(backoff.until) : NaN;
+  if (Number.isFinite(backoffUntilMs) && Date.now() < backoffUntilMs) {
+    const msg = `GitHub rate limit backoff until ${backoff!.until}${backoff?.reason ? ` (${backoff.reason})` : ""}`;
+    workerConsole("org-issue-supervisor", "info", msg);
+    return {
+      openCount: readQueueOpenTotal(root),
+      implementCount: readImplementQueueCount(root),
+      desiredWorkers: 0,
+      activeWorkers: 0,
+      spawned: 0,
+      message: msg,
+    };
+  }
 
   const countRes = runPython("org-issue-open-count.py");
   let openCount = parseOpenCount(countRes.tail) ?? readQueueOpenTotal(root);
