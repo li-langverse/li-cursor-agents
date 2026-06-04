@@ -1,4 +1,4 @@
-# Wake supervisor Deployment every 30m if scaled down or pod exited.
+# Wake supervisor Deployment every hour if scaled down or pod exited.
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -7,7 +7,7 @@ metadata:
   labels:
     app: li-org-issue-supervisor-wake
 spec:
-  schedule: "*/30 * * * *"
+  schedule: "0 * * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3
   failedJobsHistoryLimit: 5

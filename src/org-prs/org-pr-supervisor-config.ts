@@ -20,12 +20,12 @@ export function orgReviewerSupervisorDeploymentName(): string {
 }
 
 export function orgPrSupervisorIntervalMs(): number {
-  const n = Number(process.env.LI_ORG_PR_SUPERVISOR_INTERVAL_MS ?? 120_000);
+  const n = Number(process.env.LI_ORG_PR_SUPERVISOR_INTERVAL_MS ?? 3_600_000);
   return Number.isFinite(n) && n >= 15_000 ? n : 120_000;
 }
 
 export function orgReviewerSupervisorIntervalMs(): number {
-  const n = Number(process.env.LI_ORG_REVIEWER_SUPERVISOR_INTERVAL_MS ?? 120_000);
+  const n = Number(process.env.LI_ORG_REVIEWER_SUPERVISOR_INTERVAL_MS ?? 3_600_000);
   return Number.isFinite(n) && n >= 15_000 ? n : 120_000;
 }
 
