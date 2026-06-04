@@ -23,6 +23,7 @@ echo "==> context: $(kubectl config current-context)"
 kubectl apply -f "$K8S/namespace.yaml"
 kubectl apply -f "$K8S/pvc-ph-sci-simulation-gap-close-workspace.yaml"
 kubectl apply -f "$K8S/configmap-ph-sci-simulation-gap-close.yaml"
+kubectl apply -f "$K8S/configmap-ph-sci-simulation-gap-close-entrypoint.yaml"
 TOKEN="${GH_TOKEN:-$GITHUB_TOKEN}"
 kubectl -n "$NS" create secret generic li-agents-secrets \
   --from-literal=GH_TOKEN="$TOKEN" \

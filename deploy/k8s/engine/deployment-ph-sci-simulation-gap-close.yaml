@@ -31,6 +31,7 @@ spec:
         - name: ph-sci-simulation-gap-close
           image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
           imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "/scripts/entrypoint.sh"]
           envFrom:
             - configMapRef:
                 name: li-ph-sci-simulation-gap-close
@@ -67,7 +68,13 @@ spec:
           volumeMounts:
             - name: workspace
               mountPath: /workspace
+            - name: entrypoint
+              mountPath: /scripts
       volumes:
         - name: workspace
           persistentVolumeClaim:
             claimName: li-ph-sci-simulation-gap-close-workspace
+        - name: entrypoint
+          configMap:
+            name: li-ph-sci-simulation-gap-close-entrypoint
+            defaultMode: 0755
