@@ -230,7 +230,7 @@ function readQueueBucket(root: string, bucket: string): QueuedOrgPr[] {
 
 /** PRs needing implementer work (CI fix, rebase, dirty branch). */
 export function readImplementQueuePrs(root = agentsPackageRoot()): QueuedOrgPr[] {
-  const buckets = ["dirty", "ci_not_ok"] as const;
+  const buckets = ["dirty", "ci_not_ok", "blocked"] as const;
   const out: QueuedOrgPr[] = [];
   const seen = new Set<string>();
   for (const bucket of buckets) {
