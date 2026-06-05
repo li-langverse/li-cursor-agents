@@ -114,3 +114,8 @@ export function orgPrQueueRefreshEnabledForRole(role: "pr" | "reviewer"): boolea
   }
   return true;
 }
+
+export function orgPrIncrementalRefreshEnabled(): boolean {
+  const v = process.env.LI_ORG_PR_INCREMENTAL_REFRESH?.trim().toLowerCase();
+  return v !== "0" && v !== "false" && v !== "no";
+}

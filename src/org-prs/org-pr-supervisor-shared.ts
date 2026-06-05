@@ -3,7 +3,11 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
 import { isMergeQueueFresh, readMergeQueueMeta } from "./org-pr-coordination.js";
-import { orgPrQueueMaxAgeMs, orgPrQueueRefreshEnabledForRole } from "./org-pr-supervisor-config.js";
+import {
+  orgPrIncrementalRefreshEnabled,
+  orgPrQueueMaxAgeMs,
+  orgPrQueueRefreshEnabledForRole,
+} from "./org-pr-supervisor-config.js";
 
 export function sleep(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
@@ -82,6 +86,10 @@ export function refreshPrMergeQueue(
     };
   }
   const maxAgeMin = Math.max(1, Math.ceil(orgPrQueueMaxAgeMs() / 60_000));
-  const result = runPython("org-merge-open-prs.py", ["--dry-run", "--max-age-minutes", String(maxAgeMin)]);
+  const args = ["--dry-run", "--max-age-minutes", String(maxAgeMin)];
+  if (readMergeQueueMeta(root).exists && orgPrIncrementalRefreshEnabled()) {
+    args.push("--incremental");
+  }
+  const result = runPython("org-merge-open-prs.py", args);
   return { ...result, skipped: false, source: "github" };
 }
