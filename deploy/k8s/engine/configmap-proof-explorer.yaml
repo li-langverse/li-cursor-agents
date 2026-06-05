@@ -11,8 +11,8 @@ data:
   LI_PROOF_EXPLORER_ALWAYS_ON: "1"
   LI_PROOF_EXPLORER_PHASE_HANDOFF: "0"
   LI_PROOF_EXPLORER_SWEEP_MODE: "1"
-  LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/proof-explorer-phase11-proof-library-polish.md"
-  LI_PROOF_EXPLORER_PHASES_JSON: '[{"id":"phase11","goalRel":"data/goal-directed-sprints/proof-explorer-phase11-proof-library-polish.md","gateRel":"scripts/proof-explorer-phase11-completion-gate.sh"}]'
+  LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/proof-explorer-phase12-catalog-quality.md"
+  LI_PROOF_EXPLORER_PHASES_JSON: '[{"id":"phase12","goalRel":"data/goal-directed-sprints/proof-explorer-phase12-catalog-quality.md","gateRel":"scripts/proof-explorer-phase12-completion-gate.sh"}]'
   LI_PROOF_EXPLORER_LIC_ROOT: "/workspace/lic"
   LI_CURSOR_AGENTS_ROOT: "/app"
   LI_PROOF_EXPLORER_WORKFLOW_REPO: "lic"
