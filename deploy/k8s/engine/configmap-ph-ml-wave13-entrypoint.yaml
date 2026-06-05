@@ -98,18 +98,43 @@ data:
       fi
     }
 
+    lic_stale_for_inference_sse() {
+      local lic_bin="$1"
+      [[ -x "$lic_bin" ]] || return 0
+      local marker="${LIC_ROOT}/runtime/li_rt_inference_sse.c"
+      [[ -f "$marker" ]] || return 1
+      local src
+      for src in \
+        "${LIC_ROOT}/compiler/codegen/compile.cpp" \
+        "${LIC_ROOT}/compiler/mir/mir_runtime_link.cpp" \
+        "$marker"; do
+        if [[ -f "$src" ]] && [[ "$src" -nt "$lic_bin" ]]; then
+          return 0
+        fi
+      done
+      return 1
+    }
+
     ensure_lic_built() {
       # shellcheck source=lib/lic-bin-select.sh
       source "${LIC_ROOT}/scripts/lib/lic-bin-select.sh"
+      local lic_bin=""
       if lic_rel="$(li_pick_lic_bin "$LIC_ROOT" 2>/dev/null)"; then
         case "$lic_rel" in
-          ./*) export LIC="${LIC_ROOT}/${lic_rel#./}" ;;
-          *) export LIC="$lic_rel" ;;
+          ./*) lic_bin="${LIC_ROOT}/${lic_rel#./}" ;;
+          *) lic_bin="$lic_rel" ;;
         esac
+        export LIC="$lic_bin"
+      fi
+      if [[ -n "$lic_bin" ]] && [[ -x "$lic_bin" ]] && ! lic_stale_for_inference_sse "$lic_bin"; then
         echo "ph-ml-wave13-entrypoint: lic compiler present at ${LIC}"
         return 0
       fi
-      echo "ph-ml-wave13-entrypoint: building lic (LLVM 22 in-container)"
+      if [[ -n "$lic_bin" ]]; then
+        echo "ph-ml-wave13-entrypoint: stale lic (stage8 inference SSE link); rebuilding"
+      else
+        echo "ph-ml-wave13-entrypoint: building lic (LLVM 22 in-container)"
+      fi
       if (cd "$LIC_ROOT" && bash scripts/build.sh); then
         if lic_rel="$(li_pick_lic_bin "$LIC_ROOT")"; then
           case "$lic_rel" in
@@ -121,6 +146,18 @@ data:
         fi
       fi
       echo "ph-ml-wave13-entrypoint: WARN lic build failed; agent loop may retry" >&2
+      return 0
+    }
+
+    ensure_inference_native_backend() {
+      local script="${LIC_ROOT}/scripts/build-inference-native-backend.sh"
+      [[ -f "$script" ]] || return 0
+      echo "ph-ml-wave13-entrypoint: building inference-native-backend (stage8 SSE upstream)"
+      if (cd "$LIC_ROOT" && bash scripts/build-inference-native-backend.sh); then
+        echo "ph-ml-wave13-entrypoint: inference-native-backend OK"
+        return 0
+      fi
+      echo "ph-ml-wave13-entrypoint: WARN inference-native-backend build failed" >&2
       return 0
     }
 
@@ -153,6 +190,7 @@ data:
       exit 1
     }
     ensure_lic_built
+    ensure_inference_native_backend
     export LI_PROOF_EXPLORER_LIC_ROOT="$LIC_ROOT" LI_CURSOR_AGENTS_ROOT="$AGENTS_ROOT" LIC_ROOT="$LIC_ROOT" BENCHMARKS_ROOT="$BENCHMARKS_ROOT"
     export LI_PROOF_EXPLORER_GOAL_FILE="$GOAL_REL"
     exec node "${AGENTS_ROOT}/dist/cli/proof-explorer-worker.js" start

@@ -1,4 +1,4 @@
-import { existsSync } from "node:fs";
+import { existsSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
 import type { AgentId } from "../types.js";
@@ -21,10 +21,28 @@ function licCompilerPath(licRoot: string): string {
   return join(licRoot, "build/compiler/lic/lic");
 }
 
+/** Rebuild when stage8 inference SSE sources are newer than the lic binary. */
+function licNeedsRebuild(licRoot: string): boolean {
+  const licBin = licCompilerPath(licRoot);
+  if (!existsSync(licBin)) return true;
+  const marker = join(licRoot, "runtime/li_rt_inference_sse.c");
+  if (!existsSync(marker)) return false;
+  const licMtime = statSync(licBin).mtimeMs;
+  for (const rel of [
+    "compiler/codegen/compile.cpp",
+    "compiler/mir/mir_runtime_link.cpp",
+    "runtime/li_rt_inference_sse.c",
+  ]) {
+    const src = join(licRoot, rel);
+    if (existsSync(src) && statSync(src).mtimeMs > licMtime) return true;
+  }
+  return false;
+}
+
 /** Ensure lic compiler exists before gate scripts (no-op when already built). */
 export function ensureLicPrebuild(licRoot: string): { ok: boolean; detail: string } {
   const licBin = licCompilerPath(licRoot);
-  if (existsSync(licBin)) {
+  if (existsSync(licBin) && !licNeedsRebuild(licRoot)) {
     return { ok: true, detail: "lic compiler present" };
   }
   const buildSh = join(licRoot, "scripts/build.sh");
