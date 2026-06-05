@@ -14,24 +14,8 @@ $Root = Split-Path $PSScriptRoot -Parent
 $K8s = Join-Path $Root "deploy\k8s\engine"
 $Workspace = Split-Path $Root -Parent
 
-function Load-EnvFile([string]$Path) {
-    if (-not (Test-Path $Path)) { return }
-    Get-Content $Path | ForEach-Object {
-        if ($_ -match '^([^#=]+)=(.*)$') {
-            $k = $matches[1].Trim()
-            $v = $matches[2].Trim()
-            if ($v) { Set-Item -Path "env:$k" -Value $v }
-        }
-    }
-}
-
-foreach ($envFile in @(
-        (Join-Path $Workspace ".env"),
-        (Join-Path $Workspace ".env.github"),
-        (Join-Path $Root ".env")
-    )) {
-    Load-EnvFile $envFile
-}
+. (Join-Path $PSScriptRoot "lib\ghcr-env.ps1")
+Load-LiSwarmEnvFiles -AgentsRoot $Root -WorkspaceRoot $Workspace
 
 if (-not $env:CURSOR_API_KEY) { Write-Warning "CURSOR_API_KEY not set — implementer jobs may fail" }
 
@@ -63,11 +47,12 @@ if (-not $SkipBuild) {
         Pop-Location
     }
 
-    $loginToken = $env:GHCR_PUSH_TOKEN
-    if (-not $loginToken) { $loginToken = $env:GH_TOKEN }
-    if (-not $loginToken) { $loginToken = $env:GH_TOKEN_OVERVIEW_PAGE }
-    if (-not $loginToken) { $loginToken = $env:GH_SWARM_TOKEN }
-    if (-not $loginToken) { Write-Error "GHCR_PUSH_TOKEN (write:packages) or GH_TOKEN required for ghcr push" }
+    $resolved = Resolve-GhcrPushToken
+    if (-not $resolved) {
+        Write-Error "Classic GHCR push token required (ghp_* with write:packages). Set GHCR_TOKEN or GHCR_PUSH_TOKEN in li/.env"
+    }
+    $loginToken = $resolved.Token
+    Write-Host "==> ghcr push token from $($resolved.Source)"
     Write-Host "==> $cli login ghcr.io"
     $loginToken | & $cli login ghcr.io -u "li-langverse" --password-stdin 2>&1 | Out-Host
     if ($LASTEXITCODE -ne 0) { throw "ghcr login failed" }
@@ -124,6 +109,7 @@ $manifests = @(
     "configmap-org-unblocker-supervisor.yaml",
     "configmap-org-pr-supervisor.yaml",
     "configmap-org-reviewer-supervisor.yaml",
+    "configmap-org-pr-merge-worker.yaml",
     "configmap-org-research-supervisor.yaml",
     "configmap-org-planner-supervisor.yaml",
     "configmap-org-supervisor-dashboard.yaml",
@@ -136,6 +122,7 @@ $manifests = @(
     "deployment-org-planner-supervisor.yaml",
     "deployment-org-supervisor-dashboard.yaml",
     "deployment-org-issue-worker.yaml",
+    "deployment-org-pr-merge-worker.yaml",
     "cronjob-org-issue-worker.yaml",
     "cronjob-org-issue-supervisor-wake.yaml",
     "cronjob-org-issue-triage-supervisor-wake.yaml",
@@ -169,7 +156,8 @@ $deploys = @(
     "li-org-research-supervisor",
     "li-org-planner-supervisor",
     "li-org-supervisor-dashboard",
-    "li-org-issue-worker"
+    "li-org-issue-worker",
+    "li-org-pr-merge-worker"
 )
 foreach ($d in $deploys) {
     kubectl -n $Namespace rollout restart "deploy/$d" 2>$null
