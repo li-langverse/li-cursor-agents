@@ -14,6 +14,8 @@ import json
 import os
 import sys
 import time
+from datetime import datetime, timezone
+from pathlib import Path
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -148,13 +150,63 @@ def update_branch(repo: str, num: int) -> tuple[bool, str]:
     return False, f"{status}:{msg}"
 
 
+def queue_path() -> Path:
+    return Path(__file__).resolve().parents[1] / "data" / "goal-directed-sprints" / "org-pr-merge-queue.json"
+
+
+def queue_age_minutes(path: Path) -> float | None:
+    if not path.exists():
+        return None
+    age_ms = (datetime.now(timezone.utc).timestamp() * 1000) - (path.stat().st_mtime * 1000)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        updated = data.get("updatedAt")
+        if updated:
+            parsed = datetime.fromisoformat(updated.replace("Z", "+00:00"))
+            age_ms = (datetime.now(timezone.utc) - parsed).total_seconds() * 1000
+    except (json.JSONDecodeError, ValueError, TypeError, OSError):
+        pass
+    return max(0.0, age_ms / 60_000)
+
+
+def maybe_serve_cached_queue(max_age_minutes: float | None) -> bool:
+    if max_age_minutes is None or max_age_minutes <= 0:
+        return False
+    path = queue_path()
+    age = queue_age_minutes(path)
+    if age is None or age > max_age_minutes:
+        return False
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return False
+    report = data.get("report") or {}
+    total = report.get("total")
+    if total is None:
+        return False
+    print(f"open_prs={total}", flush=True)
+    print(json.dumps(report, indent=2))
+    print(f"queue_cache_hit age_minutes={age:.1f} path={path}", flush=True)
+    return True
+
+
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--dry-run", action="store_true")
     p.add_argument("--merge-green", action="store_true")
     p.add_argument("--fix-dirty", action="store_true")
     p.add_argument("--limit", type=int, default=0)
+    p.add_argument(
+        "--max-age-minutes",
+        type=float,
+        default=0,
+        help="Skip GitHub classify when org-pr-merge-queue.json is newer than this many minutes",
+    )
     args = p.parse_args()
+
+    if args.dry_run and not args.merge_green and not args.fix_dirty:
+        if maybe_serve_cached_queue(args.max_age_minutes):
+            return
 
     issues = gh_search_prs()
     print(f"open_prs={len(issues)}", flush=True)
@@ -196,17 +248,12 @@ def main() -> None:
     }
     print(json.dumps(report, indent=2))
 
-    out_path = os.path.join(
-        os.path.dirname(__file__),
-        "..",
-        "data",
-        "goal-directed-sprints",
-        "org-pr-merge-queue.json",
-    )
-    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    out_path = queue_path()
+    os.makedirs(out_path.parent, exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(
             {
+                "updatedAt": datetime.now(timezone.utc).isoformat(),
                 "report": report,
                 "green": [r.__dict__ for r in green],
                 "blocked": [r.__dict__ for r in blocked],

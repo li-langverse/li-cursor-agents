@@ -2,6 +2,8 @@ import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
+import { isMergeQueueFresh, readMergeQueueMeta } from "./org-pr-coordination.js";
+import { orgPrQueueMaxAgeMs, orgPrQueueRefreshEnabledForRole } from "./org-pr-supervisor-config.js";
 
 export function sleep(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
@@ -37,9 +39,49 @@ export function parsePrOpenCount(tail: string): number | null {
   return m ? Number(m[1]) : null;
 }
 
-export function refreshPrMergeQueue(): { ok: boolean; tail: string } {
-  if (process.env.LI_ORG_PR_QUEUE_REFRESH_ENABLED?.trim() === "0") {
-    return { ok: true, tail: "queue refresh disabled" };
+export type PrOpenCountSource = "queue" | "github" | "none";
+
+/** Prefer org-pr-merge-queue.json on PVC; avoid GitHub search when cache exists. */
+export function resolvePrOpenCount(root = agentsPackageRoot()): {
+  count: number;
+  source: PrOpenCountSource;
+} {
+  const meta = readMergeQueueMeta(root);
+  if (meta.exists) {
+    return { count: meta.total, source: "queue" };
   }
-  return runPython("org-merge-open-prs.py", ["--dry-run"]);
+  const countRes = runPython("org-pr-open-count.py");
+  const parsed = parsePrOpenCount(countRes.tail);
+  if (parsed != null) return { count: parsed, source: "github" };
+  return { count: 0, source: "none" };
+}
+
+export interface PrQueueRefreshResult {
+  ok: boolean;
+  tail: string;
+  skipped: boolean;
+  source: "github" | "queue" | "disabled";
+}
+
+export function refreshPrMergeQueue(
+  root = agentsPackageRoot(),
+  role: "pr" | "reviewer" = "pr",
+  force = false,
+): PrQueueRefreshResult {
+  if (!orgPrQueueRefreshEnabledForRole(role)) {
+    return { ok: true, tail: "queue refresh disabled for role", skipped: true, source: "disabled" };
+  }
+  if (!force && isMergeQueueFresh(root)) {
+    const meta = readMergeQueueMeta(root);
+    const ageMs = Date.now() - meta.updatedAtMs;
+    return {
+      ok: true,
+      tail: `queue cache hit age_ms=${ageMs} open_prs=${meta.total}`,
+      skipped: true,
+      source: "queue",
+    };
+  }
+  const maxAgeMin = Math.max(1, Math.ceil(orgPrQueueMaxAgeMs() / 60_000));
+  const result = runPython("org-merge-open-prs.py", ["--dry-run", "--max-age-minutes", String(maxAgeMin)]);
+  return { ...result, skipped: false, source: "github" };
 }

@@ -84,7 +84,12 @@ export async function swarmCiWorkerCycle(): Promise<SwarmCiWorkerCycleResult> {
     const workspaceRoot = resolveOrgPrWorkspaceRoot();
     const paths = queuePaths(workspaceRoot);
     workerConsole("swarm-ci-worker", "info", `cycle start workspace=${workspaceRoot}`);
-    const refresh = runPython(workspaceRoot, "org-merge-open-prs.py", ["--dry-run"]);
+    const maxAgeMin = Math.max(1, Math.ceil(Number(process.env.LI_ORG_PR_QUEUE_MAX_AGE_MS ?? 1_800_000) / 60_000));
+    const refresh = runPython(workspaceRoot, "org-merge-open-prs.py", [
+      "--dry-run",
+      "--max-age-minutes",
+      String(maxAgeMin),
+    ]);
     if (!refresh.ok) {
         return {
             ok: false,

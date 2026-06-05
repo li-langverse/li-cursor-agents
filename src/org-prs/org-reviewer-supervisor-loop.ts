@@ -33,7 +33,7 @@ import {
 } from "./org-pr-supervisor-config.js";
 import { idleLimitReached } from "../org/supervisor-idle.js";
 import { runOrgLaneObserverTick } from "../org/org-lane-observer-tick.js";
-import { parsePrOpenCount, refreshPrMergeQueue, runPython, sleep } from "./org-pr-supervisor-shared.js";
+import { refreshPrMergeQueue, resolvePrOpenCount, sleep } from "./org-pr-supervisor-shared.js";
 
 export interface ReviewerSupervisorTickResult {
   openCount: number;
@@ -59,13 +59,11 @@ export async function orgReviewerSupervisorTick(): Promise<ReviewerSupervisorTic
     };
   }
 
-  const countRes = runPython("org-pr-open-count.py");
-  let openCount = parsePrOpenCount(countRes.tail) ?? 0;
+  const openResolved = resolvePrOpenCount(root);
+  const openCount = openResolved.count;
 
-  const refresh = refreshPrMergeQueue();
-  if (refresh.ok) {
-    openCount = readQueueOpenTotal(root) || openCount;
-  } else {
+  const refresh = refreshPrMergeQueue(root, "reviewer");
+  if (!refresh.skipped && !refresh.ok) {
     workerConsole("org-reviewer-supervisor", "warn", `merge queue refresh failed: ${refresh.tail.slice(-200)}`);
   }
 

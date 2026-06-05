@@ -99,3 +99,18 @@ export function orgPrSupervisorEnabled(): boolean {
 export function orgReviewerSupervisorEnabled(): boolean {
   return truthyEnv("LI_ORG_REVIEWER_SUPERVISOR_ENABLED");
 }
+
+/** Serve cached org-pr-merge-queue.json without re-classifying every supervisor tick. */
+export function orgPrQueueMaxAgeMs(): number {
+  const n = Number(process.env.LI_ORG_PR_QUEUE_MAX_AGE_MS ?? 1_800_000);
+  return Number.isFinite(n) && n >= 60_000 ? n : 1_800_000;
+}
+
+/** PR supervisor may refresh the merge queue; reviewer reads PVC cache only. */
+export function orgPrQueueRefreshEnabledForRole(role: "pr" | "reviewer"): boolean {
+  if (process.env.LI_ORG_PR_QUEUE_REFRESH_ENABLED?.trim() === "0") return false;
+  if (role === "reviewer") {
+    return process.env.LI_ORG_REVIEWER_QUEUE_REFRESH_ENABLED?.trim() === "1";
+  }
+  return true;
+}

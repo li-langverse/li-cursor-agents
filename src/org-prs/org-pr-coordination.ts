@@ -5,12 +5,14 @@ import {
   openSync,
   readFileSync,
   renameSync,
+  statSync,
   unlinkSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
 import { sprintDataDir } from "../org-issues/org-issue-coordination.js";
+import { orgPrQueueMaxAgeMs } from "./org-pr-supervisor-config.js";
 
 export type OrgPrActiveStatus = "claimed" | "running" | "completed" | "failed";
 export type OrgPrWorkerRole = "implementer" | "reviewer";
@@ -46,6 +48,7 @@ export interface QueuedOrgPr {
 const ACTIVE_FILE = "org-pr-active.json";
 const IMPLEMENT_AUDIT = "org-pr-implement-audit.jsonl";
 const REVIEW_AUDIT = "org-pr-review-audit.jsonl";
+export const MERGE_QUEUE_FILE = "org-pr-merge-queue.json";
 
 export function activeStatePath(root = agentsPackageRoot()): string {
   return join(sprintDataDir(root), ACTIVE_FILE);
@@ -260,11 +263,48 @@ export function readReviewQueuePrs(root = agentsPackageRoot()): QueuedOrgPr[] {
   return out;
 }
 
+export function mergeQueuePath(root = agentsPackageRoot()): string {
+  return join(sprintDataDir(root), MERGE_QUEUE_FILE);
+}
+
+export interface MergeQueueMeta {
+  total: number;
+  updatedAtMs: number;
+  exists: boolean;
+}
+
+export function readMergeQueueMeta(root = agentsPackageRoot()): MergeQueueMeta {
+  const path = mergeQueuePath(root);
+  if (!existsSync(path)) return { total: 0, updatedAtMs: 0, exists: false };
+  let total = 0;
+  let updatedAtMs = statSync(path).mtimeMs;
+  try {
+    const q = JSON.parse(readFileSync(path, "utf8")) as {
+      report?: { total?: number };
+      updatedAt?: string;
+    };
+    total = q.report?.total ?? 0;
+    if (q.updatedAt) {
+      const parsed = Date.parse(q.updatedAt);
+      if (Number.isFinite(parsed)) updatedAtMs = parsed;
+    }
+  } catch {
+    /* use mtime + total=0 */
+  }
+  return { total, updatedAtMs, exists: true };
+}
+
+export function isMergeQueueFresh(
+  root = agentsPackageRoot(),
+  maxAgeMs = orgPrQueueMaxAgeMs(),
+): boolean {
+  const meta = readMergeQueueMeta(root);
+  if (!meta.exists) return false;
+  return Date.now() - meta.updatedAtMs < maxAgeMs;
+}
+
 export function readQueueOpenTotal(root = agentsPackageRoot()): number {
-  const path = join(sprintDataDir(root), "org-pr-merge-queue.json");
-  if (!existsSync(path)) return 0;
-  const q = JSON.parse(readFileSync(path, "utf8")) as { report?: { total?: number } };
-  return q.report?.total ?? 0;
+  return readMergeQueueMeta(root).total;
 }
 
 export function pruneTerminalActiveEntries(root = agentsPackageRoot()): number {

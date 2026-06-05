@@ -29,7 +29,7 @@ import {
 import { reconcileOrphanedK8sJobs } from "../org/k8s-job-reconcile.js";
 import { idleLimitReached } from "../org/supervisor-idle.js";
 import { runOrgLaneObserverTick } from "../org/org-lane-observer-tick.js";
-import { parsePrOpenCount, refreshPrMergeQueue, runPython, sleep } from "./org-pr-supervisor-shared.js";
+import { refreshPrMergeQueue, resolvePrOpenCount, sleep } from "./org-pr-supervisor-shared.js";
 
 export interface PrSupervisorTickResult {
   openCount: number;
@@ -55,11 +55,13 @@ export async function orgPrSupervisorTick(): Promise<PrSupervisorTickResult> {
     };
   }
 
-  const countRes = runPython("org-pr-open-count.py");
-  let openCount = parsePrOpenCount(countRes.tail) ?? 0;
+  const openResolved = resolvePrOpenCount(root);
+  let openCount = openResolved.count;
 
-  const refresh = refreshPrMergeQueue();
-  if (refresh.ok) {
+  const refresh = refreshPrMergeQueue(root, "pr");
+  if (refresh.skipped) {
+    workerConsole("org-pr-supervisor", "info", `queue ${refresh.source}: ${refresh.tail.slice(-120)}`);
+  } else if (refresh.ok) {
     openCount = readQueueOpenTotal(root) || openCount;
   } else {
     workerConsole("org-pr-supervisor", "warn", `queue refresh failed: ${refresh.tail.slice(-200)}`);
