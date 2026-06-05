@@ -4,6 +4,7 @@ Started: 2026-05-30
 
 | Iteration | open_prs | merged | notes |
 |-----------|----------|--------|-------|
+| 2026-05-31 code_implementer-1780198294965 | 5 → 4 | 3 | Phase A: refresh (5 open); Phase B: REST squash li-cursor-agents#102, lic#634, lic#633; Phase C: rebase+push lic#633/#632, lidb#25; Phase D: lic#632 CI fix (checkout-ecosystem-siblings + GHA workflows), benchmarks#272 tier-0 stability path; lis#33 closed; open: lic#632 CI pending, lic#635, lis#34, lidb#25 |
 | 2026-05-31 code_implementer-1780194539860 | 1 → 1 | 0 | Phase A: refresh (li-cursor-agents#100 green clean); implementation_queue 1–8 **stale** (lic#439/#552 closed via REST); completion gate **blocked** — #100 awaits human merge (do-not-self-merge) |
 | 2026-05-31 code_implementer-1780194176407 | 1 → 0 | 1 | Phase A: refresh (li-cursor-agents#99 green clean); Phase B: REST squash #99 (session 24 sprint digest); implementation_queue 1–8 **stale**; **completion gate pass** |
 | 2026-05-31 code_implementer-1780193829432 | 1 → 0 | 1 | Phase A: refresh (li-cursor-agents#98 green clean); Phase B: REST squash #98 (session 23 sprint digest); implementation_queue 1–8 **stale**; **completion gate pass** |
