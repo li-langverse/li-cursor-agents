@@ -2,6 +2,11 @@
 
 import { parseMaxIdleCycles } from "../org/supervisor-idle.js";
 
+export interface UnblockerAction {
+  kind: string;
+  detail: string;
+}
+
 function truthyEnv(name: string): boolean {
   const v = process.env[name]?.trim().toLowerCase();
   return v === "1" || v === "true" || v === "yes";
@@ -27,6 +32,11 @@ export function orgUnblockerMaxIdleCycles(): number {
 export function orgUnblockerStuckJobMinutes(): number {
   const n = Number(process.env.LI_ORG_UNBLOCKER_STUCK_JOB_MINUTES ?? 20);
   return Number.isFinite(n) && n >= 5 ? Math.min(n, 180) : 20;
+}
+
+export function orgUnblockerLongRunJobMinutes(): number {
+  const n = Number(process.env.LI_ORG_UNBLOCKER_LONG_RUN_JOB_MINUTES ?? 150);
+  return Number.isFinite(n) && n >= 30 ? Math.min(n, 480) : 150;
 }
 
 export function orgUnblockerEnabled(): boolean {
@@ -59,4 +69,14 @@ export const STUCK_CONTAINER_REASONS = new Set([
   "ImagePullBackOff",
   "ErrImagePull",
   "InvalidImageName",
+  "CrashLoopBackOff",
+  "CreateContainerError",
+  "RunContainerError",
+]);
+
+export const STUCK_SUPERVISOR_REASONS = new Set([
+  "CrashLoopBackOff",
+  "ImagePullBackOff",
+  "ErrImagePull",
+  "CreateContainerConfigError",
 ]);

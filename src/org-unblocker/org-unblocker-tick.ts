@@ -8,17 +8,24 @@ import {
   ORG_SUPERVISOR_DEPLOYMENTS,
   ORG_WAKE_CRONJOBS,
   STUCK_CONTAINER_REASONS,
+  STUCK_SUPERVISOR_REASONS,
+  type UnblockerAction,
+  orgUnblockerLongRunJobMinutes,
   orgUnblockerNamespace,
   orgUnblockerStuckJobMinutes,
 } from "./org-unblocker-config.js";
 import { inClusterConfig, k8sRequest } from "./org-unblocker-k8s.js";
+import {
+  healBackoffFiles,
+  pruneExpiredCooldowns,
+  pruneExpiredIssueSkips,
+  pruneTerminalLaneClaims,
+  reconcileOrphanedLaneClaims,
+} from "./org-unblocker-state.js";
 
 const SECRETS_NAME = "li-agents-secrets";
 
-export interface UnblockerAction {
-  kind: string;
-  detail: string;
-}
+export type { UnblockerAction };
 
 export interface UnblockerTickResult {
   actions: UnblockerAction[];
@@ -52,17 +59,17 @@ async function ensureSwarmSecrets(
   }
 
   const data = (res.body as { data?: Record<string, string> }).data ?? {};
-  const gh = data.GH_TOKEN;
-  const swarm = data.GH_SWARM_TOKEN;
   const patch: Record<string, string> = {};
-  if (gh && !swarm) patch.GH_SWARM_TOKEN = gh;
-  if (swarm && !gh) patch.GH_TOKEN = swarm;
+  if (data.GH_TOKEN && !data.GH_SWARM_TOKEN) patch.GH_SWARM_TOKEN = data.GH_TOKEN;
+  if (data.GH_SWARM_TOKEN && !data.GH_TOKEN) patch.GH_TOKEN = data.GH_SWARM_TOKEN;
+  if (data.CURSOR_API_KEY && !data.CURSOR_SDK_KEY) patch.CURSOR_SDK_KEY = data.CURSOR_API_KEY;
+  if (data.CURSOR_SDK_KEY && !data.CURSOR_API_KEY) patch.CURSOR_API_KEY = data.CURSOR_SDK_KEY;
+
   if (!Object.keys(patch).length) return actions;
 
   const patchRes = await k8sRequest(cfg, "PATCH", path, { data: patch }, "application/merge-patch+json");
   if (patchRes.status === 200) {
-    const keys = Object.keys(patch).join(",");
-    actions.push({ kind: "secret_patched", detail: keys });
+    actions.push({ kind: "secret_patched", detail: Object.keys(patch).join(",") });
   } else {
     actions.push({ kind: "secret_patch_failed", detail: `status=${patchRes.status}` });
   }
@@ -72,12 +79,14 @@ async function ensureSwarmSecrets(
 interface PodRow {
   name: string;
   jobName?: string;
+  deploymentName?: string;
   phase: string;
   waitingReason?: string;
   startedAt?: string;
+  runningStartedAt?: string;
 }
 
-async function listOrgWorkerPods(
+async function listNamespacePods(
   cfg: NonNullable<ReturnType<typeof inClusterConfig>>,
   ns: string,
 ): Promise<PodRow[]> {
@@ -86,40 +95,90 @@ async function listOrgWorkerPods(
   if (res.status !== 200 || !res.body || typeof res.body !== "object") return [];
   const items = (res.body as { items?: unknown[] }).items ?? [];
   const out: PodRow[] = [];
+
   for (const item of items) {
     if (!item || typeof item !== "object") continue;
     const pod = item as {
       metadata?: {
         name?: string;
+        labels?: Record<string, string>;
         ownerReferences?: { kind?: string; name?: string }[];
       };
       status?: {
         phase?: string;
         startTime?: string;
         containerStatuses?: {
-          state?: { waiting?: { reason?: string } };
+          state?: {
+            waiting?: { reason?: string };
+            running?: { startedAt?: string };
+            terminated?: { reason?: string };
+          };
         }[];
       };
     };
+
     const owners = pod.metadata?.ownerReferences ?? [];
     const jobOwner = owners.find((o) => o.kind === "Job");
-    if (!jobOwner?.name) continue;
-    if (!jobOwner.name.startsWith("li-org-")) continue;
+    const labels = pod.metadata?.labels ?? {};
+    const appLabel = labels.app;
 
     let waitingReason: string | undefined;
+    let runningStartedAt: string | undefined;
     for (const cs of pod.status?.containerStatuses ?? []) {
-      const reason = cs.state?.waiting?.reason;
-      if (reason) {
-        waitingReason = reason;
-        break;
-      }
+      const w = cs.state?.waiting?.reason;
+      if (w) waitingReason = w;
+      if (cs.state?.running?.startedAt) runningStartedAt = cs.state.running.startedAt;
+      const term = cs.state?.terminated?.reason;
+      if (term === "OOMKilled" || term === "Error") waitingReason = term;
     }
-    out.push({
+
+    const row: PodRow = {
       name: pod.metadata?.name ?? "",
-      jobName: jobOwner.name,
       phase: pod.status?.phase ?? "Unknown",
       waitingReason,
       startedAt: pod.status?.startTime,
+      runningStartedAt,
+    };
+
+    if (jobOwner?.name?.startsWith("li-org-")) {
+      row.jobName = jobOwner.name;
+    } else if (appLabel && ORG_SUPERVISOR_DEPLOYMENTS.includes(appLabel as (typeof ORG_SUPERVISOR_DEPLOYMENTS)[number])) {
+      row.deploymentName = appLabel;
+    }
+    out.push(row);
+  }
+  return out;
+}
+
+interface JobRow {
+  name: string;
+  active: boolean;
+  succeeded: boolean;
+  failed: boolean;
+}
+
+async function listOrgJobs(
+  cfg: NonNullable<ReturnType<typeof inClusterConfig>>,
+  ns: string,
+): Promise<JobRow[]> {
+  const path = `/apis/batch/v1/namespaces/${ns}/jobs`;
+  const res = await k8sRequest(cfg, "GET", path);
+  if (res.status !== 200 || !res.body || typeof res.body !== "object") return [];
+  const items = (res.body as { items?: unknown[] }).items ?? [];
+  const out: JobRow[] = [];
+  for (const item of items) {
+    if (!item || typeof item !== "object") continue;
+    const job = item as {
+      metadata?: { name?: string };
+      status?: { active?: number; succeeded?: number; failed?: number };
+    };
+    const name = job.metadata?.name ?? "";
+    if (!name.startsWith("li-org-")) continue;
+    out.push({
+      name,
+      active: (job.status?.active ?? 0) > 0,
+      succeeded: (job.status?.succeeded ?? 0) > 0,
+      failed: (job.status?.failed ?? 0) > 0,
     });
   }
   return out;
@@ -135,14 +194,37 @@ async function deleteJob(
   return res.status === 200 || res.status === 202;
 }
 
+async function restartDeployment(
+  cfg: NonNullable<ReturnType<typeof inClusterConfig>>,
+  ns: string,
+  name: string,
+): Promise<boolean> {
+  const path = `/apis/apps/v1/namespaces/${ns}/deployments/${name}`;
+  const patch = {
+    spec: {
+      template: {
+        metadata: {
+          annotations: {
+            "li-langverse.io/unblocker-restartedAt": new Date().toISOString(),
+          },
+        },
+      },
+    },
+  };
+  const res = await k8sRequest(cfg, "PATCH", path, patch, "application/merge-patch+json");
+  return res.status === 200;
+}
+
 async function healStuckJobs(
   cfg: NonNullable<ReturnType<typeof inClusterConfig>>,
   ns: string,
 ): Promise<UnblockerAction[]> {
   const actions: UnblockerAction[] = [];
   const stuckMinutes = orgUnblockerStuckJobMinutes();
-  const cutoff = Date.now() - stuckMinutes * 60_000;
-  const pods = await listOrgWorkerPods(cfg, ns);
+  const longRunMinutes = orgUnblockerLongRunJobMinutes();
+  const stuckCutoff = Date.now() - stuckMinutes * 60_000;
+  const longCutoff = Date.now() - longRunMinutes * 60_000;
+  const pods = await listNamespacePods(cfg, ns);
   const jobsToDelete = new Set<string>();
 
   for (const pod of pods) {
@@ -153,7 +235,14 @@ async function healStuckJobs(
     }
     if (pod.phase === "Pending" && pod.startedAt) {
       const started = Date.parse(pod.startedAt);
-      if (Number.isFinite(started) && started < cutoff) {
+      if (Number.isFinite(started) && started < stuckCutoff) {
+        jobsToDelete.add(pod.jobName);
+      }
+      continue;
+    }
+    if (pod.phase === "Running" && pod.runningStartedAt) {
+      const started = Date.parse(pod.runningStartedAt);
+      if (Number.isFinite(started) && started < longCutoff) {
         jobsToDelete.add(pod.jobName);
       }
     }
@@ -165,6 +254,46 @@ async function healStuckJobs(
       kind: ok ? "deleted_stuck_job" : "delete_stuck_job_failed",
       detail: jobName,
     });
+  }
+  return actions;
+}
+
+async function deleteTerminalOrgJobs(
+  cfg: NonNullable<ReturnType<typeof inClusterConfig>>,
+  ns: string,
+): Promise<UnblockerAction[]> {
+  const actions: UnblockerAction[] = [];
+  const jobs = await listOrgJobs(cfg, ns);
+  for (const job of jobs) {
+    if (job.active) continue;
+    if (!job.succeeded && !job.failed) continue;
+    const ok = await deleteJob(cfg, ns, job.name);
+    actions.push({
+      kind: ok ? "deleted_terminal_job" : "delete_terminal_job_failed",
+      detail: job.name,
+    });
+  }
+  return actions;
+}
+
+async function healSupervisorPods(
+  cfg: NonNullable<ReturnType<typeof inClusterConfig>>,
+  ns: string,
+): Promise<UnblockerAction[]> {
+  const actions: UnblockerAction[] = [];
+  const restarted = new Set<string>();
+  const pods = await listNamespacePods(cfg, ns);
+
+  for (const pod of pods) {
+    if (!pod.deploymentName) continue;
+    if (!pod.waitingReason || !STUCK_SUPERVISOR_REASONS.has(pod.waitingReason)) continue;
+    if (restarted.has(pod.deploymentName)) continue;
+    const ok = await restartDeployment(cfg, ns, pod.deploymentName);
+    actions.push({
+      kind: ok ? "restarted_supervisor" : "restart_supervisor_failed",
+      detail: `${pod.deploymentName} (${pod.waitingReason})`,
+    });
+    restarted.add(pod.deploymentName);
   }
   return actions;
 }
@@ -196,42 +325,16 @@ async function scaleSupervisors(
   return actions;
 }
 
-async function unsuspendWakeCrons(
+async function unsuspendCron(
   cfg: NonNullable<ReturnType<typeof inClusterConfig>>,
   ns: string,
-): Promise<UnblockerAction[]> {
-  const actions: UnblockerAction[] = [];
-  for (const name of ORG_WAKE_CRONJOBS) {
-    const path = `/apis/batch/v1/namespaces/${ns}/cronjobs/${name}`;
-    const getRes = await k8sRequest(cfg, "GET", path);
-    if (getRes.status === 404) continue;
-    if (getRes.status !== 200 || !getRes.body || typeof getRes.body !== "object") continue;
-    const suspended = (getRes.body as { spec?: { suspend?: boolean } }).spec?.suspend === true;
-    if (!suspended) continue;
-    const patchRes = await k8sRequest(
-      cfg,
-      "PATCH",
-      path,
-      { spec: { suspend: false } },
-      "application/merge-patch+json",
-    );
-    actions.push({
-      kind: patchRes.status === 200 ? "unsuspended_cron" : "unsuspend_cron_failed",
-      detail: name,
-    });
-  }
-  return actions;
-}
-
-async function unsuspendIssueWorkerCron(
-  cfg: NonNullable<ReturnType<typeof inClusterConfig>>,
-  ns: string,
-): Promise<UnblockerAction[]> {
-  const name = "li-org-issue-worker";
+  name: string,
+): Promise<UnblockerAction | null> {
   const path = `/apis/batch/v1/namespaces/${ns}/cronjobs/${name}`;
   const getRes = await k8sRequest(cfg, "GET", path);
-  if (getRes.status !== 200 || !getRes.body || typeof getRes.body !== "object") return [];
-  if ((getRes.body as { spec?: { suspend?: boolean } }).spec?.suspend !== true) return [];
+  if (getRes.status === 404) return null;
+  if (getRes.status !== 200 || !getRes.body || typeof getRes.body !== "object") return null;
+  if ((getRes.body as { spec?: { suspend?: boolean } }).spec?.suspend !== true) return null;
   const patchRes = await k8sRequest(
     cfg,
     "PATCH",
@@ -239,11 +342,30 @@ async function unsuspendIssueWorkerCron(
     { spec: { suspend: false } },
     "application/merge-patch+json",
   );
+  return {
+    kind: patchRes.status === 200 ? "unsuspended_cron" : "unsuspend_cron_failed",
+    detail: name,
+  };
+}
+
+async function unsuspendAllCrons(
+  cfg: NonNullable<ReturnType<typeof inClusterConfig>>,
+  ns: string,
+): Promise<UnblockerAction[]> {
+  const actions: UnblockerAction[] = [];
+  for (const name of [...ORG_WAKE_CRONJOBS, "li-org-issue-worker"]) {
+    const a = await unsuspendCron(cfg, ns, name);
+    if (a) actions.push(a);
+  }
+  return actions;
+}
+
+function healDiskState(root = agentsPackageRoot()): UnblockerAction[] {
   return [
-    {
-      kind: patchRes.status === 200 ? "unsuspended_cron" : "unsuspend_cron_failed",
-      detail: name,
-    },
+    ...healBackoffFiles(root),
+    ...pruneExpiredIssueSkips(root),
+    ...pruneExpiredCooldowns(root),
+    ...pruneTerminalLaneClaims(root),
   ];
 }
 
@@ -260,11 +382,18 @@ export async function orgUnblockerTick(): Promise<UnblockerTickResult> {
   const ns = orgUnblockerNamespace();
   const actions: UnblockerAction[] = [];
 
+  actions.push(...healDiskState(root));
   actions.push(...(await ensureSwarmSecrets(cfg, ns)));
+
+  const jobs = await listOrgJobs(cfg, ns);
+  const liveJobNames = new Set(jobs.map((j) => j.name));
+  actions.push(...reconcileOrphanedLaneClaims(liveJobNames, root));
+
   actions.push(...(await healStuckJobs(cfg, ns)));
+  actions.push(...(await deleteTerminalOrgJobs(cfg, ns)));
+  actions.push(...(await healSupervisorPods(cfg, ns)));
   actions.push(...(await scaleSupervisors(cfg, ns)));
-  actions.push(...(await unsuspendWakeCrons(cfg, ns)));
-  actions.push(...(await unsuspendIssueWorkerCron(cfg, ns)));
+  actions.push(...(await unsuspendAllCrons(cfg, ns)));
 
   const msg =
     actions.length === 0
