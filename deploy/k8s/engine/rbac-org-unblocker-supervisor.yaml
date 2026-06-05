@@ -1,0 +1,42 @@
+# RBAC for org unblocker supervisor (secrets, stuck jobs, scale supervisors).
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: li-org-unblocker-supervisor
+  namespace: li-swarm
+  labels:
+    app: li-org-unblocker-supervisor
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: li-org-unblocker-supervisor
+  namespace: li-swarm
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["get", "patch", "update"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list", "watch", "delete", "patch", "update"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: li-org-unblocker-supervisor
+  namespace: li-swarm
+subjects:
+  - kind: ServiceAccount
+    name: li-org-unblocker-supervisor
+    namespace: li-swarm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: li-org-unblocker-supervisor

@@ -39,6 +39,8 @@
     "agents:org-issue-supervisor-wake": "npm run build && node dist/cli/org-issue-supervisor.js wake",
     "agents:org-issue-triage-supervisor": "npm run build && node dist/cli/org-issue-triage-supervisor.js supervise",
     "agents:org-issue-triage-supervisor-wake": "npm run build && node dist/cli/org-issue-triage-supervisor.js wake",
+    "agents:org-unblocker-supervisor": "npm run build && node dist/cli/org-unblocker-supervisor.js supervise",
+    "agents:org-unblocker-supervisor-wake": "npm run build && node dist/cli/org-unblocker-supervisor.js wake",
     "agents:org-planner-supervisor": "npm run build && node dist/cli/org-planner-supervisor.js supervise",
     "agents:org-planner-supervisor-wake": "npm run build && node dist/cli/org-planner-supervisor.js wake",
     "agents:org-pr-supervisor": "npm run build && node dist/cli/org-pr-supervisor.js supervise",

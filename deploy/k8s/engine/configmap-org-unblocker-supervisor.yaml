@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: li-org-unblocker-supervisor
+  namespace: li-swarm
+data:
+  LI_ORG_UNBLOCKER_ENABLED: "1"
+  LI_ORG_UNBLOCKER_INTERVAL_MS: "600000"
+  LI_ORG_UNBLOCKER_MAX_IDLE_CYCLES: "0"
+  LI_ORG_UNBLOCKER_STUCK_JOB_MINUTES: "20"
+  LI_ORG_UNBLOCKER_NAMESPACE: "li-swarm"
+  NODE_ENV: "production"

@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: li-org-unblocker-supervisor-wake
+  namespace: li-swarm
+  labels:
+    app: li-org-unblocker-supervisor-wake
+spec:
+  schedule: "*/10 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 3600
+      backoffLimit: 1
+      activeDeadlineSeconds: 300
+      template:
+        metadata:
+          labels:
+            app: li-org-unblocker-supervisor-wake
+        spec:
+          serviceAccountName: li-org-unblocker-supervisor
+          restartPolicy: OnFailure
+          nodeSelector:
+            li-langverse.io/node-pool: engine
+          containers:
+            - name: wake
+              image: ghcr.io/li-langverse/li-cursor-agents:latest
+              imagePullPolicy: Always
+              command: ["node", "dist/cli/org-unblocker-supervisor.js", "wake"]
+              envFrom:
+                - configMapRef:
+                    name: li-org-unblocker-supervisor
+              resources:
+                requests:
+                  cpu: "50m"
+                  memory: "128Mi"
+                limits:
+                  cpu: "500m"
+                  memory: "256Mi"

@@ -103,6 +103,8 @@ if ($env:CURSOR_SDK_KEY) { $secretArgs += "--from-literal=CURSOR_SDK_KEY=$($env:
 if ($env:SUPABASE_URL) { $secretArgs += "--from-literal=SUPABASE_URL=$($env:SUPABASE_URL)" }
 if ($env:SUPABASE_SERVICE_ROLE_KEY) { $secretArgs += "--from-literal=SUPABASE_SERVICE_ROLE_KEY=$($env:SUPABASE_SERVICE_ROLE_KEY)" }
 kubectl @secretArgs | kubectl apply -f -
+Write-Host "==> ensure GH_SWARM_TOKEN + GH_TOKEN stay in sync"
+& (Join-Path $PSScriptRoot "org-ensure-swarm-secrets.ps1") -KubeConfig $KubeConfig -Namespace $Namespace
 
 $loginToken = $env:GH_SWARM_TOKEN
 kubectl -n $Namespace create secret docker-registry ghcr-li-langverse `
@@ -113,10 +115,12 @@ kubectl -n $Namespace create secret docker-registry ghcr-li-langverse `
 
 $manifests = @(
     "rbac-org-issue-supervisor.yaml",
+    "rbac-org-unblocker-supervisor.yaml",
     "rbac-org-pr-supervisor.yaml",
     "rbac-org-research-supervisor.yaml",
     "configmap-org-issue-supervisor.yaml",
     "configmap-org-issue-triage-supervisor.yaml",
+    "configmap-org-unblocker-supervisor.yaml",
     "configmap-org-pr-supervisor.yaml",
     "configmap-org-reviewer-supervisor.yaml",
     "configmap-org-research-supervisor.yaml",
@@ -124,6 +128,7 @@ $manifests = @(
     "configmap-org-supervisor-dashboard.yaml",
     "deployment-org-issue-supervisor.yaml",
     "deployment-org-issue-triage-supervisor.yaml",
+    "deployment-org-unblocker-supervisor.yaml",
     "deployment-org-pr-supervisor.yaml",
     "deployment-org-reviewer-supervisor.yaml",
     "deployment-org-research-supervisor.yaml",
@@ -133,6 +138,7 @@ $manifests = @(
     "cronjob-org-issue-worker.yaml",
     "cronjob-org-issue-supervisor-wake.yaml",
     "cronjob-org-issue-triage-supervisor-wake.yaml",
+    "cronjob-org-unblocker-supervisor-wake.yaml",
     "cronjob-org-pr-supervisor-wake.yaml",
     "cronjob-org-reviewer-supervisor-wake.yaml",
     "cronjob-org-research-supervisor-wake.yaml",
@@ -146,6 +152,7 @@ foreach ($m in $manifests) {
 $deploys = @(
     "li-org-issue-supervisor",
     "li-org-issue-triage-supervisor",
+    "li-org-unblocker-supervisor",
     "li-org-pr-supervisor",
     "li-org-reviewer-supervisor",
     "li-org-research-supervisor",
@@ -159,6 +166,9 @@ foreach ($d in $deploys) {
 }
 
 Write-Host "==> org swarm deployed; image=$Image"
+
+Write-Host "==> ensure swarm secrets after rollout"
+& (Join-Path $PSScriptRoot "org-ensure-swarm-secrets.ps1") -KubeConfig $KubeConfig -Namespace $Namespace
 
 Write-Host "==> clear issue failure skip cooldowns"
 & (Join-Path $PSScriptRoot "org-clear-issue-skip.ps1") -KubeConfig $KubeConfig -Namespace $Namespace

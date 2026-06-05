@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: li-org-unblocker-supervisor
+  namespace: li-swarm
+  labels:
+    app: li-org-unblocker-supervisor
+    li-langverse.io/role: org-unblocker-supervisor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: li-org-unblocker-supervisor
+  template:
+    metadata:
+      labels:
+        app: li-org-unblocker-supervisor
+    spec:
+      serviceAccountName: li-org-unblocker-supervisor
+      nodeSelector:
+        li-langverse.io/node-pool: engine
+      containers:
+        - name: supervisor
+          image: ghcr.io/li-langverse/li-cursor-agents:latest
+          imagePullPolicy: Always
+          command: ["node", "dist/cli/org-unblocker-supervisor.js", "supervise"]
+          envFrom:
+            - configMapRef:
+                name: li-org-unblocker-supervisor
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+          volumeMounts:
+            - name: sprint-data
+              mountPath: /app/data/goal-directed-sprints
+      volumes:
+        - name: sprint-data
+          persistentVolumeClaim:
+            claimName: li-agents-sprint-data
