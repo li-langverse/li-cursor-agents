@@ -122,3 +122,14 @@ kubectl -n li-swarm logs deploy/li-org-issue-supervisor --tail=50
 - Deploy: `bash scripts/setup-engine-k8s-ph-sci-simulation-gap-close.sh` (requires `KUBECONFIG`, `GH_TOKEN`, `CURSOR_API_KEY`)
 - Logs: `kubectl -n li-swarm logs -f deploy/li-ph-sci-simulation-gap-close`
 
+### PH-SCI electrochemistry + GPU chem (PR #847)
+
+- Deployment: `li-ph-sci-electrochemistry` (namespace `li-swarm`, node `engine`)
+- PVC: `li-ph-sci-electrochemistry-workspace` (dedicated — do not share with other sprints)
+- Branch: `cursor/ph-sci-gpu-chem-dft`
+- Goal: `lic/data/goal-directed-sprints/ph-sci-electrochemistry-gpu-roadmap.md` (echem → GPU chem → gap-close)
+- Gate: `lic/scripts/ph-sci-gpu-chem-gates.sh` + `ph-sci-echem-competitive-gates.sh`
+- Deploy: `bash scripts/setup-engine-k8s-ph-sci-electrochemistry.sh` (reuses `li-agents-secrets` if present)
+- Scale: `kubectl -n li-swarm scale deploy/li-ph-sci-electrochemistry --replicas=1`
+- Logs: `kubectl -n li-swarm logs -f deploy/li-ph-sci-electrochemistry`
+
