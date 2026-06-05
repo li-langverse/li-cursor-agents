@@ -1,6 +1,3 @@
-import { spawnSync } from "node:child_process";
-import { existsSync } from "node:fs";
-import { join } from "node:path";
 import { randomBytes } from "node:crypto";
 import { agentLog } from "../agent-log.js";
 import { saveOrgSupervisorCycle } from "../db/org-supervisor-cycle.js";
@@ -36,6 +33,7 @@ import {
   orgPlannerSupervisorMaxWorkers,
   researchPlanRef,
 } from "./org-planner-supervisor-config.js";
+import { refreshIssueClassify } from "../org-issues/org-issue-queue-shared.js";
 
 function sleep(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
@@ -46,21 +44,6 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
     const t = setTimeout(resolve, ms);
     signal?.addEventListener("abort", () => { clearTimeout(t); resolve(); }, { once: true });
   });
-}
-
-function runPython(scriptName: string, args: string[] = []): { ok: boolean; tail: string } {
-  const root = agentsPackageRoot();
-  const script = join(root, "scripts", scriptName);
-  if (!existsSync(script)) return { ok: false, tail: `missing ${script}` };
-  const py = process.platform === "win32" ? "python" : "python3";
-  const proc = spawnSync(py, [script, ...args], {
-    cwd: root,
-    env: process.env,
-    encoding: "utf8",
-    timeout: 3_600_000,
-  });
-  const tail = `${proc.stdout ?? ""}${proc.stderr ?? ""}`.trim().slice(-2000);
-  return { ok: proc.status === 0, tail };
 }
 
 export interface PlannerSupervisorTickResult {
@@ -99,8 +82,8 @@ export async function orgPlannerSupervisorTick(): Promise<PlannerSupervisorTickR
     };
   }
 
-  const classify = runPython("org-classify-open-issues.py");
-  if (!classify.ok) {
+  const classify = refreshIssueClassify(root, "planner");
+  if (!classify.skipped && !classify.ok) {
     workerConsole("org-planner-supervisor", "warn", `classify failed: ${classify.tail.slice(-200)}`);
   }
 

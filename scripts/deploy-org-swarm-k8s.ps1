@@ -114,6 +114,7 @@ kubectl -n $Namespace create secret docker-registry ghcr-li-langverse `
     --dry-run=client -o yaml | kubectl apply -f -
 
 $manifests = @(
+    "configmap.yaml",
     "rbac-org-issue-supervisor.yaml",
     "rbac-org-unblocker-supervisor.yaml",
     "rbac-org-pr-supervisor.yaml",
@@ -147,6 +148,14 @@ $manifests = @(
 foreach ($m in $manifests) {
     $p = Join-Path $K8s $m
     if (Test-Path $p) { kubectl apply -f $p }
+}
+
+Write-Host "==> unsuspend org wake cronjobs + issue-worker cron"
+$cronjobs = kubectl -n $Namespace get cronjob -o name 2>$null | ForEach-Object { $_ -replace "^cronjob\.batch/", "" }
+foreach ($cj in $cronjobs) {
+    if ($cj -match "^li-org-") {
+        kubectl -n $Namespace patch cronjob $cj --type=merge -p '{"spec":{"suspend":false}}' 2>$null | Out-Null
+    }
 }
 
 $deploys = @(

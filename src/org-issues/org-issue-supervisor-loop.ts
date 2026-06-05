@@ -1,6 +1,3 @@
-import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
 import { randomBytes } from "node:crypto";
 import { agentLog } from "../agent-log.js";
 import { saveOrgSupervisorCycle } from "../db/org-supervisor-cycle.js";
@@ -24,8 +21,10 @@ import {
   readActiveState,
   readImplementQueueCount,
   readImplementQueueIssues,
+  readIssueQueueMeta,
   updateIssueStatus,
 } from "./org-issue-coordination.js";
+import { refreshIssueClassify, resolveIssueOpenCount } from "./org-issue-queue-shared.js";
 import {
   createImplementerJob,
   isInKubernetesCluster,
@@ -51,31 +50,8 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
   });
 }
 
-function runPython(scriptName: string, args: string[] = []): { ok: boolean; tail: string } {
-  const root = agentsPackageRoot();
-  const script = join(root, "scripts", scriptName);
-  if (!existsSync(script)) return { ok: false, tail: `missing ${script}` };
-  const py = process.platform === "win32" ? "python" : "python3";
-  const proc = spawnSync(py, [script, ...args], {
-    cwd: root,
-    env: process.env,
-    encoding: "utf8",
-    timeout: 3_600_000,
-  });
-  const tail = `${proc.stdout ?? ""}${proc.stderr ?? ""}`.trim().slice(-2000);
-  return { ok: proc.status === 0, tail };
-}
-
-function parseOpenCount(tail: string): number | null {
-  const m = /open_issues=(\d+)/.exec(tail);
-  return m ? Number(m[1]) : null;
-}
-
 function readQueueOpenTotal(root: string): number {
-  const path = join(root, "data", "goal-directed-sprints", "org-issue-queue.json");
-  if (!existsSync(path)) return 0;
-  const q = JSON.parse(readFileSync(path, "utf8")) as { report?: { total_open?: number } };
-  return q.report?.total_open ?? 0;
+  return readIssueQueueMeta(root).totalOpen;
 }
 
 export interface SupervisorTickResult {
@@ -106,11 +82,12 @@ export async function orgIssueSupervisorTick(): Promise<SupervisorTickResult> {
     };
   }
 
-  const countRes = runPython("org-issue-open-count.py");
-  let openCount = parseOpenCount(countRes.tail) ?? readQueueOpenTotal(root);
+  let openCount = resolveIssueOpenCount(root);
 
-  const classify = runPython("org-classify-open-issues.py");
-  if (classify.ok) {
+  const classify = refreshIssueClassify(root, "issue");
+  if (classify.skipped) {
+    workerConsole("org-issue-supervisor", "info", `classify ${classify.source}: ${classify.tail.slice(-120)}`);
+  } else if (classify.ok) {
     openCount = readQueueOpenTotal(root) || openCount;
   } else {
     workerConsole("org-issue-supervisor", "warn", `classify failed: ${classify.tail.slice(-200)}`);

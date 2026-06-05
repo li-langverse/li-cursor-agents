@@ -78,3 +78,18 @@ export function issueSlug(repo: string, number: number): string {
 export function orgIssueSupervisorEnabled(): boolean {
   return truthyEnv("LI_ORG_ISSUE_SUPERVISOR_ENABLED") || truthyEnv("LI_ORG_ISSUE_WORKER_ALWAYS_ON");
 }
+
+export function orgIssueQueueMaxAgeMs(): number {
+  const n = Number(process.env.LI_ORG_ISSUE_QUEUE_MAX_AGE_MS ?? 1_800_000);
+  return Number.isFinite(n) && n >= 60_000 ? n : 1_800_000;
+}
+
+/** Only the issue supervisor classifies by default; triage/planner read org-issue-queue.json. */
+export function orgIssueClassifyEnabledForRole(role: "issue" | "triage" | "planner" | "worker"): boolean {
+  if (truthyEnv("LI_ORG_ISSUE_ALLOW_MULTI_CLASSIFY")) return true;
+  if (role === "issue") return process.env.LI_ORG_ISSUE_CLASSIFY_ENABLED?.trim() !== "0";
+  if (role === "worker") return process.env.LI_ORG_ISSUE_WORKER_CLASSIFY_ENABLED?.trim() !== "0";
+  if (role === "triage") return truthyEnv("LI_ORG_ISSUE_TRIAGE_CLASSIFY_ENABLED");
+  if (role === "planner") return truthyEnv("LI_ORG_ISSUE_PLANNER_CLASSIFY_ENABLED");
+  return false;
+}

@@ -1,6 +1,3 @@
-import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
 import { randomBytes } from "node:crypto";
 import { agentLog } from "../agent-log.js";
 import { saveOrgSupervisorCycle } from "../db/org-supervisor-cycle.js";
@@ -36,6 +33,8 @@ import {
   isInKubernetesCluster,
   listTriageJobs,
 } from "./org-issue-triage-k8s-client.js";
+import { readIssueQueueMeta } from "./org-issue-coordination.js";
+import { refreshIssueClassify } from "./org-issue-queue-shared.js";
 
 function sleep(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
@@ -48,26 +47,8 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
   });
 }
 
-function runPython(scriptName: string): { ok: boolean; tail: string } {
-  const root = agentsPackageRoot();
-  const script = join(root, "scripts", scriptName);
-  if (!existsSync(script)) return { ok: false, tail: `missing ${script}` };
-  const py = process.platform === "win32" ? "python" : "python3";
-  const proc = spawnSync(py, [script], {
-    cwd: root,
-    env: process.env,
-    encoding: "utf8",
-    timeout: 3_600_000,
-  });
-  const tail = `${proc.stdout ?? ""}${proc.stderr ?? ""}`.trim().slice(-2000);
-  return { ok: proc.status === 0, tail };
-}
-
 function readQueueOpenTotal(root: string): number {
-  const path = join(root, "data", "goal-directed-sprints", "org-issue-queue.json");
-  if (!existsSync(path)) return 0;
-  const q = JSON.parse(readFileSync(path, "utf8")) as { report?: { total_open?: number } };
-  return q.report?.total_open ?? 0;
+  return readIssueQueueMeta(root).totalOpen;
 }
 
 export interface TriageSupervisorTickResult {
@@ -98,11 +79,9 @@ export async function orgIssueTriageSupervisorTick(): Promise<TriageSupervisorTi
     };
   }
 
-  const classify = runPython("org-classify-open-issues.py");
-  let openCount = readQueueOpenTotal(root);
-  if (classify.ok) {
-    openCount = readQueueOpenTotal(root);
-  } else {
+  const classify = refreshIssueClassify(root, "triage");
+  const openCount = readQueueOpenTotal(root);
+  if (!classify.skipped && !classify.ok) {
     workerConsole("org-issue-triage-supervisor", "warn", `classify failed: ${classify.tail.slice(-200)}`);
   }
 

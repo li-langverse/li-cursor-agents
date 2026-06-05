@@ -5,11 +5,13 @@ import {
   openSync,
   readFileSync,
   renameSync,
+  statSync,
   unlinkSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
+import { orgIssueQueueMaxAgeMs } from "./org-issue-supervisor-config.js";
 
 export type OrgIssueActiveStatus = "claimed" | "running" | "completed" | "failed";
 export type OrgIssueWorkerRole = "implementer" | "triage";
@@ -44,6 +46,7 @@ export interface QueuedOrgIssue {
 const ACTIVE_FILE = "org-issue-active.json";
 const AUDIT_FILE = "org-issue-implement-audit.jsonl";
 const TRIAGE_AUDIT_FILE = "org-issue-triage-audit.jsonl";
+export const ISSUE_QUEUE_FILE = "org-issue-queue.json";
 
 export function sprintDataDir(root = agentsPackageRoot()): string {
   return join(root, "data", "goal-directed-sprints");
@@ -239,9 +242,49 @@ export function readImplementQueueIssues(root = agentsPackageRoot()): QueuedOrgI
   return readQueueBucket(root, "implement");
 }
 
+export function issueQueuePath(root = agentsPackageRoot()): string {
+  return join(sprintDataDir(root), ISSUE_QUEUE_FILE);
+}
+
+export interface IssueQueueMeta {
+  totalOpen: number;
+  updatedAtMs: number;
+  exists: boolean;
+}
+
+export function readIssueQueueMeta(root = agentsPackageRoot()): IssueQueueMeta {
+  const path = issueQueuePath(root);
+  if (!existsSync(path)) return { totalOpen: 0, updatedAtMs: 0, exists: false };
+  let totalOpen = 0;
+  let updatedAtMs = statSync(path).mtimeMs;
+  try {
+    const q = JSON.parse(readFileSync(path, "utf8")) as {
+      report?: { total_open?: number };
+      updatedAt?: string;
+    };
+    totalOpen = q.report?.total_open ?? 0;
+    if (q.updatedAt) {
+      const parsed = Date.parse(q.updatedAt);
+      if (Number.isFinite(parsed)) updatedAtMs = parsed;
+    }
+  } catch {
+    /* use mtime */
+  }
+  return { totalOpen, updatedAtMs, exists: true };
+}
+
+export function isIssueQueueFresh(
+  root = agentsPackageRoot(),
+  maxAgeMs = orgIssueQueueMaxAgeMs(),
+): boolean {
+  const meta = readIssueQueueMeta(root);
+  if (!meta.exists) return false;
+  return Date.now() - meta.updatedAtMs < maxAgeMs;
+}
+
 /** Count of issues ready for implementer Jobs (from last classify report or bucket length). */
 export function readImplementQueueCount(root = agentsPackageRoot()): number {
-  const path = join(sprintDataDir(root), "org-issue-queue.json");
+  const path = issueQueuePath(root);
   if (!existsSync(path)) return 0;
   const q = JSON.parse(readFileSync(path, "utf8")) as {
     report?: { implement?: number };

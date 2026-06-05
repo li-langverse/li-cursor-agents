@@ -200,11 +200,55 @@ def classify_issue(issue: dict, title_index: dict[str, list[tuple[str, int]]]) -
     return {**row, "_bucket": "needs_triage"}
 
 
+def queue_age_minutes(path: str) -> float | None:
+    if not os.path.isfile(path):
+        return None
+    age_ms = (datetime.now(timezone.utc).timestamp() * 1000) - (os.path.getmtime(path) * 1000)
+    try:
+        data = json.loads(open(path, encoding="utf-8").read())
+        updated = data.get("updatedAt")
+        if updated:
+            parsed = datetime.fromisoformat(updated.replace("Z", "+00:00"))
+            age_ms = (datetime.now(timezone.utc) - parsed).total_seconds() * 1000
+    except (json.JSONDecodeError, ValueError, TypeError, OSError):
+        pass
+    return max(0.0, age_ms / 60_000)
+
+
+def maybe_serve_cached_queue(max_age_minutes: float) -> bool:
+    if max_age_minutes <= 0:
+        return False
+    age = queue_age_minutes(OUT)
+    if age is None or age > max_age_minutes:
+        return False
+    try:
+        data = json.loads(open(OUT, encoding="utf-8").read())
+    except (json.JSONDecodeError, OSError):
+        return False
+    report = data.get("report") or {}
+    total = report.get("total_open")
+    if total is None:
+        return False
+    print(f"open_issues={total}", flush=True)
+    print(json.dumps(report, indent=2))
+    print(f"issue_queue_cache_hit age_minutes={age:.1f}", flush=True)
+    return True
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="Only print summary, still writes queue")
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument(
+        "--max-age-minutes",
+        type=float,
+        default=0,
+        help="Skip classify when org-issue-queue.json is newer than this many minutes",
+    )
     args = ap.parse_args()
+
+    if maybe_serve_cached_queue(args.max_age_minutes):
+        return
 
     issues = search_open_issues()
     print(f"open_issues={len(issues)}", flush=True)
@@ -247,7 +291,7 @@ def main() -> None:
         "limit": args.limit or None,
         **{k: len(v) for k, v in buckets.items()},
     }
-    payload = {"report": report, **buckets}
+    payload = {"updatedAt": datetime.now(timezone.utc).isoformat(), "report": report, **buckets}
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
