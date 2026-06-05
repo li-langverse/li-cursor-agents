@@ -41,7 +41,7 @@ spec:
                   name: li-agents-secrets
                   key: GH_TOKEN
             - name: GIT_REF
-              value: "cursor/proof-explorer-phase9-handoff"
+              value: "main"
             - name: GIT_REPO
               value: "https://github.com/li-langverse/li-cursor-agents.git"
           command:

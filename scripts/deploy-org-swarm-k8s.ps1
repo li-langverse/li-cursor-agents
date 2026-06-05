@@ -152,9 +152,11 @@ foreach ($m in $manifests) {
 
 Write-Host "==> unsuspend org wake cronjobs + issue-worker cron"
 $cronjobs = kubectl -n $Namespace get cronjob -o name 2>$null | ForEach-Object { $_ -replace "^cronjob\.batch/", "" }
+$cronPatchFile = Join-Path $env:TEMP "li-org-cron-unsuspend.json"
+[System.IO.File]::WriteAllText($cronPatchFile, '{"spec":{"suspend":false}}')
 foreach ($cj in $cronjobs) {
     if ($cj -match "^li-org-") {
-        kubectl -n $Namespace patch cronjob $cj --type=merge -p '{"spec":{"suspend":false}}' 2>$null | Out-Null
+        kubectl -n $Namespace patch cronjob $cj --type=merge --patch-file $cronPatchFile 2>$null | Out-Null
     }
 }
 
