@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import unittest
@@ -86,6 +87,48 @@ class TuiAdapterTests(unittest.TestCase):
         journeys = target.get("journeys") or []
         self.assertEqual(journeys[0]["id"], "cli_to_tui")
         self.assertTrue(journeys[0].get("completed"))
+
+    def test_tui_demo_a11y_export_plain_text(self) -> None:
+        fixture = ROOT / "fixtures" / "tui-demo.sh"
+        proc = subprocess.run(
+            ["bash", str(fixture)],
+            cwd=str(fixture.parent),
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+            env={**os.environ, "LI_TUI_EXPORT_A11Y": "1"},
+            stdin=subprocess.DEVNULL,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        self.assertIn("plain snapshot", proc.stdout)
+        self.assertIn("Surface: tui_app", proc.stdout)
+        self.assertNotIn("\033", proc.stdout)
+
+    def test_tui_app_fixture_ux_a11y_artifact_and_error_rubric(self) -> None:
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "run_audit.py"),
+                "--target",
+                "tui-app-fixture",
+                "--mode",
+                "ux",
+            ],
+            cwd=str(AGENTS_ROOT),
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        payload = json.loads(proc.stdout)
+        target = payload["ux"]["targets"][0]
+        self.assertEqual(target["status"], "pass")
+        artifacts = target.get("artifacts") or []
+        self.assertTrue(any("a11y-plain.txt" in a for a in artifacts))
+        rubric = target.get("rubric_scores") or {}
+        self.assertGreaterEqual(rubric.get("error_handling", 0), 0.85)
 
 
 if __name__ == "__main__":
