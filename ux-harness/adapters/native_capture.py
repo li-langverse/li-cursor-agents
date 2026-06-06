@@ -23,6 +23,18 @@ def resolve_lic_root(target: TargetConfig, agents_root: Path) -> Path | None:
         if p.is_dir():
             return p
     paths = target.raw.get("paths") or {}
+    if target.id == "lic-tetris":
+        example = paths.get("example")
+        if example:
+            p = Path(str(example))
+            if not p.is_absolute():
+                p = (agents_root / p).resolve()
+            if p.is_dir():
+                return p.parent.parent
+        sibling = _langverse_sibling(agents_root, "lic")
+        if sibling.is_dir():
+            return sibling
+        return None
     lic = paths.get("lic_root")
     if lic:
         p = Path(str(lic))
@@ -44,12 +56,22 @@ def resolve_lic_root(target: TargetConfig, agents_root: Path) -> Path | None:
 
 
 def resolve_capture_script(target: TargetConfig, lic_root: Path | None, agents_root: Path) -> Path | None:
-    """Prefer $LIC_ROOT script over paths.capture_script (canonical studio capture)."""
+    """Resolve target-specific native capture script (never studio stub for lic-tetris)."""
+    paths = target.raw.get("paths") or {}
+    if target.id == "lic-tetris":
+        raw = paths.get("capture_script")
+        if raw:
+            p = Path(str(raw))
+            if not p.is_absolute():
+                p = (agents_root / p).resolve()
+            if p.is_file():
+                return p
+        default = agents_root / "ux-harness/scripts/lic-tetris-ux-capture-native.sh"
+        return default if default.is_file() else None
     if lic_root is not None:
         script = lic_root / "scripts/studio-ui-ux-capture-native.sh"
         if script.is_file():
             return script
-    paths = target.raw.get("paths") or {}
     raw = paths.get("capture_script")
     if raw:
         p = Path(str(raw))
@@ -114,11 +136,35 @@ def run_studio_native_capture(
         }
     png_dir = out_dir / "png" / "native"
     png_dir.mkdir(parents=True, exist_ok=True)
+    is_tetris = target.id == "lic-tetris"
     env = {
         **os.environ,
-        "STUDIO_UI_UX_NATIVE_PNG_DIR": str(png_dir),
         "STUDIO_UI_UX_CAPTURE_SKIP_NATIVE": "0",
     }
+    if is_tetris:
+        meta_path = out_dir / "capture-meta.json"
+        env["TETRIS_UX_NATIVE_PNG_DIR"] = str(png_dir)
+        env["TETRIS_UX_NATIVE_META"] = str(meta_path)
+        paths = target.raw.get("paths") or {}
+        build_script = paths.get("build_script")
+        if build_script:
+            env["TETRIS_UX_BUILD_SCRIPT"] = str(
+                Path(str(build_script)).resolve()
+                if Path(str(build_script)).is_absolute()
+                else (agents_root / str(build_script)).resolve()
+            )
+        example = paths.get("example")
+        if example and lic_root is not None:
+            ex = Path(str(example))
+            if not ex.is_absolute():
+                ex = (agents_root / ex).resolve()
+            try:
+                env["TETRIS_UX_EXAMPLE"] = str(ex.relative_to(lic_root))
+            except ValueError:
+                env["TETRIS_UX_EXAMPLE"] = "examples/tetris"
+    else:
+        meta_path = (lic_root or agents_root) / "data/studio-ui-ux-plan-loop/latest-native-capture.json"
+        env["STUDIO_UI_UX_NATIVE_PNG_DIR"] = str(png_dir)
     if lic_root is not None:
         env["LIC_ROOT"] = str(lic_root)
     cmd = ["bash", str(script)]
@@ -137,7 +183,6 @@ def run_studio_native_capture(
     pngs = sorted(png_dir.glob("*.png"))
     native_pixels = proc.returncode == 0 and len(pngs) > 0 and _png_has_viewport_signal(pngs[0])
     artifacts = [str(p) for p in pngs]
-    meta_path = (lic_root or agents_root) / "data/studio-ui-ux-plan-loop/latest-native-capture.json"
     meta: dict[str, Any] = {}
     if meta_path.is_file():
         try:

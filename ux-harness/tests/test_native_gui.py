@@ -133,6 +133,80 @@ class NativeGuiTests(unittest.TestCase):
             self.assertEqual(meta.get("target_id"), "world-studio-native")
             self.assertNotEqual(meta.get("png_dir"), "/stale/other-target/png")
 
+    def test_lic_tetris_skips_studio_capture_script(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            lic = root / "lic"
+            lic.mkdir()
+            studio_script = lic / "scripts/studio-ui-ux-capture-native.sh"
+            studio_script.parent.mkdir(parents=True)
+            studio_script.write_text("#!/bin/bash\n", encoding="utf-8")
+            tetris_script = AGENTS_ROOT / "ux-harness/scripts/lic-tetris-ux-capture-native.sh"
+            target = TargetConfig(
+                id="lic-tetris",
+                repo="lic",
+                surface="gui",
+                surface_class="gui_app",
+                adapter="native_gui",
+                raw={
+                    "paths": {
+                        "example": str(lic / "examples/tetris"),
+                        "capture_script": "ux-harness/scripts/lic-tetris-ux-capture-native.sh",
+                    }
+                },
+            )
+            script = resolve_capture_script(target, lic, AGENTS_ROOT)
+            self.assertEqual(script, tetris_script)
+
+    def test_resolve_lic_root_from_tetris_example(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            example = root / "lic/examples/tetris"
+            example.mkdir(parents=True)
+            target = TargetConfig(
+                id="lic-tetris",
+                repo="lic",
+                surface="gui",
+                surface_class="gui_app",
+                adapter="native_gui",
+                raw={"paths": {"example": str(example)}},
+            )
+            resolved = resolve_lic_root(target, root)
+            self.assertEqual(resolved, (root / "lic").resolve())
+
+    def test_lic_tetris_capture_meta_example_field(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            lic = Path(tmp) / "lic"
+            example = lic / "examples/tetris"
+            example.mkdir(parents=True)
+            capture = Path(tmp) / "fake-tetris-capture.sh"
+            capture.write_text("#!/bin/bash\nexit 1\n", encoding="utf-8")
+
+            target = TargetConfig(
+                id="lic-tetris",
+                repo="lic",
+                surface="gui",
+                surface_class="gui_app",
+                adapter="native_gui",
+                raw={
+                    "paths": {
+                        "example": str(example),
+                        "capture_script": str(capture),
+                    }
+                },
+            )
+            out_dir = Path(tmp) / "artifacts" / "lic-tetris"
+            with mock.patch(
+                "adapters.native_capture.linux_headless_ok", return_value=True
+            ), mock.patch(
+                "adapters.native_capture.xvfb_runner", return_value=None
+            ), mock.patch.dict(os.environ, {"DISPLAY": ":99", "LIC_ROOT": str(lic)}):
+                out = run_studio_native_capture(target, AGENTS_ROOT, out_dir)
+            meta = out.get("capture_meta") or {}
+            self.assertEqual(meta.get("target_id"), "lic-tetris")
+            self.assertEqual(str(out_dir / "capture-meta.json"), str(out_dir / "capture-meta.json"))
+            self.assertEqual(out["status"], "skip")
+
 
 if __name__ == "__main__":
     unittest.main()
