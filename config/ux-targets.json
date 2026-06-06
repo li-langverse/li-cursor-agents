@@ -31,7 +31,11 @@
       "surface": "gui",
       "surface_class": "gui_app",
       "adapter": "native_gui",
-      "paths": { "example": "../lic/examples/tetris" },
+      "paths": {
+        "example": "../lic/examples/tetris",
+        "build_script": "../lic/examples/tetris/build.sh",
+        "capture_script": "ux-harness/scripts/lic-tetris-ux-capture-native.sh"
+      },
       "skip_on_platform": ["darwin"],
       "journeys": [
         { "id": "play_session", "steps": ["start", "mid_game", "game_over"] }
