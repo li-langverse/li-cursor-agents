@@ -131,5 +131,16 @@ kubectl -n li-swarm logs deploy/li-org-issue-supervisor --tail=50
 - Gate: `lic/scripts/ph-sci-gpu-chem-gates.sh` + `ph-sci-echem-competitive-gates.sh`
 - Deploy: `bash scripts/setup-engine-k8s-ph-sci-electrochemistry.sh` (reuses `li-agents-secrets` if present)
 - Scale: `kubectl -n li-swarm scale deploy/li-ph-sci-electrochemistry --replicas=1`
+- **After sprint completes:** `kubectl -n li-swarm scale deploy/li-ph-sci-electrochemistry --replicas=0` (worker exits on `GOAL_COMPLETE` when `LI_PROOF_EXPLORER_EXIT_ON_COMPLETE=1`)
 - Logs: `kubectl -n li-swarm logs -f deploy/li-ph-sci-electrochemistry`
+
+### li-parallel native HPC
+
+- Deployment: `li-li-parallel` (namespace `li-swarm`, node `engine`)
+- PVC: `li-li-parallel-workspace` (dedicated)
+- Branch: `cursor/li-parallel-native-hpc`
+- Goal: `lic/data/goal-directed-sprints/li-parallel-native-hpc.md`
+- Gate: `lic/scripts/check-li-parallel-full-suite.sh`
+- Deploy: `bash scripts/setup-engine-k8s-li-parallel.sh`
+- Logs: `kubectl -n li-swarm logs -f deploy/li-li-parallel`
 
