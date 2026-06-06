@@ -186,10 +186,28 @@ export function updateTriageIssueStatus(
 export function appendTriageAudit(row: Record<string, unknown>, root = agentsPackageRoot()): void {
   const path = triageAuditPath(root);
   mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, `${JSON.stringify({ ts: new Date().toISOString(), ...row })}\n`, {
-    encoding: "utf8",
-    flag: "a",
-  });
+  const line = JSON.stringify({ ts: new Date().toISOString(), ...row });
+  const issueRef = String(row.issueRef ?? "");
+  const workerId = String(row.workerId ?? "");
+
+  if (existsSync(path) && issueRef && workerId) {
+    try {
+      const raw = readFileSync(path, "utf8").trimEnd();
+      if (raw) {
+        const lines = raw.split("\n");
+        const prev = JSON.parse(lines.at(-1) ?? "{}") as Record<string, unknown>;
+        if (prev.issueRef === issueRef && prev.workerId === workerId) {
+          lines[lines.length - 1] = line;
+          writeFileSync(path, `${lines.join("\n")}\n`, { encoding: "utf8" });
+          return;
+        }
+      }
+    } catch {
+      /* fall through to append */
+    }
+  }
+
+  writeFileSync(path, `${line}\n`, { encoding: "utf8", flag: "a" });
 }
 
 export function pruneTerminalTriageEntries(root = agentsPackageRoot()): number {

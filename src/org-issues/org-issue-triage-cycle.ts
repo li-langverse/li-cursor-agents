@@ -36,7 +36,7 @@ export function orgIssueTriageAgentId(): AgentId {
   return "org_issue_triage";
 }
 
-function buildTriageInstruction(
+export function buildTriageInstruction(
   issueRef: string,
   issue: { title: string; body: string | null; labels: string[]; html_url: string },
   workerId: string,
@@ -103,9 +103,9 @@ function outputTail(text: string | undefined, max = 1500): string | undefined {
   return text.trim().slice(-max);
 }
 
-function detectRouted(output: string): OrgIssueTriageResult["routed"] {
+export function detectTriageRouted(output: string): OrgIssueTriageResult["routed"] {
   if (/close_github_issue/i.test(output) && /"closed"\s*:\s*true/i.test(output)) return "close";
-  if (/org-close-issue\.py/i.test(output) && /closed|close/i.test(output)) return "close";
+  if (/org-close-issue\.py/i.test(output) && /"closed"\s*:\s*true/i.test(output)) return "close";
   if (/plan-approved|route.*implement|implement bucket/i.test(output)) return "implement";
   if (/plan-needed|route_planner|issue-feature-planner/i.test(output)) return "planner";
   return "none";
@@ -226,7 +226,7 @@ export async function runOrgIssueTriageCycle(
   }
 
   const output = agentResult.outputText ?? agentResult.error ?? "";
-  const routed = detectRouted(output);
+  const routed = detectTriageRouted(output);
   const agentOk = agentResult.status === "finished";
   const ok = agentOk || issueClosed;
 
