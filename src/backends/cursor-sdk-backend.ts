@@ -9,7 +9,7 @@ import {
   resolveCursorModelId,
   resolveCursorSdkFallbackModelId,
 } from "../env.js";
-import { buildControlPlaneMcpServers } from "../mcp/mcp-config.js";
+import { buildControlPlaneMcpServers, mergeMcpServers } from "../mcp/mcp-config.js";
 import type { AgentBackend, AgentDefinition, AgentRunOptions, AgentRunResult } from "../types.js";
 import {
   printSdkDeltaToTerminal,
@@ -132,7 +132,7 @@ export class CursorSdkBackend implements AgentBackend {
         const attemptStart = Date.now();
         try {
           const { Agent } = await import("@cursor/sdk");
-          const mcpServers = buildControlPlaneMcpServers();
+          const mcpServers = mergeMcpServers(buildControlPlaneMcpServers(), options.extraMcpServers);
           agent = await Agent.create({
             apiKey,
             model: { id: modelId },

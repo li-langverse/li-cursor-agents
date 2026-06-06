@@ -1,4 +1,5 @@
 import https from "node:https";
+import type { GitHubResponseHeaders } from "../github/github-rate-limit.js";
 
 export interface GitHubIssue {
   number: number;
@@ -21,10 +22,10 @@ function ghRequest<T>(
   method: string,
   path: string,
   body?: unknown,
-): Promise<{ status: number; data: T | null; raw: string }> {
+): Promise<{ status: number; data: T | null; raw: string; headers: GitHubResponseHeaders }> {
   const token = ghToken();
   if (!token) {
-    return Promise.resolve({ status: 401, data: null, raw: "GH_TOKEN required" });
+    return Promise.resolve({ status: 401, data: null, raw: "GH_TOKEN required", headers: {} });
   }
   const payload = body === undefined ? undefined : JSON.stringify(body);
   return new Promise((resolve, reject) => {
@@ -55,7 +56,7 @@ function ghRequest<T>(
               data = null;
             }
           }
-          resolve({ status: res.statusCode ?? 0, data, raw });
+          resolve({ status: res.statusCode ?? 0, data, raw, headers: res.headers });
         });
       },
     );
@@ -63,6 +64,36 @@ function ghRequest<T>(
     if (payload) req.write(payload);
     req.end();
   });
+}
+
+export class GitHubIssueRequestError extends Error {
+  readonly status: number;
+  readonly headers: GitHubResponseHeaders;
+
+  constructor(message: string, status: number, headers: GitHubResponseHeaders) {
+    super(message);
+    this.name = "GitHubIssueRequestError";
+    this.status = status;
+    this.headers = headers;
+  }
+}
+
+export async function fetchGitHubRateLimitCore(): Promise<{
+  remaining: number;
+  reset: number;
+  limit: number;
+} | null> {
+  const res = await ghRequest<{
+    resources?: { core?: { remaining?: number; reset?: number; limit?: number } };
+  }>("GET", "/rate_limit");
+  if (res.status !== 200 || !res.data?.resources?.core) return null;
+  const core = res.data.resources.core;
+  if (!Number.isFinite(core.remaining) || !Number.isFinite(core.reset)) return null;
+  return {
+    remaining: core.remaining!,
+    reset: core.reset!,
+    limit: Number.isFinite(core.limit) ? core.limit! : 5000,
+  };
 }
 
 export async function fetchGitHubIssue(
@@ -80,7 +111,11 @@ export async function fetchGitHubIssue(
   }>("GET", `/repos/${org}/${repo}/issues/${number}`);
 
   if (res.status !== 200 || !res.data) {
-    throw new Error(`GitHub issue fetch failed (${res.status}): ${res.raw.slice(0, 300)}`);
+    throw new GitHubIssueRequestError(
+      `GitHub issue fetch failed (${res.status}): ${res.raw.slice(0, 300)}`,
+      res.status,
+      res.headers,
+    );
   }
 
   const issue = res.data;

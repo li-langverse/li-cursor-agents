@@ -1,0 +1,73 @@
+# Always-on agent-runs leaderboard heartbeat (engine node, toy / joke — perpetual SDK runs).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: li-agent-runs-leaderboard
+  namespace: li-swarm
+  labels:
+    app: li-agent-runs-leaderboard
+    app.kubernetes.io/name: li-agent-runs-leaderboard
+    app.kubernetes.io/component: heartbeat-agent
+    app.kubernetes.io/part-of: li-langverse
+    li-langverse.io/sprint: agent-runs-leaderboard
+    li-langverse.io/role: agent-runs-heartbeat
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: li-agent-runs-leaderboard
+  template:
+    metadata:
+      labels:
+        app: li-agent-runs-leaderboard
+        app.kubernetes.io/name: li-agent-runs-leaderboard
+        app.kubernetes.io/component: heartbeat-agent
+        app.kubernetes.io/part-of: li-langverse
+        li-langverse.io/sprint: agent-runs-leaderboard
+        li-langverse.io/role: agent-runs-heartbeat
+      annotations:
+        prometheus.io/scrape: "false"
+        li-langverse.io/curator: julianmkleber.com
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: engine
+      imagePullSecrets:
+        - name: ghcr-li-langverse
+      containers:
+        - name: agent-runs-leaderboard
+          image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "/config/entrypoint.sh"]
+          envFrom:
+            - configMapRef:
+                name: li-agent-runs-leaderboard
+          env:
+            - name: CURSOR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: CURSOR_API_KEY
+                  optional: true
+            - name: CURSOR_SDK_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: CURSOR_SDK_KEY
+                  optional: true
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+          volumeMounts:
+            - name: config-bundle
+              mountPath: /config
+      volumes:
+        - name: config-bundle
+          configMap:
+            name: li-agent-runs-leaderboard-bundle
+            defaultMode: 0755

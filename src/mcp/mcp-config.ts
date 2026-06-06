@@ -14,6 +14,7 @@ import { configuredStore, dbEnabled, useLidbStore } from "../db/client.js";
 export const CONTROL_PLANE_DB_MCP_ID = "li-control-plane-db";
 export const CONTROL_PLANE_LIQ_MCP_ID = "li-control-plane-liq";
 export const ECOSYSTEM_CONTEXT_MCP_ID = "li-ecosystem-context";
+export const ORG_GITHUB_MCP_ID = "li-org-github";
 
 export function controlPlaneDbMcpEntryPath(): string {
   const root = agentsPackageRoot();
@@ -40,6 +41,41 @@ export function controlPlaneLiqMcpEntryPath(): string {
     throw new Error(`Missing ${built} — run npm run build`);
   }
   return built;
+}
+
+export function orgGithubMcpEntryPath(): string {
+  const root = agentsPackageRoot();
+  const built = join(root, "dist", "mcp", "org-github-mcp.js");
+  if (!existsSync(built)) {
+    throw new Error(`Missing ${built} — run npm run build`);
+  }
+  return built;
+}
+
+export function buildOrgGithubMcpServer(root = agentsPackageRoot()): McpServerConfig {
+  const env: Record<string, string> = { LI_CURSOR_AGENTS_ROOT: root };
+  for (const key of ["GH_TOKEN", "GITHUB_TOKEN", "LI_CURSOR_AGENTS_ROOT"]) {
+    const v = process.env[key];
+    if (v) env[key] = v;
+  }
+  return {
+    type: "stdio",
+    command: process.execPath,
+    args: [orgGithubMcpEntryPath()],
+    cwd: root,
+    env,
+  };
+}
+
+export function mergeMcpServers(
+  ...parts: Array<Record<string, McpServerConfig> | undefined>
+): Record<string, McpServerConfig> | undefined {
+  const merged: Record<string, McpServerConfig> = {};
+  for (const part of parts) {
+    if (!part) continue;
+    Object.assign(merged, part);
+  }
+  return Object.keys(merged).length ? merged : undefined;
 }
 
 function buildEcosystemContextMcpServer(root: string): McpServerConfig {

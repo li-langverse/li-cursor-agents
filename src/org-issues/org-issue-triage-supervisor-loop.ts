@@ -5,7 +5,12 @@ import { workerConsole } from "../worker/worker-console.js";
 import { agentsPackageRoot } from "../runner.js";
 import { reconcileOrphanedK8sJobs } from "../org/k8s-job-reconcile.js";
 import { idleLimitReached } from "../org/supervisor-idle.js";
-import { getPrBackoff } from "../org-prs/org-pr-coordination.js";
+import { getPrBackoff, setPrBackoff } from "../org-prs/org-pr-coordination.js";
+import {
+  backoffIsoFromCoreRateLimit,
+  shouldDeferForRateLimit,
+} from "../github/github-rate-limit.js";
+import { fetchGitHubRateLimitCore, ghToken } from "./org-issue-github.js";
 import { issueRef } from "./org-issue-supervisor-config.js";
 import {
   activeTriageClaimsForDb,
@@ -49,6 +54,10 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
 
 function readQueueOpenTotal(root: string): number {
   return readIssueQueueMeta(root).totalOpen;
+}
+
+function ghTokenAvailable(): boolean {
+  return Boolean(ghToken());
 }
 
 export interface TriageSupervisorTickResult {
@@ -118,6 +127,32 @@ export async function orgIssueTriageSupervisorTick(): Promise<TriageSupervisorTi
   const queued = readTriageQueueIssues(root);
   const activeSet = activeTriageIssueRefs(readTriageActiveState(root));
   let spawned = 0;
+
+  if (slots > 0 && ghTokenAvailable()) {
+    try {
+      const core = await fetchGitHubRateLimitCore();
+      if (shouldDeferForRateLimit(core)) {
+        const until = backoffIsoFromCoreRateLimit(core!);
+        setPrBackoff(until, "github_rate_limit_preflight");
+        const msg = `GitHub rate limit preflight: ${core!.remaining} remaining until ${until}`;
+        workerConsole("org-issue-triage-supervisor", "info", msg);
+        return {
+          openCount,
+          triageCount,
+          desiredWorkers: 0,
+          activeWorkers,
+          spawned: 0,
+          message: msg,
+        };
+      }
+    } catch (err) {
+      workerConsole(
+        "org-issue-triage-supervisor",
+        "warn",
+        `rate limit preflight failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  }
 
   for (const row of queued) {
     if (spawned >= slots) break;

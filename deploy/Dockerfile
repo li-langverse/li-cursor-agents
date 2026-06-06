@@ -25,7 +25,9 @@ RUN npm run build \
   && npm --prefix apps/org-supervisor-dashboard prune --omit=dev
 
 COPY deploy/org-worker-entrypoint.sh /app/deploy/org-worker-entrypoint.sh
-RUN chmod +x /app/deploy/org-worker-entrypoint.sh
+# Windows checkouts often carry CRLF despite .gitattributes; strip before exec.
+RUN find /app/deploy /app/scripts -type f -name '*.sh' -exec sed -i 's/\r$//' {} + \
+  && chmod +x /app/deploy/org-worker-entrypoint.sh
 
 ENV NODE_ENV=production
 # Default: org-issue worker one-shot (CronJob overrides command).

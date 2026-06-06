@@ -1,13 +1,13 @@
-import { setPlannerBackoff } from "../org-planner/org-planner-coordination.js";
-import { setPrBackoff } from "../org-prs/org-pr-coordination.js";
+import { applyOrgGitHubRateLimitBackoff } from "../github/github-rate-limit.js";
 import { resolveCursorApiKey, resolveCursorEnvFileHint } from "../env.js";
 import { runAgent, agentsPackageRoot, shouldUseMock } from "../runner.js";
 import { workerConsole } from "../worker/worker-console.js";
 import type { AgentId } from "../types.js";
 import type { QueuedOrgIssue } from "./org-issue-coordination.js";
 import { removeClosedIssueFromQueue } from "./org-issue-coordination.js";
-import { fetchGitHubIssue, postGitHubIssueComment } from "./org-issue-github.js";
+import { fetchGitHubIssue, GitHubIssueRequestError, postGitHubIssueComment } from "./org-issue-github.js";
 import { issueRef, parseIssueRef } from "./org-issue-supervisor-config.js";
+import { buildOrgGithubMcpServer, ORG_GITHUB_MCP_ID } from "../mcp/mcp-config.js";
 
 export interface OrgIssueTriageOptions {
   issueRef: string;
@@ -35,7 +35,7 @@ export function orgIssueTriageAgentId(): AgentId {
   return "org_issue_triage";
 }
 
-function buildTriageInstruction(
+export function buildTriageInstruction(
   issueRef: string,
   issue: { title: string; body: string | null; labels: string[]; html_url: string },
   workerId: string,
@@ -43,6 +43,7 @@ function buildTriageInstruction(
 ): string {
   const parsed = parseIssueRef(issueRef);
   const repo = parsed?.repo ?? "lic";
+  const issueNum = parsed?.number ?? 0;
   const labels = issue.labels.length ? issue.labels.join(", ") : "(none)";
   const classification = queueEntry?.classification_note?.trim() || "needs_triage";
   const body = issue.body?.trim() || "(empty body)";
@@ -65,23 +66,32 @@ function buildTriageInstruction(
     "",
     "## Your task",
     "",
-    "You are the **triage** agent for this single open issue. Decide and **execute** one outcome:",
+    "You are the **triage** agent for this single issue. Pick **one** outcome and execute it:",
     "",
-    "1. **Close with evidence** (duplicate, spam, already on main, wontfix, superseded):",
-    "   Run `python3 scripts/org-close-issue.py --repo " +
-      repo +
-      " --number N --reason <reason> --summary \"...\" --evidence \"...\"`",
-    "   Do not close via GitHub UI only.",
+    "### A) Close → **must** call MCP tool `close_github_issue` (server `li-org-github`)",
     "",
-    "2. **Route to implementation** (actionable bug/feature with clear AC): add label `plan-approved` or `bug`/`enhancement`, comment, stop.",
+    "```",
+    "close_github_issue({",
+    `  repo: "${repo}",`,
+    `  number: ${issueNum},`,
+    '  reason: "<already_implemented|duplicate|wontfix|spam|superseded|not_actionable|stale_no_response>",',
+    '  summary: "...",',
+    '  evidence: "PR #123 merged / duplicate of #456 / file X on main"',
+    "})",
+    "```",
     "",
-    "3. **Route to planner** (needs design/plan): ensure `plan-needed` (or comment), stop — do not close.",
+    "Success = tool JSON has `\"closed\": true`. Do **not** use GitHub UI or shell `org-close-issue.py` manually unless the tool fails.",
     "",
-    "4. **Stale / needs human**: comment with concrete ask; only close if author unresponsive and policy allows `stale_no_response`.",
+    "### B) Route to implement",
+    "Add label `bug` / `enhancement` / `plan-approved`, comment with AC, stop (issue stays open).",
     "",
-    "Read first: `prompts/org-issue-triage-agent.md`, `data/goal-directed-sprints/org-issue-zero.md`.",
+    "### C) Route to planner",
+    "Add label `plan-needed`, comment what's missing, stop.",
     "",
-    "After any `org-close-issue.py` success, the issue must show **closed** on GitHub.",
+    "### D) Needs human",
+    "Comment with one concrete question; stop.",
+    "",
+    "Read `prompts/org-issue-triage-agent.md`. Do **not** re-classify the whole org.",
     "",
     `workflow repo: ${repo}`,
   ].join("\n");
@@ -92,8 +102,9 @@ function outputTail(text: string | undefined, max = 1500): string | undefined {
   return text.trim().slice(-max);
 }
 
-function detectRouted(output: string): OrgIssueTriageResult["routed"] {
-  if (/org-close-issue\.py/i.test(output) && /closed|close/i.test(output)) return "close";
+export function detectTriageRouted(output: string): OrgIssueTriageResult["routed"] {
+  if (/close_github_issue/i.test(output) && /"closed"\s*:\s*true/i.test(output)) return "close";
+  if (/org-close-issue\.py/i.test(output) && /"closed"\s*:\s*true/i.test(output)) return "close";
   if (/plan-approved|route.*implement|implement bucket/i.test(output)) return "implement";
   if (/plan-needed|route_planner|issue-feature-planner/i.test(output)) return "planner";
   return "none";
@@ -135,11 +146,8 @@ export async function runOrgIssueTriageCycle(
     issue = await fetchGitHubIssue(parsed.org, parsed.repo, parsed.number);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (/rate limit exceeded|secondary rate limit/i.test(msg)) {
-      const until = new Date(Date.now() + 3_600_000).toISOString();
-      setPrBackoff(until, "github_rate_limited");
-      setPlannerBackoff(until, "github_rate_limited");
-    }
+    const headers = err instanceof GitHubIssueRequestError ? err.headers : undefined;
+    applyOrgGitHubRateLimitBackoff(msg, headers);
     return {
       ok: false,
       status: "failed",
@@ -190,6 +198,7 @@ export async function runOrgIssueTriageCycle(
       dryRun: options.dryRun ?? false,
       workflowRepo: parsed.repo,
       extraInstruction: instruction,
+      extraMcpServers: mock ? undefined : { [ORG_GITHUB_MCP_ID]: buildOrgGithubMcpServer() },
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -213,7 +222,7 @@ export async function runOrgIssueTriageCycle(
   }
 
   const output = agentResult.outputText ?? agentResult.error ?? "";
-  const routed = detectRouted(output);
+  const routed = detectTriageRouted(output);
   const agentOk = agentResult.status === "finished";
   const ok = agentOk || issueClosed;
 

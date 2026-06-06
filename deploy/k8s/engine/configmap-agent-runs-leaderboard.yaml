@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: li-agent-runs-leaderboard
+  namespace: li-swarm
+  labels:
+    app: li-agent-runs-leaderboard
+    app.kubernetes.io/name: li-agent-runs-leaderboard
+    app.kubernetes.io/component: heartbeat-agent
+    li-langverse.io/sprint: agent-runs-leaderboard
+data:
+  LI_AGENT_RUNS_LEADERBOARD_ALWAYS_ON: "1"
+  LI_AGENT_RUNS_LEADERBOARD_LOOP_SLEEP_SEC: "180"
+  LI_AGENT_RUNS_LEADERBOARD_AGENT: "plan_verifier"
+  LI_AGENT_RUNS_LEADERBOARD_WORKFLOW_REPO: "li-cursor-agents"
+  LI_CURSOR_AGENTS_ROOT: "/app"
+  LI_SDK_TERMINAL_STREAM: "1"
+  LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE: "1"
+  LI_AGENT_MINIMAL_PROMPT: "1"
+  NODE_ENV: "production"

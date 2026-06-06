@@ -21,6 +21,11 @@ rules:
       - li-world-studio-gui-product-visual
       - li-li-toml-config
       - li-proof-explorer
+      - li-db-studio-product
+      - li-db-studio-klaut
+      - li-research-product
+      - li-research-klaut
+      - li-research-ingest
   - apiGroups: ["apps"]
     resources: ["deployments/scale"]
     verbs: ["get", "patch", "update"]
@@ -28,6 +33,11 @@ rules:
       - li-world-studio-gui-product-visual
       - li-li-toml-config
       - li-proof-explorer
+      - li-db-studio-product
+      - li-db-studio-klaut
+      - li-research-product
+      - li-research-klaut
+      - li-research-ingest
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

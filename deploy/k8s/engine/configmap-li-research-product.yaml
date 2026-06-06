@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: li-research-product
+  namespace: li-swarm
+  labels:
+    app: li-research-product
+    app.kubernetes.io/name: li-research-product
+    app.kubernetes.io/component: goal-directed-agent
+    li-langverse.io/sprint: li-research-r0
+data:
+  LI_GOAL_WORKSPACE: "/workspace"
+  LI_GOAL_FILE: "data/goal-directed-sprints/wp-li-research-r0-product.md"
+  LI_GOAL_BRANCH: "cursor/li-research-r0"
+  LI_GOAL_BRANCH_SCHEMA: "cursor/li-research-r0"
+  LI_GOAL_AGENT: "code_implementer"
+  LI_GOAL_LOOP_SLEEP_SEC: "120"
+  LI_GOAL_DEPLOYMENT_NAME: "li-research-product"
+  LI_GOAL_NAMESPACE: "li-swarm"
+  LI_GITHUB_ORG: "li-langverse"
+  LI_CURSOR_AGENTS_ROOT: "/app"
+  LI_CONTROL_PLANE_STORE: "disk"
+  LI_SDK_TERMINAL_STREAM: "1"
+  LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE: "1"
+  NODE_ENV: "production"

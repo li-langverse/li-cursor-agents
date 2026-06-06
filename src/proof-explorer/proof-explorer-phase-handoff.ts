@@ -66,6 +66,11 @@ const DEFAULT_PHASES: ProofExplorerPhase[] = [
     goalRel: "data/goal-directed-sprints/proof-explorer-phase12-catalog-quality.md",
     gateRel: "scripts/proof-explorer-phase12-completion-gate.sh",
   },
+  {
+    id: "phase13",
+    goalRel: "data/goal-directed-sprints/proof-explorer-phase13-ten-of-ten.md",
+    gateRel: "scripts/proof-explorer-phase13-completion-gate.sh",
+  },
 ];
 
 export function isPhaseHandoffEnabled(): boolean {

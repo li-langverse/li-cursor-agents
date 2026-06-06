@@ -1,0 +1,48 @@
+# Script-only worker: squash-merge green PRs from org-pr-merge-queue.json (no Cursor agent).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: li-org-pr-merge-worker
+  namespace: li-swarm
+  labels:
+    app: li-org-pr-merge-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: li-org-pr-merge-worker
+  template:
+    metadata:
+      labels:
+        app: li-org-pr-merge-worker
+    spec:
+      nodeSelector:
+        li-langverse.io/node-pool: engine
+      containers:
+        - name: worker
+          image: ghcr.io/li-langverse/li-cursor-agents:latest
+          imagePullPolicy: Always
+          command: ["node", "dist/cli/org-pr-merge-worker.js", "start"]
+          envFrom:
+            - configMapRef:
+                name: li-org-pr-merge-worker
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_SWARM_TOKEN
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "1"
+              memory: "512Mi"
+          volumeMounts:
+            - name: sprint-data
+              mountPath: /app/data/goal-directed-sprints
+      volumes:
+        - name: sprint-data
+          persistentVolumeClaim:
+            claimName: li-agents-sprint-data

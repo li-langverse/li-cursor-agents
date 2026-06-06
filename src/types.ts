@@ -101,6 +101,8 @@ export interface AgentRunOptions {
   runId?: string;
   /** Populated by runner for live trace + event persistence. */
   runInput?: AgentRunInputRecord;
+  /** Additional MCP servers merged into the SDK agent (e.g. li-org-github for triage). */
+  extraMcpServers?: Record<string, import("./mcp/mcp-config.js").McpServerConfig>;
 }
 
 export interface AgentRunCompletionMeta {

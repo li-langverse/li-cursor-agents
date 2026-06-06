@@ -247,6 +247,11 @@ export function readImplementQueuePrs(root = agentsPackageRoot()): QueuedOrgPr[]
   return out;
 }
 
+/** PRs ready for squash merge (green bucket only). */
+export function readGreenQueuePrs(root = agentsPackageRoot()): QueuedOrgPr[] {
+  return readQueueBucket(root, "green");
+}
+
 /** PRs ready for standards review (green + blocked merge queue). */
 export function readReviewQueuePrs(root = agentsPackageRoot()): QueuedOrgPr[] {
   const buckets = ["green", "blocked"] as const;

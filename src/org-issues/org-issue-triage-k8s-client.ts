@@ -138,6 +138,18 @@ export async function listTriageJobs(): Promise<K8sTriageJobSummary[]> {
   return out;
 }
 
+export function triageJobContainerCommand(issueRef: string, workerId: string): string[] {
+  return [
+    "/app/deploy/org-worker-entrypoint.sh",
+    "node",
+    "dist/cli/org-issue-triage.js",
+    "--issue",
+    issueRef,
+    "--worker-id",
+    workerId,
+  ];
+}
+
 export async function createTriageJob(options: {
   issueRef: string;
   repo: string;
@@ -176,15 +188,7 @@ export async function createTriageJob(options: {
               name: "triage",
               image,
               imagePullPolicy: "Always",
-              command: [
-                "/app/deploy/org-worker-entrypoint.sh",
-                "node",
-                "dist/cli/org-issue-triage.js",
-                "--issue",
-                options.issueRef,
-                "--worker-id",
-                options.workerId,
-              ],
+              command: triageJobContainerCommand(options.issueRef, options.workerId),
               envFrom: [{ configMapRef: { name: "li-org-issue-triage-supervisor" } }],
               env: [
                 {

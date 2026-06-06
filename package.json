@@ -35,6 +35,8 @@
     "agents:async-swarm": "npm run build && node dist/cli/async-swarm.js start",
     "agents:org-issue-worker": "npm run build && node dist/cli/org-issue-worker.js start",
     "agents:org-issue-worker-once": "npm run build && node dist/cli/org-issue-worker.js once",
+    "agents:org-pr-merge-worker": "npm run build && node dist/cli/org-pr-merge-worker.js start",
+    "agents:org-pr-merge-worker-once": "npm run build && node dist/cli/org-pr-merge-worker.js once",
     "agents:org-issue-supervisor": "npm run build && node dist/cli/org-issue-supervisor.js supervise",
     "agents:org-issue-supervisor-wake": "npm run build && node dist/cli/org-issue-supervisor.js wake",
     "agents:org-issue-triage-supervisor": "npm run build && node dist/cli/org-issue-triage-supervisor.js supervise",

@@ -3,7 +3,7 @@
 param(
     [int]$Max = 0,  # 0 = no iteration cap; stop on completion gate only
     [string]$UntilLocal = "",
-    [ValidateSet("all", "studio", "lig", "ph-ml", "world-studio", "world-studio-runnable", "world-studio-gui-library", "world-studio-gui-polish", "benchmarks", "benchmarks-dashboard", "li-toml-config", "swarm", "org-prs", "org-prs-dirty", "org-prs-ci")]
+    [ValidateSet("all", "studio", "lig", "ph-ml", "world-studio", "world-studio-runnable", "world-studio-gui-library", "world-studio-gui-polish", "world-studio-aimd-demo", "benchmarks", "benchmarks-dashboard", "li-toml-config", "swarm", "org-prs", "org-prs-dirty", "org-prs-ci")]
     [string]$Sprint = "all",
     [switch]$DryRun,
     [switch]$BuildOnly
@@ -152,6 +152,19 @@ $sprints = @(
             LI_GOAL_GATE_PREFER_CWD = "1"
             WORLD_STUDIO_GATES_WSL = "1"
             LI_GOAL_LOOP_SLEEP_SEC = "45"
+            LIC = "../lic/build-wsl/compiler/lic/lic"
+        }
+    },
+    @{
+        Id       = "world-studio-aimd-demo"
+        Agent    = "world_studio_builder"
+        Repo     = "studio"
+        Cwd      = "../studio"
+        GoalRel  = "../studio/data/goal-directed-sprints/world-studio-aimd-demo.md"
+        ExtraEnv = @{
+            LI_GOAL_GATE_PREFER_CWD = "0"
+            WORLD_STUDIO_GATES_WSL = "1"
+            LI_GOAL_LOOP_SLEEP_SEC = "60"
             LIC = "../lic/build-wsl/compiler/lic/lic"
         }
     },
