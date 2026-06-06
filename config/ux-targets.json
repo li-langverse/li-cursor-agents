@@ -57,8 +57,7 @@
       "surface_class": "gui_app",
       "adapter": "native_gui",
       "paths": {
-        "lic_root": "../lic",
-        "capture_script": "../lic/scripts/studio-ui-ux-capture-native.sh"
+        "lic_root": "../lic-studio-ui"
       },
       "skip_on_platform": ["darwin"],
       "journeys": [

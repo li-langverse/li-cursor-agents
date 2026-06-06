@@ -14,6 +14,6 @@ python3 ux-harness/run_audit.py --target lic-docs --mode ux
 - **docs** — static link scan of built MkDocs `site/` (skips if not built; set `LIC_ROOT` to override site path)
 - **web_gui** — HTTP probe or HTML fixture file
 - **tui** — runs `fixture` shell script from manifest
-- **native_gui** — `world-studio-native` runs `lic/scripts/studio-ui-ux-capture-native.sh` under Xvfb/SDL when Linux + libsdl2; skips on missing deps (HTML mocks remain fallback)
+- **native_gui** — `world-studio-native` runs `$LIC_ROOT/scripts/studio-ui-ux-capture-native.sh` (canonical `lic-studio-ui` checkout, `LIC_ROOT` override) under Xvfb/SDL when Linux + libsdl2; skips on missing deps (HTML mocks remain fallback)
 
 Preflight: `../benchmarks/scripts/ui-ux-audit.py` writes `data/latest/ui-audit.json` and `ux-audit.json`.

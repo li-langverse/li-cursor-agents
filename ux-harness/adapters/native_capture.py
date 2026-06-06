@@ -12,6 +12,10 @@ from typing import Any
 from .base import TargetConfig
 
 
+def _langverse_sibling(agents_root: Path, name: str) -> Path:
+    return (agents_root.parent / name).resolve()
+
+
 def resolve_lic_root(target: TargetConfig, agents_root: Path) -> Path | None:
     env_root = os.environ.get("LIC_ROOT")
     if env_root:
@@ -20,15 +24,31 @@ def resolve_lic_root(target: TargetConfig, agents_root: Path) -> Path | None:
             return p
     paths = target.raw.get("paths") or {}
     lic = paths.get("lic_root")
-    if not lic:
-        return None
-    p = Path(str(lic))
-    if not p.is_absolute():
-        p = (agents_root / p).resolve()
-    return p if p.is_dir() else None
+    if lic:
+        p = Path(str(lic))
+        if not p.is_absolute():
+            p = (agents_root / p).resolve()
+        if p.is_dir():
+            return p
+        # Canonical studio checkout may be absent; fall back to main lic tree.
+        if "lic-studio-ui" in str(lic):
+            fallback = _langverse_sibling(agents_root, "lic")
+            if fallback.is_dir():
+                return fallback
+    if target.id == "world-studio-native":
+        for sibling in ("lic-studio-ui", "lic"):
+            p = _langverse_sibling(agents_root, sibling)
+            if p.is_dir():
+                return p
+    return None
 
 
 def resolve_capture_script(target: TargetConfig, lic_root: Path | None, agents_root: Path) -> Path | None:
+    """Prefer $LIC_ROOT script over paths.capture_script (canonical studio capture)."""
+    if lic_root is not None:
+        script = lic_root / "scripts/studio-ui-ux-capture-native.sh"
+        if script.is_file():
+            return script
     paths = target.raw.get("paths") or {}
     raw = paths.get("capture_script")
     if raw:
@@ -37,10 +57,6 @@ def resolve_capture_script(target: TargetConfig, lic_root: Path | None, agents_r
             p = (agents_root / p).resolve()
         if p.is_file():
             return p
-    if lic_root is not None:
-        script = lic_root / "scripts/studio-ui-ux-capture-native.sh"
-        if script.is_file():
-            return script
     return None
 
 
@@ -128,6 +144,8 @@ def run_studio_native_capture(
             meta = json.loads(meta_path.read_text(encoding="utf-8"))
         except json.JSONDecodeError:
             meta = {}
+    # Per-target png dir — do not report stale png_dir from other harness runs.
+    meta = {**meta, "png_dir": str(png_dir), "target_id": target.id}
     if proc.returncode != 0:
         return {
             **base,

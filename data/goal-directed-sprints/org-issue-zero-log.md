@@ -6,3 +6,4 @@ Baseline open issues: **177** (GitHub search)
 | Iteration | open_issues | closed | implemented | notes |
 |-----------|------------:|-------:|------------:|-------|
 | 2026-05-30 setup | 177 | 0 | 0 | Sprint + scripts added; queue not yet classified |
+| 2026-06-06 | — | 0 | 1 | #47 world-studio-native capture_script fix → PR #118 |
