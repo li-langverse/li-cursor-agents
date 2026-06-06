@@ -5,6 +5,16 @@ from typing import Any
 
 from .base import TargetConfig
 
+_AGENTIC_AI_SOTA = ["cursor-agent", "linear-app", "github-copilot-workspace"]
+_DEFAULT_MOCK_SOTA = ["mkdocs-material", "shadcn-ui", "textual"]
+
+
+def _mock_sota_refs(target_id: str) -> list[str]:
+    refs = list(_DEFAULT_MOCK_SOTA)
+    if target_id == "world-studio-demo":
+        refs.extend(_AGENTIC_AI_SOTA)
+    return refs
+
 
 def mock_ui_result(target: TargetConfig, agents_root: str) -> dict[str, Any]:
     failing = target.id in ("lic-docs",)
@@ -66,7 +76,7 @@ def mock_ux_result(target: TargetConfig, agents_root: str) -> dict[str, Any]:
             if low_rubric
             else []
         ),
-        "sota_refs": ["mkdocs-material", "shadcn-ui", "textual"],
+        "sota_refs": _mock_sota_refs(target.id),
         "rubric_scores": rubric,
         "rubric_threshold": 0.6,
         "missing_states": ["empty"] if low_rubric else [],

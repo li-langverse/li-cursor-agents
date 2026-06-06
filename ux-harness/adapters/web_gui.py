@@ -230,6 +230,8 @@ def _build_ux_payload(
         missing_states = [] if empty_state_ok else ["empty"]
         rubric = _rubric_from_journeys(journey_results, empty_state_ok=empty_state_ok)
         sota_refs = ["shadcn-ui"]
+        if target.id == "world-studio-demo":
+            sota_refs = sota_refs + ["cursor-agent", "linear-app", "github-copilot-workspace"]
 
     out_dir = _artifact_dir(target, agents_root)
     out_dir.mkdir(parents=True, exist_ok=True)
