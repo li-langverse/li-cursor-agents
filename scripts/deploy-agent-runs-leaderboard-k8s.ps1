@@ -35,6 +35,18 @@ if (-not $env:CURSOR_API_KEY) {
 }
 
 $env:KUBECONFIG = $KubeConfig
+Write-Host "==> npm run build (leaderboard daemon dist overlay)"
+Push-Location $Root
+npm run build
+Pop-Location
+
+$daemonOverlay = Join-Path $env:TEMP "li-agent-runs-leaderboard-daemon-overlay"
+if (Test-Path $daemonOverlay) { Remove-Item -Recurse -Force $daemonOverlay }
+New-Item -ItemType Directory -Force -Path (Join-Path $daemonOverlay "cli") | Out-Null
+New-Item -ItemType Directory -Force -Path (Join-Path $daemonOverlay "agent-runs-leaderboard") | Out-Null
+Copy-Item -Force (Join-Path $Root "dist\cli\agent-runs-leaderboard-daemon.js") (Join-Path $daemonOverlay "cli\")
+Copy-Item -Force (Join-Path $Root "dist\agent-runs-leaderboard\*.js") (Join-Path $daemonOverlay "agent-runs-leaderboard\")
+
 Write-Host "==> kubectl apply li-agent-runs-leaderboard (namespace=$Namespace)"
 
 kubectl label node $EngineNode li-langverse.io/node-pool=engine --overwrite 2>$null
@@ -48,7 +60,7 @@ $extra = @{
 }
 . (Join-Path $Root "scripts\Invoke-K8sGoalLoopBundle.ps1") `
     -Root $Root -Namespace $Namespace -ConfigMapName "li-agent-runs-leaderboard-bundle" `
-    -ExtraFiles $extra
+    -ExtraFiles $extra -DistOverlayDir $daemonOverlay
 
 $ghToken = if ($env:GH_TOKEN) { $env:GH_TOKEN } elseif ($env:GITHUB_TOKEN) { $env:GITHUB_TOKEN } else { "unused" }
 $secretArgs = @(
@@ -72,7 +84,7 @@ kubectl -n $Namespace rollout restart deploy/li-agent-runs-leaderboard 2>$null
 kubectl -n $Namespace rollout status deploy/li-agent-runs-leaderboard --timeout=180s
 
 Write-Host ""
-Write-Host "=== li-agent-runs-leaderboard deployed (forever heartbeat) ==="
+Write-Host "=== li-agent-runs-leaderboard deployed (long-lived SDK session) ==="
 Write-Host "  kubectl -n $Namespace get pods -l app=li-agent-runs-leaderboard -w"
 Write-Host "  kubectl -n $Namespace logs deploy/li-agent-runs-leaderboard --tail=80 -f"
 Write-Host ""

@@ -3,7 +3,8 @@ param(
     [Parameter(Mandatory = $true)][string]$Root,
     [Parameter(Mandatory = $true)][string]$Namespace,
     [Parameter(Mandatory = $true)][string]$ConfigMapName,
-    [hashtable]$ExtraFiles = @{}
+    [hashtable]$ExtraFiles = @{},
+    [string]$DistOverlayDir = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -36,18 +37,34 @@ foreach ($key in $ExtraFiles.Keys) {
     }
 }
 
+if ($DistOverlayDir -and (Test-Path $DistOverlayDir)) {
+    $overlayDest = Join-Path $bundleDir "daemon-dist"
+    New-Item -ItemType Directory -Force -Path $overlayDest | Out-Null
+    Get-ChildItem -Path $DistOverlayDir -Recurse -File -Filter "*.js" | ForEach-Object {
+        $rel = $_.FullName.Substring($DistOverlayDir.Length).TrimStart('\', '/')
+        $destDir = Join-Path $overlayDest (Split-Path $rel -Parent)
+        if ($destDir -and -not (Test-Path $destDir)) {
+            New-Item -ItemType Directory -Force -Path $destDir | Out-Null
+        }
+        Copy-Item -Force $_.FullName (Join-Path $overlayDest $rel)
+    }
+}
+
 python -c @"
 import pathlib, subprocess, os, sys
 bundle = pathlib.Path(r'$bundleDir')
 env = {**os.environ, 'KUBECONFIG': os.environ.get('KUBECONFIG', '')}
+args = ['kubectl', '-n', '$Namespace', 'create', 'configmap', '$ConfigMapName']
+for path in sorted(bundle.rglob('*')):
+    if not path.is_file():
+        continue
+    rel = path.relative_to(bundle).as_posix()
+    key = rel.replace('/', '__')
+    args.extend(['--from-file', f'{key}={path}'])
+args.extend(['--dry-run=client', '-o', 'yaml'])
 proc = subprocess.run(
     ['kubectl', '-n', '$Namespace', 'apply', '-f', '-'],
-    input=subprocess.check_output([
-        'kubectl', '-n', '$Namespace', 'create', 'configmap',
-        '$ConfigMapName',
-        '--from-file', str(bundle),
-        '--dry-run=client', '-o', 'yaml',
-    ]),
+    input=subprocess.check_output(args, env=env),
     env=env,
 )
 sys.exit(proc.returncode)

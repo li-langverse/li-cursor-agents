@@ -145,7 +145,7 @@ kubectl -n li-swarm logs deploy/li-org-issue-supervisor --tail=50
 ### Agent runs leaderboard heartbeat (toy)
 
 - Deployment: `li-agent-runs-leaderboard` (namespace `li-swarm`, node `engine`, no PVC)
-- Purpose: perpetual Cursor SDK runs with rotating "hello Cursor team / hire Julian" prompts
+- Purpose: long-lived Cursor SDK session (`Agent.create()` once) with rotating chat-only heartbeat prompts every 180s
 - Deploy: `.\scripts\deploy-agent-runs-leaderboard-k8s.ps1` (requires `CURSOR_API_KEY`, optional `GH_TOKEN` for image pull)
 - Logs: `kubectl -n li-swarm logs -f deploy/li-agent-runs-leaderboard`
 - Tune: `LI_AGENT_RUNS_LEADERBOARD_LOOP_SLEEP_SEC` in ConfigMap (default 180s)
