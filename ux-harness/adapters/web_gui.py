@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import urllib.error
 import urllib.request
 from pathlib import Path
@@ -24,6 +25,10 @@ _STEP_MARKERS: dict[str, list[str]] = {
 }
 
 _STRICT_JOURNEY_TARGETS = frozenset({"agents-dashboard", "benchmarks-dashboard"})
+
+_PANEL_RE = re.compile(r'data-ux-panel=["\']([^"\']+)["\']')
+_GEN_LOOP_STEPS = {"prompt", "preview", "edit"}
+_GUI_GEN_PANELS = _GEN_LOOP_STEPS | {"error", "empty"}
 
 
 def _probe_url_for_target(target: TargetConfig) -> str | None:
@@ -92,7 +97,15 @@ def _step_passes(step_id: str, html: str) -> bool:
     return any(marker in html for marker in markers)
 
 
-def _evaluate_journey(journey: dict, html: str, *, strict: bool) -> dict:
+def _panels_in_html(html: str) -> set[str]:
+    return set(_PANEL_RE.findall(html))
+
+
+def _has_marker(html: str, marker: str) -> bool:
+    return marker in html
+
+
+def _evaluate_journey_markers(journey: dict, html: str, *, strict: bool) -> dict:
     steps = journey.get("steps") or []
     jid = str(journey.get("id", "unknown"))
     step_trace: list[dict[str, str]] = []
@@ -113,6 +126,38 @@ def _evaluate_journey(journey: dict, html: str, *, strict: bool) -> dict:
         "completed": completed,
         "step_count": len(steps),
     }
+
+
+def _evaluate_journey_panels(journey: dict, panels: set[str]) -> dict:
+    steps = journey.get("steps") or []
+    jid = str(journey.get("id", "unknown"))
+    step_trace: list[dict[str, str]] = []
+    completed = True
+    for step in steps:
+        step_id = str(step)
+        ok = step_id in panels
+        step_trace.append({"step": step_id, "status": "pass" if ok else "fail"})
+        if not ok:
+            completed = False
+    return {
+        "id": jid,
+        "steps": steps,
+        "step_trace": step_trace,
+        "completed": completed,
+        "step_count": len(steps),
+    }
+
+
+def _missing_gui_gen_states(panels: set[str], html: str) -> list[str]:
+    missing: list[str] = []
+    for panel in sorted(_GUI_GEN_PANELS):
+        if panel not in panels:
+            missing.append(panel)
+    if "empty" in panels and not _has_marker(html, "data-ux-empty-cta"):
+        missing.append("empty_cta")
+    if "error" in panels and not _has_marker(html, "data-ux-error-recovery"):
+        missing.append("error_recovery")
+    return missing
 
 
 def _rubric_from_journeys(journey_results: list[dict], *, empty_state_ok: bool) -> dict[str, float]:
@@ -137,6 +182,20 @@ def _rubric_from_journeys(journey_results: list[dict], *, empty_state_ok: bool) 
     }
 
 
+def _rubric_for_gui_gen(panels: set[str], html: str, journey_results: list[dict]) -> dict[str, float]:
+    completed = sum(1 for j in journey_results if j.get("completed"))
+    ratio = completed / len(journey_results) if journey_results else 1.0
+    empty_ok = "empty" in panels and _has_marker(html, "data-ux-empty-cta")
+    error_ok = "error" in panels and _has_marker(html, "data-ux-error-recovery")
+    return {
+        "nav_clarity": 0.85 if ratio >= 1.0 else 0.45 + 0.4 * ratio,
+        "task_efficiency": 0.8 if ratio >= 1.0 else 0.5 + 0.3 * ratio,
+        "empty_states": 0.9 if empty_ok else (0.5 if "empty" in panels else 0.35),
+        "error_handling": 0.9 if error_ok else (0.5 if "error" in panels else 0.35),
+        "cognitive_load": 0.7 if ratio >= 1.0 else 0.55 + 0.15 * ratio,
+    }
+
+
 def _build_ux_payload(
     target: TargetConfig,
     agents_root: Path,
@@ -148,16 +207,29 @@ def _build_ux_payload(
 ) -> dict:
     journeys_cfg = target.raw.get("journeys") or []
     strict = target.id in _STRICT_JOURNEY_TARGETS
-    journey_results = [
-        _evaluate_journey(j, html, strict=strict) for j in journeys_cfg if isinstance(j, dict)
-    ]
-    needs_empty_state = any(
-        "check_empty_state" in (j.get("steps") or [])
-        for j in journeys_cfg
-        if isinstance(j, dict)
-    )
-    empty_state_ok = _step_passes("check_empty_state", html) if needs_empty_state else True
-    rubric = _rubric_from_journeys(journey_results, empty_state_ok=empty_state_ok)
+    is_gui_gen = target.surface_class == "gui_gen"
+    panels = _panels_in_html(html)
+
+    if is_gui_gen:
+        journey_results = [
+            _evaluate_journey_panels(j, panels) for j in journeys_cfg if isinstance(j, dict)
+        ]
+        missing_states = _missing_gui_gen_states(panels, html)
+        rubric = _rubric_for_gui_gen(panels, html, journey_results)
+        sota_refs = ["shadcn-ui", "v0.dev"]
+    else:
+        journey_results = [
+            _evaluate_journey_markers(j, html, strict=strict) for j in journeys_cfg if isinstance(j, dict)
+        ]
+        needs_empty_state = any(
+            "check_empty_state" in (j.get("steps") or [])
+            for j in journeys_cfg
+            if isinstance(j, dict)
+        )
+        empty_state_ok = _step_passes("check_empty_state", html) if needs_empty_state else True
+        missing_states = [] if empty_state_ok else ["empty"]
+        rubric = _rubric_from_journeys(journey_results, empty_state_ok=empty_state_ok)
+        sota_refs = ["shadcn-ui"]
 
     out_dir = _artifact_dir(target, agents_root)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -165,6 +237,13 @@ def _build_ux_payload(
     journey_log.write_text(json.dumps(journey_results, indent=2) + "\n", encoding="utf-8")
 
     friction: list[dict] = []
+    if is_gui_gen and missing_states:
+        friction.append(
+            {
+                "journey": "gen_preview_loop",
+                "issue": f"Missing generator states: {', '.join(missing_states)}",
+            }
+        )
     for jr in journey_results:
         if not jr.get("completed"):
             friction.append({"journey": jr.get("id"), "issue": "journey incomplete"})
@@ -184,11 +263,11 @@ def _build_ux_payload(
         "status": status,
         "journeys": journey_results,
         "friction_points": friction,
-        "sota_refs": ["shadcn-ui"],
+        "sota_refs": sota_refs,
         "rubric_scores": rubric,
         "rubric_threshold": 0.6,
         "rubric_min": min_rubric_score(rubric),
-        "missing_states": [] if empty_state_ok else ["empty"],
+        "missing_states": missing_states,
         "artifacts": [str(journey_log)],
         "mode": mode,
     }
