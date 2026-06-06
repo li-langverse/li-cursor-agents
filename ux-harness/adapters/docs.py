@@ -6,6 +6,7 @@ from pathlib import Path
 
 from sota.rubric import min_rubric_score, rubric_failing
 from .base import TargetConfig
+from .docs_playwright import audit_docs_playwright, playwright_enabled
 from .mock_data import mock_ui_result, mock_ux_result
 from .static_site import audit_static_site, resolve_site_dir, site_url_path_prefix
 
@@ -19,6 +20,11 @@ def _site_dir(target: TargetConfig, agents_root: Path) -> Path:
 
 
 def _mkdocs_config(target: TargetConfig, agents_root: Path) -> Path | None:
+    lic_root = os.environ.get("LIC_ROOT")
+    if lic_root:
+        candidate = Path(lic_root).resolve() / "mkdocs.yml"
+        if candidate.is_file():
+            return candidate
     paths = target.raw.get("paths") or {}
     rel = paths.get("mkdocs_config")
     if not rel:
@@ -36,12 +42,8 @@ def _audit_docs_site(target: TargetConfig, agents_root: Path) -> dict:
     return audit_static_site(site_dir, site_prefix=prefix, mkdocs_config=mkdocs)
 
 
-def run_docs_ui(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
-    if mock:
-        return mock_ui_result(target, str(agents_root))
-
-    audit = _audit_docs_site(target, agents_root)
-    base = {
+def _ui_base(target: TargetConfig, *, mode: str) -> dict:
+    return {
         "target_id": target.id,
         "repo": target.repo,
         "surface": target.surface,
@@ -52,18 +54,55 @@ def run_docs_ui(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
         "contrast_failures": [],
         "baseline_status": "ok",
         "tokens_deviation": [],
-        "mode": "static_site",
+        "mode": mode,
     }
+
+
+def run_docs_ui(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
+    if mock:
+        return mock_ui_result(target, str(agents_root))
+
+    audit = _audit_docs_site(target, agents_root)
+    site_dir = _site_dir(target, agents_root)
+    mkdocs = _mkdocs_config(target, agents_root)
+    base = _ui_base(target, mode="static_site")
     if not audit["built"]:
         return {**base, "status": "skip", "skip_reason": audit["skip_reason"], "broken_links": 0}
+
     broken = int(audit["broken_links"])
-    return {
+    pw: dict | None = None
+    if playwright_enabled():
+        pw = audit_docs_playwright(
+            site_dir,
+            agents_root,
+            target_id=target.id,
+            mkdocs_config=mkdocs,
+        )
+        if pw.get("ok"):
+            base = _ui_base(target, mode="playwright")
+            base["artifacts"] = pw["artifacts"]
+            base["axe_violations"] = pw["axe_violations"]
+            base["pixel_diff"] = pw["pixel_diff"]
+            base["baseline_status"] = pw["baseline_status"]
+
+    pixel_fail = (
+        pw is not None
+        and pw.get("ok")
+        and pw.get("baseline_status") == "drift"
+    )
+    status = "fail" if broken > 0 or pixel_fail else "pass"
+    out = {
         **base,
-        "status": "fail" if broken > 0 else "pass",
+        "status": status,
         "broken_links": broken,
         "html_files": audit["html_files"],
         "links_checked": audit.get("links_checked", 0),
     }
+    if pw and pw.get("ok") and pw.get("missing_baselines"):
+        out["missing_baselines"] = pw["missing_baselines"]
+    if pw and not pw.get("ok") and pw.get("skip_reason"):
+        out["playwright_skip_reason"] = pw["skip_reason"]
+    return out
 
 
 def run_docs_ux(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
@@ -105,20 +144,42 @@ def run_docs_ux(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
             "artifacts": [],
             "mode": "static_site",
         }
+
+    pw_artifacts: list[str] = []
+    mode = "static_site"
+    if playwright_enabled():
+        site_dir = _site_dir(target, agents_root)
+        mkdocs = _mkdocs_config(target, agents_root)
+        pw = audit_docs_playwright(
+            site_dir,
+            agents_root,
+            target_id=target.id,
+            mkdocs_config=mkdocs,
+        )
+        if pw.get("ok"):
+            mode = "playwright"
+            pw_artifacts = list(pw.get("artifacts") or [])
+            for jr in journey_results:
+                if jr["id"] == "mobile_nav":
+                    jr["completed"] = any("nav-mobile" in a for a in pw_artifacts)
+                elif jr["id"] == "first_reading_path":
+                    jr["completed"] = any("home-" in a for a in pw_artifacts)
+
     failing = rubric_failing(rubric)
+    incomplete = any(not j.get("completed") for j in journey_results)
     return {
         "target_id": target.id,
         "repo": target.repo,
         "surface": target.surface,
         "surface_class": target.surface_class,
-        "status": "fail" if failing else "pass",
+        "status": "fail" if failing or incomplete else "pass",
         "journeys": journey_results,
         "friction_points": [],
         "sota_refs": ["mkdocs-material"],
         "rubric_scores": rubric,
         "rubric_threshold": 0.6,
         "missing_states": [],
-        "artifacts": [],
-        "mode": "static_site",
+        "artifacts": pw_artifacts,
+        "mode": mode,
         "rubric_min": min_rubric_score(rubric),
     }

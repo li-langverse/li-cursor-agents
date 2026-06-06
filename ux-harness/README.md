@@ -9,7 +9,17 @@ python3 ux-harness/run_audit.py --target lic-docs --mode ui
 python3 ux-harness/run_audit.py --target lic-docs --mode ux
 ```
 
-**CI:** `--mock` uses deterministic fixtures (no Playwright/Xvfb). Without `--mock`:
+**CI modes**
+
+| Mode | Command | Behavior |
+|------|---------|----------|
+| Mock | `--mock` | Deterministic fixture payloads for agent briefing / unit tests |
+| Static (default) | no flags | Docs: link scan of built MkDocs `site/` (skips if not built; `LIC_ROOT` overrides path) |
+| Extended docs UI | `LI_DOCS_PLAYWRIGHT=1` | Serves `site/`, Playwright screenshots at 1280×720 + 375×812, axe-core, pixel diff vs `ux-harness/baselines/docs/` |
+
+Refresh docs baselines after theme/CSS changes: `python3 ux-harness/scripts/capture-docs-baselines.py` (see `ux-harness/baselines/docs/README.md`).
+
+Without `--mock`:
 
 - **docs** — static link scan of built MkDocs `site/` (skips if not built; set `LIC_ROOT` to override site path)
 - **web_gui** — HTTP probe when the app is running; otherwise HTML fixture fallback (labeled `fixture_fallback` in audit JSON)
