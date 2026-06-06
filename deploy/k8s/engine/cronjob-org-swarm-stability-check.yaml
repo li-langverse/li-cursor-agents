@@ -1,0 +1,52 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: li-org-swarm-stability-check
+  namespace: li-swarm
+  labels:
+    app: li-org-swarm-stability-check
+spec:
+  schedule: "*/30 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 6
+  failedJobsHistoryLimit: 12
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 86400
+      backoffLimit: 0
+      activeDeadlineSeconds: 120
+      template:
+        metadata:
+          labels:
+            app: li-org-swarm-stability-check
+        spec:
+          restartPolicy: Never
+          nodeSelector:
+            li-langverse.io/node-pool: engine
+          containers:
+            - name: check
+              image: ghcr.io/li-langverse/li-cursor-agents:latest
+              imagePullPolicy: Always
+              command:
+                - node
+                - scripts/test-org-swarm-stability.mjs
+                - /app/data/goal-directed-sprints
+              env:
+                - name: LI_SWARM_STABILITY_WINDOW_MS
+                  value: "86400000"
+                - name: LI_SWARM_STABILITY_MAX_FAIL_RATE
+                  value: "0.75"
+              resources:
+                requests:
+                  cpu: "25m"
+                  memory: "64Mi"
+                limits:
+                  cpu: "200m"
+                  memory: "128Mi"
+              volumeMounts:
+                - name: sprint-data
+                  mountPath: /app/data/goal-directed-sprints
+          volumes:
+            - name: sprint-data
+              persistentVolumeClaim:
+                claimName: li-agents-sprint-data

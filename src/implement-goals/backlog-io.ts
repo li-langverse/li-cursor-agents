@@ -10,11 +10,12 @@ const PLAN_TODO_RE =
   /- id: (\S+)\n\s+content: "?([^"\n]+)"?\n\s+status: (\w+)/g;
 
 export function parseBacklogTodos(text: string, format?: ImplementBacklogFormat): BacklogTodo[] {
+  const normalized = text.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
   const fmt =
-    format ?? (text.includes("docs/superpowers/plans/") ? "plan_yaml" : "markdown_todos");
+    format ?? (normalized.includes("docs/superpowers/plans/") ? "plan_yaml" : "markdown_todos");
   if (fmt === "plan_yaml") {
-    const m = text.match(/^todos:\s*\n([\s\S]*?)^---\s*$/m);
-    const block = m?.[1] ?? text;
+    const m = normalized.match(/^todos:\s*\n([\s\S]*?)^---\s*$/m);
+    const block = m?.[1] ?? normalized;
     const todos: BacklogTodo[] = [];
     for (const match of block.matchAll(PLAN_TODO_RE)) {
       todos.push({
@@ -27,7 +28,7 @@ export function parseBacklogTodos(text: string, format?: ImplementBacklogFormat)
   }
 
   const todos: BacklogTodo[] = [];
-  for (const match of text.matchAll(MARKDOWN_TODO_RE)) {
+  for (const match of normalized.matchAll(MARKDOWN_TODO_RE)) {
     todos.push({
       id: match[1]!,
       content: (match[2] ?? match[3] ?? "").trim(),
