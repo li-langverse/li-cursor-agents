@@ -33,11 +33,13 @@ sync_repo() {
   local branch="$2"
   [[ -d "$root/.git" ]] || return 0
   git -C "$root" fetch origin --prune
+  git -C "$root" fetch origin "$branch":"refs/remotes/origin/$branch" --depth 1 2>/dev/null || true
   if git -C "$root" show-ref --verify --quiet "refs/remotes/origin/${branch}"; then
     git -C "$root" checkout -B "$branch" "origin/${branch}"
     git -C "$root" reset --hard "origin/${branch}"
   else
-    git -C "$root" checkout -B "$branch"
+    echo "sync_repo: origin/${branch} not found in ${root}" >&2
+    return 1
   fi
 }
 
@@ -53,7 +55,10 @@ sync_workspace() {
   sync_repo "$LIC_ROOT" "$LIC_BRANCH"
   export LIC_ROOT
   ensure_fixtures
-  test -f "$STUDIO_ROOT/$GOAL_FILE_REL"
+  if [[ ! -f "$STUDIO_ROOT/$GOAL_FILE_REL" ]]; then
+    echo "sync_workspace: missing goal file $STUDIO_ROOT/$GOAL_FILE_REL (studio HEAD=$(git -C "$STUDIO_ROOT" rev-parse --short HEAD 2>/dev/null || echo unknown))" >&2
+    return 1
+  fi
 }
 
 run_goal_loop() {
