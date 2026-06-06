@@ -133,6 +133,15 @@ kubectl -n li-swarm logs deploy/li-org-issue-supervisor --tail=50
 - Scale: `kubectl -n li-swarm scale deploy/li-ph-sci-electrochemistry --replicas=1`
 - Logs: `kubectl -n li-swarm logs -f deploy/li-ph-sci-electrochemistry`
 
+### World Studio AIMD hero demo
+
+- Deployment: `li-world-studio-aimd-demo` (namespace `li-swarm`, node `engine`, PVC workspace)
+- Branch: `cursor/world-studio-aimd-demo` (studio); lic `main`
+- Goal: `studio/data/goal-directed-sprints/world-studio-aimd-demo.md`
+- Gate: `studio/scripts/world-studio-aimd-demo-gates.sh` + completion gate
+- Deploy: `.\scripts\deploy-world-studio-aimd-demo-k8s.ps1 -KubeConfig "$env:USERPROFILE\.kube\config-homelab"`
+- Logs: `kubectl -n li-swarm logs -f deploy/li-world-studio-aimd-demo`
+
 ### Agent runs leaderboard heartbeat (toy)
 
 - Deployment: `li-agent-runs-leaderboard` (namespace `li-swarm`, node `engine`, no PVC)
