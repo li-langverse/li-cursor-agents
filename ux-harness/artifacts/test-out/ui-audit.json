@@ -1,10 +1,10 @@
 {
-  "generated_at": "2026-06-06T05:32:14.383275+00:00",
+  "generated_at": "2026-06-06T15:56:20.126931+00:00",
   "platform": "Linux",
   "summary": {
-    "total": 8,
-    "failing": 2,
-    "passing": 6,
+    "total": 9,
+    "failing": 1,
+    "passing": 8,
     "skipped": 0
   },
   "targets": [
@@ -15,7 +15,7 @@
       "surface_class": "docs",
       "status": "fail",
       "artifacts": [
-        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780723866154/repo/ux-harness/artifacts/lic-docs/home.png"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780761347352/repo/ux-harness/artifacts/lic-docs/home.png"
       ],
       "axe_violations": [
         {
@@ -43,23 +43,36 @@
       "repo": "li-cursor-agents",
       "surface": "gui",
       "surface_class": "gui_app",
-      "status": "fail",
+      "status": "pass",
       "artifacts": [
-        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780723866154/repo/ux-harness/artifacts/agents-dashboard/home.png"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780761347352/repo/ux-harness/artifacts/agents-dashboard/home.png"
       ],
-      "axe_violations": [
-        {
-          "id": "color-contrast",
-          "impact": "serious",
-          "nodes": 2
-        }
-      ],
+      "axe_violations": [],
       "pixel_diff": {
-        "max_ratio": 0.06,
+        "max_ratio": 0.0,
         "threshold": 0.04
       },
       "contrast_failures": [],
-      "baseline_status": "drift",
+      "baseline_status": "ok",
+      "tokens_deviation": [],
+      "broken_links": 0
+    },
+    {
+      "target_id": "benchmarks-dashboard",
+      "repo": "benchmarks",
+      "surface": "gui",
+      "surface_class": "gui_app",
+      "status": "pass",
+      "artifacts": [
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780761347352/repo/ux-harness/artifacts/benchmarks-dashboard/home.png"
+      ],
+      "axe_violations": [],
+      "pixel_diff": {
+        "max_ratio": 0.0,
+        "threshold": 0.04
+      },
+      "contrast_failures": [],
+      "baseline_status": "ok",
       "tokens_deviation": [],
       "broken_links": 0
     },
@@ -70,7 +83,7 @@
       "surface_class": "gui_app",
       "status": "pass",
       "artifacts": [
-        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780723866154/repo/ux-harness/artifacts/lic-tetris/home.png"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780761347352/repo/ux-harness/artifacts/lic-tetris/home.png"
       ],
       "axe_violations": [],
       "pixel_diff": {
@@ -91,7 +104,7 @@
       "surface_class": "gui_app",
       "status": "pass",
       "artifacts": [
-        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780723866154/repo/ux-harness/artifacts/world-studio-demo/home.png"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780761347352/repo/ux-harness/artifacts/world-studio-demo/home.png"
       ],
       "axe_violations": [],
       "pixel_diff": {
@@ -110,7 +123,7 @@
       "surface_class": "gui_app",
       "status": "pass",
       "artifacts": [
-        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780723866154/repo/ux-harness/artifacts/world-studio-native/home.png"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780761347352/repo/ux-harness/artifacts/world-studio-native/home.png"
       ],
       "axe_violations": [],
       "pixel_diff": {
@@ -131,7 +144,7 @@
       "surface_class": "gui_gen",
       "status": "pass",
       "artifacts": [
-        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780723866154/repo/ux-harness/artifacts/gui-gen-fixture/home.png"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780761347352/repo/ux-harness/artifacts/gui-gen-fixture/home.png"
       ],
       "axe_violations": [],
       "pixel_diff": {
@@ -150,7 +163,7 @@
       "surface_class": "tui_app",
       "status": "pass",
       "artifacts": [
-        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780723866154/repo/ux-harness/artifacts/tui-app-fixture/home.png"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780761347352/repo/ux-harness/artifacts/tui-app-fixture/home.png"
       ],
       "axe_violations": [],
       "pixel_diff": {
@@ -169,7 +182,7 @@
       "surface_class": "tui_gen",
       "status": "pass",
       "artifacts": [
-        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780723866154/repo/ux-harness/artifacts/tui-gen-fixture/home.png"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780761347352/repo/ux-harness/artifacts/tui-gen-fixture/home.png"
       ],
       "axe_violations": [],
       "pixel_diff": {
