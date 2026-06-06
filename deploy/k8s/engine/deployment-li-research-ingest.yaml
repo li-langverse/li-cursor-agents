@@ -64,6 +64,8 @@ spec:
                 secretKeyRef:
                   name: li-agents-secrets
                   key: GH_TOKEN
+            - name: WARM_INDEX_PATH
+              value: "/warm-index"
             - name: CURSOR_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -86,12 +88,18 @@ spec:
           volumeMounts:
             - name: workspace
               mountPath: /workspace
+            - name: warm-index
+              mountPath: /warm-index
             - name: config-bundle
               mountPath: /config
       volumes:
         - name: workspace
           persistentVolumeClaim:
             claimName: li-research-ingest-workspace
+        - name: warm-index
+          hostPath:
+            path: /srv/homelab/intenso-research/li-research/warm-index
+            type: Directory
         - name: config-bundle
           configMap:
             name: li-research-ingest-bundle

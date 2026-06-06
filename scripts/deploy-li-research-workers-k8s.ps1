@@ -98,10 +98,10 @@ if (-not $SkipProduct) {
     Write-Host "==> li-research-product"
     kubectl apply -f (Join-Path $K8s "configmap-li-research-product.yaml")
     kubectl apply -f (Join-Path $K8s "deployment-li-research-product.yaml")
-    $goalProduct = Normalize-GoalFile (Join-Path $KlautProGoals "wp-li-research-r0-product.md")
+    $goalProduct = Normalize-GoalFile (Join-Path $KlautProGoals "wp-li-research-r1-product.md")
     $extra = @{
-        "entrypoint.sh"                 = (Join-Path $Root "deploy\li-research-product-entrypoint.sh")
-        "wp-li-research-r0-product.md"  = $goalProduct
+        "entrypoint.sh"                = (Join-Path $Root "deploy\li-research-product-entrypoint.sh")
+        "wp-li-research-r1-product.md"  = $goalProduct
     }
     . $BundleScript -Root $Root -Namespace $Namespace -ConfigMapName "li-research-product-bundle" -ExtraFiles $extra
 
@@ -117,10 +117,10 @@ if (-not $SkipKlaut) {
     Write-Host "==> li-research-klaut"
     kubectl apply -f (Join-Path $K8s "configmap-li-research-klaut.yaml")
     kubectl apply -f (Join-Path $K8s "deployment-li-research-klaut.yaml")
-    $goalKlaut = Normalize-GoalFile (Join-Path $KlautProGoals "wp-li-research-r0-klaut.md")
+    $goalKlaut = Normalize-GoalFile (Join-Path $KlautProGoals "wp-li-research-r1-klaut.md")
     $extra = @{
-        "entrypoint.sh"                = (Join-Path $Root "deploy\li-research-klaut-entrypoint.sh")
-        "wp-li-research-r0-klaut.md"   = $goalKlaut
+        "entrypoint.sh"               = (Join-Path $Root "deploy\li-research-klaut-entrypoint.sh")
+        "wp-li-research-r1-klaut.md"  = $goalKlaut
     }
     . $BundleScript -Root $Root -Namespace $Namespace -ConfigMapName "li-research-klaut-bundle" -ExtraFiles $extra
 
@@ -142,10 +142,10 @@ if (-not $SkipIngest) {
     Write-Host "==> li-research-ingest"
     kubectl apply -f (Join-Path $K8s "configmap-li-research-ingest.yaml")
     kubectl apply -f (Join-Path $K8s "deployment-li-research-ingest.yaml")
-    $goalIngest = Normalize-GoalFile (Join-Path $KlautProGoals "wp-li-research-ingest.md")
+    $goalIngest = Normalize-GoalFile (Join-Path $KlautProGoals "wp-li-research-warm-ingest.md")
     $extra = @{
-        "entrypoint.sh"              = (Join-Path $Root "deploy\li-research-ingest-entrypoint.sh")
-        "wp-li-research-ingest.md"   = $goalIngest
+        "entrypoint.sh"                 = (Join-Path $Root "deploy\li-research-ingest-entrypoint.sh")
+        "wp-li-research-warm-ingest.md" = $goalIngest
     }
     . $BundleScript -Root $Root -Namespace $Namespace -ConfigMapName "li-research-ingest-bundle" -ExtraFiles $extra
 
