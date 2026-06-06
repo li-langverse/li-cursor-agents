@@ -1,0 +1,92 @@
+# Goal-directed agent: li-research homelab track (cap-jmk token — klaut-agents-secrets).
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: li-research-klaut-workspace
+  namespace: li-swarm
+  labels:
+    app: li-research-klaut
+    li-langverse.io/sprint: li-research-r0-klaut
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: li-research-klaut
+  namespace: li-swarm
+  labels:
+    app: li-research-klaut
+    app.kubernetes.io/name: li-research-klaut
+    app.kubernetes.io/component: goal-directed-agent
+    app.kubernetes.io/part-of: cap-jmk-launchpad
+    li-langverse.io/sprint: li-research-r0-klaut
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: li-research-klaut
+  template:
+    metadata:
+      labels:
+        app: li-research-klaut
+        app.kubernetes.io/name: li-research-klaut
+        app.kubernetes.io/component: goal-directed-agent
+        li-langverse.io/sprint: li-research-r0-klaut
+    spec:
+      serviceAccountName: li-goal-worker
+      nodeSelector:
+        kubernetes.io/hostname: engine
+      imagePullSecrets:
+        - name: ghcr-li-langverse
+      containers:
+        - name: agent
+          image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "/config/entrypoint.sh"]
+          envFrom:
+            - configMapRef:
+                name: li-research-klaut
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: klaut-agents-secrets
+                  key: GH_TOKEN
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: klaut-agents-secrets
+                  key: GH_TOKEN
+            - name: CURSOR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: klaut-agents-secrets
+                  key: CURSOR_API_KEY
+                  optional: true
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "4"
+              memory: "4Gi"
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: config-bundle
+              mountPath: /config
+      volumes:
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: li-research-klaut-workspace
+        - name: config-bundle
+          configMap:
+            name: li-research-klaut-bundle
+            defaultMode: 0755

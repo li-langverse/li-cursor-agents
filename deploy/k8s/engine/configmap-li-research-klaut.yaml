@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: li-research-klaut
+  namespace: li-swarm
+  labels:
+    app: li-research-klaut
+    app.kubernetes.io/name: li-research-klaut
+    app.kubernetes.io/component: goal-directed-agent
+    li-langverse.io/sprint: li-research-r0-klaut
+data:
+  LI_GOAL_WORKSPACE: "/workspace"
+  LI_GOAL_FILE: "data/goal-directed-sprints/wp-li-research-r0-klaut.md"
+  LI_GOAL_BRANCH: "cursor/li-research-homelab-r0"
+  LI_GOAL_AGENT: "code_implementer"
+  LI_GOAL_LOOP_SLEEP_SEC: "120"
+  LI_GOAL_DEPLOYMENT_NAME: "li-research-klaut"
+  LI_GOAL_NAMESPACE: "li-swarm"
+  LI_GITHUB_ORG: "cap-jmk-launchpad"
+  LI_CURSOR_AGENTS_ROOT: "/app"
+  LI_CONTROL_PLANE_STORE: "disk"
+  LI_SDK_TERMINAL_STREAM: "1"
+  LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE: "1"
+  NODE_ENV: "production"
