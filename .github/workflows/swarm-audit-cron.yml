@@ -49,6 +49,7 @@ jobs:
           test -f /tmp/ux-audit-out/ux-audit.json
           python3 ux-harness/run_audit.py --all --mock --out-dir /tmp/ux-audit-mock
           python3 ux-harness/tests/test_harness.py
+          python3 ux-harness/tests/test_web_gui_adapter.py
           python3 ux-harness/tests/test_static_site.py
 
       - name: Fixture briefing + heap plan
