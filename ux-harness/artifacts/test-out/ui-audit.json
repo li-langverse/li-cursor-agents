@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-06T15:56:20.126931+00:00",
+  "generated_at": "2026-06-06T18:42:36.413684+00:00",
   "platform": "Linux",
   "summary": {
     "total": 9,
@@ -15,7 +15,7 @@
       "surface_class": "docs",
       "status": "fail",
       "artifacts": [
-        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780761347352/repo/ux-harness/artifacts/lic-docs/home.png"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780771301066/repo/ux-harness/artifacts/lic-docs/home.png"
       ],
       "axe_violations": [
         {
@@ -45,7 +45,7 @@
       "surface_class": "gui_app",
       "status": "pass",
       "artifacts": [
-        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780761347352/repo/ux-harness/artifacts/agents-dashboard/home.png"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780771301066/repo/ux-harness/artifacts/agents-dashboard/home.png"
       ],
       "axe_violations": [],
       "pixel_diff": {
@@ -64,7 +64,7 @@
       "surface_class": "gui_app",
       "status": "pass",
       "artifacts": [
-        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780761347352/repo/ux-harness/artifacts/benchmarks-dashboard/home.png"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780771301066/repo/ux-harness/artifacts/benchmarks-dashboard/home.png"
       ],
       "axe_violations": [],
       "pixel_diff": {
@@ -83,7 +83,7 @@
       "surface_class": "gui_app",
       "status": "pass",
       "artifacts": [
-        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780761347352/repo/ux-harness/artifacts/lic-tetris/home.png"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780771301066/repo/ux-harness/artifacts/lic-tetris/home.png"
       ],
       "axe_violations": [],
       "pixel_diff": {
@@ -104,7 +104,7 @@
       "surface_class": "gui_app",
       "status": "pass",
       "artifacts": [
-        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780761347352/repo/ux-harness/artifacts/world-studio-demo/home.png"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780771301066/repo/ux-harness/artifacts/world-studio-demo/home.png"
       ],
       "axe_violations": [],
       "pixel_diff": {
@@ -123,7 +123,7 @@
       "surface_class": "gui_app",
       "status": "pass",
       "artifacts": [
-        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780761347352/repo/ux-harness/artifacts/world-studio-native/home.png"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780771301066/repo/ux-harness/artifacts/world-studio-native/home.png"
       ],
       "axe_violations": [],
       "pixel_diff": {
@@ -144,7 +144,7 @@
       "surface_class": "gui_gen",
       "status": "pass",
       "artifacts": [
-        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780761347352/repo/ux-harness/artifacts/gui-gen-fixture/home.png"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780771301066/repo/ux-harness/artifacts/gui-gen-fixture/home.png"
       ],
       "axe_violations": [],
       "pixel_diff": {
@@ -163,7 +163,7 @@
       "surface_class": "tui_app",
       "status": "pass",
       "artifacts": [
-        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780761347352/repo/ux-harness/artifacts/tui-app-fixture/home.png"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780771301066/repo/ux-harness/artifacts/tui-app-fixture/home.png"
       ],
       "axe_violations": [],
       "pixel_diff": {
@@ -182,7 +182,7 @@
       "surface_class": "tui_gen",
       "status": "pass",
       "artifacts": [
-        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780761347352/repo/ux-harness/artifacts/tui-gen-fixture/home.png"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780771301066/repo/ux-harness/artifacts/tui-gen-fixture/home.png"
       ],
       "axe_violations": [],
       "pixel_diff": {
