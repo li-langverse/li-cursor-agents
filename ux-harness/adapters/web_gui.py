@@ -17,13 +17,23 @@ _STEP_MARKERS: dict[str, list[str]] = {
     "check_empty_state": ['data-testid="agents-empty-state"', "data-empty-state", "No agent runs yet"],
     "open_run": ['data-testid="live-stream-panel"', "Live activity"],
     "read_stream": ['data-testid="live-activity-empty"', "No SDK runs in progress"],
+    "dashboard_home": ['data-testid="benchmarks-dashboard-home"', "Li Benchmarks"],
+    "overview_search": ['data-testid="benchmark-search"', "Search benchmarks"],
+    "gpu_matrix": ['data-testid="benchmarks-gpu-matrix-page"', "GPU chip matrix"],
+    "chip_picker": ['data-testid="gpu-chip-picker"', "Contributed GPUs"],
 }
+
+_STRICT_JOURNEY_TARGETS = frozenset({"agents-dashboard", "benchmarks-dashboard"})
 
 
 def _probe_url_for_target(target: TargetConfig) -> str | None:
     if target.id == "agents-dashboard":
         port = os.environ.get("LI_PLAYWRIGHT_UI_PORT", "3099")
         return f"http://127.0.0.1:{port}"
+    if target.id == "benchmarks-dashboard":
+        port = os.environ.get("LI_BENCHMARKS_DASHBOARD_PORT", "3100")
+        base_path = os.environ.get("NEXT_PUBLIC_BASE_PATH", "").rstrip("/")
+        return f"http://127.0.0.1:{port}{base_path}"
     url = target.raw.get("url")
     return str(url) if url else None
 
@@ -137,11 +147,16 @@ def _build_ux_payload(
     ui_status: str,
 ) -> dict:
     journeys_cfg = target.raw.get("journeys") or []
-    strict = target.id == "agents-dashboard"
+    strict = target.id in _STRICT_JOURNEY_TARGETS
     journey_results = [
         _evaluate_journey(j, html, strict=strict) for j in journeys_cfg if isinstance(j, dict)
     ]
-    empty_state_ok = _step_passes("check_empty_state", html) if strict else True
+    needs_empty_state = any(
+        "check_empty_state" in (j.get("steps") or [])
+        for j in journeys_cfg
+        if isinstance(j, dict)
+    )
+    empty_state_ok = _step_passes("check_empty_state", html) if needs_empty_state else True
     rubric = _rubric_from_journeys(journey_results, empty_state_ok=empty_state_ok)
 
     out_dir = _artifact_dir(target, agents_root)

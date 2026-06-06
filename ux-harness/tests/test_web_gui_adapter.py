@@ -92,6 +92,34 @@ class WebGuiAdapterTests(unittest.TestCase):
         self.assertEqual(target.get("mode"), "fixture")
         self.assertNotIn("fixture_fallback", target)
 
+    def test_benchmarks_dashboard_fixture_fallback_when_offline(self) -> None:
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "run_audit.py"),
+                "--target",
+                "benchmarks-dashboard",
+                "--mode",
+                "both",
+            ],
+            cwd=str(AGENTS_ROOT),
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        payload = json.loads(proc.stdout)
+        ui = payload["ui"]["targets"][0]
+        ux = payload["ux"]["targets"][0]
+        self.assertEqual(ui["status"], "pass")
+        self.assertTrue(ui.get("fixture_fallback"))
+        self.assertEqual(ux["status"], "pass")
+        home = next(j for j in ux.get("journeys") or [] if j.get("id") == "dashboard_home")
+        gpu = next(j for j in ux.get("journeys") or [] if j.get("id") == "gpu_matrix")
+        self.assertTrue(home.get("completed"))
+        self.assertTrue(gpu.get("completed"))
+
 
 if __name__ == "__main__":
     unittest.main()

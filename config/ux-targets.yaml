@@ -28,6 +28,22 @@ targets:
       - id: live_stream
         steps: [open_run, read_stream]
 
+  - id: benchmarks-dashboard
+    repo: benchmarks
+    surface: gui
+    surface_class: gui_app
+    adapter: web_gui
+    url: http://127.0.0.1:3100
+    paths:
+      app_dir: ../benchmarks/dashboard-next
+      start_script: ../benchmarks/dashboard-next/scripts/dev-ux-harness.sh
+    fixture: ux-harness/fixtures/benchmarks-dashboard-fixture.html
+    journeys:
+      - id: dashboard_home
+        steps: [dashboard_home, overview_search]
+      - id: gpu_matrix
+        steps: [gpu_matrix, chip_picker]
+
   - id: lic-tetris
     repo: lic
     surface: gui
