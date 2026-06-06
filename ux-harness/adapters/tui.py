@@ -6,6 +6,8 @@ import os
 import subprocess
 from pathlib import Path
 
+from sota.rubric import min_rubric_score, rubric_failing
+
 from .base import TargetConfig
 from .mock_data import mock_ui_result, mock_ux_result
 
@@ -222,18 +224,20 @@ def run_tui_ux(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
 
     all_completed = all(jr.get("completed") for jr in journey_results) if journey_results else exit_ok
     rubric = _rubric_from_journeys(journey_results, exit_ok)
+    status = "fail" if not all_completed or not exit_ok or rubric_failing(rubric) else "pass"
 
     return {
         "target_id": target.id,
         "repo": target.repo,
         "surface": target.surface,
         "surface_class": target.surface_class,
-        "status": "pass" if all_completed and exit_ok else "fail",
+        "status": status,
         "journeys": journey_results,
         "friction_points": friction,
         "sota_refs": ["textual"],
         "rubric_scores": rubric,
         "rubric_threshold": 0.6,
+        "rubric_min": min_rubric_score(rubric),
         "missing_states": [],
         "artifacts": artifacts,
         "mode": "fixture",
