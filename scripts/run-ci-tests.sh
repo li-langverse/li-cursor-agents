@@ -30,3 +30,4 @@ node scripts/test-swarm-health-report.mjs
 node scripts/test-supabase-failover-probe.mjs
 python3 ux-harness/tests/test_harness.py
 python3 ux-harness/tests/test_static_site.py
+python3 ux-harness/tests/test_web_gui_adapter.py
