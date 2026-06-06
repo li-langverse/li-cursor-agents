@@ -7,7 +7,7 @@ from .base import TargetConfig
 
 
 def mock_ui_result(target: TargetConfig, agents_root: str) -> dict[str, Any]:
-    failing = target.id in ("lic-docs", "agents-dashboard")
+    failing = target.id in ("lic-docs",)
     artifacts = [
         f"{agents_root}/ux-harness/artifacts/{target.id}/home.png",
     ]
@@ -34,7 +34,7 @@ def mock_ui_result(target: TargetConfig, agents_root: str) -> dict[str, Any]:
 
 
 def mock_ux_result(target: TargetConfig, agents_root: str) -> dict[str, Any]:
-    low_rubric = target.id in ("agents-dashboard", "tui-app-fixture")
+    low_rubric = target.id in ("tui-app-fixture",)
     journeys = target.raw.get("journeys") or []
     journey_results = []
     for j in journeys:

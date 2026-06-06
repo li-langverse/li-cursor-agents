@@ -21,6 +21,7 @@ targets:
     surface_class: gui_app
     adapter: web_gui
     url: http://127.0.0.1:3099
+    fixture: ux-harness/fixtures/agents-dashboard-empty.html
     journeys:
       - id: agents_list_empty
         steps: [open_agents, check_empty_state]

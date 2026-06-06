@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Li Agents Dashboard — UX harness fixture</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      min-height: 100vh;
+    }
+    .layout { display: flex; min-height: 100vh; }
+    nav.sidebar {
+      width: 220px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 1rem;
+    }
+    nav.sidebar a {
+      display: block;
+      color: var(--accent);
+      text-decoration: none;
+      padding: 0.35rem 0;
+    }
+    main { flex: 1; padding: 1.5rem; }
+    .empty-state {
+      border: 1px dashed var(--border);
+      border-radius: 12px;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      max-width: 28rem;
+      margin: 2rem auto;
+      background: var(--surface);
+    }
+    .empty-state svg { width: 48px; height: 48px; color: var(--muted); margin-bottom: 0.75rem; }
+    .empty-state h2 { font-size: 1.1rem; margin: 0 0 0.5rem; }
+    .empty-state p { color: var(--muted); margin: 0 0 1rem; font-size: 0.95rem; }
+    .empty-state .cta {
+      display: inline-block;
+      background: #238636;
+      color: #fff;
+      border-radius: 6px;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.875rem;
+      text-decoration: none;
+    }
+    .hint { color: var(--muted); font-size: 0.875rem; }
+    .panel {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1.5rem;
+      background: var(--surface);
+    }
+    .data-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    .data-table th, .data-table td {
+      border-bottom: 1px solid var(--border);
+      padding: 0.5rem;
+      text-align: left;
+    }
+    .empty { color: var(--muted); font-style: italic; }
+  </style>
+</head>
+<body>
+  <div class="layout" data-testid="agents-page">
+    <nav class="sidebar" aria-label="Dashboard">
+      <a href="#agents" data-testid="nav-agents">Agents</a>
+      <a href="#activity">Activity</a>
+      <a href="#runs">Runs</a>
+    </nav>
+    <main>
+      <h1>Agents</h1>
+      <p class="hint">0 of 0 agents shown</p>
+
+      <section aria-label="Empty roster" data-testid="agents-empty-state" data-empty-state="true">
+        <div class="empty-state">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <h2>No agent runs yet</h2>
+          <p>Start the supervisor or run an agent to populate the roster and live activity feed.</p>
+          <a class="cta" href="#start-swarm">Start swarm</a>
+        </div>
+      </section>
+
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Agent</th><th>Status</th><th>Task</th></tr></thead>
+          <tbody>
+            <tr><td colspan="3" class="empty">No agents match</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <section class="panel" data-testid="live-stream-panel" aria-label="Live stream">
+        <h2>Live activity</h2>
+        <p class="hint" data-testid="live-activity-empty">
+          No SDK runs in progress — start the swarm to see tool and step activity here.
+        </p>
+        <div data-testid="live-stream" hidden aria-hidden="true">
+          <pre>event: tool_call\npayload: read_file</pre>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
