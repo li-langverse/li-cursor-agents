@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Li Benchmarks Dashboard — UX harness fixture</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --muted: #9ba3af;
+      --accent: #58a6ff;
+      --green: #3fb950;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      min-height: 100vh;
+    }
+    header {
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+      background: var(--surface);
+    }
+    header h1 { margin: 0; font-size: 1.25rem; }
+    header nav a { color: var(--accent); margin-right: 1rem; text-decoration: none; }
+    main { padding: 1.5rem; max-width: 72rem; margin: 0 auto; }
+    .bento { display: grid; gap: 1rem; }
+    .coverage-honesty {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      background: var(--surface);
+    }
+    .search-panel {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+      background: var(--surface);
+    }
+    .search-panel input {
+      width: 100%;
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+    }
+    .gpu-matrix-page h2 { margin-top: 0; }
+    .gpu-chip-picker { margin-top: 1rem; }
+    .gpu-chip-cards { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+    .gpu-chip-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      background: var(--surface);
+      color: var(--text);
+      min-width: 10rem;
+    }
+    .gpu-chip-card-active { border-color: var(--accent); }
+    .mono { font-family: ui-monospace, monospace; font-size: 0.9em; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <header>
+    <h1><a href="#home">Li Benchmarks</a></h1>
+    <nav aria-label="Site">
+      <a href="#home">Overview</a>
+      <a href="#search">Search</a>
+      <a href="#gpu-matrix">GPU matrix</a>
+    </nav>
+  </header>
+
+  <main data-testid="benchmarks-dashboard-home">
+    <section class="coverage-honesty" aria-label="Coverage honesty">
+      <p><strong>Overview</strong> — performance, security, and correctness across the Li ecosystem.</p>
+    </section>
+
+    <section id="search" class="search-panel" data-testid="benchmark-search" aria-label="Search benchmarks">
+      <h2>Search benchmarks</h2>
+      <label class="mono" for="bench-q">Filter catalog rows</label>
+      <input id="bench-q" type="search" placeholder="Search benchmarks" aria-label="Search benchmarks" />
+    </section>
+
+    <section id="gpu-matrix" class="gpu-matrix-page" data-testid="benchmarks-gpu-matrix-page" aria-label="GPU chip matrix">
+      <h2>GPU chip matrix</h2>
+      <p class="mono">Each donated machine is ingested separately — pick a chip to compare CPU vs GPU timing.</p>
+      <div class="gpu-chip-picker" data-testid="gpu-chip-picker" role="tablist" aria-label="Contributed GPUs">
+        <button type="button" class="gpu-chip-card gpu-chip-card-active" role="tab" aria-selected="true">
+          <strong>Reference chip</strong>
+          <span class="mono">linux · cuda</span>
+        </button>
+        <button type="button" class="gpu-chip-card" role="tab" aria-selected="false">
+          <strong>Open slot</strong>
+          <span class="mono">donate hardware</span>
+        </button>
+      </div>
+    </section>
+  </main>
+</body>
+</html>
