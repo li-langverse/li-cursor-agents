@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-25T19:32:00.041516+00:00",
+  "generated_at": "2026-06-06T05:32:14.394885+00:00",
   "platform": "Linux",
   "summary": {
     "total": 8,
@@ -51,7 +51,7 @@
       "rubric_threshold": 0.6,
       "missing_states": [],
       "artifacts": [
-        "/home/s4il0r/Documents/Cursor/li-langverse/li-cursor-agents/ux-harness/artifacts/lic-docs/journey-log.json"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780723866154/repo/ux-harness/artifacts/lic-docs/journey-log.json"
       ]
     },
     {
@@ -103,7 +103,7 @@
         "empty"
       ],
       "artifacts": [
-        "/home/s4il0r/Documents/Cursor/li-langverse/li-cursor-agents/ux-harness/artifacts/agents-dashboard/journey-log.json"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780723866154/repo/ux-harness/artifacts/agents-dashboard/journey-log.json"
       ]
     },
     {
@@ -140,7 +140,7 @@
       "rubric_threshold": 0.6,
       "missing_states": [],
       "artifacts": [
-        "/home/s4il0r/Documents/Cursor/li-langverse/li-cursor-agents/ux-harness/artifacts/lic-tetris/journey-log.json"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780723866154/repo/ux-harness/artifacts/lic-tetris/journey-log.json"
       ],
       "mode": "native_gui",
       "native_pixels": false
@@ -198,7 +198,7 @@
       "rubric_threshold": 0.6,
       "missing_states": [],
       "artifacts": [
-        "/home/s4il0r/Documents/Cursor/li-langverse/li-cursor-agents/ux-harness/artifacts/world-studio-demo/journey-log.json"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780723866154/repo/ux-harness/artifacts/world-studio-demo/journey-log.json"
       ]
     },
     {
@@ -235,7 +235,7 @@
       "rubric_threshold": 0.6,
       "missing_states": [],
       "artifacts": [
-        "/home/s4il0r/Documents/Cursor/li-langverse/li-cursor-agents/ux-harness/artifacts/world-studio-native/journey-log.json"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780723866154/repo/ux-harness/artifacts/world-studio-native/journey-log.json"
       ],
       "mode": "native_gui",
       "native_pixels": true
@@ -274,7 +274,7 @@
       "rubric_threshold": 0.6,
       "missing_states": [],
       "artifacts": [
-        "/home/s4il0r/Documents/Cursor/li-langverse/li-cursor-agents/ux-harness/artifacts/gui-gen-fixture/journey-log.json"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780723866154/repo/ux-harness/artifacts/gui-gen-fixture/journey-log.json"
       ]
     },
     {
@@ -318,7 +318,7 @@
         "empty"
       ],
       "artifacts": [
-        "/home/s4il0r/Documents/Cursor/li-langverse/li-cursor-agents/ux-harness/artifacts/tui-app-fixture/journey-log.json"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780723866154/repo/ux-harness/artifacts/tui-app-fixture/journey-log.json"
       ]
     },
     {
@@ -354,7 +354,7 @@
       "rubric_threshold": 0.6,
       "missing_states": [],
       "artifacts": [
-        "/home/s4il0r/Documents/Cursor/li-langverse/li-cursor-agents/ux-harness/artifacts/tui-gen-fixture/journey-log.json"
+        "/app/data/workspaces/li-langverse/li-cursor-agents/code_implementer-1780723866154/repo/ux-harness/artifacts/tui-gen-fixture/journey-log.json"
       ]
     }
   ]
