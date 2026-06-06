@@ -11,7 +11,7 @@ metadata:
 data:
   LI_PROOF_EXPLORER_ALWAYS_ON: "1"
   LI_PROOF_EXPLORER_PHASE_HANDOFF: "0"
-  LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/li-parallel-native-hpc.md"
+  LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/li-parallel-killer-package.md"
   LI_PROOF_EXPLORER_LIC_ROOT: "/workspace/lic"
   LI_CURSOR_AGENTS_ROOT: "/app"
   LI_PROOF_EXPLORER_WORKFLOW_REPO: "lic"

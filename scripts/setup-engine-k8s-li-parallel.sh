@@ -49,5 +49,5 @@ kubectl apply -f "$K8S/deployment-li-parallel.yaml"
 kubectl -n "$NS" scale deploy/li-li-parallel --replicas=1
 kubectl -n "$NS" rollout restart deploy/li-li-parallel
 kubectl -n "$NS" rollout status deploy/li-li-parallel --timeout=180s || true
-echo "Done. Worker runs until check-li-parallel-full-suite.sh passes."
+echo "Done. Worker runs until check-li-parallel-killer-gate.sh passes (progress: check-li-parallel-full-suite.sh)."
 echo "Watch: kubectl -n $NS logs -f deploy/li-li-parallel"
