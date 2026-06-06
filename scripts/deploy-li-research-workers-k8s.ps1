@@ -23,17 +23,13 @@ function Normalize-GoalFile([string]$Src) {
     return $dest
 }
 
-$env:KUBECONFIG = $KubeConfig
-Write-Host "==> deploy li-research workers (namespace=$Namespace node=$EngineNode)"
-
-kubectl label node $EngineNode li-langverse.io/node-pool=engine --overwrite 2>$null
-kubectl apply -f (Join-Path $K8s "namespace.yaml")
-kubectl apply -f (Join-Path $K8s "rbac-goal-workers-scale.yaml")
-
-if (-not $SkipProduct) {
-    $liToken = $null
+# li-langverse: always load from li/ tree — never reuse cap-jmk token from a prior step.
+function Load-LiLangverseEnv {
+    $env:GH_TOKEN = $null
+    $env:GITHUB_TOKEN = $null
     foreach ($envFile in @(
             (Join-Path $LiRoot ".env.github"),
+            (Join-Path $LiRoot ".env"),
             (Join-Path $Root ".env")
         )) {
         if (-not (Test-Path $envFile)) { continue }
@@ -48,7 +44,56 @@ if (-not $SkipProduct) {
         }
     }
     if (-not $env:GH_TOKEN -and $env:GITHUB_TOKEN) { $env:GH_TOKEN = $env:GITHUB_TOKEN }
-    if (-not $env:GH_TOKEN) { Write-Error "GH_TOKEN required from li/.env.github for product+ingest workers" }
+    if (-not $env:GH_TOKEN) {
+        Write-Error "GH_TOKEN required from li/.env.github (or li/.env) for li-langverse workers"
+    }
+}
+
+function Apply-LiAgentsSecrets {
+    param([string]$Ns)
+    $secretArgs = @(
+        "create", "secret", "generic", "li-agents-secrets",
+        "--from-literal=GH_TOKEN=$($env:GH_TOKEN)",
+        "-n", $Ns, "--dry-run=client", "-o", "yaml"
+    )
+    if ($env:CURSOR_API_KEY) { $secretArgs += "--from-literal=CURSOR_API_KEY=$($env:CURSOR_API_KEY)" }
+    if ($env:CURSOR_SDK_KEY) { $secretArgs += "--from-literal=CURSOR_SDK_KEY=$($env:CURSOR_SDK_KEY)" }
+    kubectl @secretArgs | kubectl apply -f -
+
+    kubectl -n $Ns create secret docker-registry ghcr-li-langverse `
+        --docker-server=ghcr.io `
+        --docker-username=li-langverse `
+        --docker-password=$env:GH_TOKEN `
+        --dry-run=client -o yaml | kubectl apply -f -
+}
+
+# cap-jmk-launchpad homelab token only.
+function Load-KlautHomelabEnv {
+    $env:GH_TOKEN = $null
+    $env:GITHUB_TOKEN = $null
+    Get-Content (Join-Path $BeelinkRoot ".env") | ForEach-Object {
+        if ($_ -match '^GH_TOKEN=(.+)$') { $env:GH_TOKEN = $Matches[1].Trim() }
+    }
+    if (-not $env:GH_TOKEN) {
+        Write-Error "GH_TOKEN required from beelink-cleanup/.env for klaut worker"
+    }
+    $LiAgentsEnv = Join-Path $Root ".env"
+    if (Test-Path $LiAgentsEnv) {
+        Get-Content $LiAgentsEnv | ForEach-Object {
+            if ($_ -match '^CURSOR_API_KEY=(.+)$') { $env:CURSOR_API_KEY = $Matches[1].Trim() }
+        }
+    }
+}
+
+$env:KUBECONFIG = $KubeConfig
+Write-Host "==> deploy li-research workers (namespace=$Namespace node=$EngineNode)"
+
+kubectl label node $EngineNode li-langverse.io/node-pool=engine --overwrite 2>$null
+kubectl apply -f (Join-Path $K8s "namespace.yaml")
+kubectl apply -f (Join-Path $K8s "rbac-goal-workers-scale.yaml")
+
+if (-not $SkipProduct) {
+    Load-LiLangverseEnv
 
     Write-Host "==> li-research-product"
     kubectl apply -f (Join-Path $K8s "configmap-li-research-product.yaml")
@@ -60,38 +105,14 @@ if (-not $SkipProduct) {
     }
     . $BundleScript -Root $Root -Namespace $Namespace -ConfigMapName "li-research-product-bundle" -ExtraFiles $extra
 
-    $secretArgs = @(
-        "create", "secret", "generic", "li-agents-secrets",
-        "--from-literal=GH_TOKEN=$($env:GH_TOKEN)",
-        "-n", $Namespace, "--dry-run=client", "-o", "yaml"
-    )
-    if ($env:CURSOR_API_KEY) { $secretArgs += "--from-literal=CURSOR_API_KEY=$($env:CURSOR_API_KEY)" }
-    if ($env:CURSOR_SDK_KEY) { $secretArgs += "--from-literal=CURSOR_SDK_KEY=$($env:CURSOR_SDK_KEY)" }
-    kubectl @secretArgs | kubectl apply -f -
-
-    kubectl -n $Namespace create secret docker-registry ghcr-li-langverse `
-        --docker-server=ghcr.io `
-        --docker-username=li-langverse `
-        --docker-password=$env:GH_TOKEN `
-        --dry-run=client -o yaml | kubectl apply -f -
+    Apply-LiAgentsSecrets -Ns $Namespace
 
     kubectl -n $Namespace rollout restart deploy/li-research-product 2>$null
     kubectl -n $Namespace rollout status deploy/li-research-product --timeout=300s
 }
 
 if (-not $SkipKlaut) {
-    $env:GH_TOKEN = $null
-    Get-Content (Join-Path $BeelinkRoot ".env") | ForEach-Object {
-        if ($_ -match '^GH_TOKEN=(.+)$') { $env:GH_TOKEN = $Matches[1].Trim() }
-    }
-    if (-not $env:GH_TOKEN) { Write-Error "GH_TOKEN required from beelink-cleanup/.env for klaut worker" }
-
-    $LiAgentsEnv = Join-Path $Root ".env"
-    if (Test-Path $LiAgentsEnv) {
-        Get-Content $LiAgentsEnv | ForEach-Object {
-            if ($_ -match '^CURSOR_API_KEY=(.+)$') { $env:CURSOR_API_KEY = $Matches[1].Trim() }
-        }
-    }
+    Load-KlautHomelabEnv
 
     Write-Host "==> li-research-klaut"
     kubectl apply -f (Join-Path $K8s "configmap-li-research-klaut.yaml")
@@ -116,18 +137,7 @@ if (-not $SkipKlaut) {
 }
 
 if (-not $SkipIngest) {
-    if (-not $env:GH_TOKEN) {
-        foreach ($envFile in @(
-                (Join-Path $LiRoot ".env.github"),
-                (Join-Path $Root ".env")
-            )) {
-            if (-not (Test-Path $envFile)) { continue }
-            Get-Content $envFile | ForEach-Object {
-                if ($_ -match '^GH_TOKEN=(.+)$') { $env:GH_TOKEN = $Matches[1].Trim() }
-            }
-        }
-    }
-    if (-not $env:GH_TOKEN) { Write-Error "GH_TOKEN required for ingest worker" }
+    Load-LiLangverseEnv
 
     Write-Host "==> li-research-ingest"
     kubectl apply -f (Join-Path $K8s "configmap-li-research-ingest.yaml")
@@ -138,6 +148,8 @@ if (-not $SkipIngest) {
         "wp-li-research-ingest.md"   = $goalIngest
     }
     . $BundleScript -Root $Root -Namespace $Namespace -ConfigMapName "li-research-ingest-bundle" -ExtraFiles $extra
+
+    Apply-LiAgentsSecrets -Ns $Namespace
 
     kubectl -n $Namespace rollout restart deploy/li-research-ingest 2>$null
     kubectl -n $Namespace rollout status deploy/li-research-ingest --timeout=300s
