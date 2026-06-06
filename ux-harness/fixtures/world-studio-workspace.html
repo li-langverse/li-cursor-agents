@@ -8,21 +8,66 @@
     body { width: 1920px; height: 1080px; overflow: hidden;
       font-family: system-ui, sans-serif; background: #0d1117; color: #e6edf3; }
     .dock { position: absolute; left: 0; top: 0; bottom: 0; width: 56px;
-      background: #161b22; border-right: 1px solid #30363d; }
+      background: #161b22; border-right: 1px solid #30363d; display: flex; flex-direction: column; gap: 4px; padding: 8px 0; }
+    .dock button {
+      width: 40px; height: 40px; margin: 0 auto; border: none; border-radius: 6px;
+      background: transparent; color: #8b949e; cursor: pointer; font-size: 18px;
+    }
+    .dock button[aria-current="page"] { background: #21262d; color: #58a6ff; }
+    .dock button:focus-visible,
+    .inspector button:focus-visible,
+    .topbar button:focus-visible {
+      outline: 2px solid #58a6ff; outline-offset: 2px;
+    }
     .viewport { position: absolute; left: 56px; top: 44px; right: 320px; bottom: 0;
-      background: radial-gradient(circle at 50% 40%, #1a2332, #0d1117); }
+      background: radial-gradient(circle at 50% 40%, #161b22, #0d1117); }
     .inspector { position: absolute; right: 0; top: 44px; width: 320px; bottom: 0;
       background: #161b22; border-left: 1px solid #30363d; padding: 16px; font-size: 13px; }
+    .inspector h2 { font-size: 14px; margin-bottom: 12px; color: #c9d1d9; }
+    .metric-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #30363d; }
+    .metric-row dt { color: #8b949e; }
+    .metric-row dd { color: #e6edf3; font-variant-numeric: tabular-nums; }
     .topbar { position: absolute; left: 56px; right: 0; top: 0; height: 44px;
       background: #161b22; border-bottom: 1px solid #30363d; display: flex; align-items: center;
-      padding: 0 16px; font-size: 13px; }
-    .badge { background: #238636; color: #fff; padding: 2px 8px; border-radius: 4px; margin-left: 8px; }
+      padding: 0 16px; font-size: 13px; gap: 8px; }
+    .badge { background: #238636; color: #fff; padding: 2px 8px; border-radius: 4px; }
+    .topbar button {
+      margin-left: auto; border: 1px solid #30363d; background: #21262d; color: #e6edf3;
+      border-radius: 6px; padding: 4px 10px; font-size: 12px; cursor: pointer;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
   </style>
 </head>
 <body>
-  <nav class="dock" aria-label="Tools"></nav>
-  <header class="topbar">Li World Studio <span class="badge">Agent: idle</span></header>
+  <nav class="dock" aria-label="Tools">
+    <button type="button" aria-label="Select tool" aria-current="page" title="Select">◎</button>
+    <button type="button" aria-label="Move tool" title="Move">✥</button>
+    <button type="button" aria-label="Measure tool" title="Measure">📐</button>
+  </nav>
+  <header class="topbar">
+    Li World Studio
+    <span class="badge" aria-label="Agent status idle">Agent: idle</span>
+    <button type="button" aria-label="Open command palette">⌘K Palette</button>
+  </header>
   <main class="viewport" role="main" aria-label="3D viewport"></main>
-  <aside class="inspector"><h2>Inspector</h2><p>Particle tier: 10k (mock)</p></aside>
+  <aside class="inspector" aria-label="Inspector panel">
+    <h2>Inspector</h2>
+    <dl>
+      <div class="metric-row">
+        <dt>UX-13 FPS (mock)</dt>
+        <dd>60</dd>
+      </div>
+      <div class="metric-row">
+        <dt>UX-14 Particles (mock)</dt>
+        <dd>10,000</dd>
+      </div>
+      <div class="metric-row">
+        <dt>Particle tier</dt>
+        <dd>10k</dd>
+      </div>
+    </dl>
+  </aside>
 </body>
 </html>

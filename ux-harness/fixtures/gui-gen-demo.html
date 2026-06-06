@@ -87,6 +87,15 @@
     }
     button.primary { background: #238636; border-color: #2ea043; color: #fff; }
     button.ghost { background: transparent; }
+    button:focus-visible,
+    input:focus-visible,
+    textarea:focus-visible {
+      outline: 2px solid #58a6ff;
+      outline-offset: 2px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
     .preview-card {
       border: 1px dashed #30363d;
       border-radius: 8px;
@@ -143,11 +152,11 @@
   </style>
 </head>
 <body>
-  <header>
+  <header role="banner" aria-label="Li GUI generator header">
     <h1>Li GUI generator (fixture)</h1>
-    <span class="badge">gen_preview_loop</span>
+    <span class="badge" aria-label="Active journey gen preview loop">gen_preview_loop</span>
   </header>
-  <main>
+  <main aria-label="Generator application">
     <aside class="sidebar">
       <section class="panel" data-ux-panel="prompt" aria-label="Prompt panel">
         <h2>Prompt</h2>
