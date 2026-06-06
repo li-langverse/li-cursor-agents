@@ -54,6 +54,34 @@ sync_lic_repo() {
 
 sync_lic_repo
 
+ensure_lic_built() {
+  # shellcheck source=/dev/null
+  source "${LIC_ROOT}/scripts/lib/lic-bin-select.sh"
+  if lic_rel="$(li_pick_lic_bin "$LIC_ROOT" 2>/dev/null)"; then
+    case "$lic_rel" in
+      ./*) export LIC="${LIC_ROOT}/${lic_rel#./}" ;;
+      *) export LIC="$lic_rel" ;;
+    esac
+    echo "proof-explorer-k8s-entrypoint: lic present at ${LIC}"
+    return 0
+  fi
+  echo "proof-explorer-k8s-entrypoint: building lic (LLVM in-container)"
+  if (cd "$LIC_ROOT" && bash scripts/build.sh); then
+    if lic_rel="$(li_pick_lic_bin "$LIC_ROOT")"; then
+      case "$lic_rel" in
+        ./*) export LIC="${LIC_ROOT}/${lic_rel#./}" ;;
+        *) export LIC="$lic_rel" ;;
+      esac
+      echo "proof-explorer-k8s-entrypoint: lic build OK ${LIC}"
+      return 0
+    fi
+  fi
+  echo "proof-explorer-k8s-entrypoint: WARN lic build failed; gates may retry" >&2
+  return 0
+}
+
+ensure_lic_built
+
 sync_proof_library() {
   mkdir -p "$(dirname "$PL_ROOT")"
   if [[ ! -d "$PL_ROOT/.git" ]]; then
@@ -82,6 +110,7 @@ fi
 export LI_PROOF_EXPLORER_LIC_ROOT="$LIC_ROOT"
 export LI_CURSOR_AGENTS_ROOT="$AGENTS_ROOT"
 export LIC_ROOT="$LIC_ROOT"
+export LIC="${LIC:-}"
 export LI_PROOF_EXPLORER_ALWAYS_ON="${LI_PROOF_EXPLORER_ALWAYS_ON:-1}"
 if [[ -z "${LI_PROOF_EXPLORER_EXIT_ON_COMPLETE:-}" && "${LI_PROOF_EXPLORER_PHASE_HANDOFF:-1}" == "0" ]]; then
   export LI_PROOF_EXPLORER_EXIT_ON_COMPLETE=1
