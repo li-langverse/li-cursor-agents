@@ -12,6 +12,7 @@ from sota.rubric import min_rubric_score, rubric_failing
 
 from .base import TargetConfig
 from .mock_data import mock_ui_result, mock_ux_result
+from .web_gui_playwright import audit_web_gui_playwright, playwright_enabled
 
 _STEP_MARKERS: dict[str, list[str]] = {
     "open_agents": ['data-testid="agents-page"', "Agents"],
@@ -283,6 +284,16 @@ def _build_ux_payload(
     return payload
 
 
+def _axe_ui_failing(pw: dict) -> bool:
+    for v in pw.get("axe_violations") or []:
+        impact = str(v.get("impact", "")).lower()
+        if impact in ("serious", "critical"):
+            return True
+    if pw.get("contrast_failures"):
+        return True
+    return False
+
+
 def run_web_gui_ui(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
     if mock:
         return mock_ui_result(target, str(agents_root))
@@ -318,6 +329,29 @@ def run_web_gui_ui(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
             result["fixture_fallback"] = True
             if meta.get("url"):
                 result["offline_url"] = meta.get("url")
+
+        fixture = _fixture_path(target, agents_root)
+        pw: dict | None = None
+        if fixture is not None and playwright_enabled():
+            pw = audit_web_gui_playwright(fixture, agents_root, target_id=target.id)
+            if pw.get("ok"):
+                result["mode"] = "playwright"
+                result["artifacts"] = pw["artifacts"]
+                result["axe_violations"] = pw["axe_violations"]
+                result["pixel_diff"] = pw["pixel_diff"]
+                result["contrast_failures"] = pw["contrast_failures"]
+                result["tokens_deviation"] = pw["tokens_deviation"]
+                result["baseline_status"] = pw["baseline_status"]
+                if pw.get("missing_baselines"):
+                    result["missing_baselines"] = pw["missing_baselines"]
+            elif pw.get("skip_reason"):
+                result["playwright_skip_reason"] = pw["skip_reason"]
+
+        axe_fail = pw is not None and pw.get("ok") and _axe_ui_failing(pw)
+        pixel_fail = pw is not None and pw.get("ok") and pw.get("baseline_status") == "drift"
+        token_fail = pw is not None and pw.get("ok") and bool(pw.get("tokens_deviation"))
+        if axe_fail or pixel_fail or token_fail:
+            result["status"] = "fail"
         return result
     return {**base, "status": "pass", "url": meta.get("url"), "mode": "http_probe"}
 

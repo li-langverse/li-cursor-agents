@@ -52,6 +52,7 @@ jobs:
           python3 ux-harness/tests/test_web_gui_adapter.py
           python3 ux-harness/tests/test_static_site.py
           python3 ux-harness/tests/test_docs_playwright.py
+          python3 ux-harness/tests/test_web_gui_playwright.py
 
       - name: Fixture briefing + heap plan
         run: python3 fixtures/e2e-benchmarks/scripts/agent-briefing.py
