@@ -35,12 +35,23 @@ kubectl apply -f deploy/k8s/engine/cronjob-org-issue-worker.yaml
 
 ## Image build
 
+Org-issue worker (`:latest`):
+
 ```bash
 docker build -f deploy/Dockerfile -t ghcr.io/li-langverse/li-cursor-agents:latest .
 docker push ghcr.io/li-langverse/li-cursor-agents:latest
 ```
 
-Update `image:` in the YAML if you use a private registry.
+Goal-directed sprint workers (`:proof-explorer-llvm22`, exit-on-complete in image since **2026-06-06** / commit `b139d4f`):
+
+```bash
+docker build -f deploy/Dockerfile.proof-explorer \
+  --build-arg LI_CI_IMAGE=ghcr.io/li-langverse/lic-ci:debian12-llvm22 \
+  -t ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22 .
+docker push ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
+```
+
+Or trigger **Publish proof-explorer image** workflow on `main`. Update `image:` in the YAML if you use a private registry.
 
 ## What each run does
 

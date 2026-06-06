@@ -38,4 +38,5 @@ jobs:
             LI_CI_IMAGE=ghcr.io/li-langverse/lic-ci:debian12-llvm22
           tags: |
             ghcr.io/li-langverse/li-cursor-agents:proof-explorer
+            ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
             ghcr.io/li-langverse/li-cursor-agents:proof-explorer-${{ github.sha }}
