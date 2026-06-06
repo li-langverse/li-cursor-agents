@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Tests for web_gui adapter fixture fallback and journey execution."""
+"""Tests for web_gui adapter fixture fallback, gui-gen journeys, and rubric scoring."""
 from __future__ import annotations
 
 import json
@@ -69,7 +69,29 @@ class WebGuiAdapterTests(unittest.TestCase):
         self.assertEqual(target["status"], "pass")
         self.assertTrue(target.get("fixture_fallback"))
 
-    def test_gui_gen_fixture_still_passes(self) -> None:
+    def test_gui_gen_fixture_ui_passes(self) -> None:
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "run_audit.py"),
+                "--target",
+                "gui-gen-fixture",
+                "--mode",
+                "ui",
+            ],
+            cwd=str(AGENTS_ROOT),
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        payload = json.loads(proc.stdout)
+        target = payload["ui"]["targets"][0]
+        self.assertEqual(target["status"], "pass")
+        self.assertIn("fixture", target)
+
+    def test_gui_gen_fixture_ux_gen_preview_loop(self) -> None:
         proc = subprocess.run(
             [
                 sys.executable,
@@ -91,6 +113,21 @@ class WebGuiAdapterTests(unittest.TestCase):
         self.assertEqual(target["status"], "pass")
         self.assertEqual(target.get("mode"), "fixture")
         self.assertNotIn("fixture_fallback", target)
+
+        journeys = target.get("journeys") or []
+        self.assertGreater(len(journeys), 0)
+        gen_loop = next(j for j in journeys if j.get("id") == "gen_preview_loop")
+        self.assertTrue(gen_loop.get("completed"))
+        self.assertEqual(gen_loop.get("steps"), ["prompt", "preview", "edit"])
+        self.assertEqual(len(gen_loop.get("step_trace") or []), 3)
+
+        rubric = target.get("rubric_scores") or {}
+        self.assertGreaterEqual(rubric.get("empty_states", 0), 0.85)
+        self.assertGreaterEqual(rubric.get("error_handling", 0), 0.85)
+        self.assertEqual(target.get("missing_states"), [])
+
+        artifacts = target.get("artifacts") or []
+        self.assertTrue(any("journey-log.json" in a for a in artifacts))
 
     def test_benchmarks_dashboard_fixture_fallback_when_offline(self) -> None:
         proc = subprocess.run(
