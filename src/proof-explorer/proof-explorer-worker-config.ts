@@ -7,6 +7,16 @@ export function isProofExplorerWorkerAlwaysOn(): boolean {
   return truthyEnv("LI_PROOF_EXPLORER_ALWAYS_ON");
 }
 
+/** Exit the worker process when all completion gates pass (default for single-goal sprints). */
+export function isProofExplorerExitOnComplete(): boolean {
+  const raw = process.env.LI_PROOF_EXPLORER_EXIT_ON_COMPLETE?.trim();
+  if (raw !== undefined && raw !== "") {
+    return truthyEnv("LI_PROOF_EXPLORER_EXIT_ON_COMPLETE");
+  }
+  // Single-goal sprint workers (PHASE_HANDOFF=0) should not idle-loop after GOAL_COMPLETE.
+  return process.env.LI_PROOF_EXPLORER_PHASE_HANDOFF?.trim() === "0";
+}
+
 /** Sweep mode: catalog pass gates handoff; per-specimen verify failures are non-fatal. */
 export function isProofExplorerSweepMode(): boolean {
   return truthyEnv("LI_PROOF_EXPLORER_SWEEP_MODE");

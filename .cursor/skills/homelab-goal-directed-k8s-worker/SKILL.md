@@ -36,6 +36,7 @@ Template: `deploy/k8s/engine/pvc-pure-li-https-workspace.yaml` (10Gi, `local-pat
 
 ```yaml
 LI_PROOF_EXPLORER_ALWAYS_ON: "1"
+LI_PROOF_EXPLORER_EXIT_ON_COMPLETE: "1"       # exit pod when GOAL_COMPLETE (default when PHASE_HANDOFF=0)
 LI_PROOF_EXPLORER_PHASE_HANDOFF: "0"          # single-goal sprint (not multi-phase handoff)
 LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/<sprint>.md"
 LI_PROOF_EXPLORER_BRANCH: "cursor/<branch>"
@@ -51,6 +52,7 @@ LI_SDK_TERMINAL_STREAM: "1"
 
 | Flag | Why |
 |------|-----|
+| `EXIT_ON_COMPLETE=1` | After `GOAL_COMPLETE`, worker calls `process.exit(0)` instead of sleeping 120s forever |
 | `PHASE_HANDOFF=0` | Without it worker exits immediately when phase handoff logic thinks program is complete |
 | `SKIP_IMPLEMENTER_PREFLIGHT_GATE=1` | Optional when image is rebuilt on lic-ci (has clang-22); keep for faster worker start |
 
@@ -98,12 +100,21 @@ spawn: bash --agent code_implementer --goal-file .../pure-li-https.md
 
 `GOAL_INCOMPLETE` + completion gate exit 1 between iterations is **expected** until the sprint gate passes.
 
+When the gate passes you should see `GOAL_COMPLETE` then `program complete — all phase gates passed` and the pod **exits** (not another sleep cycle). Scale the Deployment to 0 after the sprint finishes to free the engine node:
+
+```bash
+kubectl -n li-swarm scale deploy/<sprint> --replicas=0
+```
+
+Set `LI_PROOF_EXPLORER_EXIT_ON_COMPLETE=0` only for always-on multi-phase workers (e.g. proof-explorer with `PHASE_HANDOFF=1` that should keep running across phases).
+
 ## Anti-patterns
 
 - **Sharing `li-proof-explorer-workspace` across concurrent deploys** — branch checkout races; goal file disappears
 - Custom `command: ["/bin/bash", "/scripts/entrypoint.sh"]` + ConfigMap entrypoint — duplicates image entrypoint
 - Missing `LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE` — LLVM 22 preflight error before agent runs
 - Missing `LI_PROOF_EXPLORER_PHASE_HANDOFF=0` — worker exits thinking program complete
+- Missing `LI_PROOF_EXPLORER_EXIT_ON_COMPLETE=1` on single-goal sprints — pod idle-loops every 120s after `GOAL_COMPLETE`
 
 ## Examples
 

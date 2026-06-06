@@ -83,6 +83,9 @@ export LI_PROOF_EXPLORER_LIC_ROOT="$LIC_ROOT"
 export LI_CURSOR_AGENTS_ROOT="$AGENTS_ROOT"
 export LIC_ROOT="$LIC_ROOT"
 export LI_PROOF_EXPLORER_ALWAYS_ON="${LI_PROOF_EXPLORER_ALWAYS_ON:-1}"
+if [[ -z "${LI_PROOF_EXPLORER_EXIT_ON_COMPLETE:-}" && "${LI_PROOF_EXPLORER_PHASE_HANDOFF:-1}" == "0" ]]; then
+  export LI_PROOF_EXPLORER_EXIT_ON_COMPLETE=1
+fi
 
 set +e
 node "${AGENTS_ROOT}/dist/cli/proof-explorer-worker.js" start

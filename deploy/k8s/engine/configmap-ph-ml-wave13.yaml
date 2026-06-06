@@ -15,6 +15,7 @@ metadata:
       benches. Default honesty gate passes with declared deps + live_proxy without GPU.
 data:
   LI_PROOF_EXPLORER_ALWAYS_ON: "1"
+  LI_PROOF_EXPLORER_EXIT_ON_COMPLETE: "1"
   LI_PROOF_EXPLORER_PHASE_HANDOFF: "0"
   LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/ph-ml-stage8-production.md"
   LI_PROOF_EXPLORER_LIC_ROOT: "/workspace/lic"

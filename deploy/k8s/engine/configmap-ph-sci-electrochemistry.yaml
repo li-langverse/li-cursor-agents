@@ -10,6 +10,7 @@ metadata:
     li-langverse.io/sprint: ph-sci-electrochemistry
 data:
   LI_PROOF_EXPLORER_ALWAYS_ON: "1"
+  LI_PROOF_EXPLORER_EXIT_ON_COMPLETE: "1"
   LI_PROOF_EXPLORER_PHASE_HANDOFF: "0"
   LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/ph-sci-electrochemistry-gpu-roadmap.md"
   LI_PROOF_EXPLORER_LIC_ROOT: "/workspace/lic"

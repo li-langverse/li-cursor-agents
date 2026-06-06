@@ -5,6 +5,7 @@ import { agentLog } from "../agent-log.js";
 import { workerConsole } from "../worker/worker-console.js";
 import { resolveActivePhase } from "./proof-explorer-phase-handoff.js";
 import {
+  isProofExplorerExitOnComplete,
   isProofExplorerWorkerAlwaysOn,
   proofExplorerAgentsRoot,
   proofExplorerLicRoot,
@@ -114,7 +115,7 @@ async function proofExplorerWorkerLoop(signal: AbortSignal): Promise<void> {
       const active = await resolveActivePhase();
       if (active.allComplete) {
         workerConsole("li-proof-explorer", "info", "program complete — all phase gates passed");
-        if (process.env.LI_PROOF_EXPLORER_EXIT_ON_COMPLETE === "1") {
+        if (isProofExplorerExitOnComplete()) {
           process.exit(0);
         }
         break;
@@ -136,7 +137,7 @@ async function proofExplorerWorkerLoop(signal: AbortSignal): Promise<void> {
         const next = await resolveActivePhase();
         if (next.allComplete) {
           workerConsole("li-proof-explorer", "info", "program complete — all phase gates passed");
-          if (process.env.LI_PROOF_EXPLORER_EXIT_ON_COMPLETE === "1") {
+          if (isProofExplorerExitOnComplete()) {
             process.exit(0);
           }
           break;
