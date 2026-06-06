@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: li-li-parallel
+  namespace: li-swarm
+  labels:
+    app: li-li-parallel
+    app.kubernetes.io/name: li-li-parallel
+    app.kubernetes.io/component: goal-directed-agent
+    li-langverse.io/sprint: li-parallel-native-hpc
+data:
+  LI_PROOF_EXPLORER_ALWAYS_ON: "1"
+  LI_PROOF_EXPLORER_PHASE_HANDOFF: "0"
+  LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/li-parallel-native-hpc.md"
+  LI_PROOF_EXPLORER_LIC_ROOT: "/workspace/lic"
+  LI_CURSOR_AGENTS_ROOT: "/app"
+  LI_PROOF_EXPLORER_WORKFLOW_REPO: "lic"
+  LI_PROOF_EXPLORER_BRANCH: "cursor/li-parallel-native-hpc"
+  LI_PROOF_EXPLORER_BRANCH_FALLBACKS: "cursor/li-parallel-native-hpc,main"
+  LI_GITHUB_ORG: "li-langverse"
+  LI_PROOF_EXPLORER_LIC_REPO: "lic"
+  LI_PROOF_EXPLORER_LOOP_SLEEP_SEC: "120"
+  LI_PROOF_EXPLORER_AGENT: "code_implementer"
+  LI_PROOF_EXPLORER_LOOP_MAX: "0"
+  LI_CONTROL_PLANE_STORE: "disk"
+  LI_SDK_TERMINAL_STREAM: "1"
+  LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE: "1"
+  LI_SWARM_EXTERNAL: "1"
+  NODE_ENV: "production"
