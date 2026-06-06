@@ -157,6 +157,54 @@ class WebGuiAdapterTests(unittest.TestCase):
         self.assertTrue(home.get("completed"))
         self.assertTrue(gpu.get("completed"))
 
+    def test_world_studio_demo_ux_includes_agentic_ai_sota(self) -> None:
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "run_audit.py"),
+                "--target",
+                "world-studio-demo",
+                "--mode",
+                "ux",
+            ],
+            cwd=str(AGENTS_ROOT),
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        payload = json.loads(proc.stdout)
+        target = payload["ux"]["targets"][0]
+        self.assertEqual(target["status"], "pass")
+        sota = set(target.get("sota_refs") or [])
+        for required in ("cursor-agent", "linear-app", "github-copilot-workspace"):
+            self.assertIn(required, sota, msg=f"missing agentic_ai ref {required!r}")
+
+    def test_world_studio_demo_mock_ux_includes_agentic_ai_sota(self) -> None:
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "run_audit.py"),
+                "--target",
+                "world-studio-demo",
+                "--mode",
+                "ux",
+                "--mock",
+            ],
+            cwd=str(AGENTS_ROOT),
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        payload = json.loads(proc.stdout)
+        target = payload["ux"]["targets"][0]
+        sota = set(target.get("sota_refs") or [])
+        for required in ("cursor-agent", "linear-app", "github-copilot-workspace"):
+            self.assertIn(required, sota, msg=f"missing agentic_ai ref {required!r}")
+
 
 if __name__ == "__main__":
     unittest.main()
