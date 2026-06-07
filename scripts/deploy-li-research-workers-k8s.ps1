@@ -157,6 +157,7 @@ if (-not $SkipIngest) {
 
     Write-Host "==> li-research-ingest"
     kubectl apply -f (Join-Path $K8s "configmap-li-research-ingest.yaml")
+    kubectl apply -f (Join-Path $K8s "secret-li-research-s2-api-key.yaml")
     kubectl apply -f (Join-Path $K8s "deployment-li-research-ingest.yaml")
     $goalIngest = Normalize-GoalFile (Join-Path $KlautProGoals $GoalIngest)
     $extra = @{

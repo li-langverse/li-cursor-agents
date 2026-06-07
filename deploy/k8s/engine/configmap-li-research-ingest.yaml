@@ -12,6 +12,8 @@ data:
   LI_GOAL_WORKSPACE: "/workspace"
   LI_GOAL_FILE: "data/goal-directed-sprints/wp-li-research-r1b-warm-ingest.md"
   LI_GOAL_BRANCH: "cursor/li-research-r1b"
+  LI_RESEARCH_INGEST_ROOT: "/workspace/li-research-ingest"
+  LI_SECRETS_DIR: "/srv/homelab/li-research/secrets"
   LI_GOAL_AGENT: "code_implementer"
   LI_GOAL_LOOP_SLEEP_SEC: "300"
   WARM_INGEST_MIN_BYTES: "1073741824"

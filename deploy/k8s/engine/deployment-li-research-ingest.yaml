@@ -78,6 +78,8 @@ spec:
                   name: li-agents-secrets
                   key: CURSOR_SDK_KEY
                   optional: true
+            - name: S2_API_KEY_FILE
+              value: /run/secrets/s2-api-key
           resources:
             requests:
               cpu: "500m"
@@ -92,6 +94,13 @@ spec:
               mountPath: /warm-index
             - name: config-bundle
               mountPath: /config
+            - name: s2-api-key
+              mountPath: /run/secrets/s2-api-key
+              subPath: s2-api-key
+              readOnly: true
+            - name: homelab-secrets
+              mountPath: /srv/homelab/li-research/secrets
+              readOnly: true
       volumes:
         - name: workspace
           persistentVolumeClaim:
@@ -104,3 +113,14 @@ spec:
           configMap:
             name: li-research-ingest-bundle
             defaultMode: 0755
+        - name: s2-api-key
+          secret:
+            secretName: li-research-s2-api-key
+            optional: true
+            items:
+              - key: s2-api-key
+                path: s2-api-key
+        - name: homelab-secrets
+          hostPath:
+            path: /srv/homelab/li-research/secrets
+            type: DirectoryOrCreate

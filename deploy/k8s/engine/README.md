@@ -73,6 +73,16 @@ On a host running `async-swarm`, set `LI_ORG_ISSUE_WORKER_ALWAYS_ON=1` in the sa
 
 Defer when `ORG_PR_SPRINT_ROLE=old-dirty|old-ci` (PR sprints own the token).
 
+### li-research warm ingest (R1b)
+
+- Deployment: `li-research-ingest` (namespace `li-swarm`, node `engine`)
+- PVC: `li-research-ingest-workspace`; warm index hostPath `/warm-index` → `/srv/homelab/nvme/li-research/warm-index`
+- S2 key: `secret-li-research-s2-api-key.yaml` mounted at `/run/secrets/s2-api-key` (`S2_API_KEY_FILE`); homelab drop-in `LI_SECRETS_DIR=/srv/homelab/li-research/secrets`
+- Deploy: `.\scripts\deploy-li-research-workers-k8s.ps1 -SkipProduct -SkipKlaut` (edit secret placeholder first)
+- Live hotfix without redeploying base manifest: [li-research-ingest/deploy/k8s/README.md](https://github.com/li-langverse/li-research-ingest/blob/main/deploy/k8s/README.md) (strategic-merge patch)
+- Verify on pod: `bash scripts/discover-s2-key.sh && ./scripts/unblock-r1b.sh` in `/workspace/li-research-ingest`
+- Track: [li-research-ingest#6](https://github.com/li-langverse/li-research-ingest/issues/6)
+
 ## Verify
 
 ```bash
