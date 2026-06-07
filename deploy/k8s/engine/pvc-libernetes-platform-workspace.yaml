@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: li-libernetes-platform-workspace
+  namespace: li-swarm
+  labels:
+    app: li-libernetes-platform
+    app.kubernetes.io/component: goal-directed-agent
+    li-langverse.io/sprint: libernetes-platform
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: local-path

@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: li-libernetes-control
+  namespace: li-swarm
+  labels:
+    app: li-libernetes-control
+    app.kubernetes.io/component: goal-directed-agent
+    li-langverse.io/sprint: libernetes-control
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: li-libernetes-control
+  template:
+    metadata:
+      labels:
+        app: li-libernetes-control
+        app.kubernetes.io/component: goal-directed-agent
+        li-langverse.io/sprint: libernetes-control
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: engine
+      imagePullSecrets:
+        - name: ghcr-li-langverse
+      containers:
+        - name: libernetes-control
+          image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: li-libernetes-control
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+            - name: GITHUB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+            - name: CURSOR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: CURSOR_API_KEY
+                  optional: true
+            - name: CURSOR_SDK_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: CURSOR_SDK_KEY
+                  optional: true
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "4"
+              memory: "4Gi"
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+      volumes:
+        - name: workspace
+          persistentVolumeClaim:
+            claimName: li-libernetes-control-workspace
