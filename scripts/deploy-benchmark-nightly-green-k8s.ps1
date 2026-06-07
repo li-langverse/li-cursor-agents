@@ -48,6 +48,8 @@ kubectl apply -f (Join-Path $K8s "deployment-benchmark-nightly-green.yaml")
 
 $extra = @{
     "entrypoint.sh" = (Join-Path $Root "deploy\benchmark-nightly-green-entrypoint.sh")
+    "benchmark-nightly-green.md" = (Join-Path $Root "data\goal-directed-sprints\benchmark-nightly-green.md")
+    "benchmark-nightly-green-plan.md" = (Join-Path $Root "data\goal-directed-sprints\benchmark-nightly-green-plan.md")
 }
 . (Join-Path $Root "scripts\Invoke-K8sGoalLoopBundle.ps1") `
     -Root $Root -Namespace $Namespace -ConfigMapName "li-benchmark-nightly-green-bundle" `

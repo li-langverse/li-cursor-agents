@@ -8,11 +8,28 @@ export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
 BENCHMARKS_ROOT="${LI_BENCHMARK_NIGHTLY_GREEN_BENCHMARKS_ROOT:-/workspace/benchmarks}"
 LIC_ROOT="${LI_BENCHMARK_NIGHTLY_GREEN_LIC_ROOT:-/workspace/lic}"
 AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
-GOAL_FILE="${AGENTS_ROOT}/${LI_BENCHMARK_NIGHTLY_GREEN_GOAL_FILE:-data/goal-directed-sprints/benchmark-nightly-green.md}"
+GOAL_REL="${LI_BENCHMARK_NIGHTLY_GREEN_GOAL_FILE:-data/goal-directed-sprints/benchmark-nightly-green.md}"
 AGENT="${LI_BENCHMARK_NIGHTLY_GREEN_AGENT:-code_implementer}"
 BENCHMARKS_BRANCH="${LI_BENCHMARK_NIGHTLY_GREEN_BENCHMARKS_BRANCH:-cursor/benchmark-nightly-green}"
 LIC_BRANCH="${LI_BENCHMARK_NIGHTLY_GREEN_LIC_BRANCH:-main}"
 LOOP_SLEEP="${LI_BENCHMARK_NIGHTLY_GREEN_LOOP_SLEEP_SEC:-${LI_GOAL_LOOP_SLEEP_SEC:-90}}"
+
+resolve_goal_file() {
+  local dest="$AGENTS_ROOT/$GOAL_REL"
+  if [[ -f "$dest" ]]; then
+    echo "$dest"
+    return 0
+  fi
+  mkdir -p "$AGENTS_ROOT/data/goal-directed-sprints"
+  if [[ -f /config/benchmark-nightly-green.md ]]; then
+    cp /config/benchmark-nightly-green.md "$AGENTS_ROOT/data/goal-directed-sprints/benchmark-nightly-green.md"
+    [[ -f /config/benchmark-nightly-green-plan.md ]] && \
+      cp /config/benchmark-nightly-green-plan.md "$AGENTS_ROOT/data/goal-directed-sprints/benchmark-nightly-green-plan.md"
+    echo "$AGENTS_ROOT/data/goal-directed-sprints/benchmark-nightly-green.md"
+    return 0
+  fi
+  return 1
+}
 
 echo "benchmark-nightly-green-entrypoint: benchmarks=${BENCHMARKS_ROOT} branch=${BENCHMARKS_BRANCH} lic=${LIC_ROOT}"
 
@@ -64,8 +81,8 @@ sync_workspace() {
   sync_repo "$LIC_ROOT" "$LIC_BRANCH"
   export LIC_ROOT LI_REPO_ROOT="$LIC_ROOT" BENCHMARKS_ROOT
   ensure_lic_built
-  [[ -f "$GOAL_FILE" ]] || {
-    echo "benchmark-nightly-green-entrypoint: missing goal file ${GOAL_FILE}" >&2
+  GOAL_FILE="$(resolve_goal_file)" || {
+    echo "benchmark-nightly-green-entrypoint: missing goal file (image + /config bundle)" >&2
     exit 1
   }
   [[ -f "$BENCHMARKS_ROOT/scripts/benchmark-nightly-green-progress-gate.sh" ]] || {
@@ -78,6 +95,7 @@ run_goal_loop() {
   export_goal_loop_self_unblock_env "$BENCHMARKS_BRANCH"
   export LI_CURSOR_AGENTS_ROOT="$AGENTS_ROOT"
   export LI_REPO_WORKFLOW_BRANCH="$BENCHMARKS_BRANCH"
+  GOAL_FILE="$(resolve_goal_file)"
   "$AGENTS_ROOT/scripts/goal-directed-loop.sh" \
     --agent "$AGENT" \
     --workflow-repo benchmarks \

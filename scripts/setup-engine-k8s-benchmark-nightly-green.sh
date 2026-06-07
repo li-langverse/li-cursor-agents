@@ -46,11 +46,13 @@ for pair in \
   "goal-directed-loop.sh:scripts/goal-directed-loop.sh" \
   "goal-loop-self-unblock.sh:scripts/goal-loop-self-unblock.sh" \
   "k8s-goal-loop-common.sh:deploy/k8s-goal-loop-common.sh" \
-  "entrypoint.sh:deploy/benchmark-nightly-green-entrypoint.sh"; do
+  "entrypoint.sh:deploy/benchmark-nightly-green-entrypoint.sh" \
+  "benchmark-nightly-green.md:data/goal-directed-sprints/benchmark-nightly-green.md" \
+  "benchmark-nightly-green-plan.md:data/goal-directed-sprints/benchmark-nightly-green-plan.md"; do
   dest="${pair%%:*}"
   src="${ROOT}/${pair#*:}"
   sed 's/\r$//' "$src" > "$BUNDLE_DIR/$dest"
-  chmod +x "$BUNDLE_DIR/$dest"
+  chmod +x "$BUNDLE_DIR/$dest" 2>/dev/null || true
 done
 
 kubectl -n "$NS" create configmap li-benchmark-nightly-green-bundle \
