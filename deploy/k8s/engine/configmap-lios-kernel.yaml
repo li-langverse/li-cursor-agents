@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: li-lios-kernel
+  namespace: li-swarm
+  labels:
+    app: li-lios-kernel
+    app.kubernetes.io/name: li-lios-kernel
+    app.kubernetes.io/component: goal-directed-agent
+    li-langverse.io/sprint: lios-kernel-m1
+data:
+  LI_GOAL_WORKSPACE: "/workspace"
+  LI_GOAL_FILE: "data/goal-directed-sprints/lios-kernel-m1.md"
+  LI_GOAL_BRANCH_LI_OS: "cursor/lios-kernel-m1"
+  LI_GOAL_BRANCH_LIC: "cursor/lios-kernel-m1"
+  LI_GOAL_BRANCH_FALLBACKS: "cursor/lios-kernel-m1,main"
+  LI_GOAL_AGENT: "code_implementer"
+  LI_GOAL_LOOP_MAX: "0"
+  LI_GOAL_LOOP_SLEEP_SEC: "120"
+  LI_GOAL_GATE_PREFER_CWD: "1"
+  LI_GOAL_SYNC_CWD_AFTER_RUN: "1"
+  LI_GOAL_SELF_UNBLOCK: "1"
+  LI_GOAL_STUCK_THRESHOLD: "5"
+  LI_GOAL_SCALE_DOWN_ON_COMPLETE: "1"
+  LI_GOAL_DEPLOYMENT_NAME: "li-lios-kernel"
+  LI_GOAL_NAMESPACE: "li-swarm"
+  LI_GITHUB_ORG: "li-langverse"
+  LI_CURSOR_AGENTS_ROOT: "/app"
+  LI_CONTROL_PLANE_STORE: "disk"
+  LI_SDK_TERMINAL_STREAM: "1"
+  LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE: "1"
+  NODE_ENV: "production"

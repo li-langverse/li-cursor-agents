@@ -65,7 +65,7 @@ HINT
 
 ## Unblock: lic linker
 - Reproduce: build tier3 `async_await_chain` and a tier7 registry `.li` target with `lic build`.
-- Fix `lic` on `main` (MIR/linker regression); PR to `lic` — avoid pinning `LIC_BENCH_REF` unless documented temporary.
+- Fix `lic` on `main` (MIR/linker regression); PR to `lic` â€” avoid pinning `LIC_BENCH_REF` unless documented temporary.
 - Rebuild: `(cd lic && ./scripts/build.sh)` then re-run progress gate.
 HINT
 )"
@@ -85,12 +85,24 @@ HINT
     hints+="$(cat <<'HINT'
 
 ## Unblock: publish-dashboard chain
-- Gates run in order: measurement-quality → dashboard-invariants → zero-missing-data → commit summary.
+- Gates run in order: measurement-quality â†’ dashboard-invariants â†’ zero-missing-data â†’ commit summary.
 - Fix upstream CSV/parity first; re-run `./scripts/benchmark-nightly-green-progress-gate.sh`.
 HINT
 )"
   fi
 
+
+  if echo "$ctx" | grep -qiE 'hello_kern|dev-vm|freestanding|check-zero-c|QEMU|kernel-abi'; then
+    hints+="$(cat <<'HINT'
+
+## Unblock: LiOS kernel M1
+- Create/fix gates under `li-os/scripts/gates/` — do not skip with JSON-only updates.
+- Freestanding link: `@hw` intrinsics only — no C/asm in kernel ELF (`check-zero-c.sh`).
+- Reproduce: `bash scripts/gates/phase-p0-hello-kern-gate.sh` then `dev-vm.sh --smoke`.
+- Branch: `cursor/lios-kernel-m1` on **li-os** + **lic**; push before next loop iteration.
+HINT
+)"
+  fi
   if echo "$ctx" | grep -qiE 'benchmark-nightly-green-progress|benchmark-nightly-green-gate'; then
     hints+="$(cat <<'HINT'
 
