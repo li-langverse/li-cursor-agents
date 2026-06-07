@@ -211,19 +211,27 @@ build_agent_extra_instruction() {
     fi
   fi
 
+  local unblock_hints=""
+  if declare -F goal_loop_unblock_hints_from_context >/dev/null 2>&1; then
+    unblock_hints="$(goal_loop_unblock_hints_from_context "$gate_note" "$gaps_tail" 2>/dev/null || true)"
+  fi
+
   if [[ "$stuck_flag" == "1" ]]; then
     stuck_ctx="$(cat <<STUCK
 
 ## Self-unblock (required — loop is stuck)
 
-The same plan todos have been pending for several iterations. **Stop** re-running gates only or updating \`latest-iteration-assessment.json\` / manifest timestamps without code changes.
+The same plan todos have been pending for several iterations. **Stop** re-running gates only or updating assessment JSON / manifest timestamps without code changes.
 
-**Implement now:** \`${next_todo:-next pending wsv/wsp/wsg todo}\` in native Li on \`${LI_REPO_WORKFLOW_BRANCH:-sprint branch}\`.
-- Edit \`docs/superpowers/plans/*-loop.md\` → set this todo \`status: done\` only after real implementation.
-- Run progress + completion gate bash blocks from the goal file yourself.
+**Implement now:** todo \`${next_todo:-next pending plan todo}\` on branch \`${LI_REPO_WORKFLOW_BRANCH:-sprint branch}\`.
+- Mark plan todo \`status: done\` only after real implementation and passing progress gate.
+- Run **Progress gate** and **Completion gate** bash blocks from the goal file yourself.
 - Push to \`origin/${LI_REPO_WORKFLOW_BRANCH:-HEAD}\`; do not claim sprint complete in JSON alone.
+${unblock_hints}
 STUCK
 )"
+  elif [[ -n "$unblock_hints" ]]; then
+    stuck_ctx="${unblock_hints}"
   fi
 
   cat <<EOF

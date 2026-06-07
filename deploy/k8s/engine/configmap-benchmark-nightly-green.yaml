@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: li-benchmark-nightly-green
+  namespace: li-swarm
+  labels:
+    app: li-benchmark-nightly-green
+    app.kubernetes.io/name: li-benchmark-nightly-green
+    app.kubernetes.io/component: goal-directed-agent
+data:
+  LI_BENCHMARK_NIGHTLY_GREEN_ALWAYS_ON: "1"
+  LI_BENCHMARK_NIGHTLY_GREEN_LOOP_SLEEP_SEC: "90"
+
+  LI_BENCHMARK_NIGHTLY_GREEN_GOAL_FILE: "data/goal-directed-sprints/benchmark-nightly-green.md"
+  LI_BENCHMARK_NIGHTLY_GREEN_AGENT: "code_implementer"
+  LI_BENCHMARK_NIGHTLY_GREEN_BENCHMARKS_BRANCH: "cursor/benchmark-nightly-green"
+  LI_BENCHMARK_NIGHTLY_GREEN_LIC_BRANCH: "main"
+
+  LI_BENCHMARK_NIGHTLY_GREEN_BENCHMARKS_ROOT: "/workspace/benchmarks"
+  LI_BENCHMARK_NIGHTLY_GREEN_LIC_ROOT: "/workspace/lic"
+  LI_CURSOR_AGENTS_ROOT: "/app"
+
+  LI_GOAL_LOOP_GATE_ONLY: "1"
+  LI_GOAL_GATE_PREFER_CWD: "0"
+  LI_GOAL_SYNC_CWD_AFTER_RUN: "1"
+  LI_GOAL_SELF_UNBLOCK: "1"
+  LI_REPO_WORKFLOW_TRACK_REMOTE: "1"
+  LI_GOAL_STUCK_THRESHOLD: "5"
+  LI_GOAL_SCALE_DOWN_ON_COMPLETE: "1"
+  LI_GOAL_DEPLOYMENT_NAME: "li-benchmark-nightly-green"
+  LI_GOAL_NAMESPACE: "li-swarm"
+
+  BENCH_EQUALIZE_RUNS: "1"
+  BENCH_MIN_RUNS: "6"
+  BENCH_RUNS: "6"
+  BENCHMARK_NIGHTLY_GATE_MAX_WAIT_SEC: "7200"
+
+  LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE: "1"
+  LI_SDK_TERMINAL_STREAM: "1"
+  NODE_ENV: "production"

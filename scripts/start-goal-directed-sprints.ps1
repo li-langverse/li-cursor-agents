@@ -3,7 +3,7 @@
 param(
     [int]$Max = 0,  # 0 = no iteration cap; stop on completion gate only
     [string]$UntilLocal = "",
-    [ValidateSet("all", "studio", "lig", "ph-ml", "ph-ml-li-array", "world-studio", "world-studio-runnable", "world-studio-gui-library", "world-studio-gui-polish", "world-studio-aimd-demo", "benchmarks", "benchmarks-dashboard", "li-toml-config", "swarm", "org-prs", "org-prs-dirty", "org-prs-ci")]
+    [ValidateSet("all", "studio", "lig", "ph-ml", "ph-ml-li-array", "world-studio", "world-studio-runnable", "world-studio-gui-library", "world-studio-gui-polish", "world-studio-aimd-demo", "benchmarks", "benchmark-nightly-green", "benchmarks-dashboard", "li-toml-config", "swarm", "org-prs", "org-prs-dirty", "org-prs-ci")]
     [string]$Sprint = "all",
     [switch]$DryRun,
     [switch]$BuildOnly
@@ -178,6 +178,23 @@ $sprints = @(
             WORLD_STUDIO_GATES_WSL = "1"
             LI_GOAL_LOOP_SLEEP_SEC = "60"
             LIC = "../lic/build-wsl/compiler/lic/lic"
+        }
+    },
+    @{
+        Id       = "benchmark-nightly-green"
+        Agent    = "code_implementer"
+        Repo     = "benchmarks"
+        Cwd      = "../benchmarks"
+        GoalRel  = "../data/goal-directed-sprints/benchmark-nightly-green.md"
+        ExtraEnv = @{
+            LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE = "1"
+            LI_STACK_SKIP_SUPABASE = "1"
+            LI_GOAL_SELF_UNBLOCK = "1"
+            LI_GOAL_SYNC_CWD_AFTER_RUN = "1"
+            BENCH_EQUALIZE_RUNS = "1"
+            BENCH_MIN_RUNS = "6"
+            BENCH_RUNS = "6"
+            LI_REPO_WORKFLOW_BRANCH = "cursor/benchmark-nightly-green"
         }
     },
     @{

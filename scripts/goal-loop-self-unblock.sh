@@ -18,10 +18,18 @@ from pathlib import Path
 goal = Path(sys.argv[1])
 cwd = Path(sys.argv[2])
 text = goal.read_text(encoding="utf-8")
+rel = None
 m = re.search(r"Plan loop:\*\*\s*\[[^\]]*\]\(([^)]+)\)", text, re.I)
-if not m:
+if m:
+    rel = m.group(1).strip().lstrip("./")
+else:
+    fm = re.match(r"^---\r?\n([\s\S]*?)\r?\n---", text)
+    if fm:
+        pm = re.search(r"^plan:\s*(\S+)\s*$", fm.group(1), re.M)
+        if pm:
+            rel = pm.group(1).strip().lstrip("./")
+if not rel:
     sys.exit(1)
-rel = m.group(1).strip().lstrip("./")
 if rel.startswith("../"):
     rel = rel[3:]
 for base in (cwd, goal.parent):
@@ -31,6 +39,70 @@ for base in (cwd, goal.parent):
         sys.exit(0)
 sys.exit(1)
 PY
+}
+
+# Context-aware hints when gates fail or the loop is stuck (benchmark nightly, lic link, etc.).
+goal_loop_unblock_hints_from_context() {
+  local gate_note="${1:-}"
+  local gaps="${2:-}"
+  local ctx="${gate_note}${gaps}"
+  local hints=""
+
+  if echo "$ctx" | grep -qiE 'sample-run imbalance|measurement-quality|MEASUREMENT_STRICT_PARITY|sample_runs'; then
+    hints+="$(cat <<'HINT'
+
+## Unblock: sample-run parity
+- Do **not** relax `check-summary-measurement-quality.py` or `MEASUREMENT_STRICT_PARITY`.
+- Confirm `BENCH_EQUALIZE_RUNS=1`; fix `time_commands_with_equal_runs` and tier1 parallel CSV races.
+- Run: `python3 -m unittest harness.test_timing_equalize -v`
+- Inspect merged CSV: every lang must share the same `sample_runs` per benchmark row.
+HINT
+)"
+  fi
+
+  if echo "$ctx" | grep -qiE 'linker command failed|clang.*link failed|undefined reference|ld: '; then
+    hints+="$(cat <<'HINT'
+
+## Unblock: lic linker
+- Reproduce: build tier3 `async_await_chain` and a tier7 registry `.li` target with `lic build`.
+- Fix `lic` on `main` (MIR/linker regression); PR to `lic` — avoid pinning `LIC_BENCH_REF` unless documented temporary.
+- Rebuild: `(cd lic && ./scripts/build.sh)` then re-run progress gate.
+HINT
+)"
+  fi
+
+  if echo "$ctx" | grep -qiE 'tier7|bench-linux-merge|require_tier_csv|tier3'; then
+    hints+="$(cat <<'HINT'
+
+## Unblock: tier shard / merge
+- Ensure each tier7 shard emits non-empty CSV (`run-registry-tier-benches.py`, `REGISTRY_SHARD_COUNT=3`).
+- Fix linker/build failures before re-dispatching nightly; merge needs all 11 Linux tier artifacts.
+HINT
+)"
+  fi
+
+  if echo "$ctx" | grep -qiE 'publish-dashboard|zero-missing|dashboard-invariant|check-summary'; then
+    hints+="$(cat <<'HINT'
+
+## Unblock: publish-dashboard chain
+- Gates run in order: measurement-quality → dashboard-invariants → zero-missing-data → commit summary.
+- Fix upstream CSV/parity first; re-run `./scripts/benchmark-nightly-green-progress-gate.sh`.
+HINT
+)"
+  fi
+
+  if echo "$ctx" | grep -qiE 'benchmark-nightly-green-progress|benchmark-nightly-green-gate'; then
+    hints+="$(cat <<'HINT'
+
+## Unblock: benchmark nightly gates
+- Run progress gate locally: `./scripts/benchmark-nightly-green-progress-gate.sh`
+- Completion (CI): `BENCHMARK_NIGHTLY_GATE_DISPATCH=1 ./scripts/benchmark-nightly-green-gate.sh`
+- Pick the first pending BN todo in the plan; implement code, not metadata-only commits.
+HINT
+)"
+  fi
+
+  echo "$hints"
 }
 
 goal_loop_plan_todos() {
