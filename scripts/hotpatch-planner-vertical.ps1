@@ -1,4 +1,4 @@
-#!/usr/bin/env pwsh
+﻿#!/usr/bin/env pwsh
 # Hot-patch homelab cluster with planner code + dashboard without rebuilding GHCR image.
 $ErrorActionPreference = "Stop"
 $Root = Split-Path $PSScriptRoot -Parent
@@ -8,7 +8,9 @@ if (-not (Test-Path "$Root/dist/cli/org-planner-supervisor.js")) {
   Pop-Location
 }
 
-$env:KUBECONFIG = if ($env:KUBECONFIG) { $env:KUBECONFIG } else { "$env:USERPROFILE\.kube\config-homelab" }
+
+. (Join-Path $PSScriptRoot "lib\resolve-org-swarm-kubeconfig.ps1")
+$KubeConfig = Ensure-OrgSwarmKubeconfig -Dest $(if ($env:KUBECONFIG) { $env:KUBECONFIG } else { "$env:USERPROFILE\.kube\config-homelab" })
 $Ns = "li-swarm"
 
 Write-Host "Creating ConfigMap li-org-planner-hotfix in $Ns..."
@@ -18,33 +20,16 @@ Get-ChildItem "$Root/dist/org-planner/*.js" | ForEach-Object {
 }
 $plannerArgs += "--from-file=org-planner-supervisor.js=$Root/dist/cli/org-planner-supervisor.js"
 $plannerArgs += "--from-file=org-planner-worker.js=$Root/dist/cli/org-planner-worker.js"
+$ttl = Join-Path $Root "dist/k8s/finished-job-ttl.js"
+if (Test-Path -LiteralPath $ttl) {
+  $plannerArgs += "--from-file=finished-job-ttl.js=$ttl"
+}
 & kubectl @plannerArgs | kubectl apply -f -
 
-Write-Host "Patching li-org-planner-supervisor deployment with hotfix mounts..."
-$patch = @'
-{
-  "spec": {
-    "template": {
-      "spec": {
-        "containers": [{
-          "name": "supervisor",
-          "volumeMounts": [
-            { "name": "planner-hotfix", "mountPath": "/app/dist/org-planner" },
-            { "name": "planner-hotfix", "mountPath": "/app/dist/cli/org-planner-supervisor.js", "subPath": "org-planner-supervisor.js" },
-            { "name": "planner-hotfix", "mountPath": "/app/dist/cli/org-planner-worker.js", "subPath": "org-planner-worker.js" },
-            { "name": "sprint-data", "mountPath": "/app/data/goal-directed-sprints" }
-          ]
-        }],
-        "volumes": [
-          { "name": "planner-hotfix", "configMap": { "name": "li-org-planner-hotfix" } },
-          { "name": "sprint-data", "persistentVolumeClaim": { "claimName": "li-agents-sprint-data" } }
-        ]
-      }
-    }
-  }
-}
-'@
-$patch | kubectl patch deployment li-org-planner-supervisor -n $Ns --type=strategic -p -
+# Hotfix mounts at /hotfix only (see deployment-org-planner-supervisor.yaml). Never mount ConfigMap over /app/dist/org-planner.
+Write-Host "Re-applying planner supervisor deployment..."
+$deployYaml = Join-Path $Root "deploy/k8s/engine/deployment-org-planner-supervisor.yaml"
+if (Test-Path -LiteralPath $deployYaml) { kubectl apply -f $deployYaml }
 
 Write-Host "Scaling planner supervisor to 1..."
 kubectl -n $Ns scale deployment/li-org-planner-supervisor --replicas=1

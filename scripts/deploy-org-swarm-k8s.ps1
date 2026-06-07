@@ -1,4 +1,4 @@
-# Build, push, and deploy org swarm stack on homelab engine cluster.
+﻿# Build, push, and deploy org swarm stack on homelab engine cluster.
 param(
     [string]$KubeConfig = "$env:USERPROFILE\.kube\config-homelab",
     [string]$Namespace = "li-swarm",
@@ -10,6 +10,14 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "lib\resolve-org-swarm-kubeconfig.ps1")
+if (-not $SkipDeploy) {
+    $KubeConfig = Ensure-OrgSwarmKubeconfig -Dest $KubeConfig
+} else {
+    . (Join-Path $PSScriptRoot "sync-kubeconfig-from-beelink.ps1")
+    $synced = Sync-KubeconfigFromBeelink -Dest $KubeConfig
+    if ($synced) { $env:KUBECONFIG = $synced; $KubeConfig = $synced }
+}
 $Root = Split-Path $PSScriptRoot -Parent
 $K8s = Join-Path $Root "deploy\k8s\engine"
 $Workspace = Split-Path $Root -Parent
@@ -17,7 +25,7 @@ $Workspace = Split-Path $Root -Parent
 . (Join-Path $PSScriptRoot "lib\ghcr-env.ps1")
 Load-LiSwarmEnvFiles -AgentsRoot $Root -WorkspaceRoot $Workspace
 
-if (-not $env:CURSOR_API_KEY) { Write-Warning "CURSOR_API_KEY not set — implementer jobs may fail" }
+if (-not $env:CURSOR_API_KEY) { Write-Warning "CURSOR_API_KEY not set â€” implementer jobs may fail" }
 
 function Resolve-ContainerCli {
     foreach ($cmd in @("podman", "docker")) {
@@ -64,7 +72,7 @@ if (-not $SkipBuild) {
 }
 
 if ($SkipDeploy) {
-    Write-Host "SkipDeploy — image ready: $Image (pushed=$pushed)"
+    Write-Host "SkipDeploy â€” image ready: $Image (pushed=$pushed)"
     exit 0
 }
 
