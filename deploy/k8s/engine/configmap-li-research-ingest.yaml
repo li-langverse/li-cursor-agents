@@ -7,13 +7,14 @@ metadata:
     app: li-research-ingest
     app.kubernetes.io/name: li-research-ingest
     app.kubernetes.io/component: goal-directed-agent
-    li-langverse.io/sprint: li-research-warm-ingest
+    li-langverse.io/sprint: li-research-r1b-ingest
 data:
   LI_GOAL_WORKSPACE: "/workspace"
-  LI_GOAL_FILE: "data/goal-directed-sprints/wp-li-research-warm-ingest.md"
-  LI_GOAL_BRANCH: "cursor/li-research-r1"
+  LI_GOAL_FILE: "data/goal-directed-sprints/wp-li-research-r1b-warm-ingest.md"
+  LI_GOAL_BRANCH: "cursor/li-research-r1b"
   LI_GOAL_AGENT: "code_implementer"
-  LI_GOAL_LOOP_SLEEP_SEC: "180"
+  LI_GOAL_LOOP_SLEEP_SEC: "300"
+  WARM_INGEST_MIN_BYTES: "1073741824"
   LI_GOAL_DEPLOYMENT_NAME: "li-research-ingest"
   LI_GOAL_NAMESPACE: "li-swarm"
   LI_GITHUB_ORG: "li-langverse"

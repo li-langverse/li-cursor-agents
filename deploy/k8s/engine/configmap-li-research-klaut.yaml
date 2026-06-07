@@ -7,11 +7,11 @@ metadata:
     app: li-research-klaut
     app.kubernetes.io/name: li-research-klaut
     app.kubernetes.io/component: goal-directed-agent
-    li-langverse.io/sprint: li-research-r1-klaut
+    li-langverse.io/sprint: li-research-r1b-klaut
 data:
   LI_GOAL_WORKSPACE: "/workspace"
-  LI_GOAL_FILE: "data/goal-directed-sprints/wp-li-research-r1-klaut.md"
-  LI_GOAL_BRANCH: "cursor/li-research-homelab-r1"
+  LI_GOAL_FILE: "data/goal-directed-sprints/wp-li-research-r1b-klaut.md"
+  LI_GOAL_BRANCH: "cursor/li-research-homelab-r1b"
   LI_GOAL_AGENT: "code_implementer"
   LI_GOAL_LOOP_SLEEP_SEC: "120"
   LI_GOAL_DEPLOYMENT_NAME: "li-research-klaut"
