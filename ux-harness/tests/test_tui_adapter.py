@@ -130,6 +130,31 @@ class TuiAdapterTests(unittest.TestCase):
         rubric = target.get("rubric_scores") or {}
         self.assertGreaterEqual(rubric.get("error_handling", 0), 0.85)
 
+    def test_tui_gen_fixture_ux_a11y_artifact_and_error_rubric(self) -> None:
+        proc = subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "run_audit.py"),
+                "--target",
+                "tui-gen-fixture",
+                "--mode",
+                "ux",
+            ],
+            cwd=str(AGENTS_ROOT),
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+        self.assertEqual(proc.returncode, 0, proc.stderr)
+        payload = json.loads(proc.stdout)
+        target = payload["ux"]["targets"][0]
+        self.assertEqual(target["status"], "pass")
+        artifacts = target.get("artifacts") or []
+        self.assertTrue(any("a11y-plain.txt" in a for a in artifacts))
+        rubric = target.get("rubric_scores") or {}
+        self.assertGreaterEqual(rubric.get("error_handling", 0), 0.85)
+
 
 if __name__ == "__main__":
     unittest.main()
