@@ -3,8 +3,8 @@ param(
     [string]$KubeConfig = "$env:USERPROFILE\.kube\config-homelab",
     [string]$Namespace = "li-swarm",
     [string]$EngineNode = "engine",
-    [ValidateSet("R1b", "R1")]
-    [string]$Sprint = "R1b",
+    [ValidateSet("Public", "R1b", "R1")]
+    [string]$Sprint = "Public",
     [switch]$SkipProduct,
     [switch]$SkipKlaut,
     [switch]$SkipIngest
@@ -90,10 +90,10 @@ function Load-KlautHomelabEnv {
 $env:KUBECONFIG = $KubeConfig
 Write-Host "==> deploy li-research workers sprint=$Sprint (namespace=$Namespace node=$EngineNode)"
 
-$GoalIngest = if ($Sprint -eq "R1b") { "wp-li-research-r1b-warm-ingest.md" } else { "wp-li-research-warm-ingest.md" }
+$GoalIngest = if ($Sprint -eq "Public") { "wp-li-research-public-index.md" } elseif ($Sprint -eq "R1b") { "wp-li-research-r1b-warm-ingest.md" } else { "wp-li-research-warm-ingest.md" }
 $GoalProduct = if ($Sprint -eq "R1b") { "wp-li-research-r1b-product.md" } else { "wp-li-research-r1-product.md" }
 $GoalKlaut = if ($Sprint -eq "R1b") { "wp-li-research-r1b-klaut.md" } else { "wp-li-research-r1-klaut.md" }
-$BundleIngest = if ($Sprint -eq "R1b") { "wp-li-research-r1b-warm-ingest.md" } else { "wp-li-research-warm-ingest.md" }
+$BundleIngest = if ($Sprint -eq "Public") { "wp-li-research-public-index.md" } elseif ($Sprint -eq "R1b") { "wp-li-research-r1b-warm-ingest.md" } else { "wp-li-research-warm-ingest.md" }
 $BundleProduct = if ($Sprint -eq "R1b") { "wp-li-research-r1b-product.md" } else { "wp-li-research-r1-product.md" }
 $BundleKlaut = if ($Sprint -eq "R1b") { "wp-li-research-r1b-klaut.md" } else { "wp-li-research-r1-klaut.md" }
 
