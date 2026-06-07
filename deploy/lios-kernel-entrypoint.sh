@@ -78,4 +78,6 @@ run_goal_loop(){
   mkdir -p "$LIOS_ROOT/scripts/gates" 2>/dev/null || true
   "$AGENTS_ROOT/scripts/goal-directed-loop.sh" --agent "$AGENT" --workflow-repo li-os --cwd "$LIOS_ROOT" --goal-file "$g" --max 0 --sleep "$LOOP_SLEEP"; }
 sync_workspace; seed_loop_state; test -f "$(resolve_goal_file)" || { echo missing goal >&2; exit 1; }
-while true; do sync_workspace; set +e; run_goal_loop; rc=$?; set -e; [[ $rc -eq 0 ]] && finish_on_goal_complete; echo retry $rc; sleep "$LOOP_SLEEP"; done
+while true; do sync_workspace; set +e; run_goal_loop; rc=$?; set -e
+  if [[ $rc -eq 0 ]]; then finish_on_goal_complete; exec sleep infinity; fi
+  echo retry $rc; sleep "$LOOP_SLEEP"; done
