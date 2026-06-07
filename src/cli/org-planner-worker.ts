@@ -7,12 +7,14 @@ import {
   appendPlannerAudit,
   readActiveState,
   updatePlanStatus,
+  type PlannerWorkKind,
 } from "../org-planner/org-planner-coordination.js";
 import {
   claimHandoffForPlanning,
   runOrgPlannerCycle,
 } from "../org-planner/org-planner-plan-cycle.js";
-import type { PlannerWorkKind } from "../org-planner/org-planner-coordination.js";
+import { refreshIssueClassify } from "../org-issues/org-issue-queue-shared.js";
+import { agentsPackageRoot } from "../runner.js";
 import { workerConsole } from "../worker/worker-console.js";
 
 function parseArgs(argv: string[]) {
@@ -87,6 +89,7 @@ async function main(): Promise<void> {
     planRef: args.planRef,
     kind: args.kind,
     workerId: args.workerId,
+    issueRef: args.issueRef || entry.issueRef,
     status: result.status,
     agentId: result.agentId,
     planReady: result.planReady,
@@ -95,6 +98,10 @@ async function main(): Promise<void> {
     error: result.error,
     outputTail: result.outputTail,
   });
+
+  if (result.planReady && args.kind === "issue_plan") {
+    refreshIssueClassify(agentsPackageRoot(), "planner", true);
+  }
 
   updatePlanStatus(
     args.planRef,

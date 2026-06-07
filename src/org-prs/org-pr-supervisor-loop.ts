@@ -26,6 +26,7 @@ import {
   orgPrSupervisorMaxWorkers,
   prRef,
 } from "./org-pr-supervisor-config.js";
+import { deferSupervisorForGitHubRateLimit } from "../org/supervisor-github-preflight.js";
 import { reconcileOrphanedK8sJobs } from "../org/k8s-job-reconcile.js";
 import { idleLimitReached } from "../org/supervisor-idle.js";
 import { runOrgLaneObserverTick } from "../org/org-lane-observer-tick.js";
@@ -103,6 +104,19 @@ export async function orgPrSupervisorTick(): Promise<PrSupervisorTickResult> {
   const queued = implementQueue;
   const activeSet = activePrRefs(readActiveState(root));
   let spawned = 0;
+
+  if (slots > 0) {
+    const deferMsg = await deferSupervisorForGitHubRateLimit("org-pr-supervisor");
+    if (deferMsg) {
+      return {
+        openCount,
+        desiredWorkers: 0,
+        activeWorkers,
+        spawned: 0,
+        message: deferMsg,
+      };
+    }
+  }
 
   for (const row of queued) {
     if (spawned >= slots) break;

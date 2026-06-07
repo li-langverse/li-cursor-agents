@@ -30,6 +30,7 @@ import {
   isInKubernetesCluster,
   listImplementerJobs,
 } from "./org-issue-k8s-client.js";
+import { deferSupervisorForGitHubRateLimit } from "../org/supervisor-github-preflight.js";
 import {
   computeDesiredWorkers,
   issueRef,
@@ -140,6 +141,20 @@ export async function orgIssueSupervisorTick(): Promise<SupervisorTickResult> {
   const queued = readImplementQueueIssues(root);
   const activeSet = activeIssueRefs(readActiveState(root));
   let spawned = 0;
+
+  if (slots > 0) {
+    const deferMsg = await deferSupervisorForGitHubRateLimit("org-issue-supervisor");
+    if (deferMsg) {
+      return {
+        openCount,
+        implementCount,
+        desiredWorkers: 0,
+        activeWorkers,
+        spawned: 0,
+        message: deferMsg,
+      };
+    }
+  }
 
   for (const issue of queued) {
     if (spawned >= slots) break;

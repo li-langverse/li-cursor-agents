@@ -138,3 +138,29 @@ export async function postGitHubIssueComment(
   const res = await ghRequest("POST", `/repos/${org}/${repo}/issues/${number}/comments`, { body });
   return { ok: res.status === 200 || res.status === 201, status: res.status };
 }
+
+/** Add plan-approved (and drop plan-needed) so classify moves issue to implement bucket. */
+export async function promoteIssuePlanApproved(
+  org: string,
+  repo: string,
+  number: number,
+): Promise<{ ok: boolean; labels: string[] }> {
+  const add = await ghRequest<Array<{ name?: string }>>(
+    "POST",
+    `/repos/${org}/${repo}/issues/${number}/labels`,
+    { labels: ["plan-approved"] },
+  );
+  if (add.status !== 200 || !add.data) {
+    throw new GitHubIssueRequestError(
+      `GitHub add label failed (${add.status}): ${add.raw.slice(0, 300)}`,
+      add.status,
+      add.headers,
+    );
+  }
+  await ghRequest(
+    "DELETE",
+    `/repos/${org}/${repo}/issues/${number}/labels/plan-needed`,
+  );
+  const after = await fetchGitHubIssue(org, repo, number);
+  return { ok: after.labels.includes("plan-approved"), labels: after.labels };
+}

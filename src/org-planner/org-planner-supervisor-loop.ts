@@ -34,6 +34,7 @@ import {
   researchPlanRef,
 } from "./org-planner-supervisor-config.js";
 import { refreshIssueClassify } from "../org-issues/org-issue-queue-shared.js";
+import { deferSupervisorForGitHubRateLimit } from "../org/supervisor-github-preflight.js";
 
 function sleep(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
@@ -117,6 +118,19 @@ export async function orgPlannerSupervisorTick(): Promise<PlannerSupervisorTickR
   const queued = readPlannerWorkQueue(root);
   const activeSet = activePlanRefs(readActiveState(root));
   let spawned = 0;
+
+  if (slots > 0) {
+    const deferMsg = await deferSupervisorForGitHubRateLimit("org-planner-supervisor");
+    if (deferMsg) {
+      return {
+        openCount,
+        desiredWorkers: 0,
+        activeWorkers,
+        spawned: 0,
+        message: deferMsg,
+      };
+    }
+  }
 
   for (const item of queued) {
     if (spawned >= slots) break;
