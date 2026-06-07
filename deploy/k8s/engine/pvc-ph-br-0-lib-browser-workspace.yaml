@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: li-ph-br-0-lib-browser-workspace
+  namespace: li-swarm
+  labels:
+    app: li-ph-br-0-lib-browser
+    app.kubernetes.io/name: li-ph-br-0-lib-browser
+    app.kubernetes.io/component: goal-directed-agent
+    li-langverse.io/sprint: ph-br-0-lib-browser-foundation
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 15Gi
+  storageClassName: local-path

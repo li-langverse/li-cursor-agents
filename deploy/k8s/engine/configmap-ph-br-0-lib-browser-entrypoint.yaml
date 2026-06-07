@@ -1,0 +1,126 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: li-ph-br-0-lib-browser-entrypoint
+  namespace: li-swarm
+  labels:
+    app: li-ph-br-0-lib-browser
+    li-langverse.io/sprint: ph-br-0-lib-browser-foundation
+data:
+  entrypoint.sh: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+    : "${GH_TOKEN:?GH_TOKEN required}"
+    export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
+    ORG="${LI_GITHUB_ORG:-li-langverse}"
+    REPO_LIC="${LI_PROOF_EXPLORER_LIC_REPO:-lic}"
+    REPO_LIB="${LI_PROOF_EXPLORER_LIB_REPO:-lib}"
+    PREFERRED_BRANCH="${LI_PROOF_EXPLORER_BRANCH:-cursor/ph-br-0-foundation}"
+    FALLBACK_RAW="${LI_PROOF_EXPLORER_BRANCH_FALLBACKS:-cursor/ph-br-0-foundation,main}"
+    LIB_ROOT="${LI_PROOF_EXPLORER_LIC_ROOT:-/workspace/lib}"
+    LIC_COMPILER_ROOT="${LIC_COMPILER_ROOT:-/workspace/lic}"
+    AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
+    GOAL_REL="${LI_PROOF_EXPLORER_GOAL_FILE:-data/goal-directed-sprints/ph-br-0-lib-browser-foundation.md}"
+    echo "ph-br-0-entrypoint: branch=${PREFERRED_BRANCH} lib=${LIB_ROOT} lic=${LIC_COMPILER_ROOT} goal=${GOAL_REL}"
+    export GH_TOKEN GITHUB_TOKEN
+    echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
+    gh auth setup-git 2>/dev/null || true
+    git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+    git config --global user.email "${LI_GIT_USER_EMAIL:-goal-worker@li-langverse.dev}"
+    git config --global user.name "${LI_GIT_USER_NAME:-li-goal-worker}"
+
+    branch_candidates() {
+      local seen="" b
+      for b in "$PREFERRED_BRANCH" ${FALLBACK_RAW//,/ }; do
+        b="${b// /}"
+        [[ -z "$b" ]] && continue
+        [[ " $seen " == *" $b "* ]] && continue
+        seen="$seen $b"
+        echo "$b"
+      done
+    }
+
+    clone_if_missing() {
+      local repo="$1"
+      local root="$2"
+      mkdir -p "$(dirname "$root")"
+      if [[ ! -d "$root/.git" ]]; then
+        echo "ph-br-0-entrypoint: cloning ${ORG}/${repo}"
+        gh repo clone "${ORG}/${repo}" "$root" || {
+          rm -rf "$root"
+          gh repo clone "${ORG}/${repo}" "$root"
+        }
+      fi
+    }
+
+    sync_lib_repo() {
+      clone_if_missing "$REPO_LIB" "$LIB_ROOT"
+      git -C "$LIB_ROOT" fetch origin --prune
+      local branch lib_ok=0
+      for branch in $(branch_candidates); do
+        if ! git -C "$LIB_ROOT" show-ref --verify --quiet "refs/remotes/origin/${branch}"; then
+          continue
+        fi
+        git -C "$LIB_ROOT" checkout -f -B "$branch" "origin/${branch}"
+        git -C "$LIB_ROOT" reset --hard "origin/${branch}"
+        lib_ok=1
+        export LI_PROOF_EXPLORER_BRANCH="$branch"
+        export LI_REPO_WORKFLOW_BRANCH="$branch"
+        echo "ph-br-0-entrypoint: lib on branch=${branch} $(git -C "$LIB_ROOT" log -1 --oneline)"
+        break
+      done
+      [[ "$lib_ok" == "1" ]] || {
+        echo "ph-br-0-entrypoint: no lib branch found among candidates" >&2
+        exit 1
+      }
+    }
+
+    sync_lic_compiler_repo() {
+      clone_if_missing "$REPO_LIC" "$LIC_COMPILER_ROOT"
+      git -C "$LIC_COMPILER_ROOT" fetch origin --prune
+      local lic_branch="${LI_PROOF_EXPLORER_LIC_COMPILER_BRANCH:-main}"
+      if git -C "$LIC_COMPILER_ROOT" show-ref --verify --quiet "refs/remotes/origin/${lic_branch}"; then
+        git -C "$LIC_COMPILER_ROOT" checkout -f -B "$lic_branch" "origin/${lic_branch}"
+        git -C "$LIC_COMPILER_ROOT" reset --hard "origin/${lic_branch}"
+      fi
+      echo "ph-br-0-entrypoint: lic compiler repo $(git -C "$LIC_COMPILER_ROOT" log -1 --oneline 2>/dev/null || echo unknown)"
+    }
+
+    ensure_lic_built() {
+      # shellcheck source=lib/lic-bin-select.sh
+      source "${LIC_COMPILER_ROOT}/scripts/lib/lic-bin-select.sh"
+      if lic_rel="$(li_pick_lic_bin "$LIC_COMPILER_ROOT" 2>/dev/null)"; then
+        case "$lic_rel" in
+          ./*) export LIC="${LIC_COMPILER_ROOT}/${lic_rel#./}" ;;
+          *) export LIC="$lic_rel" ;;
+        esac
+        echo "ph-br-0-entrypoint: lic present at ${LIC}"
+        return 0
+      fi
+      echo "ph-br-0-entrypoint: building lic (LLVM 22 in-container)"
+      if (cd "$LIC_COMPILER_ROOT" && bash scripts/build.sh); then
+        if lic_rel="$(li_pick_lic_bin "$LIC_COMPILER_ROOT")"; then
+          case "$lic_rel" in
+            ./*) export LIC="${LIC_COMPILER_ROOT}/${lic_rel#./}" ;;
+            *) export LIC="$lic_rel" ;;
+          esac
+          echo "ph-br-0-entrypoint: lic build OK ${LIC}"
+          return 0
+        fi
+      fi
+      echo "ph-br-0-entrypoint: WARN lic build failed; agent loop may retry" >&2
+      return 0
+    }
+
+    if [[ ! -f "${AGENTS_ROOT}/${GOAL_REL}" ]]; then
+      echo "ph-br-0-entrypoint: missing goal in agents image ${AGENTS_ROOT}/${GOAL_REL}" >&2
+      exit 1
+    fi
+
+    sync_lib_repo
+    sync_lic_compiler_repo
+    ensure_lic_built
+    export LI_PROOF_EXPLORER_LIC_ROOT="$LIB_ROOT" LI_CURSOR_AGENTS_ROOT="$AGENTS_ROOT"
+    export LIC_ROOT="$LIC_COMPILER_ROOT" LIC="${LIC:-}"
+    export LI_PROOF_EXPLORER_GOAL_FILE="$GOAL_REL"
+    exec node "${AGENTS_ROOT}/dist/cli/proof-explorer-worker.js" start
