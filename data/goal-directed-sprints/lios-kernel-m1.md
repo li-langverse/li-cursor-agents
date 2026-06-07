@@ -26,7 +26,7 @@ Clone siblings under `/workspace`:
 - `/workspace/lic` — `cursor/lios-kernel-m1`
 - `/workspace/li-os` — `cursor/lios-kernel-m1` (primary `--cwd`)
 
-## Gates
+## Completion gate
 
 ```bash
 export LIK_ROOT=/workspace/lik LIC_ROOT=/workspace/lic
@@ -34,6 +34,8 @@ cd /workspace/li-os
 bash scripts/gates/m1-completion-gate.sh
 bash scripts/gates/check-no-port-caps.sh
 ```
+
+Expected: all phase gates green; lik builds hello_kern; serial smoke via QEMU or Unicorn.
 
 ## Self-unblock
 
