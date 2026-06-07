@@ -1,0 +1,104 @@
+﻿apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: li-ph-sci-gap-close-phase2-entrypoint
+  namespace: li-swarm
+  labels:
+    app: li-ph-sci-gap-close-phase2
+    li-langverse.io/sprint: ph-sci-electrochemistry
+data:
+  entrypoint.sh: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+    : "${GH_TOKEN:?GH_TOKEN required}"
+    export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
+    ORG="${LI_GITHUB_ORG:-li-langverse}"
+    REPO_LIC="${LI_PROOF_EXPLORER_LIC_REPO:-lic}"
+    PREFERRED_BRANCH="${LI_PROOF_EXPLORER_BRANCH:-main}"
+    FALLBACK_RAW="${LI_PROOF_EXPLORER_BRANCH_FALLBACKS:-main,main}"
+    LIC_ROOT="${LI_PROOF_EXPLORER_LIC_ROOT:-/workspace/lic}"
+    AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
+    GOAL_REL="${LI_PROOF_EXPLORER_GOAL_FILE:-data/goal-directed-sprints/ph-sci-gap-close-phase2.md}"
+    echo "ph-sci-phase2-entrypoint: branch=${PREFERRED_BRANCH} goal=${GOAL_REL}"
+    export GH_TOKEN GITHUB_TOKEN
+    echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
+    gh auth setup-git 2>/dev/null || true
+    git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+    git config --global user.email "${LI_GIT_USER_EMAIL:-goal-worker@li-langverse.dev}"
+    git config --global user.name "${LI_GIT_USER_NAME:-li-goal-worker}"
+
+    branch_candidates() {
+      local seen="" b
+      for b in "$PREFERRED_BRANCH" ${FALLBACK_RAW//,/ }; do
+        b="${b// /}"
+        [[ -z "$b" ]] && continue
+        [[ " $seen " == *" $b "* ]] && continue
+        seen="$seen $b"
+        echo "$b"
+      done
+    }
+
+    sync_lic_repo() {
+      mkdir -p "$(dirname "$LIC_ROOT")"
+      if [[ ! -d "$LIC_ROOT/.git" ]]; then
+        echo "ph-sci-phase2-entrypoint: cloning ${ORG}/${REPO_LIC}"
+        gh repo clone "${ORG}/${REPO_LIC}" "$LIC_ROOT" || {
+          rm -rf "$LIC_ROOT"
+          gh repo clone "${ORG}/${REPO_LIC}" "$LIC_ROOT"
+        }
+      fi
+      git -C "$LIC_ROOT" fetch origin --prune
+      local branch goal_ok=0
+      for branch in $(branch_candidates); do
+        if ! git -C "$LIC_ROOT" show-ref --verify --quiet "refs/remotes/origin/${branch}"; then
+          continue
+        fi
+        git -C "$LIC_ROOT" checkout -f -B "$branch" "origin/${branch}"
+        git -C "$LIC_ROOT" reset --hard "origin/${branch}"
+        if [[ -f "${LIC_ROOT}/${GOAL_REL}" ]]; then
+          goal_ok=1
+          export LI_PROOF_EXPLORER_BRANCH="$branch"
+          export LI_REPO_WORKFLOW_BRANCH="$branch"
+          echo "ph-sci-phase2-entrypoint: lic on branch=${branch} $(git -C "$LIC_ROOT" log -1 --oneline)"
+          break
+        fi
+        echo "ph-sci-phase2-entrypoint: branch ${branch} missing goal ${GOAL_REL}, trying next"
+      done
+      [[ "$goal_ok" == "1" ]] || {
+        echo "ph-sci-phase2-entrypoint: no branch contains goal ${GOAL_REL}" >&2
+        exit 1
+      }
+    }
+
+    ensure_lic_built() {
+      # shellcheck source=lib/lic-bin-select.sh
+      source "${LIC_ROOT}/scripts/lib/lic-bin-select.sh"
+      if lic_rel="$(li_pick_lic_bin "$LIC_ROOT" 2>/dev/null)"; then
+        case "$lic_rel" in
+          ./*) export LIC="${LIC_ROOT}/${lic_rel#./}" ;;
+          *) export LIC="$lic_rel" ;;
+        esac
+        echo "ph-sci-phase2-entrypoint: lic present at ${LIC}"
+        return 0
+      fi
+      echo "ph-sci-phase2-entrypoint: building lic (LLVM 22 in-container)"
+      if (cd "$LIC_ROOT" && bash scripts/build.sh); then
+        if lic_rel="$(li_pick_lic_bin "$LIC_ROOT")"; then
+          case "$lic_rel" in
+            ./*) export LIC="${LIC_ROOT}/${lic_rel#./}" ;;
+            *) export LIC="$lic_rel" ;;
+          esac
+          echo "ph-sci-phase2-entrypoint: lic build OK ${LIC}"
+          return 0
+        fi
+      fi
+      echo "ph-sci-phase2-entrypoint: WARN lic build failed; agent loop may retry" >&2
+      return 0
+    }
+
+    sync_lic_repo
+    ensure_lic_built
+    export LI_PROOF_EXPLORER_LIC_ROOT="$LIC_ROOT" LI_CURSOR_AGENTS_ROOT="$AGENTS_ROOT" LIC_ROOT="$LIC_ROOT" LIC="${LIC:-}"
+    export LI_PROOF_EXPLORER_GOAL_FILE="$GOAL_REL"
+    exec node "${AGENTS_ROOT}/dist/cli/proof-explorer-worker.js" start
+

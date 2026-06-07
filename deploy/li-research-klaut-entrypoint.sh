@@ -8,8 +8,8 @@ export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
 ORG="${LI_GITHUB_ORG:-cap-jmk-launchpad}"
 AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
 WORKSPACE="${LI_GOAL_WORKSPACE:-/workspace}"
-BRANCH="${LI_GOAL_BRANCH:-cursor/li-research-homelab-r0}"
-GOAL_FILE_REL="${LI_GOAL_FILE:-data/goal-directed-sprints/wp-li-research-r0-klaut.md}"
+BRANCH="${LI_GOAL_BRANCH:-cursor/li-research-homelab-r1b}"
+GOAL_FILE_REL="${LI_GOAL_FILE:-data/goal-directed-sprints/wp-li-research-r1b-klaut.md}"
 AGENT="${LI_GOAL_AGENT:-code_implementer}"
 LOOP_SLEEP="${LI_GOAL_LOOP_SLEEP_SEC:-120}"
 
@@ -58,8 +58,8 @@ clone_or_sync() {
 
 seed_goal() {
   mkdir -p "${AGENTS_ROOT}/data/goal-directed-sprints"
-  if [[ -f /config/wp-li-research-r0-klaut.md ]]; then
-    cp -f /config/wp-li-research-r0-klaut.md "${AGENTS_ROOT}/data/goal-directed-sprints/"
+  if [[ -f /config/wp-li-research-r1b-klaut.md ]]; then
+    cp -f /config/wp-li-research-r1b-klaut.md "${AGENTS_ROOT}/data/goal-directed-sprints/"
   fi
 }
 
@@ -68,8 +68,8 @@ resolve_goal_file() {
     echo "${AGENTS_ROOT}/${GOAL_FILE_REL}"
     return 0
   fi
-  if [[ -f /config/wp-li-research-r0-klaut.md ]]; then
-    echo "/config/wp-li-research-r0-klaut.md"
+  if [[ -f /config/wp-li-research-r1b-klaut.md ]]; then
+    echo "/config/wp-li-research-r1b-klaut.md"
     return 0
   fi
   return 1

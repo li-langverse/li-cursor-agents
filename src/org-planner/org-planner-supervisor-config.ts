@@ -55,7 +55,7 @@ export function computeDesiredWorkers(
   maxWorkers = orgPlannerSupervisorMaxWorkers(),
 ): number {
   if (openCount <= 0) return 0;
-  return Math.min(maxWorkers, Math.max(1, Math.ceil(openCount / 25)));
+  return Math.min(maxWorkers, Math.max(1, Math.ceil(openCount / 12)));
 }
 
 export function orgPlannerSupervisorEnabled(): boolean {

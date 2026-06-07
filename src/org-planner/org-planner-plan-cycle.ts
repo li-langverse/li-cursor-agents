@@ -4,7 +4,13 @@ import { resolveCursorApiKey, resolveCursorEnvFileHint } from "../env.js";
 import { runAgent, agentsPackageRoot, shouldUseMock } from "../runner.js";
 import { workerConsole } from "../worker/worker-console.js";
 import type { AgentId } from "../types.js";
-import { fetchGitHubIssue, postGitHubIssueComment } from "../org-issues/org-issue-github.js";
+import { applyOrgGitHubRateLimitBackoff } from "../github/github-rate-limit.js";
+import {
+  fetchGitHubIssue,
+  GitHubIssueRequestError,
+  postGitHubIssueComment,
+  promoteIssuePlanApproved,
+} from "../org-issues/org-issue-github.js";
 import { orgName, parseIssueRef } from "../org-issues/org-issue-supervisor-config.js";
 import { loadResearchGoals, northStarFitForGoal } from "../research-goals/load-goals.js";
 import {
@@ -310,14 +316,30 @@ return {
 
   let planReady = agentResult.status === "finished";
 
-  if (options.kind === "issue_plan" && options.issueRef) {
+  if (options.kind === "issue_plan" && options.issueRef && !options.dryRun && !mock) {
     const parsed = parseIssueRef(options.issueRef);
     if (parsed) {
       try {
         const after = await fetchGitHubIssue(parsed.org, parsed.repo, parsed.number);
         planReady = planReady || after.labels.includes("plan-approved");
-      } catch {
-        /* best-effort */
+        if (agentResult.status === "finished" && !after.labels.includes("plan-approved")) {
+          const promoted = await promoteIssuePlanApproved(parsed.org, parsed.repo, parsed.number);
+          planReady = promoted.ok;
+          workerConsole(
+            "org-planner-worker",
+            "info",
+            `promoted ${options.issueRef} plan-approved (${promoted.labels.join(", ")})`,
+          );
+        }
+      } catch (err) {
+        if (err instanceof GitHubIssueRequestError) {
+          applyOrgGitHubRateLimitBackoff(err.message, err.headers);
+        }
+        workerConsole(
+          "org-planner-worker",
+          "warn",
+          `plan-approved promotion failed for ${options.issueRef}: ${err instanceof Error ? err.message : String(err)}`,
+        );
       }
     }
   }

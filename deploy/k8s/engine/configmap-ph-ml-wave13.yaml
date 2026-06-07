@@ -7,7 +7,7 @@ metadata:
     app: li-ph-ml-wave13
     app.kubernetes.io/name: li-ph-ml-wave13
     app.kubernetes.io/component: goal-directed-agent
-    li-langverse.io/sprint: ph-ml-hpc
+    li-langverse.io/sprint: ph-ml-li-array
   annotations:
     li-langverse.io/gate-honesty: >-
       PH_ML_REQUIRE_SB3, PH_ML_REQUIRE_RAY, PH_ML_REQUIRE_GPU are opt-in only.
@@ -17,13 +17,13 @@ data:
   LI_PROOF_EXPLORER_ALWAYS_ON: "1"
   LI_PROOF_EXPLORER_EXIT_ON_COMPLETE: "1"
   LI_PROOF_EXPLORER_PHASE_HANDOFF: "0"
-  LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/ph-ml-stage8-production.md"
+  LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/ph-ml-li-array-competitive.md"
   LI_PROOF_EXPLORER_LIC_ROOT: "/workspace/lic"
   BENCHMARKS_ROOT: "/workspace/benchmarks"
   LI_CURSOR_AGENTS_ROOT: "/app"
   LI_PROOF_EXPLORER_WORKFLOW_REPO: "lic"
   LI_PROOF_EXPLORER_BRANCH: "main"
-  LI_PROOF_EXPLORER_BRANCH_FALLBACKS: "main,cursor/ph-ml-stage8-production,cursor/ph-ml-program-complete"
+  LI_PROOF_EXPLORER_BRANCH_FALLBACKS: "main,cursor/ph-ml-li-array-competitive,cursor/ph-ml-program-complete"
   LI_GITHUB_ORG: "li-langverse"
   LI_PROOF_EXPLORER_LIC_REPO: "lic"
   LI_BENCHMARKS_REPO: "benchmarks"

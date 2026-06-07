@@ -3,6 +3,8 @@ param(
     [string]$KubeConfig = "$env:USERPROFILE\.kube\config-homelab",
     [string]$Namespace = "li-swarm",
     [string]$EngineNode = "engine",
+    [ValidateSet("R1b", "R1")]
+    [string]$Sprint = "R1b",
     [switch]$SkipProduct,
     [switch]$SkipKlaut,
     [switch]$SkipIngest
@@ -86,7 +88,21 @@ function Load-KlautHomelabEnv {
 }
 
 $env:KUBECONFIG = $KubeConfig
-Write-Host "==> deploy li-research workers (namespace=$Namespace node=$EngineNode)"
+Write-Host "==> deploy li-research workers sprint=$Sprint (namespace=$Namespace node=$EngineNode)"
+
+$GoalIngest = if ($Sprint -eq "R1b") { "wp-li-research-r1b-warm-ingest.md" } else { "wp-li-research-warm-ingest.md" }
+$GoalProduct = if ($Sprint -eq "R1b") { "wp-li-research-r1b-product.md" } else { "wp-li-research-r1-product.md" }
+$GoalKlaut = if ($Sprint -eq "R1b") { "wp-li-research-r1b-klaut.md" } else { "wp-li-research-r1-klaut.md" }
+$BundleIngest = if ($Sprint -eq "R1b") { "wp-li-research-r1b-warm-ingest.md" } else { "wp-li-research-warm-ingest.md" }
+$BundleProduct = if ($Sprint -eq "R1b") { "wp-li-research-r1b-product.md" } else { "wp-li-research-r1-product.md" }
+$BundleKlaut = if ($Sprint -eq "R1b") { "wp-li-research-r1b-klaut.md" } else { "wp-li-research-r1-klaut.md" }
+
+function Scale-LiResearchWorkers {
+    param([string]$Ns)
+    foreach ($d in @("li-research-product", "li-research-klaut", "li-research-ingest")) {
+        kubectl -n $Ns scale "deploy/$d" --replicas=1 2>$null
+    }
+}
 
 kubectl label node $EngineNode li-langverse.io/node-pool=engine --overwrite 2>$null
 kubectl apply -f (Join-Path $K8s "namespace.yaml")
@@ -98,10 +114,10 @@ if (-not $SkipProduct) {
     Write-Host "==> li-research-product"
     kubectl apply -f (Join-Path $K8s "configmap-li-research-product.yaml")
     kubectl apply -f (Join-Path $K8s "deployment-li-research-product.yaml")
-    $goalProduct = Normalize-GoalFile (Join-Path $KlautProGoals "wp-li-research-r0-product.md")
+    $goalProduct = Normalize-GoalFile (Join-Path $KlautProGoals $GoalProduct)
     $extra = @{
         "entrypoint.sh"                 = (Join-Path $Root "deploy\li-research-product-entrypoint.sh")
-        "wp-li-research-r0-product.md"  = $goalProduct
+        $BundleProduct                  = $goalProduct
     }
     . $BundleScript -Root $Root -Namespace $Namespace -ConfigMapName "li-research-product-bundle" -ExtraFiles $extra
 
@@ -117,10 +133,10 @@ if (-not $SkipKlaut) {
     Write-Host "==> li-research-klaut"
     kubectl apply -f (Join-Path $K8s "configmap-li-research-klaut.yaml")
     kubectl apply -f (Join-Path $K8s "deployment-li-research-klaut.yaml")
-    $goalKlaut = Normalize-GoalFile (Join-Path $KlautProGoals "wp-li-research-r0-klaut.md")
+    $goalKlaut = Normalize-GoalFile (Join-Path $KlautProGoals $GoalKlaut)
     $extra = @{
-        "entrypoint.sh"                = (Join-Path $Root "deploy\li-research-klaut-entrypoint.sh")
-        "wp-li-research-r0-klaut.md"   = $goalKlaut
+        "entrypoint.sh"    = (Join-Path $Root "deploy\li-research-klaut-entrypoint.sh")
+        $BundleKlaut       = $goalKlaut
     }
     . $BundleScript -Root $Root -Namespace $Namespace -ConfigMapName "li-research-klaut-bundle" -ExtraFiles $extra
 
@@ -142,10 +158,10 @@ if (-not $SkipIngest) {
     Write-Host "==> li-research-ingest"
     kubectl apply -f (Join-Path $K8s "configmap-li-research-ingest.yaml")
     kubectl apply -f (Join-Path $K8s "deployment-li-research-ingest.yaml")
-    $goalIngest = Normalize-GoalFile (Join-Path $KlautProGoals "wp-li-research-ingest.md")
+    $goalIngest = Normalize-GoalFile (Join-Path $KlautProGoals $GoalIngest)
     $extra = @{
-        "entrypoint.sh"              = (Join-Path $Root "deploy\li-research-ingest-entrypoint.sh")
-        "wp-li-research-ingest.md"   = $goalIngest
+        "entrypoint.sh"    = (Join-Path $Root "deploy\li-research-ingest-entrypoint.sh")
+        $BundleIngest       = $goalIngest
     }
     . $BundleScript -Root $Root -Namespace $Namespace -ConfigMapName "li-research-ingest-bundle" -ExtraFiles $extra
 
@@ -155,8 +171,10 @@ if (-not $SkipIngest) {
     kubectl -n $Namespace rollout status deploy/li-research-ingest --timeout=300s
 }
 
+Scale-LiResearchWorkers -Ns $Namespace
+
 Write-Host ""
-Write-Host "=== li-research workers deployed ==="
+Write-Host "=== li-research workers deployed (sprint=$Sprint) ==="
 kubectl -n $Namespace get deploy -l 'app in (li-research-product,li-research-klaut,li-research-ingest)' `
     -o custom-columns=NAME:.metadata.name,READY:.status.readyReplicas,REPLICAS:.spec.replicas
 Write-Host ""

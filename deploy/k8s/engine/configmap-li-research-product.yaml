@@ -7,12 +7,12 @@ metadata:
     app: li-research-product
     app.kubernetes.io/name: li-research-product
     app.kubernetes.io/component: goal-directed-agent
-    li-langverse.io/sprint: li-research-r0
+    li-langverse.io/sprint: li-research-r1b
 data:
   LI_GOAL_WORKSPACE: "/workspace"
-  LI_GOAL_FILE: "data/goal-directed-sprints/wp-li-research-r0-product.md"
-  LI_GOAL_BRANCH: "cursor/li-research-r0"
-  LI_GOAL_BRANCH_SCHEMA: "cursor/li-research-r0"
+  LI_GOAL_FILE: "data/goal-directed-sprints/wp-li-research-r1b-product.md"
+  LI_GOAL_BRANCH: "cursor/li-research-r1b"
+  LI_GOAL_BRANCH_SCHEMA: "cursor/li-research-r1b"
   LI_GOAL_AGENT: "code_implementer"
   LI_GOAL_LOOP_SLEEP_SEC: "120"
   LI_GOAL_DEPLOYMENT_NAME: "li-research-product"

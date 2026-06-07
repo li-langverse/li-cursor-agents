@@ -8,9 +8,9 @@ export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
 ORG="${LI_GITHUB_ORG:-li-langverse}"
 AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
 WORKSPACE="${LI_GOAL_WORKSPACE:-/workspace}"
-BRANCH="${LI_GOAL_BRANCH:-cursor/li-research-r0}"
-BRANCH_SCHEMA="${LI_GOAL_BRANCH_SCHEMA:-cursor/li-research-r0}"
-GOAL_FILE_REL="${LI_GOAL_FILE:-data/goal-directed-sprints/wp-li-research-r0-product.md}"
+BRANCH="${LI_GOAL_BRANCH:-cursor/li-research-r1b}"
+BRANCH_SCHEMA="${LI_GOAL_BRANCH_SCHEMA:-cursor/li-research-r1b}"
+GOAL_FILE_REL="${LI_GOAL_FILE:-data/goal-directed-sprints/wp-li-research-r1b-product.md}"
 AGENT="${LI_GOAL_AGENT:-code_implementer}"
 LOOP_SLEEP="${LI_GOAL_LOOP_SLEEP_SEC:-120}"
 
@@ -66,8 +66,8 @@ ensure_repos() {
 
 seed_goal() {
   mkdir -p "${AGENTS_ROOT}/data/goal-directed-sprints"
-  if [[ -f /config/wp-li-research-r0-product.md ]]; then
-    cp -f /config/wp-li-research-r0-product.md "${AGENTS_ROOT}/data/goal-directed-sprints/"
+  if [[ -f /config/wp-li-research-r1b-product.md ]]; then
+    cp -f /config/wp-li-research-r1b-product.md "${AGENTS_ROOT}/data/goal-directed-sprints/"
   fi
 }
 
@@ -76,8 +76,8 @@ resolve_goal_file() {
     echo "${AGENTS_ROOT}/${GOAL_FILE_REL}"
     return 0
   fi
-  if [[ -f /config/wp-li-research-r0-product.md ]]; then
-    echo "/config/wp-li-research-r0-product.md"
+  if [[ -f /config/wp-li-research-r1b-product.md ]]; then
+    echo "/config/wp-li-research-r1b-product.md"
     return 0
   fi
   return 1
