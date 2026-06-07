@@ -34,18 +34,19 @@ spec:
                 secretKeyRef:
                   name: li-agents-secrets
                   key: GH_SWARM_TOKEN
-                        - name: GH_SWARM_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: li-agents-secrets
-                  key: GH_SWARM_TOKEN
+
             - name: GH_SWARM_TOKEN_BACKUP
               valueFrom:
                 secretKeyRef:
                   name: li-agents-secrets
                   key: GH_SWARM_TOKEN_BACKUP
                   optional: true
-- name: SUPABASE_URL
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_SWARM_TOKEN
+            - name: SUPABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: li-agents-secrets

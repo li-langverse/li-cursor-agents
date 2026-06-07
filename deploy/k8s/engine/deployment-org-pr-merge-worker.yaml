@@ -27,7 +27,7 @@ spec:
             - configMapRef:
                 name: li-org-pr-merge-worker
           env:
-                        - name: GH_SWARM_TOKEN
+            - name: GH_SWARM_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: li-agents-secrets
@@ -38,7 +38,12 @@ spec:
                   name: li-agents-secrets
                   key: GH_SWARM_TOKEN_BACKUP
                   optional: true
-resources:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_SWARM_TOKEN
+          resources:
             requests:
               cpu: "100m"
               memory: "256Mi"

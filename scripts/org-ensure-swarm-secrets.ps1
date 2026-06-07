@@ -7,6 +7,12 @@ param(
 $ErrorActionPreference = "Stop"
 $env:KUBECONFIG = $KubeConfig
 
+$ScriptsRoot = Split-Path $PSScriptRoot -Parent
+$AgentsRoot = Split-Path $ScriptsRoot -Parent
+$WorkspaceRoot = Split-Path $AgentsRoot -Parent
+. (Join-Path $PSScriptRoot "lib\ghcr-env.ps1")
+Load-LiSwarmEnvFiles -AgentsRoot $AgentsRoot -WorkspaceRoot $WorkspaceRoot
+
 if (-not (kubectl get secret li-agents-secrets -n $Namespace 2>$null)) {
     Write-Host "li-agents-secrets missing in $Namespace (skip ensure)"
     exit 0
@@ -25,19 +31,18 @@ if ($swarm -and -not $gh) {
     Write-Host "Patching GH_TOKEN from GH_SWARM_TOKEN"
 }
 
-if ($patch.Count -eq 0) {
+if ($patch.Count -gt 0) {
+    $data = @{}
+    foreach ($k in $patch.Keys) { $data[$k] = $patch[$k] }
+    $json = @{ data = $data } | ConvertTo-Json -Compress
+    $tmp = Join-Path $env:TEMP "li-agents-secrets-patch.json"
+    [System.IO.File]::WriteAllText($tmp, $json)
+    kubectl -n $Namespace patch secret li-agents-secrets --type=merge --patch-file $tmp
+    Remove-Item $tmp -Force -ErrorAction SilentlyContinue
+    Write-Host "li-agents-secrets patched in $Namespace"
+} else {
     Write-Host "li-agents-secrets OK (GH_TOKEN + GH_SWARM_TOKEN present)"
-    exit 0
 }
-
-$data = @{}
-foreach ($k in $patch.Keys) { $data[$k] = $patch[$k] }
-$json = @{ data = $data } | ConvertTo-Json -Compress
-$tmp = Join-Path $env:TEMP "li-agents-secrets-patch.json"
-[System.IO.File]::WriteAllText($tmp, $json)
-kubectl -n $Namespace patch secret li-agents-secrets --type=merge --patch-file $tmp
-Remove-Item $tmp -Force -ErrorAction SilentlyContinue
-Write-Host "li-agents-secrets patched in $Namespace"
 
 $backup = kubectl -n $Namespace get secret li-agents-secrets -o jsonpath='{.data.GH_SWARM_TOKEN_BACKUP}' 2>$null
 if (-not $backup -and $env:GH_SWARM_TOKEN_BACKUP) {
@@ -48,4 +53,6 @@ if (-not $backup -and $env:GH_SWARM_TOKEN_BACKUP) {
     kubectl -n $Namespace patch secret li-agents-secrets --type=merge --patch-file $tmp2
     Remove-Item $tmp2 -Force -ErrorAction SilentlyContinue
     Write-Host "Patched GH_SWARM_TOKEN_BACKUP from local env"
+} elseif ($backup) {
+    Write-Host "li-agents-secrets OK (GH_SWARM_TOKEN_BACKUP present)"
 }

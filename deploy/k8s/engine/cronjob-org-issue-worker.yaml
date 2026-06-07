@@ -36,18 +36,23 @@ spec:
                 - configMapRef:
                     name: li-org-issue-worker
               env:
-                            - name: GH_SWARM_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: li-agents-secrets
-                  key: GH_SWARM_TOKEN
-            - name: GH_SWARM_TOKEN_BACKUP
-              valueFrom:
-                secretKeyRef:
-                  name: li-agents-secrets
-                  key: GH_SWARM_TOKEN_BACKUP
-                  optional: true
-resources:
+                - name: GH_SWARM_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: li-agents-secrets
+                      key: GH_SWARM_TOKEN
+                - name: GH_SWARM_TOKEN_BACKUP
+                  valueFrom:
+                    secretKeyRef:
+                      name: li-agents-secrets
+                      key: GH_SWARM_TOKEN_BACKUP
+                      optional: true
+                - name: GH_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: li-agents-secrets
+                      key: GH_SWARM_TOKEN
+              resources:
                 requests:
                   cpu: "250m"
                   memory: "512Mi"
