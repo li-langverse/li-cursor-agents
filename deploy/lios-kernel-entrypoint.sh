@@ -38,10 +38,21 @@ clone_or_sync(){ local repo="$1" dest="$2" pref="$3"; mkdir -p "$(dirname "$dest
       git -C "$dest" checkout -f -B "$b" "origin/$b"; git -C "$dest" reset --hard "origin/$b"; ok=1; break
     fi
   done; [[ $ok -eq 0 ]] && git -C "$dest" checkout -B "$pref" 2>/dev/null || true; }
+ensure_repo_tree(){ local marker="$1" dest="$2" repo="$3" branch="$4";
+  if [[ ! -f "${dest}/${marker}" ]]; then
+    echo "lios-kernel-entrypoint: repairing incomplete checkout ${dest} (${marker} missing)" >&2
+    rm -rf "${dest}"
+    clone_or_sync "$repo" "$dest" "$branch"
+  fi
+  [[ -f "${dest}/${marker}" ]] || { echo "lios-kernel-entrypoint: ${dest} still missing ${marker}" >&2; return 1; }
+}
 sync_workspace(){
   clone_or_sync "${ORG}/lik" "$LIK_ROOT" "$BRANCH_LIK"
   clone_or_sync "${ORG}/lic" "$LIC_ROOT" "$BRANCH_LIC"
   clone_or_sync "${ORG}/li-os" "$LIOS_ROOT" "$BRANCH_LI_OS"
+  ensure_repo_tree "docs/kernel-abi.md" "$LIK_ROOT" "${ORG}/lik" "$BRANCH_LIK"
+  ensure_repo_tree "docs/compiler-kernel-targets.md" "$LIC_ROOT" "${ORG}/lic" "$BRANCH_LIC"
+  ensure_repo_tree "scripts/gates/m1-completion-gate.sh" "$LIOS_ROOT" "${ORG}/li-os" "$BRANCH_LI_OS"
   export LIK_ROOT LIC_ROOT LIOS_ROOT
 }
 seed_loop_state(){
