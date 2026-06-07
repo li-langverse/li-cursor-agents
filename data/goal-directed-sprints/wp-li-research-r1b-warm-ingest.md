@@ -14,7 +14,7 @@ R1 passed on **scaffold only** (empty dirs + `.ingest-bootstrap-ok`). R1b requir
 
 | Mount in pod | Host path |
 |--------------|-----------|
-| `/warm-index` | `/srv/homelab/intenso-research/li-research/warm-index` |
+| `/warm-index` | `/srv/homelab/nvme/li-research/warm-index` |
 
 First Intenso (`sdb`) is **lip-registry only**.
 

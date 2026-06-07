@@ -15,7 +15,7 @@ R1 klaut passed on **manifests only** — no gateway pod in `li-research` namesp
 | Disk | Path |
 |------|------|
 | sdb | lip-registry only |
-| sdc | `/srv/homelab/intenso-research/li-research/warm-index` |
+| sdc | `/srv/homelab/nvme/li-research/warm-index` |
 
 ## North star
 
@@ -54,7 +54,7 @@ git -C "$REPO" show-ref --verify --quiet "refs/remotes/origin/${BRANCH}" \
 test -f "$REPO/k8s/gateway/deployment.yaml"
 test -f "$REPO/k8s/gateway/service.yaml"
 grep -qE 'ghcr.io/li-langverse/li-research-gateway|li-research-gateway' "$REPO/k8s/gateway/deployment.yaml"
-grep -q intenso-research "$REPO/k8s/pv-warm-index.yaml"
+grep -qE 'nvme/li-research|intenso-research' "$REPO/k8s/pv-warm-index.yaml"
 
 test -f "$REPO/scripts/apply-li-research.sh"
 test -f "$REPO/scripts/verify-gateway-health.sh"

@@ -98,7 +98,7 @@ spec:
             claimName: li-research-ingest-workspace
         - name: warm-index
           hostPath:
-            path: /srv/homelab/intenso-research/li-research/warm-index
+            path: /srv/homelab/nvme/li-research/warm-index
             type: Directory
         - name: config-bundle
           configMap:
