@@ -1,0 +1,17 @@
+﻿apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: li-ph-sci-gap-close-phase2-workspace
+  namespace: li-swarm
+  labels:
+    app: li-ph-sci-gap-close-phase2
+    app.kubernetes.io/name: li-ph-sci-gap-close-phase2
+    app.kubernetes.io/component: goal-directed-agent
+    li-langverse.io/sprint: ph-sci-gap-close-phase2
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: local-path
