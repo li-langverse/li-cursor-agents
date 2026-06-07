@@ -1,10 +1,13 @@
 /** Mirrors src/control-plane/live-stream-preview.ts for client-side live rows. */
 
+import type { ToolTraceStep } from "./live-stream-display";
+import { toolStepTargetLabel } from "./live-stream-display";
+
 export interface LiveRunTraceSlice {
   assistant_text?: string;
   thinking_text?: string;
   tool_call_count?: number;
-  steps?: Array<{ type: string; message?: Record<string, unknown> }>;
+  steps?: ToolTraceStep[];
 }
 
 export interface LiveStreamPreview {
@@ -22,10 +25,9 @@ function lastToolLabel(trace: LiveRunTraceSlice): { headline: string; detail: st
   for (let i = steps.length - 1; i >= 0; i--) {
     const step = steps[i];
     if (step.type !== "toolCall") continue;
-    const m = step.message ?? {};
-    const toolType = String(m.type ?? "tool");
-    const args = m.args as Record<string, unknown> | undefined;
-    const target = args?.path ?? args?.command ?? args?.url ?? toolType;
+    const m = step.message;
+    const toolType = m?.type ?? "tool";
+    const target = toolStepTargetLabel(m);
     return {
       headline: `Tool: ${toolType}`,
       detail: collapseWs(String(target)).slice(0, 160),

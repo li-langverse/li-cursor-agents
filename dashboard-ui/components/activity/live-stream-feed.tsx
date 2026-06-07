@@ -5,6 +5,7 @@ import { deriveLiveStreamPreview } from "@/lib/live-stream-preview";
 import {
   buildDeltaRows,
   hasLiveTraceContent,
+  toolStepTargetLabel,
   toolStepsFromTrace,
 } from "@/lib/live-stream-display";
 import { RichContent } from "@/components/content/rich-content";
@@ -73,11 +74,11 @@ export function LiveStreamFeed({ detail }: { detail: RunDetail }) {
           <h5>Tools ({trace?.tool_call_count ?? toolSteps.length})</h5>
           <ul className="simple-list">
             {toolSteps.slice(-12).map((s, i) => {
-              const m = s.message ?? {};
-              const path = m.args?.path ?? m.args?.command ?? m.type;
+              const m = s.message;
+              const path = toolStepTargetLabel(m);
               return (
                 <li key={i}>
-                  <code>{m.type}</code> {String(path).slice(0, 140)}
+                  <code>{m?.type ?? "tool"}</code> {path.slice(0, 140)}
                 </li>
               );
             })}
