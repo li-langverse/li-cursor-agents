@@ -1,4 +1,4 @@
-import type { RunResult } from "@cursor/sdk";
+﻿import type { RunResult } from "@cursor/sdk";
 import { getAgent } from "../agents/registry.js";
 import { buildSkillsPromptAppendix } from "../agents/load-skills.js";
 import { resolveCursorSdkMode, sdkModeSystemPrefix } from "../agents/sdk-mode.js";
@@ -27,9 +27,48 @@ import {
 
 type SdkAgent = Awaited<ReturnType<typeof import("@cursor/sdk").Agent.create>>;
 
+const AUTH_FAILURE_PATTERNS = [
+  "unauthenticated",
+  "unauthorized",
+  "authentication",
+  "invalid token",
+  "invalid_grant",
+  "api key",
+  "401",
+  "403 forbidden",
+  "cursor_api",
+] as const;
+
+/** Per-tick in-process session recreation attempts before moving on. */
+const AUTH_RECOVERY_MAX_RETRIES = 1;
+
 let abort: AbortController | null = null;
 let loopPromise: Promise<void> | null = null;
 let activeAgent: SdkAgent | null = null;
+
+function errorText(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
+function textLooksLikeAuthFailure(text: string): boolean {
+  const lower = text.toLowerCase();
+  return AUTH_FAILURE_PATTERNS.some((p) => lower.includes(p));
+}
+
+function isSdkAuthFailure(err: unknown): boolean {
+  if (err && typeof err === "object") {
+    const name = (err as { constructor?: { name?: string } }).constructor?.name ?? "";
+    if (name === "AuthenticationError") return true;
+    if ("code" in err && (err as { code?: string }).code === "unauthenticated") return true;
+  }
+  return textLooksLikeAuthFailure(errorText(err));
+}
+
+function isAuthRunResult(result: RunResult): boolean {
+  if (result.status !== "error") return false;
+  const text = `${(result as { result?: string }).result ?? ""}`;
+  return textLooksLikeAuthFailure(text);
+}
 
 function sleepUntil(signal: AbortSignal, ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -95,6 +134,29 @@ async function createSdkAgent(cwd: string): Promise<SdkAgent> {
   });
 }
 
+async function closeSdkAgent(agent: SdkAgent | null): Promise<void> {
+  if (!agent) return;
+  try {
+    agent.close();
+  } catch {
+    /* ignore close errors */
+  }
+}
+
+async function recreateSdkAgent(cwd: string): Promise<SdkAgent> {
+  workerConsole("agent-runs-leaderboard", "warn", "auth recovery: recreating SDK session");
+  await closeSdkAgent(activeAgent);
+  activeAgent = null;
+  const agent = await createSdkAgent(cwd);
+  workerConsole(
+    "agent-runs-leaderboard",
+    "info",
+    "auth recovery: SDK Agent.create() — new session ready",
+  );
+  activeAgent = agent;
+  return agent;
+}
+
 async function sendHeartbeat(
   agent: SdkAgent,
   prompt: string,
@@ -153,22 +215,61 @@ async function runLeaderboardDaemonBody(signal: AbortSignal): Promise<void> {
         runIndex++;
         const idx = (runIndex - 1) % messages.length;
         const prompt = messages[idx]!;
+        let authRecoveryAttempts = 0;
+        let tickComplete = false;
 
-        try {
-          const result = await sendHeartbeat(activeAgent, prompt, {
-            first: runIndex === 1,
-            systemPrompt,
-            cwd,
-            runIndex,
-          });
-          workerConsole(
-            "agent-runs-leaderboard",
-            "info",
-            `tick #${runIndex} finished status=${result.status} run_id=${result.id}`,
-          );
-        } catch (err) {
-          const msg = err instanceof Error ? err.message : String(err);
-          workerConsole("agent-runs-leaderboard", "warn", `tick #${runIndex} error: ${msg}`);
+        while (!tickComplete && !signal.aborted) {
+          const includeSystemPrompt = runIndex === 1 || authRecoveryAttempts > 0;
+          try {
+            const result = await sendHeartbeat(activeAgent!, prompt, {
+              first: includeSystemPrompt,
+              systemPrompt,
+              cwd,
+              runIndex,
+            });
+
+            if (isAuthRunResult(result)) {
+              if (authRecoveryAttempts < AUTH_RECOVERY_MAX_RETRIES) {
+                authRecoveryAttempts++;
+                workerConsole(
+                  "agent-runs-leaderboard",
+                  "warn",
+                  `tick #${runIndex} auth failure (status=error) — recovery attempt ${authRecoveryAttempts}/${AUTH_RECOVERY_MAX_RETRIES}`,
+                );
+                await recreateSdkAgent(cwd);
+                continue;
+              }
+              workerConsole(
+                "agent-runs-leaderboard",
+                "warn",
+                `tick #${runIndex} auth failure persisted after ${authRecoveryAttempts} recovery attempt(s)`,
+              );
+            } else {
+              workerConsole(
+                "agent-runs-leaderboard",
+                "info",
+                `tick #${runIndex} finished status=${result.status} run_id=${result.id}`,
+              );
+            }
+            tickComplete = true;
+          } catch (err) {
+            if (isSdkAuthFailure(err) && authRecoveryAttempts < AUTH_RECOVERY_MAX_RETRIES) {
+              authRecoveryAttempts++;
+              workerConsole(
+                "agent-runs-leaderboard",
+                "warn",
+                `tick #${runIndex} auth error: ${errorText(err)} — recovery attempt ${authRecoveryAttempts}/${AUTH_RECOVERY_MAX_RETRIES}`,
+              );
+              await recreateSdkAgent(cwd);
+              continue;
+            }
+            workerConsole(
+              "agent-runs-leaderboard",
+              "warn",
+              `tick #${runIndex} error: ${errorText(err)}`,
+            );
+            tickComplete = true;
+          }
         }
 
         if (signal.aborted) break;
@@ -176,12 +277,8 @@ async function runLeaderboardDaemonBody(signal: AbortSignal): Promise<void> {
         await sleepUntil(signal, sleepSec * 1000);
       }
     } finally {
-      try {
-        activeAgent.close();
-        workerConsole("agent-runs-leaderboard", "info", "SDK agent.close() on shutdown");
-      } catch {
-        /* ignore close errors */
-      }
+      await closeSdkAgent(activeAgent);
+      workerConsole("agent-runs-leaderboard", "info", "SDK agent.close() on shutdown");
       activeAgent = null;
     }
   });
