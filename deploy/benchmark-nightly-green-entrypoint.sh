@@ -93,6 +93,7 @@ sync_workspace() {
   [[ -f "$BENCHMARKS_ROOT/scripts/benchmark-nightly-green-progress-gate.sh" ]] || {
     echo "benchmark-nightly-green-entrypoint: WARN gate scripts missing on ${BENCHMARKS_BRANCH} — agent should add them" >&2
   }
+  chmod +x "$BENCHMARKS_ROOT/scripts/benchmark-nightly-green-"*.sh 2>/dev/null || true
 }
 
 run_goal_loop() {
