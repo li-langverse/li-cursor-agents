@@ -3,7 +3,7 @@
 param(
     [int]$Max = 0,  # 0 = no iteration cap; stop on completion gate only
     [string]$UntilLocal = "",
-    [ValidateSet("all", "studio", "lig", "ph-ml", "ph-ml-li-array", "world-studio", "world-studio-runnable", "world-studio-gui-library", "world-studio-gui-polish", "world-studio-aimd-demo", "benchmarks", "benchmark-nightly-green", "benchmarks-dashboard", "li-toml-config", "lip-registry", "swarm", "org-prs", "org-prs-dirty", "org-prs-ci")]
+    [ValidateSet("all", "studio", "lig", "ph-ml", "ph-ml-li-array", "world-studio", "world-studio-runnable", "world-studio-gui-library", "world-studio-gui-polish", "world-studio-aimd-demo", "benchmarks", "benchmark-nightly-green", "benchmarks-dashboard", "li-toml-config", "lip-registry", "lip-registry-p5", "swarm", "org-prs", "org-prs-dirty", "org-prs-ci")]
     [string]$Sprint = "all",
     [switch]$DryRun,
     [switch]$BuildOnly
@@ -245,6 +245,18 @@ $sprints = @(
         Repo     = "lis"
         Cwd      = "../lis"
         GoalRel  = "data/goal-directed-sprints/lip-registry-agent-first.md"
+        ExtraEnv = @{
+            LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE = "1"
+            LI_STACK_SKIP_SUPABASE             = "1"
+            LI_GOAL_LOOP_SLEEP_SEC             = "90"
+        }
+    },
+    @{
+        Id       = "lip-registry-p5"
+        Agent    = "code_implementer"
+        Repo     = "lis"
+        Cwd      = "../lis"
+        GoalRel  = "data/goal-directed-sprints/lip-registry-p5-edge.md"
         ExtraEnv = @{
             LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE = "1"
             LI_STACK_SKIP_SUPABASE             = "1"
