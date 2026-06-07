@@ -17,6 +17,8 @@ Build warm index from **public APIs only**:
 
 No `S2_API_KEY` required. S2 bulk remains optional when a key is wired later.
 
+**Week-long mode:** `LI_INGEST_CONTINUOUS=1` runs `run-public-ingest-continuous.sh` (no agent, no scale-down on gate).
+
 Storage: `/warm-index` on engine NVMe (`/srv/homelab/nvme/li-research/warm-index`).
 
 ## Repos

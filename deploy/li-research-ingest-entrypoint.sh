@@ -93,8 +93,33 @@ sync_workspace() {
   clone_or_sync "${ORG}/lidb" "$LIDB_ROOT" "$BRANCH" || true
 }
 
+run_continuous_public_ingest() {
+  echo "li-research-ingest-entrypoint: continuous public ingest (no agent / no scale-down)"
+  export WARM_INDEX_PATH="${WARM_INDEX_PATH:-/warm-index}"
+  export WARM_INGEST_MODE=public
+  export LI_RESEARCH_INGEST_ROOT="$INGEST_ROOT"
+  while true; do
+    sync_workspace
+    if [[ ! -f "$INGEST_ROOT/scripts/run-public-ingest-continuous.sh" ]]; then
+      echo "li-research-ingest-entrypoint: waiting for run-public-ingest-continuous.sh" >&2
+      sleep "$LOOP_SLEEP"
+      continue
+    fi
+    set +e
+    bash "$INGEST_ROOT/scripts/run-public-ingest-continuous.sh"
+    rc=$?
+    set -e
+    echo "li-research-ingest-entrypoint: continuous loop exited $rc — restart in ${LOOP_SLEEP}s" >&2
+    sleep "$LOOP_SLEEP"
+  done
+}
+
 seed_goal
 test -f "$(resolve_goal_file)" || { echo "missing goal file" >&2; exit 1; }
+
+if [[ "${LI_INGEST_CONTINUOUS:-}" == "1" ]]; then
+  run_continuous_public_ingest
+fi
 
 while true; do
   sync_workspace
