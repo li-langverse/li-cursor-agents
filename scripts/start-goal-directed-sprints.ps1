@@ -11,9 +11,15 @@ param(
 
 $ErrorActionPreference = "Stop"
 $Work = Split-Path $PSScriptRoot -Parent
-$Goals = Join-Path $Work "data\goal-directed-sprints"
+if (Test-Path (Join-Path $Work "dist\cli\run-agent.js")) {
+    $Agents = $Work
+    $WorkspaceRoot = Split-Path $Work -Parent
+} else {
+    $WorkspaceRoot = $Work
+    $Agents = Join-Path $Work "li-cursor-agents"
+}
+$Goals = Join-Path $Agents "data\goal-directed-sprints"
 $Logs = Join-Path $Goals "logs"
-$Agents = Join-Path $Work "li-cursor-agents"
 $Bash = "C:\Program Files\Git\bin\bash.exe"
 
 New-Item -ItemType Directory -Force -Path $Logs | Out-Null
@@ -21,9 +27,9 @@ New-Item -ItemType Directory -Force -Path $Logs | Out-Null
 # Secrets load order (later wins): .env.github -> li-cursor-agents/.env -> .env
 # Empty values are ignored so a blank line cannot wipe an earlier token.
 foreach ($f in @(
-        (Join-Path $Work ".env.github"),
-        (Join-Path $Work "li-cursor-agents\.env"),
-        (Join-Path $Work ".env")
+        (Join-Path $WorkspaceRoot ".env.github"),
+        (Join-Path $Agents ".env"),
+        (Join-Path $WorkspaceRoot ".env")
     )) {
     if (-not (Test-Path $f)) { continue }
     Get-Content $f | ForEach-Object {
@@ -44,8 +50,8 @@ if (-not $env:CURSOR_API_KEY -and $env:CURSOR_SDK_KEY) { $env:CURSOR_API_KEY = $
 $env:LI_CONTROL_PLANE_STORE = "disk"
 $env:LI_SDK_TERMINAL_STREAM = "1"
 $env:LI_CURSOR_AGENTS_ROOT = $Agents
-$env:BENCHMARKS_ROOT = Join-Path $Work "benchmarks"
-$env:LIC_ROOT = Join-Path $Work "lic"
+$env:BENCHMARKS_ROOT = Join-Path $WorkspaceRoot "benchmarks"
+$env:LIC_ROOT = Join-Path $WorkspaceRoot "lic"
 $env:LI_SWARM_EXTERNAL = "1"
 $env:PATH = "C:\Program Files\Git\bin;C:\Program Files\LLVM\bin;" + $env:PATH
 # lic prebuild (implementer gate) ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã¢â‚¬Â¦Ãƒâ€šÃ‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â clang 22 on PATH; set LLVM_DIR when cmake package exists
@@ -334,7 +340,7 @@ function Start-SprintJob {
 $started = @()
 foreach ($def in $sprints) {
     if ($Sprint -ne "all" -and $def.Id -ne $Sprint) { continue }
-    $goalPath = Join-Path $Work ($def.GoalRel -replace '^\.\./', '')
+    $goalPath = Join-Path $Agents ($def.GoalRel -replace '^\.\./', '')
     if (-not (Test-Path $goalPath)) {
         throw "Missing goal file: $goalPath"
     }

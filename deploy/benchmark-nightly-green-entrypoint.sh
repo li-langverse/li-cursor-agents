@@ -50,6 +50,11 @@ sync_repo() {
   local branch="$2"
   [[ -d "$root/.git" ]] || return 0
   git -C "$root" fetch origin --prune
+  if ! git -C "$root" show-ref --verify --quiet "refs/remotes/origin/${branch}"; then
+    git -C "$root" fetch origin "${branch}:refs/remotes/origin/${branch}" --depth=1 2>/dev/null || \
+      git -C "$root" fetch origin --unshallow 2>/dev/null || \
+      git -C "$root" fetch origin --prune
+  fi
   if git -C "$root" show-ref --verify --quiet "refs/remotes/origin/${branch}"; then
     git -C "$root" checkout -B "$branch" "origin/${branch}"
     git -C "$root" reset --hard "origin/${branch}"
