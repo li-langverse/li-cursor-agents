@@ -7,12 +7,35 @@ export interface LiveStreamDeltaRow {
   body: string;
 }
 
+/** Tool-call args emitted by the Cursor SDK in run_trace.steps[].message */
+export interface ToolStepMessageArgs {
+  path?: string;
+  command?: string;
+  url?: string;
+}
+
+export interface ToolStepMessage {
+  type?: string;
+  args?: ToolStepMessageArgs;
+}
+
+export interface ToolTraceStep {
+  type: string;
+  message?: ToolStepMessage;
+}
+
 export interface LiveTraceSlice {
   assistant_text?: string;
   thinking_text?: string;
   tool_call_count?: number;
-  steps?: Array<{ type: string; message?: Record<string, unknown> }>;
+  steps?: ToolTraceStep[];
   deltas?: Array<{ seq: number; at: string; type: string; payload?: unknown }>;
+}
+
+/** Primary label for a tool step (path, shell command, or tool type). */
+export function toolStepTargetLabel(message?: ToolStepMessage): string {
+  const args = message?.args;
+  return args?.path ?? args?.command ?? args?.url ?? message?.type ?? "tool";
 }
 
 export function formatDeltaPayload(payload: unknown): string {

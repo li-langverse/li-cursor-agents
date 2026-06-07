@@ -124,7 +124,7 @@ test.describe("live stream UI (mocked API)", () => {
 
     await expect(page.getByTestId("run-drawer")).toBeVisible();
     await expect(page.getByTestId("live-stream-feed")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId("live-stream-feed")).toContainText("text-delta");
+    await expect(page.getByTestId("live-stream-feed")).toContainText("Assistant");
     await expect(page.getByTestId("live-stream-feed")).toContainText(TOKEN);
     await expect(page.locator("[data-testid=live-delta-item]").first()).toBeVisible();
     await expect(page.getByText("Playwright mocked user message")).toBeVisible();
