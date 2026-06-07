@@ -18,16 +18,38 @@ function Sync-KubeconfigFromBeelink {
     }
 
     if (Test-Path -LiteralPath $canonical) {
+        $destDir = Split-Path $Dest -Parent
+        New-Item -ItemType Directory -Force -Path $destDir | Out-Null
+
+        $linked = $false
         if (Test-Path -LiteralPath $link) {
-            & $link -BeelinkRoot $BeelinkRoot
-            if ($env:KUBECONFIG) { return $env:KUBECONFIG }
-        } else {
-            $destDir = Split-Path $Dest -Parent
-            New-Item -ItemType Directory -Force -Path $destDir | Out-Null
-            if (Test-Path -LiteralPath $Dest) { Remove-Item -LiteralPath $Dest -Force }
-            New-Item -ItemType SymbolicLink -Path $Dest -Target $canonical | Out-Null
-            Write-Host "sync-kubeconfig: linked $Dest -> $canonical"
+            try {
+                & $link -BeelinkRoot $BeelinkRoot
+                if ($env:KUBECONFIG -and (Test-Path -LiteralPath $env:KUBECONFIG)) {
+                    return $env:KUBECONFIG
+                }
+                $linked = Test-Path -LiteralPath $Dest
+            } catch {
+                Write-Host "sync-kubeconfig: link skipped ($($_.Exception.Message))"
+            }
         }
+
+        if (-not $linked) {
+            try {
+                if (Test-Path -LiteralPath $Dest) { Remove-Item -LiteralPath $Dest -Force }
+                New-Item -ItemType SymbolicLink -Path $Dest -Target $canonical | Out-Null
+                Write-Host "sync-kubeconfig: linked $Dest -> $canonical"
+                $linked = $true
+            } catch {
+                Write-Host "sync-kubeconfig: symlink skipped ($($_.Exception.Message))"
+            }
+        }
+
+        if (-not $linked) {
+            Copy-Item -LiteralPath $canonical -Destination $Dest -Force
+            Write-Host "sync-kubeconfig: copied $canonical -> $Dest"
+        }
+
         $env:KUBECONFIG = $Dest
         return $Dest
     }
@@ -50,16 +72,6 @@ function Sync-KubeconfigFromBeelink {
 
     if (Test-Path -LiteralPath $Dest) {
         Write-Host "sync-kubeconfig: using existing $Dest"
-        $env:KUBECONFIG = $Dest
-        return $Dest
-    }
-
-    # Last resort: copy canonical directly to dest (no symlink) for environments that block symlinks.
-    if (Test-Path -LiteralPath $canonical) {
-        $destDir = Split-Path $Dest -Parent
-        New-Item -ItemType Directory -Force -Path $destDir | Out-Null
-        Copy-Item -LiteralPath $canonical -Destination $Dest -Force
-        Write-Host "sync-kubeconfig: copied $canonical -> $Dest"
         $env:KUBECONFIG = $Dest
         return $Dest
     }
