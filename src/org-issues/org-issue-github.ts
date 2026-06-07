@@ -1,5 +1,13 @@
 import https from "node:https";
 import type { GitHubResponseHeaders } from "../github/github-rate-limit.js";
+import {
+  ghToken,
+  ghTokenCandidates,
+  withGitHubTokenFailover,
+  type GitHubApiResponse,
+} from "../github/github-token-pool.js";
+
+export { ghToken, ghTokenCandidates };
 
 export interface GitHubIssue {
   number: number;
@@ -10,23 +18,12 @@ export interface GitHubIssue {
   labels: string[];
 }
 
-export function ghToken(): string | undefined {
-  return (
-    process.env.GH_SWARM_TOKEN?.trim() ||
-    process.env.GH_TOKEN?.trim() ||
-    process.env.GITHUB_TOKEN?.trim()
-  );
-}
-
-function ghRequest<T>(
+function ghRequestOnce<T>(
+  token: string,
   method: string,
   path: string,
   body?: unknown,
-): Promise<{ status: number; data: T | null; raw: string; headers: GitHubResponseHeaders }> {
-  const token = ghToken();
-  if (!token) {
-    return Promise.resolve({ status: 401, data: null, raw: "GH_TOKEN required", headers: {} });
-  }
+): Promise<GitHubApiResponse<T>> {
   const payload = body === undefined ? undefined : JSON.stringify(body);
   return new Promise((resolve, reject) => {
     const req = https.request(
@@ -66,6 +63,14 @@ function ghRequest<T>(
   });
 }
 
+export function ghRequest<T>(
+  method: string,
+  path: string,
+  body?: unknown,
+): Promise<{ status: number; data: T | null; raw: string; headers: GitHubResponseHeaders }> {
+  return withGitHubTokenFailover((token) => ghRequestOnce<T>(token, method, path, body));
+}
+
 export class GitHubIssueRequestError extends Error {
   readonly status: number;
   readonly headers: GitHubResponseHeaders;
@@ -83,17 +88,20 @@ export async function fetchGitHubRateLimitCore(): Promise<{
   reset: number;
   limit: number;
 } | null> {
-  const res = await ghRequest<{
-    resources?: { core?: { remaining?: number; reset?: number; limit?: number } };
-  }>("GET", "/rate_limit");
-  if (res.status !== 200 || !res.data?.resources?.core) return null;
-  const core = res.data.resources.core;
-  if (!Number.isFinite(core.remaining) || !Number.isFinite(core.reset)) return null;
-  return {
-    remaining: core.remaining!,
-    reset: core.reset!,
-    limit: Number.isFinite(core.limit) ? core.limit! : 5000,
-  };
+  for (const token of ghTokenCandidates()) {
+    const res = await ghRequestOnce<{
+      resources?: { core?: { remaining?: number; reset?: number; limit?: number } };
+    }>(token, "GET", "/rate_limit");
+    if (res.status !== 200 || !res.data?.resources?.core) continue;
+    const core = res.data.resources.core;
+    if (!Number.isFinite(core.remaining) || !Number.isFinite(core.reset)) continue;
+    return {
+      remaining: core.remaining!,
+      reset: core.reset!,
+      limit: Number.isFinite(core.limit) ? core.limit! : 5000,
+    };
+  }
+  return null;
 }
 
 export async function fetchGitHubIssue(
@@ -157,10 +165,7 @@ export async function promoteIssuePlanApproved(
       add.headers,
     );
   }
-  await ghRequest(
-    "DELETE",
-    `/repos/${org}/${repo}/issues/${number}/labels/plan-needed`,
-  );
+  await ghRequest("DELETE", `/repos/${org}/${repo}/issues/${number}/labels/plan-needed`);
   const after = await fetchGitHubIssue(org, repo, number);
   return { ok: after.labels.includes("plan-approved"), labels: after.labels };
 }

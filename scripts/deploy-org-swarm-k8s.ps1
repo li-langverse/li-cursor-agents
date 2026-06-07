@@ -1,4 +1,4 @@
-﻿# Build, push, and deploy org swarm stack on homelab engine cluster.
+# Build, push, and deploy org swarm stack on homelab engine cluster.
 param(
     [string]$KubeConfig = "$env:USERPROFILE\.kube\config-homelab",
     [string]$Namespace = "li-swarm",
@@ -25,7 +25,7 @@ $Workspace = Split-Path $Root -Parent
 . (Join-Path $PSScriptRoot "lib\ghcr-env.ps1")
 Load-LiSwarmEnvFiles -AgentsRoot $Root -WorkspaceRoot $Workspace
 
-if (-not $env:CURSOR_API_KEY) { Write-Warning "CURSOR_API_KEY not set â€” implementer jobs may fail" }
+if (-not $env:CURSOR_API_KEY) { Write-Warning "CURSOR_API_KEY not set — implementer jobs may fail" }
 
 function Resolve-ContainerCli {
     foreach ($cmd in @("podman", "docker")) {
@@ -72,7 +72,7 @@ if (-not $SkipBuild) {
 }
 
 if ($SkipDeploy) {
-    Write-Host "SkipDeploy â€” image ready: $Image (pushed=$pushed)"
+    Write-Host "SkipDeploy — image ready: $Image (pushed=$pushed)"
     exit 0
 }
 
@@ -95,6 +95,12 @@ if ($env:CURSOR_API_KEY) { $secretArgs += "--from-literal=CURSOR_API_KEY=$($env:
 if ($env:CURSOR_SDK_KEY) { $secretArgs += "--from-literal=CURSOR_SDK_KEY=$($env:CURSOR_SDK_KEY)" }
 if ($env:SUPABASE_URL) { $secretArgs += "--from-literal=SUPABASE_URL=$($env:SUPABASE_URL)" }
 if ($env:SUPABASE_SERVICE_ROLE_KEY) { $secretArgs += "--from-literal=SUPABASE_SERVICE_ROLE_KEY=$($env:SUPABASE_SERVICE_ROLE_KEY)" }
+
+if ($env:GH_SWARM_TOKEN_BACKUP) {
+    $secretArgs += "--from-literal=GH_SWARM_TOKEN_BACKUP=$($env:GH_SWARM_TOKEN_BACKUP)"
+} elseif ($env:GH_TOKEN_BACKUP) {
+    $secretArgs += "--from-literal=GH_SWARM_TOKEN_BACKUP=$($env:GH_TOKEN_BACKUP)"
+}
 kubectl @secretArgs | kubectl apply -f -
 Write-Host "==> ensure GH_SWARM_TOKEN + GH_TOKEN stay in sync"
 & (Join-Path $PSScriptRoot "org-ensure-swarm-secrets.ps1") -KubeConfig $KubeConfig -Namespace $Namespace

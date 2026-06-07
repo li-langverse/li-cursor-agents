@@ -6,12 +6,26 @@ ORG="${LI_GITHUB_ORG:-li-langverse}"
 LIC_ROOT="${LIC_ROOT:-/workspace/lic}"
 BENCHMARKS_ROOT="${BENCHMARKS_ROOT:-/workspace/benchmarks}"
 
-if [[ -n "${GH_SWARM_TOKEN:-}" ]]; then
-  export GH_TOKEN="$GH_SWARM_TOKEN"
-fi
+pick_github_token() {
+  if [[ -n "${GH_SWARM_TOKEN:-}" ]]; then
+    echo "$GH_SWARM_TOKEN"
+    return 0
+  fi
+  if [[ -n "${GH_SWARM_TOKEN_BACKUP:-}" ]]; then
+    echo "$GH_SWARM_TOKEN_BACKUP"
+    return 0
+  fi
+  if [[ -n "${GH_TOKEN:-}" ]]; then
+    echo "$GH_TOKEN"
+    return 0
+  fi
+  return 1
+}
 
-if [[ -n "${GH_TOKEN:-}" ]]; then
-  export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
+if token="$(pick_github_token)"; then
+  export GH_SWARM_TOKEN="${GH_SWARM_TOKEN:-$token}"
+  export GH_TOKEN="$token"
+  export GITHUB_TOKEN="${GITHUB_TOKEN:-$token}"
   echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
   gh auth setup-git 2>/dev/null || true
   git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/" 2>/dev/null || true
@@ -25,7 +39,7 @@ sync_repo() {
   local branch="${3:-main}"
   mkdir -p "$(dirname "$dest")"
   if [[ ! -d "$dest/.git" ]]; then
-    echo "org-worker-entrypoint: cloning ${ORG}/${repo} → ${dest}"
+    echo "org-worker-entrypoint: cloning ${ORG}/${repo} -> ${dest}"
     gh repo clone "${ORG}/${repo}" "$dest" -- --depth 1 --branch "$branch" 2>/dev/null \
       || gh repo clone "${ORG}/${repo}" "$dest" -- --depth 1
     return 0

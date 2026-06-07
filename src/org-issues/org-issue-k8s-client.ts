@@ -1,4 +1,5 @@
 import { FINISHED_JOB_TTL_SECONDS } from "../k8s/finished-job-ttl.js";
+import { k8sGitHubSecretEnv } from "../org/k8s-github-secret-env.js";
 ﻿import { readFileSync } from "node:fs";
 import https from "node:https";
 import { randomBytes } from "node:crypto";
@@ -196,10 +197,7 @@ export async function createImplementerJob(options: {
               ],
               envFrom: [{ configMapRef: { name: "li-org-issue-supervisor" } }],
               env: [
-                {
-                  name: "GH_TOKEN",
-                  valueFrom: { secretKeyRef: { name: "li-agents-secrets", key: "GH_SWARM_TOKEN" } },
-                },
+                ...k8sGitHubSecretEnv(),
                 {
                   name: "CURSOR_API_KEY",
                   valueFrom: {

@@ -38,3 +38,14 @@ $tmp = Join-Path $env:TEMP "li-agents-secrets-patch.json"
 kubectl -n $Namespace patch secret li-agents-secrets --type=merge --patch-file $tmp
 Remove-Item $tmp -Force -ErrorAction SilentlyContinue
 Write-Host "li-agents-secrets patched in $Namespace"
+
+$backup = kubectl -n $Namespace get secret li-agents-secrets -o jsonpath='{.data.GH_SWARM_TOKEN_BACKUP}' 2>$null
+if (-not $backup -and $env:GH_SWARM_TOKEN_BACKUP) {
+    $b64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:GH_SWARM_TOKEN_BACKUP))
+    $patchBackup = @{ data = @{ GH_SWARM_TOKEN_BACKUP = $b64 } } | ConvertTo-Json -Compress
+    $tmp2 = Join-Path $env:TEMP "li-agents-secrets-backup.json"
+    [System.IO.File]::WriteAllText($tmp2, $patchBackup)
+    kubectl -n $Namespace patch secret li-agents-secrets --type=merge --patch-file $tmp2
+    Remove-Item $tmp2 -Force -ErrorAction SilentlyContinue
+    Write-Host "Patched GH_SWARM_TOKEN_BACKUP from local env"
+}

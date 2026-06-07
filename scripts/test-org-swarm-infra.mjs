@@ -46,4 +46,10 @@ const deploy = read("deploy/k8s/engine/deployment-org-planner-supervisor.yaml");
 assert.ok(deploy.includes("mountPath: /hotfix"));
 assert.ok(!deploy.includes("mountPath: /app/dist/org-planner"));
 
+const deployScript = read("scripts/deploy-org-swarm-k8s.ps1");
+assert.ok(deployScript.includes("GH_SWARM_TOKEN_BACKUP"), "deploy must push backup token to li-agents-secrets");
+
+const pool = read("src/github/github-token-pool.ts");
+assert.ok(pool.includes("GH_SWARM_TOKEN_BACKUP"));
+
 console.log("test-org-swarm-infra: ok");

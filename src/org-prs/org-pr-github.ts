@@ -1,5 +1,4 @@
-import https from "node:https";
-import { ghToken } from "../org-issues/org-issue-github.js";
+import { ghRequest as orgGhRequest, ghToken } from "../org-issues/org-issue-github.js";
 
 export interface GitHubPullRequest {
   number: number;
@@ -13,52 +12,13 @@ export interface GitHubPullRequest {
   headSha: string | null;
 }
 
-function ghRequest<T>(
+async function ghRequest<T>(
   method: string,
   path: string,
   body?: unknown,
 ): Promise<{ status: number; data: T | null; raw: string }> {
-  const token = ghToken();
-  if (!token) {
-    return Promise.resolve({ status: 401, data: null, raw: "GH_TOKEN required" });
-  }
-  const payload = body === undefined ? undefined : JSON.stringify(body);
-  return new Promise((resolve, reject) => {
-    const req = https.request(
-      {
-        hostname: "api.github.com",
-        path,
-        method,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/vnd.github+json",
-          "User-Agent": "li-langverse/li-cursor-agents (org-pr-supervisor)",
-          ...(payload
-            ? { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) }
-            : {}),
-        },
-      },
-      (res) => {
-        const chunks: Buffer[] = [];
-        res.on("data", (c) => chunks.push(c));
-        res.on("end", () => {
-          const raw = Buffer.concat(chunks).toString("utf8");
-          let data: T | null = null;
-          if (raw) {
-            try {
-              data = JSON.parse(raw) as T;
-            } catch {
-              data = null;
-            }
-          }
-          resolve({ status: res.statusCode ?? 0, data, raw });
-        });
-      },
-    );
-    req.on("error", reject);
-    if (payload) req.write(payload);
-    req.end();
-  });
+  const res = await orgGhRequest<T>(method, path, body);
+  return { status: res.status, data: res.data, raw: res.raw };
 }
 
 export async function fetchGitHubPullRequest(
