@@ -24,13 +24,23 @@ git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".instead
 git config --global user.email "${LI_GIT_USER_EMAIL:-lios-kernel-agent@li-langverse.dev}"
 git config --global user.name "${LI_GIT_USER_NAME:-lios-kernel-agent}"
 branch_candidates(){ local p="$1" s="" b; for b in "$p" ${FALLBACK_RAW//,/ }; do b="${b// /}"; [[ -z "$b" ]]&&continue; [[ " $s " == *" $b "* ]]&&continue; s="$s $b"; echo "$b"; done; }
+git_clone_branch(){ local repo="$1" dest="$2" branch="$3"; local url="https://x-access-token:${GH_TOKEN}@github.com/${repo}.git";
+  rm -rf "${dest}"
+  for b in $(branch_candidates "$branch"); do
+    if git clone --depth 1 --branch "$b" "$url" "$dest" 2>/dev/null; then return 0; fi
+  done
+  git clone --depth 1 "$url" "$dest" 2>/dev/null && { git -C "$dest" checkout -B "$branch" 2>/dev/null || true; return 0; }
+  return 1
+}
 clone_or_sync(){ local repo="$1" dest="$2" pref="$3"; mkdir -p "$(dirname "$dest")";
   if [[ ! -d "$dest/.git" ]]; then
+    if git_clone_branch "$repo" "$dest" "$pref"; then return 0; fi
     if gh repo view "$repo" >/dev/null 2>&1; then
       for b in $(branch_candidates "$pref"); do gh repo clone "$repo" "$dest" -- --branch "$b" 2>/dev/null && return 0; done
-      gh repo clone "$repo" "$dest"; git -C "$dest" checkout -B "$pref" 2>/dev/null || true; return 0
+      gh repo clone "$repo" "$dest" 2>/dev/null && { git -C "$dest" checkout -B "$pref" 2>/dev/null || true; return 0; }
     fi
-    mkdir -p "$dest"; git -C "$dest" init -b "$pref"; return 0
+    echo "lios-kernel-entrypoint: clone failed for ${repo}" >&2
+    return 1
   fi
   git -C "$dest" fetch origin --prune 2>/dev/null || true
   local b ok=0; for b in $(branch_candidates "$pref"); do
@@ -41,8 +51,7 @@ clone_or_sync(){ local repo="$1" dest="$2" pref="$3"; mkdir -p "$(dirname "$dest
 ensure_repo_tree(){ local marker="$1" dest="$2" repo="$3" branch="$4";
   if [[ ! -f "${dest}/${marker}" ]]; then
     echo "lios-kernel-entrypoint: repairing incomplete checkout ${dest} (${marker} missing)" >&2
-    rm -rf "${dest}"
-    clone_or_sync "$repo" "$dest" "$branch"
+    git_clone_branch "$repo" "$dest" "$branch" || clone_or_sync "$repo" "$dest" "$branch"
   fi
   [[ -f "${dest}/${marker}" ]] || { echo "lios-kernel-entrypoint: ${dest} still missing ${marker}" >&2; return 1; }
 }
