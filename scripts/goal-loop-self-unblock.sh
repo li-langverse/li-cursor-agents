@@ -114,6 +114,20 @@ HINT
 )"
   fi
 
+  if echo "$ctx" | grep -qiE 'check-li-parallel-killer-gate|check-li-parallel-proofs|check-li-parallel-goal-complete|LIPAR_KILLER|lipar-killer-gate|WP-PAR-100|G-par.*Partial'; then
+    hints+="$(cat <<'HINT'
+
+## Unblock: li-parallel killer / proofs 100%
+- Progress gate: `./scripts/check-li-parallel-full-suite.sh` (~2 min)
+- Proofs gate: `./scripts/check-li-parallel-proofs-gate.sh`
+- Proofs 100%: mark G-par **Done** in `packages/li-parallel/docs/gap-register.md` + `proofs-table.md`, then `./scripts/check-li-parallel-proofs-complete-gate.sh`
+- GOAL_COMPLETE: `./scripts/check-li-parallel-goal-complete-gate.sh` (killer ~28 min + proofs-complete)
+- Branch: `cursor/li-parallel-native-hpc` on **lic**; push before next loop iteration.
+- Do **not** add `LIPAR_KILLER_SKIP_FULL` or weaken dual-mode / perf gates.
+HINT
+)"
+  fi
+
   echo "$hints"
 }
 
