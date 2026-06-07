@@ -90,12 +90,12 @@ function k8sRequest(
 const PLANNER_HOTFIX_CM = process.env.LI_ORG_PLANNER_HOTFIX_CONFIGMAP?.trim() || "li-org-planner-hotfix";
 
 function plannerHotfixVolumeMounts(): Array<{ name: string; mountPath: string; subPath?: string }> {
+  // SubPath only — a full-dir mount hides the image's org-planner modules and breaks imports.
   return [
-    { name: "planner-hotfix", mountPath: "/app/dist/org-planner" },
     {
       name: "planner-hotfix",
-      mountPath: "/app/dist/cli/org-planner-supervisor.js",
-      subPath: "org-planner-supervisor.js",
+      mountPath: "/app/dist/org-planner/org-planner-plan-cycle.js",
+      subPath: "org-planner-plan-cycle.js",
     },
     {
       name: "planner-hotfix",
