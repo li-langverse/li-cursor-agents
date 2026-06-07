@@ -5,7 +5,7 @@ metadata:
   namespace: li-swarm
   labels:
     app: li-ph-ml-wave13
-    li-langverse.io/sprint: ph-ml-program-complete
+    li-langverse.io/sprint: ph-ml-li-array
 data:
   entrypoint.sh: |
     #!/usr/bin/env bash
@@ -15,13 +15,13 @@ data:
     ORG="${LI_GITHUB_ORG:-li-langverse}"
     REPO_LIC="${LI_PROOF_EXPLORER_LIC_REPO:-lic}"
     REPO_BENCHMARKS="${LI_BENCHMARKS_REPO:-benchmarks}"
-    PREFERRED_BRANCH="${LI_PROOF_EXPLORER_BRANCH:-main}"
-    FALLBACK_RAW="${LI_PROOF_EXPLORER_BRANCH_FALLBACKS:-main,cursor/ph-ml-program-complete}"
+    PREFERRED_BRANCH="${LI_PROOF_EXPLORER_BRANCH:-cursor/ph-ml-li-array}"
+    FALLBACK_RAW="${LI_PROOF_EXPLORER_BRANCH_FALLBACKS:-main,cursor/ph-ml-li-array,cursor/ph-ml-program-complete}"
     BENCHMARKS_BRANCH="${LI_BENCHMARKS_BRANCH:-main}"
     LIC_ROOT="${LI_PROOF_EXPLORER_LIC_ROOT:-/workspace/lic}"
     BENCHMARKS_ROOT="${BENCHMARKS_ROOT:-/workspace/benchmarks}"
     AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
-    GOAL_REL="${LI_PROOF_EXPLORER_GOAL_FILE:-data/goal-directed-sprints/ph-ml-dl-rl-llm-wave13-final.md}"
+    GOAL_REL="${LI_PROOF_EXPLORER_GOAL_FILE:-data/goal-directed-sprints/ph-ml-li-array-competitive.md}"
     echo "ph-ml-wave13-entrypoint: preferred_branch=${PREFERRED_BRANCH} goal=${GOAL_REL}"
     export GH_TOKEN GITHUB_TOKEN
     echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true

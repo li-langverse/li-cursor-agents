@@ -3,7 +3,7 @@
 param(
     [int]$Max = 0,  # 0 = no iteration cap; stop on completion gate only
     [string]$UntilLocal = "",
-    [ValidateSet("all", "studio", "lig", "ph-ml", "world-studio", "world-studio-runnable", "world-studio-gui-library", "world-studio-gui-polish", "world-studio-aimd-demo", "benchmarks", "benchmarks-dashboard", "li-toml-config", "swarm", "org-prs", "org-prs-dirty", "org-prs-ci")]
+    [ValidateSet("all", "studio", "lig", "ph-ml", "ph-ml-li-array", "world-studio", "world-studio-runnable", "world-studio-gui-library", "world-studio-gui-polish", "world-studio-aimd-demo", "benchmarks", "benchmarks-dashboard", "li-toml-config", "swarm", "org-prs", "org-prs-dirty", "org-prs-ci")]
     [string]$Sprint = "all",
     [switch]$DryRun,
     [switch]$BuildOnly
@@ -93,6 +93,18 @@ $sprints = @(
         ExtraEnv = @{
             LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE = "1"
             LI_STACK_SKIP_SUPABASE = "1"
+        }
+    },
+    @{
+        Id       = "ph-ml-li-array"
+        Agent    = "code_implementer"
+        Repo     = "lic"
+        Cwd      = "../lic"
+        GoalRel  = "../lic/data/goal-directed-sprints/ph-ml-li-array-competitive.md"
+        ExtraEnv = @{
+            LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE = "1"
+            LI_GOAL_LOOP_SLEEP_SEC = "60"
+            LIC = "../lic/build-wsl/compiler/lic/lic"
         }
     },
     @{
