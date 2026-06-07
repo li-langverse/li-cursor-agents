@@ -15,7 +15,7 @@ $Root = Split-Path $PSScriptRoot -Parent
 $K8s = Join-Path $Root "deploy\k8s\engine"
 $LiRoot = Split-Path $Root -Parent
 $BeelinkRoot = "C:\Users\Julian\Documents\Programming\beelink-cleanup"
-$KlautProGoals = "C:\Users\Julian\Documents\Programming\klaut.pro\goals"
+$KlautProGoals = "C:\Users\Julian\Documents\Programming\lauchpad\klaut-pro\goals"
 $BundleScript = Join-Path $Root "scripts\Invoke-K8sGoalLoopBundle.ps1"
 
 function Normalize-GoalFile([string]$Src) {
