@@ -21,6 +21,11 @@ _STEP_KEYS: dict[str, str] = {
 }
 
 _HELP_MARKERS = ("Help:", "arrow keys navigate")
+_ERROR_MARKERS = ("Error:", "simulated failure")
+_A11Y_MARKERS_BY_CLASS: dict[str, tuple[str, ...]] = {
+    "tui_app": ("plain snapshot", "Surface: tui_app"),
+    "tui_gen": ("plain snapshot", "Surface: tui_gen"),
+}
 
 
 def _fixture_path(target: TargetConfig, agents_root: Path) -> Path | None:
@@ -53,6 +58,7 @@ def _run_fixture(
     *,
     ux_script: str = "",
     write_frame: bool = False,
+    extra_env: dict[str, str] | None = None,
 ) -> dict:
     fixture = _fixture_path(target, agents_root)
     base = {
@@ -68,6 +74,8 @@ def _run_fixture(
     env = {**os.environ, "UX_HARNESS": "1"}
     if ux_script:
         env["LI_UX_SCRIPT"] = ux_script
+    if extra_env:
+        env.update(extra_env)
     try:
         proc = subprocess.run(
             ["bash", str(fixture)],
@@ -145,14 +153,29 @@ def _evaluate_journey(journey: dict, stdout: str, exit_ok: bool) -> dict:
     }
 
 
-def _rubric_from_journeys(journey_results: list[dict], exit_ok: bool) -> dict[str, float]:
+def _error_handling_score(*, error_tested: bool, error_ok: bool) -> float:
+    if error_ok:
+        return 0.9
+    if error_tested:
+        return 0.5
+    return 0.35
+
+
+def _rubric_from_journeys(
+    journey_results: list[dict],
+    exit_ok: bool,
+    *,
+    error_tested: bool = False,
+    error_ok: bool = False,
+) -> dict[str, float]:
+    err = _error_handling_score(error_tested=error_tested, error_ok=error_ok)
     if not journey_results:
         low = not exit_ok
         return {
             "nav_clarity": 0.5 if low else 0.85,
             "task_efficiency": 0.5 if low else 0.8,
             "empty_states": 0.9,
-            "error_handling": 0.75,
+            "error_handling": err,
             "cognitive_load": 0.7,
         }
     completed = sum(1 for j in journey_results if j.get("completed"))
@@ -163,9 +186,18 @@ def _rubric_from_journeys(journey_results: list[dict], exit_ok: bool) -> dict[st
         "nav_clarity": nav if ratio < 1.0 else 0.85,
         "task_efficiency": task if ratio < 1.0 else 0.8,
         "empty_states": 0.9,
-        "error_handling": 0.75,
+        "error_handling": err,
         "cognitive_load": 0.55 + 0.15 * ratio,
     }
+
+
+def _a11y_export_ok(stdout: str, surface_class: str) -> bool:
+    markers = _A11Y_MARKERS_BY_CLASS.get(surface_class, ("plain snapshot",))
+    return all(marker in stdout for marker in markers)
+
+
+def _error_surface_ok(stderr: str) -> bool:
+    return any(marker in stderr for marker in _ERROR_MARKERS)
 
 
 def run_tui_ui(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
@@ -213,6 +245,31 @@ def run_tui_ux(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
     artifacts = list(ui.get("artifacts") or [])
     artifacts.append(str(journey_log))
 
+    a11y = _run_fixture(
+        target,
+        agents_root,
+        extra_env={"LI_TUI_EXPORT_A11Y": "1"},
+    )
+    a11y_stdout = a11y.get("stdout") or ""
+    a11y_ok = a11y.get("status") == "pass" and _a11y_export_ok(
+        a11y_stdout, target.surface_class
+    )
+    if a11y_ok:
+        a11y_path = out_dir / "a11y-plain.txt"
+        a11y_path.write_text(a11y_stdout, encoding="utf-8")
+        artifacts.append(str(a11y_path))
+    else:
+        artifacts.append("missing:a11y-plain.txt")
+
+    error_run = _run_fixture(
+        target,
+        agents_root,
+        extra_env={"LI_TUI_ERROR": "1", "LI_TUI_EXPORT_A11Y": "1"},
+    )
+    error_stderr = error_run.get("stderr") or ""
+    error_tested = error_run.get("status") == "pass"
+    error_ok = error_tested and _error_surface_ok(error_stderr)
+
     friction: list[dict] = []
     if ui.get("timeout"):
         friction.append({"issue": "fixture timed out in non-interactive harness"})
@@ -221,10 +278,26 @@ def run_tui_ux(target: TargetConfig, agents_root: Path, mock: bool) -> dict:
     for jr in journey_results:
         if not jr.get("completed"):
             friction.append({"journey": jr.get("id"), "issue": "journey incomplete"})
+    if not a11y_ok:
+        friction.append({"issue": "a11y plain-text export missing or invalid"})
+    if error_tested and not error_ok:
+        friction.append({"issue": "error path did not surface stderr banner"})
 
     all_completed = all(jr.get("completed") for jr in journey_results) if journey_results else exit_ok
-    rubric = _rubric_from_journeys(journey_results, exit_ok)
-    status = "fail" if not all_completed or not exit_ok or rubric_failing(rubric) else "pass"
+    rubric = _rubric_from_journeys(
+        journey_results,
+        exit_ok,
+        error_tested=error_tested,
+        error_ok=error_ok,
+    )
+    status = (
+        "fail"
+        if not all_completed
+        or not exit_ok
+        or not a11y_ok
+        or rubric_failing(rubric)
+        else "pass"
+    )
 
     return {
         "target_id": target.id,
