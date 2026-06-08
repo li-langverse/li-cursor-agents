@@ -35,7 +35,7 @@ sync_repo() {
   git -C "$root" fetch origin --prune
   git -C "$root" fetch origin "$branch":"refs/remotes/origin/$branch" --depth 1 2>/dev/null || true
   if git -C "$root" show-ref --verify --quiet "refs/remotes/origin/${branch}"; then
-    git -C "$root" checkout -B "$branch" "origin/${branch}"
+    git -C "$root" checkout -f -B "$branch" "origin/${branch}"
     git -C "$root" reset --hard "origin/${branch}"
   else
     echo "sync_repo: origin/${branch} not found in ${root}" >&2
