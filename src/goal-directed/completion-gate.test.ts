@@ -4,10 +4,11 @@ import {
   extractCompletionGateScript,
   extractProgressGateScript,
   evaluateGoalCompletion,
+  pendingPlanTodos,
   phasesMarkedDone,
   requiredPhases,
 } from "./completion-gate.js";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -42,8 +43,8 @@ python3 scripts/audit-dashboard-gaps.py
 });
 
 test("requiredPhases and phasesMarkedDone (status column only)", () => {
-  const md = `### Phase A — foo
-### Phase B — bar
+  const md = `### Phase A  foo
+### Phase B  bar
 | **A** | **DONE** | notes |
 | **B** | in progress | **DONE** in notes only |
 `;
@@ -56,8 +57,8 @@ test("evaluateGoalCompletion runs progress gate when phases remain", () => {
   const goal = join(dir, "plan.md");
   writeFileSync(
     goal,
-    `### Phase A — a
-### Phase B — b
+    `### Phase A  a
+### Phase B  b
 | **A** | **DONE** |
 | **B** | NEXT |
 
@@ -89,4 +90,40 @@ test("phasesMarkedDone reads **DONE** in last column (3-col table)", () => {
 `;
   assert.deepEqual(phasesMarkedDone(md), ["W0"]);
   assert.deepEqual(requiredPhases(md), ["W0", "W1"]);
+});
+
+test("evaluateGoalCompletion rejects when plan YAML todos remain (no Phase headings)", () => {
+  const dir = mkdtempSync(join(tmpdir(), "goal-gate-plan-"));
+  const plan = join(dir, "docs/plans/loop.md");
+  const goal = join(dir, "data/goal.md");
+  mkdirSync(join(dir, "docs/plans"), { recursive: true });
+  mkdirSync(join(dir, "data"), { recursive: true });
+  writeFileSync(
+    plan,
+    `---
+todos:
+  - id: aimd-w0-audit
+    content: "W0"
+    status: done
+  - id: aimd-w3-gpu-path
+    content: "W3"
+    status: pending
+---
+`,
+  );
+  writeFileSync(
+    goal,
+    `**Plan loop:** [loop.md](../docs/plans/loop.md)
+
+## Completion gate
+
+\`\`\`bash
+true
+\`\`\`
+`,
+  );
+  const result = evaluateGoalCompletion({ goalFile: goal, cwd: dir });
+  assert.equal(result.complete, false);
+  assert.match(result.reason, /plan todos pending: aimd-w3-gpu-path/);
+  assert.deepEqual(pendingPlanTodos(goal, dir), ["aimd-w3-gpu-path"]);
 });

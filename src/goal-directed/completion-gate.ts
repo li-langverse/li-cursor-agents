@@ -1,6 +1,8 @@
 import { readFileSync, existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
+import { resolvePlanPathFromGoalFile } from "../agents/resolve-goal-metadata.js";
+import { parseBacklogTodos } from "../implement-goals/backlog-io.js";
 
 function extractGateScript(goalText: string, heading: string): string | null {
   const re = new RegExp(`^##\\s+${heading}\\s*$`, "im");
@@ -80,6 +82,15 @@ function resolveGateScriptBody(
   return gateScript;
 }
 
+/** Pending plan YAML todo ids linked from the goal file (authoritative for sprint loops). */
+export function pendingPlanTodos(goalFile: string, cwd: string): string[] {
+  const planPath = resolvePlanPathFromGoalFile(goalFile, cwd);
+  if (!planPath || !existsSync(planPath)) return [];
+  const todos = parseBacklogTodos(readFileSync(planPath, "utf8"), "plan_yaml");
+  if (todos.length === 0) return [];
+  return todos.filter((t) => t.status !== "done").map((t) => t.id);
+}
+
 function runBashGate(
   gateScript: string,
   cwd: string,
@@ -112,6 +123,18 @@ export function evaluateGoalCompletion(
   const done = phasesMarkedDone(goalText);
   const missingPhases = required.filter((p) => !done.includes(p));
   const cwd = input.cwd ? resolve(input.cwd) : dirname(goalFile);
+  const planPending = pendingPlanTodos(goalFile, cwd);
+
+  const incompleteForPlanTodos = (
+    reason: string,
+    extra?: Partial<GoalCompletionResult>,
+  ): GoalCompletionResult => ({
+    complete: false,
+    reason,
+    phases_done: done,
+    phases_required: required,
+    ...extra,
+  });
 
   const progressGateScript = extractProgressGateScript(goalText);
   const completionGateScript =
@@ -123,40 +146,38 @@ export function evaluateGoalCompletion(
     const gateScript = resolveGateScriptBody(progressGateScript, cwd);
     const proc = runBashGate(gateScript, cwd, goalFile);
     if (proc.status !== 0) {
-      return {
-        complete: false,
-        reason: `progress gate failed (exit ${proc.status ?? "?"}): ${proc.tail || "no output"}`,
-        phases_done: done,
-        phases_required: required,
-        gate_exit_code: proc.status ?? undefined,
-      };
+      return incompleteForPlanTodos(
+        `progress gate failed (exit ${proc.status ?? "?"}): ${proc.tail || "no output"}`,
+        { gate_exit_code: proc.status ?? undefined },
+      );
     }
-    return {
-      complete: false,
-      progressOnly: true,
-      reason: `progress gate passed; phases remaining: ${missingPhases.join(", ")}`,
-      phases_done: done,
-      phases_required: required,
-      gate_exit_code: 0,
-    };
+    if (planPending.length > 0) {
+      return incompleteForPlanTodos(
+        `progress gate passed; plan todos pending: ${planPending.join(", ")}`,
+        { progressOnly: true, gate_exit_code: 0 },
+      );
+    }
+    return incompleteForPlanTodos(
+      `progress gate passed; phases remaining: ${missingPhases.join(", ")}`,
+      { progressOnly: true, gate_exit_code: 0 },
+    );
   }
 
   if (!completionGateScript) {
+    if (planPending.length > 0) {
+      return incompleteForPlanTodos(
+        `plan todos not done: ${planPending.join(", ")}`,
+      );
+    }
     if (required.length === 0) {
-      return {
-        complete: false,
-        reason: "no ## Completion gate bash block and no ### Phase headings",
-        phases_done: done,
-        phases_required: required,
-      };
+      return incompleteForPlanTodos(
+        "no ## Completion gate bash block and no ### Phase headings",
+      );
     }
     if (missingPhases.length > 0) {
-      return {
-        complete: false,
-        reason: `phases not DONE: ${missingPhases.join(", ")}`,
-        phases_done: done,
-        phases_required: required,
-      };
+      return incompleteForPlanTodos(
+        `phases not DONE: ${missingPhases.join(", ")}`,
+      );
     }
     return {
       complete: true,
@@ -169,28 +190,29 @@ export function evaluateGoalCompletion(
   const gateScript = resolveGateScriptBody(completionGateScript, cwd);
   const proc = runBashGate(gateScript, cwd, goalFile);
   if (proc.status !== 0) {
-    return {
-      complete: false,
-      reason: `completion gate failed (exit ${proc.status ?? "?"}): ${proc.tail || "no output"}`,
-      phases_done: done,
-      phases_required: required,
-      gate_exit_code: proc.status ?? undefined,
-    };
+    return incompleteForPlanTodos(
+      `completion gate failed (exit ${proc.status ?? "?"}): ${proc.tail || "no output"}`,
+      { gate_exit_code: proc.status ?? undefined },
+    );
+  }
+
+  if (planPending.length > 0) {
+    return incompleteForPlanTodos(
+      `completion gate bash passed but plan todos pending: ${planPending.join(", ")}`,
+      { gate_exit_code: 0 },
+    );
   }
 
   if (missingPhases.length > 0) {
-    return {
-      complete: false,
-      reason: `gate bash passed but phases not DONE: ${missingPhases.join(", ")}`,
-      phases_done: done,
-      phases_required: required,
-      gate_exit_code: 0,
-    };
+    return incompleteForPlanTodos(
+      `gate bash passed but phases not DONE: ${missingPhases.join(", ")}`,
+      { gate_exit_code: 0 },
+    );
   }
 
   return {
     complete: true,
-    reason: "completion gate passed; all phases DONE",
+    reason: "completion gate passed; all plan todos done",
     phases_done: done,
     phases_required: required,
     gate_exit_code: 0,

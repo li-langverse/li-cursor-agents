@@ -17,7 +17,7 @@ export_goal_loop_self_unblock_env() {
   local branch="${1:-}"
   export LI_GOAL_SELF_UNBLOCK="${LI_GOAL_SELF_UNBLOCK:-1}"
   export LI_GOAL_SYNC_CWD_AFTER_RUN="${LI_GOAL_SYNC_CWD_AFTER_RUN:-1}"
-  export LI_GOAL_GATE_PREFER_CWD="${LI_GOAL_GATE_PREFER_CWD:-0}"
+  export LI_GOAL_GATE_PREFER_CWD="${LI_GOAL_GATE_PREFER_CWD:-1}"
   export LI_GOAL_LOOP_GATE_ONLY="${LI_GOAL_LOOP_GATE_ONLY:-1}"
   export LI_GOAL_STUCK_THRESHOLD="${LI_GOAL_STUCK_THRESHOLD:-5}"
   if [[ -n "$branch" ]]; then
