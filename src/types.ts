@@ -8,6 +8,7 @@ export type AgentId =
   | "orchestrator"
   | "plan_verifier"
   | "gap_explorer"
+  | "novel_gap_researcher"
   | "implementation_gaps"
   | "code_implementer"
   | "bug_fixer"

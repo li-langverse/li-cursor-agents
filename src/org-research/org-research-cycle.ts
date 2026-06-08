@@ -11,10 +11,14 @@ import {
 import { buildResearchGoalKickoffExtra } from "../research-goals/research-goal-context.js";
 import { loadLaneState } from "../lanes/lane-state.js";
 import { getAgent } from "../agents/registry.js";
+import { buildOrgGithubMcpServer, ORG_GITHUB_MCP_ID } from "../mcp/mcp-config.js";
 import {
   orgResearchResearcherAgentId,
   parseResearchRef,
 } from "./org-research-supervisor-config.js";
+import { buildResearchDimensionTail } from "./org-research-instructions.js";
+
+const ORG_GITHUB_MCP_AGENT_IDS = new Set<AgentId>(["novel_gap_researcher", "gap_explorer"]);
 
 export interface OrgResearchCycleOptions {
   researchRef: string;
@@ -65,19 +69,7 @@ export function buildResearchInstruction(
   workerId: string,
 ): string {
   const base = buildResearchGoalKickoffExtra(goal);
-  return [
-    base,
-    "",
-    "## Org research supervisor dimension",
-    "",
-    `- **Dimension:** \`${dimension}\``,
-    `- **Worker:** \`${workerId}\``,
-    "",
-    `Focus this research run on the **${dimension}** dimension: audit, benchmark, or document findings`,
-    "relevant to that lens for the goal above. Publish under the goal's whitepaper path when done.",
-    "",
-    "Read `docs/ecosystem/research-verticals.md` for vertical context.",
-  ].join("\n");
+  return [base, "", buildResearchDimensionTail(goal, dimension, workerId)].join("\n");
 }
 
 /** Run Cursor SDK researcher agent for one goal+dimension pair. */
@@ -158,12 +150,18 @@ export async function runOrgResearchCycle(
   const started = Date.now();
   let agentResult;
   try {
+    const extraMcpServers =
+      mock || options.dryRun || !ORG_GITHUB_MCP_AGENT_IDS.has(agentId)
+        ? undefined
+        : { [ORG_GITHUB_MCP_ID]: buildOrgGithubMcpServer() };
+
     agentResult = await runAgent({
       agentId,
       cwd: agentsPackageRoot(),
       mock,
       dryRun: options.dryRun ?? false,
       extraInstruction: instruction,
+      extraMcpServers,
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

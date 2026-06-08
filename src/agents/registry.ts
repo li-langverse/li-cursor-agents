@@ -47,6 +47,17 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     preflightKeys: ["explorer", "ecosystem_audit", "briefing"],
   },
   {
+    id: "novel_gap_researcher",
+    name: "Novel gap researcher",
+    description:
+      "Org-wide gap discovery: SOTA papers + competitor gaps; files issues/repos; hands to planner.",
+    category: "ecosystem",
+    promptFile: "novel-gap-researcher.md",
+    skills: ["explore-li-ecosystem", "publish-research-whitepaper"],
+    needsWeb: true,
+    preflightKeys: ["explorer", "ecosystem_audit", "briefing"],
+  },
+  {
     id: "implementation_gaps",
     name: "Implementation gaps",
     description: "Plan vs code drift; files issues for missing PH work.",

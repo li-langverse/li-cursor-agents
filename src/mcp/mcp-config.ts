@@ -54,7 +54,7 @@ export function orgGithubMcpEntryPath(): string {
 
 export function buildOrgGithubMcpServer(root = agentsPackageRoot()): McpServerConfig {
   const env: Record<string, string> = { LI_CURSOR_AGENTS_ROOT: root };
-  for (const key of ["GH_TOKEN", "GITHUB_TOKEN", "LI_CURSOR_AGENTS_ROOT"]) {
+  for (const key of ["GH_SWARM_TOKEN", "GH_SWARM_TOKEN_BACKUP", "GH_TOKEN", "GITHUB_TOKEN", "LI_CURSOR_AGENTS_ROOT"]) {
     const v = process.env[key];
     if (v) env[key] = v;
   }

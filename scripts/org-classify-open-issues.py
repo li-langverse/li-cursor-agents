@@ -26,7 +26,7 @@ OUT = os.path.join(
 
 CLOSE_LABELS = {"duplicate", "invalid", "wontfix", "wont-fix", "spam"}
 IMPLEMENT_LABELS = {"plan-approved", "bug", "enhancement", "good first issue"}
-PLANNER_LABELS = {"plan-needed", "ecosystem-gap", "master-plan-gap"}
+PLANNER_LABELS = {"plan-needed", "ecosystem-gap", "master-plan-gap", "novel-research"}
 
 
 from _gh_token import gh_token
