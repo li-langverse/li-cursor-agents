@@ -24,6 +24,7 @@ import {
 } from "./preflight/implementer-preflight-gate.js";
 import { buildSkillsPromptAppendix } from "./agents/load-skills.js";
 import { buildUserMessage, runPreflight, resolveBenchmarksRoot } from "./preflight.js";
+import { resolvePhysicsCodegenCellPrompt } from "./preflight/physics-codegen-cell.js";
 import { resolveCursorSdkMode, sdkModeSystemPrefix } from "./agents/sdk-mode.js";
 import {
   formatRolloutDigest,
@@ -235,6 +236,10 @@ async function runAgentBody(
   }
 
   let extra = options.extraInstruction;
+
+  if (definition.id === "code_implementer" && benchmarksRoot) {
+    extra = resolvePhysicsCodegenCellPrompt(benchmarksRoot, extra);
+  }
 
   if (definition.workspaceSweep) {
     const start = Date.now();
