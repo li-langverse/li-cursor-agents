@@ -1,24 +1,54 @@
 # Shared env load + GHCR push token resolution for org swarm deploy scripts.
 
+function Import-DotEnvFile {
+    param([string]$Path)
+    if (-not (Test-Path $Path)) { return }
+    Get-Content $Path | ForEach-Object {
+        if ($_ -match '^([^#=]+)=(.*)$') {
+            $k = $matches[1].Trim()
+            $v = $matches[2].Trim().Trim('"')
+            if ($v) { Set-Item -Path "env:$k" -Value $v }
+        }
+    }
+}
+
+function Get-BeelinkCleanupRoot {
+    if ($env:BEELINK_CLEANUP_ROOT) { return $env:BEELINK_CLEANUP_ROOT }
+    return "C:\Users\Julian\Documents\Programming\beelink-cleanup"
+}
+
 function Load-LiSwarmEnvFiles {
     param(
         [string]$AgentsRoot,
         [string]$WorkspaceRoot
     )
+    $beelink = Get-BeelinkCleanupRoot
     foreach ($envFile in @(
             (Join-Path $WorkspaceRoot ".env"),
             (Join-Path $WorkspaceRoot ".env.github"),
-            (Join-Path $AgentsRoot ".env")
+            (Join-Path $AgentsRoot ".env"),
+            (Join-Path $beelink ".env"),
+            (Join-Path $beelink "homelab-k3s\.env")
         )) {
-        if (-not (Test-Path $envFile)) { continue }
-        Get-Content $envFile | ForEach-Object {
-            if ($_ -match '^([^#=]+)=(.*)$') {
-                $k = $matches[1].Trim()
-                $v = $matches[2].Trim().Trim('"')
-                if ($v) { Set-Item -Path "env:$k" -Value $v }
-            }
-        }
+        Import-DotEnvFile $envFile
     }
+    Resolve-GitHubBackupTokenFromEnv | Out-Null
+}
+
+function Resolve-GitHubBackupTokenFromEnv {
+    if ($env:GH_SWARM_TOKEN_BACKUP) {
+        return @{ Token = $env:GH_SWARM_TOKEN_BACKUP; Source = "GH_SWARM_TOKEN_BACKUP" }
+    }
+    $primary = if ($env:GH_SWARM_TOKEN) { $env:GH_SWARM_TOKEN.Trim() } else { "" }
+    foreach ($name in @("GH_TOKEN_BACKUP", "GH_TOKEN")) {
+        $raw = (Get-Item -Path "env:$name" -ErrorAction SilentlyContinue).Value
+        $v = if ($raw) { $raw.Trim() } else { "" }
+        if (-not $v) { continue }
+        if ($primary -and $v -eq $primary) { continue }
+        $env:GH_SWARM_TOKEN_BACKUP = $v
+        return @{ Token = $v; Source = $name }
+    }
+    return $null
 }
 
 function Resolve-GhcrPushToken {

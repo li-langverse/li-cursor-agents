@@ -44,6 +44,11 @@ if ($patch.Count -gt 0) {
     Write-Host "li-agents-secrets OK (GH_TOKEN + GH_SWARM_TOKEN present)"
 }
 
+$resolvedBackup = Resolve-GitHubBackupTokenFromEnv
+if ($resolvedBackup) {
+    Write-Host "GitHub backup token from $($resolvedBackup.Source)"
+}
+
 $backup = kubectl -n $Namespace get secret li-agents-secrets -o jsonpath='{.data.GH_SWARM_TOKEN_BACKUP}' 2>$null
 if (-not $backup -and $env:GH_SWARM_TOKEN_BACKUP) {
     $b64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:GH_SWARM_TOKEN_BACKUP))

@@ -52,4 +52,9 @@ assert.ok(deployScript.includes("GH_SWARM_TOKEN_BACKUP"), "deploy must push back
 const pool = read("src/github/github-token-pool.ts");
 assert.ok(pool.includes("GH_SWARM_TOKEN_BACKUP"));
 
+const ghcrEnv = read("scripts/lib/ghcr-env.ps1");
+assert.ok(ghcrEnv.includes("beelink-cleanup"), "env loader must read beelink-cleanup/.env");
+assert.ok(ghcrEnv.includes("homelab-k3s"), "env loader must read beelink-cleanup/homelab-k3s/.env");
+assert.ok(ghcrEnv.includes("Resolve-GitHubBackupTokenFromEnv"));
+
 console.log("test-org-swarm-infra: ok");
