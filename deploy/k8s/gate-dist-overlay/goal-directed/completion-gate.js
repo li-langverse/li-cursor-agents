@@ -1,0 +1,152 @@
+import { readFileSync, existsSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { dirname, resolve } from "node:path";
+import { resolvePlanPathFromGoalFile } from "../agents/resolve-goal-metadata.js";
+import { parseBacklogTodos } from "../implement-goals/backlog-io.js";
+function extractGateScript(goalText, heading) {
+    const re = new RegExp(`^##\\s+${heading}\\s*$`, "im");
+    const idx = goalText.search(re);
+    if (idx < 0)
+        return null;
+    const fence = /```(?:bash|sh)\s*\n([\s\S]*?)```/i.exec(goalText.slice(idx));
+    return fence?.[1]?.trim() || null;
+}
+/** First ```bash block under ## Progress gate */
+export function extractProgressGateScript(goalText) {
+    return extractGateScript(goalText, "Progress gate");
+}
+/** First ```bash block under ## Completion gate */
+export function extractCompletionGateScript(goalText) {
+    return extractGateScript(goalText, "Completion gate");
+}
+/** Phases marked **DONE** in status table (2-col or 3+ col with **DONE** in last column). */
+export function phasesMarkedDone(goalText) {
+    const done = [];
+    const add = (phase) => {
+        const p = phase.toUpperCase();
+        if (!done.includes(p))
+            done.push(p);
+    };
+    const statusColRe = /\|\s*\*\*([A-Z0-9]+)\*\*\s*(?:\|[^|\n]*)+\|\s*\*\*DONE\*\*\s*\|/gi;
+    for (const m of goalText.matchAll(statusColRe)) {
+        add(m[1]);
+    }
+    const twoColRe = /\|\s*\*\*([A-Z0-9]+)\*\*\s*\|\s*\*\*DONE\*\*\s*\|/gi;
+    for (const m of goalText.matchAll(twoColRe)) {
+        add(m[1]);
+    }
+    return done;
+}
+/** Required phases from ### Phase X headings */
+export function requiredPhases(goalText) {
+    const phases = [];
+    for (const m of goalText.matchAll(/^###\s+Phase\s+([A-Z0-9]+)\s+/gim)) {
+        const p = m[1].toUpperCase();
+        if (!phases.includes(p))
+            phases.push(p);
+    }
+    return phases;
+}
+function resolveGateScriptBody(gateScript, cwd) {
+    const gatePath = resolve(cwd, gateScript);
+    if (!gateScript.includes("\n") &&
+        existsSync(gatePath) &&
+        !/^(cd |python|bash|\.\/)/.test(gateScript)) {
+        return readFileSync(gatePath, "utf8");
+    }
+    return gateScript;
+}
+/** Pending plan YAML todo ids linked from the goal file (authoritative for sprint loops). */
+export function pendingPlanTodos(goalFile, cwd) {
+    const planPath = resolvePlanPathFromGoalFile(goalFile, cwd);
+    if (!planPath || !existsSync(planPath))
+        return [];
+    const todos = parseBacklogTodos(readFileSync(planPath, "utf8"), "plan_yaml");
+    if (todos.length === 0)
+        return [];
+    return todos.filter((t) => t.status !== "done").map((t) => t.id);
+}
+function runBashGate(gateScript, cwd, goalFile) {
+    const proc = spawnSync("bash", ["-lc", gateScript], {
+        cwd,
+        encoding: "utf8",
+        env: { ...process.env, LI_GOAL_FILE: goalFile },
+    });
+    const tail = (proc.stderr || proc.stdout || "").trim().slice(-500);
+    return { status: proc.status, tail };
+}
+export function evaluateGoalCompletion(input) {
+    const goalFile = resolve(input.goalFile);
+    if (!existsSync(goalFile)) {
+        return {
+            complete: false,
+            reason: `goal file missing: ${goalFile}`,
+            phases_done: [],
+            phases_required: [],
+        };
+    }
+    const goalText = readFileSync(goalFile, "utf8");
+    const required = requiredPhases(goalText);
+    const done = phasesMarkedDone(goalText);
+    const missingPhases = required.filter((p) => !done.includes(p));
+    const cwd = input.cwd ? resolve(input.cwd) : dirname(goalFile);
+    const planPending = pendingPlanTodos(goalFile, cwd);
+    const incompleteForPlanTodos = (reason, extra) => ({
+        complete: false,
+        reason,
+        phases_done: done,
+        phases_required: required,
+        ...extra,
+    });
+    const progressGateScript = extractProgressGateScript(goalText);
+    const completionGateScript = input.gateScriptPath?.trim() ||
+        process.env.LI_GOAL_COMPLETION_SCRIPT?.trim() ||
+        extractCompletionGateScript(goalText);
+    if (missingPhases.length > 0 && progressGateScript) {
+        const gateScript = resolveGateScriptBody(progressGateScript, cwd);
+        const proc = runBashGate(gateScript, cwd, goalFile);
+        if (proc.status !== 0) {
+            return incompleteForPlanTodos(`progress gate failed (exit ${proc.status ?? "?"}): ${proc.tail || "no output"}`, { gate_exit_code: proc.status ?? undefined });
+        }
+        if (planPending.length > 0) {
+            return incompleteForPlanTodos(`progress gate passed; plan todos pending: ${planPending.join(", ")}`, { progressOnly: true, gate_exit_code: 0 });
+        }
+        return incompleteForPlanTodos(`progress gate passed; phases remaining: ${missingPhases.join(", ")}`, { progressOnly: true, gate_exit_code: 0 });
+    }
+    if (!completionGateScript) {
+        if (planPending.length > 0) {
+            return incompleteForPlanTodos(`plan todos not done: ${planPending.join(", ")}`);
+        }
+        if (required.length === 0) {
+            return incompleteForPlanTodos("no ## Completion gate bash block and no ### Phase headings");
+        }
+        if (missingPhases.length > 0) {
+            return incompleteForPlanTodos(`phases not DONE: ${missingPhases.join(", ")}`);
+        }
+        return {
+            complete: true,
+            reason: "all phases marked DONE (no bash gate defined)",
+            phases_done: done,
+            phases_required: required,
+        };
+    }
+    const gateScript = resolveGateScriptBody(completionGateScript, cwd);
+    const proc = runBashGate(gateScript, cwd, goalFile);
+    if (proc.status !== 0) {
+        return incompleteForPlanTodos(`completion gate failed (exit ${proc.status ?? "?"}): ${proc.tail || "no output"}`, { gate_exit_code: proc.status ?? undefined });
+    }
+    if (planPending.length > 0) {
+        return incompleteForPlanTodos(`completion gate bash passed but plan todos pending: ${planPending.join(", ")}`, { gate_exit_code: 0 });
+    }
+    if (missingPhases.length > 0) {
+        return incompleteForPlanTodos(`gate bash passed but phases not DONE: ${missingPhases.join(", ")}`, { gate_exit_code: 0 });
+    }
+    return {
+        complete: true,
+        reason: "completion gate passed; all plan todos done",
+        phases_done: done,
+        phases_required: required,
+        gate_exit_code: 0,
+    };
+}
+//# sourceMappingURL=completion-gate.js.map

@@ -49,9 +49,13 @@ kubectl apply -f (Join-Path $K8s "deployment-world-studio-aimd-demo.yaml")
 $extra = @{
     "entrypoint.sh" = (Join-Path $Root "deploy\world-studio-aimd-demo-entrypoint.sh")
 }
+$gateDistOverlay = Join-Path $Root "deploy\k8s\gate-dist-overlay"
+if (-not (Test-Path $gateDistOverlay)) {
+    $gateDistOverlay = Join-Path $Root "dist"
+}
 . (Join-Path $Root "scripts\Invoke-K8sGoalLoopBundle.ps1") `
     -Root $Root -Namespace $Namespace -ConfigMapName "li-world-studio-aimd-demo-bundle" `
-    -ExtraFiles $extra -DistOverlayDir (Join-Path $Root "dist")
+    -ExtraFiles $extra -DistOverlayDir $gateDistOverlay
 
 $secretArgs = @(
     "create", "secret", "generic", "li-agents-secrets",
