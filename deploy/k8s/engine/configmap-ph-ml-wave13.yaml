@@ -22,7 +22,7 @@ data:
   BENCHMARKS_ROOT: "/workspace/benchmarks"
   LI_CURSOR_AGENTS_ROOT: "/app"
   LI_PROOF_EXPLORER_WORKFLOW_REPO: "lic"
-  LI_PROOF_EXPLORER_BRANCH: "cursor/ph-ml-li-array-perf-h"
+  LI_PROOF_EXPLORER_BRANCH: "main"
   LI_PROOF_EXPLORER_BRANCH_FALLBACKS: "main,cursor/ph-ml-li-array-perf-h,cursor/ph-ml-li-array"
   LI_GITHUB_ORG: "li-langverse"
   LI_PROOF_EXPLORER_LIC_REPO: "lic"
