@@ -7,10 +7,9 @@ metadata:
     app: li-ph-ml-wave13
     app.kubernetes.io/name: li-ph-ml-wave13
     app.kubernetes.io/component: goal-directed-agent
-    li-langverse.io/sprint: ph-ml-program-complete
+    li-langverse.io/sprint: ph-ml-li-array-perf-h
 spec:
-  replicas: 0
-  # Scaled down 2026-06-08: ph-ml-li-array-competitive DONE (#1077); no next ph-ml goal file on lic main.
+  replicas: 1
   strategy:
     type: Recreate
   selector:
@@ -22,7 +21,7 @@ spec:
         app: li-ph-ml-wave13
         app.kubernetes.io/name: li-ph-ml-wave13
         app.kubernetes.io/component: goal-directed-agent
-        li-langverse.io/sprint: ph-ml-program-complete
+        li-langverse.io/sprint: ph-ml-li-array-perf-h
     spec:
       nodeSelector:
         kubernetes.io/hostname: engine
