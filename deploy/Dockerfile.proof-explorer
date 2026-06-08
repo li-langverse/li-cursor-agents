@@ -4,7 +4,7 @@ ARG LI_CI_IMAGE=ghcr.io/li-langverse/lic-ci:debian12-llvm22
 FROM ${LI_CI_IMAGE}
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends curl bash \
+  && apt-get install -y --no-install-recommends curl bash libopenblas0 \
   && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
   && apt-get install -y --no-install-recommends nodejs \
   && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \

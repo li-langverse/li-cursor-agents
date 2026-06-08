@@ -23,6 +23,18 @@ data:
     AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
     GOAL_REL="${LI_PROOF_EXPLORER_GOAL_FILE:-data/goal-directed-sprints/ph-ml-li-array-competitive.md}"
     echo "ph-ml-wave13-entrypoint: preferred_branch=${PREFERRED_BRANCH} goal=${GOAL_REL}"
+    ensure_openblas() {
+      if find /usr -name 'libopenblas.so*' 2>/dev/null | grep -q .; then
+        echo "ph-ml-wave13-entrypoint: OpenBLAS present"
+        return 0
+      fi
+      echo "ph-ml-wave13-entrypoint: installing OpenBLAS (libopenblas0)"
+      apt-get update
+      apt-get install -y --no-install-recommends libopenblas0
+      rm -rf /var/lib/apt/lists/*
+      find /usr -name 'libopenblas.so*' 2>/dev/null | head -3 || true
+    }
+    ensure_openblas
     export GH_TOKEN GITHUB_TOKEN
     echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
     gh auth setup-git 2>/dev/null || true
