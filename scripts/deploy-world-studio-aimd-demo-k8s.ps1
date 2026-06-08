@@ -51,7 +51,7 @@ $extra = @{
 }
 . (Join-Path $Root "scripts\Invoke-K8sGoalLoopBundle.ps1") `
     -Root $Root -Namespace $Namespace -ConfigMapName "li-world-studio-aimd-demo-bundle" `
-    -ExtraFiles $extra
+    -ExtraFiles $extra -DistOverlayDir (Join-Path $Root "dist")
 
 $secretArgs = @(
     "create", "secret", "generic", "li-agents-secrets",

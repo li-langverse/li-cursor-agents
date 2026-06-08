@@ -16,6 +16,25 @@ LOOP_SLEEP="${LI_WORLD_STUDIO_AIMD_DEMO_LOOP_SLEEP_SEC:-${LI_GOAL_LOOP_SLEEP_SEC
 
 echo "world-studio-aimd-demo-entrypoint: studio=${STUDIO_ROOT} branch=${STUDIO_BRANCH}"
 
+apply_daemon_overlay() {
+  local f key path dest
+  shopt -s nullglob
+  for f in /config/daemon-dist__*; do
+    key="$(basename "$f")"
+    path="${key#daemon-dist__}"
+    path="${path//__//}"
+    dest="${AGENTS_ROOT}/dist/${path}"
+    mkdir -p "$(dirname "$dest")"
+    cp "$f" "$dest"
+  done
+  shopt -u nullglob
+}
+
+if compgen -G "/config/daemon-dist__*" >/dev/null; then
+  echo "world-studio-aimd-demo-entrypoint: overlay dist from /config (daemon-dist__* keys)"
+  apply_daemon_overlay
+fi
+
 if [[ -f /config/k8s-goal-loop-common.sh ]]; then
   # shellcheck source=/dev/null
   source /config/k8s-goal-loop-common.sh
