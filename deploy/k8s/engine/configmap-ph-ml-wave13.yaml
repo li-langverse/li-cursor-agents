@@ -9,6 +9,7 @@ metadata:
     app.kubernetes.io/component: goal-directed-agent
     li-langverse.io/sprint: ph-ml-li-array
   annotations:
+    li-langverse.io/goal-status: ph-ml-li-array-competitive-complete
     li-langverse.io/gate-honesty: >-
       PH_ML_REQUIRE_SB3, PH_ML_REQUIRE_RAY, PH_ML_REQUIRE_GPU are opt-in only.
       Do NOT set them in this ConfigMap unless you require executed:true on competitor

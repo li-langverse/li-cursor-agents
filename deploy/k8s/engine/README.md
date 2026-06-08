@@ -1,4 +1,4 @@
-﻿# Engine cluster â€” org issue worker
+# Engine cluster â€” org issue worker
 
 Runs **org-issue-zero** on your Kubernetes **engine** node pool: classify open issues, close high-confidence rows with **auditable GitHub comments** + `org-issue-close-audit.jsonl`.
 
@@ -127,6 +127,7 @@ kubectl -n li-swarm logs deploy/li-org-issue-supervisor --tail=50
 - Gate: `lic/scripts/ph-ml-program-complete-gates.sh` (loop max 0 until pass)
 - Deploy: `bash scripts/setup-engine-k8s-ph-ml-wave13.sh` (requires `KUBECONFIG`, `GH_TOKEN`, `CURSOR_API_KEY`)
 - Logs: `kubectl -n li-swarm logs -f deploy/li-ph-ml-wave13`
+- **Idle stop (2026-06-08):** `ph-ml-li-array-competitive` complete (lic #1077); `replicas: 0` until a new `ph-ml-*` goal exists on lic `main`.
 ### Pure Li HTTPS
 
 - Deployment: `li-pure-li-https` (namespace `li-swarm`, node `engine`)

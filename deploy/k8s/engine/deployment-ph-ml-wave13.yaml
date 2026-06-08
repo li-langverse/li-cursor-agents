@@ -1,4 +1,4 @@
-﻿apiVersion: apps/v1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: li-ph-ml-wave13
@@ -9,7 +9,8 @@ metadata:
     app.kubernetes.io/component: goal-directed-agent
     li-langverse.io/sprint: ph-ml-program-complete
 spec:
-  replicas: 1
+  replicas: 0
+  # Scaled down 2026-06-08: ph-ml-li-array-competitive DONE (#1077); no next ph-ml goal file on lic main.
   strategy:
     type: Recreate
   selector:
