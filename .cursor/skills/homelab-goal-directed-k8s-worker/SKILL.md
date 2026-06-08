@@ -7,15 +7,28 @@ description: Deploy always-on goal-directed Cursor agents on the homelab engine 
 
 Run lic goal sprints on the **engine** node (`li-swarm` namespace) until the markdown **Completion gate** passes.
 
+## GitLab-primary (GitHub mirror)
+
+Develop on **GitLab** (`https://gitlab.lilangverse.xyz/li-langverse/*`). GitHub is push-mirror only.
+
+| Item | Value |
+|------|-------|
+| Clone URL | `https://gitlab.lilangverse.xyz/li-langverse/lic.git` |
+| Auth in pods | `GITLAB_TOKEN` in `li-agents-secrets` (primary) |
+| Legacy | `GH_TOKEN` still needed for org-issue/PR workers and ghcr pull during transition |
+| Entrypoint | `/app/deploy/k8s-git-auth.sh` — prefers `GITLAB_TOKEN` |
+
+See `beelink-cleanup/docs/gitlab-primary-github-mirror.md`.
+
 ## Reuse existing containers
 
 Do **not** add custom entrypoint ConfigMaps or override `command`. Reuse what already works:
 
 | Resource | Reuse |
 |----------|-------|
-| Image | `ghcr.io/li-langverse/li-cursor-agents:proof-explorer` (built `FROM ghcr.io/li-langverse/lic-ci:debian12-llvm22`) |
-| Entrypoint | Image default (`proof-explorer-entrypoint.sh` → `proof-explorer-worker.js`) |
-| Secrets | `li-agents-secrets` (`GH_TOKEN`, optional `CURSOR_API_KEY`) |
+| Image | `ghcr.io/li-langverse/li-cursor-agents:proof-explorer` (short-term; target `registry.gitlab.lilangverse.xyz/li-langverse/li-cursor-agents`) |
+| Entrypoint | Image default (`proof-explorer-k8s-entrypoint.sh` → `proof-explorer-worker.js`) |
+| Secrets | `li-agents-secrets` (`GITLAB_TOKEN`, `GH_TOKEN`, optional `CURSOR_API_KEY`) |
 | Node | `kubernetes.io/hostname: engine` |
 
 Copy `deployment-proof-explorer.yaml` + `configmap-proof-explorer.yaml`, rename labels, change ConfigMap data and PVC name.
@@ -35,6 +48,8 @@ Template: `deploy/k8s/engine/pvc-pure-li-https-workspace.yaml` (10Gi, `local-pat
 ## ConfigMap essentials
 
 ```yaml
+LI_GIT_HOST: "gitlab.lilangverse.xyz"
+LI_GIT_GROUP: "li-langverse"
 LI_PROOF_EXPLORER_ALWAYS_ON: "1"
 LI_PROOF_EXPLORER_EXIT_ON_COMPLETE: "1"       # exit pod when GOAL_COMPLETE (default when PHASE_HANDOFF=0)
 LI_PROOF_EXPLORER_PHASE_HANDOFF: "0"          # single-goal sprint (not multi-phase handoff)
@@ -59,9 +74,9 @@ LI_SDK_TERMINAL_STREAM: "1"
 ## Prerequisites
 
 1. **kubeconfig:** `$env:KUBECONFIG = "$env:USERPROFILE\.kube\config-homelab"`
-2. **Tokens:** `GH_TOKEN` from `li/.env.github`; `CURSOR_API_KEY` from `li-cursor-agents/.env`
+2. **Tokens:** `GITLAB_TOKEN` from `~/launchpad/.env` or `li/.env.gitlab`; `CURSOR_API_KEY` from `li-cursor-agents/.env`; optional `GH_TOKEN` for ghcr pull
 3. **Goal file** on branch in `lic/data/goal-directed-sprints/<sprint>.md` with `## Completion gate` bash block
-4. **Branch pushed** to `li-langverse/lic`
+4. **Branch pushed** to `gitlab.lilangverse.xyz/li-langverse/lic`
 
 ## Deploy
 
@@ -75,7 +90,7 @@ Add four files under `deploy/k8s/engine/`:
 ```bash
 cd li-cursor-agents
 export KUBECONFIG=~/.kube/config-homelab
-export GH_TOKEN=... CURSOR_API_KEY=...
+export GITLAB_TOKEN=... CURSOR_API_KEY=...
 bash scripts/setup-engine-k8s-pure-li-https.sh
 ```
 
@@ -91,8 +106,8 @@ kubectl -n li-swarm exec deploy/li-pure-li-https -- git -C /workspace/lic branch
 Healthy startup:
 
 ```
-proof-explorer-entrypoint: cloning ... branch=cursor/pure-li-https
-proof-explorer-entrypoint: starting worker agents=/app lic=/workspace/lic
+proof-explorer-k8s-entrypoint: branch=cursor/pure-li-https lic=/workspace/lic
+proof-explorer-k8s-entrypoint: cloning li-langverse/lic
 always-on loop started ... handoff=0
 spawn: bash --agent code_implementer --goal-file .../pure-li-https.md
 [sdk] live stream on ...
@@ -115,6 +130,7 @@ Set `LI_PROOF_EXPLORER_EXIT_ON_COMPLETE=0` only for always-on multi-phase worker
 - Missing `LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE` — LLVM 22 preflight error before agent runs
 - Missing `LI_PROOF_EXPLORER_PHASE_HANDOFF=0` — worker exits thinking program complete
 - Missing `LI_PROOF_EXPLORER_EXIT_ON_COMPLETE=1` on single-goal sprints — pod idle-loops every 120s after `GOAL_COMPLETE`
+- Pushing to GitHub directly after cutover — use GitLab; push mirror syncs to GitHub
 
 ## Examples
 
@@ -129,3 +145,4 @@ Set `LI_PROOF_EXPLORER_EXIT_ON_COMPLETE=0` only for always-on multi-phase worker
 - Local loop: skill `run-goal-directed-loop`
 - Self-unblock when hooks block edits: skill `agent-self-unblock`
 - Homelab kubeconfig: `beelink-cleanup/docs/homelab-monitoring.md`
+- Mirror setup: `beelink-cleanup/docs/gitlab-primary-github-mirror.md`

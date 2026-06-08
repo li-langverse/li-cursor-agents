@@ -55,6 +55,13 @@ spec:
                 secretKeyRef:
                   name: li-agents-secrets
                   key: GH_TOKEN
+                  optional: true
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
+                  optional: true
             - name: GITHUB_TOKEN
               valueFrom:
                 secretKeyRef:

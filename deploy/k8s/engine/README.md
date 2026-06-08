@@ -11,8 +11,11 @@ Runs **org-issue-zero** on your Kubernetes **engine** node pool: classify open i
 kubectl label node <engine-node-name> li-langverse.io/node-pool=engine
 ```
 
-- GH token with `issues:write` on `li-langverse` org
+- **GitLab-primary:** `GITLAB_TOKEN` in `li-agents-secrets` (clone/push `gitlab.lilangverse.xyz/li-langverse/*`)
+- **Transition:** `GH_TOKEN` for org-issue/PR workers and ghcr image pull
 - Container image built and pushed (see below)
+
+See `beelink-cleanup/docs/gitlab-primary-github-mirror.md`.
 
 ## Apply
 
@@ -26,6 +29,7 @@ kubectl apply -f deploy/k8s/engine/configmap.yaml
 
 # 2. Secret (once)
 kubectl -n li-swarm create secret generic li-agents-secrets \
+  --from-literal=GITLAB_TOKEN="$GITLAB_TOKEN" \
   --from-literal=GH_TOKEN="$GH_TOKEN"
 
 # 3. Schedule (pick one or both)
@@ -126,7 +130,7 @@ kubectl -n li-swarm logs deploy/li-org-issue-supervisor --tail=50
 - Goal: `lic/data/goal-directed-sprints/ph-ml-li-array-perf-h.md`
 - Branch: `cursor/ph-ml-li-array-perf-h` (fallback `main`)
 - Gate: `lic/scripts/ph-ml-li-array-perf-h-gates.sh` (loop max 0 until pass)
-- Deploy: `bash scripts/setup-engine-k8s-ph-ml-wave13.sh` (requires `KUBECONFIG`, `GH_TOKEN`, `CURSOR_API_KEY`)
+- Deploy: `bash scripts/setup-engine-k8s-ph-ml-wave13.sh` (requires `KUBECONFIG`, `GITLAB_TOKEN`, `CURSOR_API_KEY`)
 - Logs: `kubectl -n li-swarm logs -f deploy/li-ph-ml-wave13`
 - **Idle stop (2026-06-08):** `ph-ml-li-array-competitive` complete (lic #1077); `replicas: 0` until a new `ph-ml-*` goal exists on lic `main`.
 ### Pure Li HTTPS
@@ -134,7 +138,7 @@ kubectl -n li-swarm logs deploy/li-org-issue-supervisor --tail=50
 - Deployment: `li-pure-li-https` (namespace `li-swarm`, node `engine`)
 - PVC: `li-pure-li-https-workspace` (dedicated — do not share with other sprints)
 - Goal: `lic/data/goal-directed-sprints/pure-li-https.md`
-- Deploy: `bash scripts/setup-engine-k8s-pure-li-https.sh` (requires `KUBECONFIG`, `GH_TOKEN`, `CURSOR_API_KEY`)
+- Deploy: `bash scripts/setup-engine-k8s-pure-li-https.sh` (requires `KUBECONFIG`, `GITLAB_TOKEN`, `CURSOR_API_KEY`)
 - Logs: `kubectl -n li-swarm logs -f deploy/li-pure-li-https`
 ### PH-SCI simulation gap-close
 

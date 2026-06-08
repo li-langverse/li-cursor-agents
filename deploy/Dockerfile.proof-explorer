@@ -29,12 +29,14 @@ COPY deploy/proof-explorer-k8s-entrypoint.sh /app/deploy/proof-explorer-k8s-entr
 COPY deploy/world-studio-gui-product-visual-entrypoint.sh /app/deploy/world-studio-gui-product-visual-entrypoint.sh
 COPY deploy/li-toml-config-entrypoint.sh /app/deploy/li-toml-config-entrypoint.sh
 COPY deploy/k8s-goal-loop-common.sh /app/deploy/k8s-goal-loop-common.sh
+COPY deploy/k8s-git-auth.sh /app/deploy/k8s-git-auth.sh
 COPY scripts/goal-loop-self-unblock.sh /app/scripts/goal-loop-self-unblock.sh
 RUN chmod +x /app/deploy/proof-explorer-entrypoint.sh \
     /app/deploy/proof-explorer-k8s-entrypoint.sh \
     /app/deploy/world-studio-gui-product-visual-entrypoint.sh \
     /app/deploy/li-toml-config-entrypoint.sh \
     /app/deploy/k8s-goal-loop-common.sh \
+    /app/deploy/k8s-git-auth.sh \
     /app/scripts/goal-loop-self-unblock.sh
 
 ENV NODE_ENV=production

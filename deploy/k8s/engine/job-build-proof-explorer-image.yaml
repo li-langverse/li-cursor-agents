@@ -40,10 +40,17 @@ spec:
                 secretKeyRef:
                   name: li-agents-secrets
                   key: GH_TOKEN
+                  optional: true
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
+                  optional: true
             - name: GIT_REF
               value: "cursor/proof-explorer-program"
             - name: GIT_REPO
-              value: "https://github.com/li-langverse/li-cursor-agents.git"
+              value: "https://gitlab.lilangverse.xyz/li-langverse/li-cursor-agents.git"
           command:
             - sh
             - -lc
@@ -69,6 +76,13 @@ spec:
                 secretKeyRef:
                   name: li-agents-secrets
                   key: GH_TOKEN
+                  optional: true
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
+                  optional: true
             - name: IMAGE
               value: ghcr.io/li-langverse/li-cursor-agents:proof-explorer
             - name: GHCR_USER
