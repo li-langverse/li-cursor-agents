@@ -12,6 +12,7 @@ $Workspace = Split-Path $Root -Parent
 
 . (Join-Path $PSScriptRoot "lib\k8s-agents-env.ps1")
 Load-K8sAgentsEnv -WorkspaceRoot $Workspace -AgentsRoot $Root
+Assert-K8sAgentsDeployTokens
 if (-not $env:CURSOR_API_KEY -and -not $env:CURSOR_SDK_KEY) {
     Write-Warning "CURSOR_API_KEY not set - pod may fail agent runs"
 }

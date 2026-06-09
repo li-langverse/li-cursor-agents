@@ -13,6 +13,7 @@ $BundleScript = Join-Path $Root "scripts\Invoke-K8sGoalLoopBundle.ps1"
 
 . (Join-Path $PSScriptRoot "lib\k8s-agents-env.ps1")
 Load-K8sAgentsEnv -WorkspaceRoot $Workspace -AgentsRoot $Root
+Assert-K8sAgentsDeployTokens
 
 if (-not $env:CURSOR_API_KEY -and -not $env:CURSOR_SDK_KEY) {
     Write-Warning "CURSOR_API_KEY not set - pod may fail agent runs"
@@ -34,7 +35,7 @@ $extra = @{
 }
 . $BundleScript -Root $Root -Namespace $Namespace -ConfigMapName "li-proof-explorer-bundle" -ExtraFiles $extra
 
-Apply-K8sAgentsSecrets -Namespace $Namespace
+Apply-K8sAgentsSecrets -Namespace $Namespace -RequireGitLab
 
 kubectl -n $Namespace rollout restart deploy/li-proof-explorer 2>$null
 kubectl -n $Namespace rollout status deploy/li-proof-explorer --timeout=180s

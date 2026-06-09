@@ -26,6 +26,10 @@ apply_li_agents_secrets() {
 }
 
 require_li_agents_tokens() {
+  if [[ "${LI_GIT_REQUIRE_GITLAB:-1}" == "1" && -z "${GITLAB_TOKEN:-}" ]]; then
+    echo "ERROR: GITLAB_TOKEN required for GitLab-primary git (org policy; load from ~/launchpad/.env or li/.env.gitlab)" >&2
+    return 1
+  fi
   if [[ -z "${GITLAB_TOKEN:-}" && -z "${GH_TOKEN:-}" && -z "${GITHUB_TOKEN:-}" ]]; then
     echo "ERROR: GITLAB_TOKEN or GH_TOKEN required (load from ~/launchpad/.env or li/.env.gitlab)" >&2
     return 1

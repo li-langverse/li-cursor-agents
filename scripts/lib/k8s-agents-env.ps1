@@ -13,7 +13,8 @@ function Load-K8sAgentsEnv {
         (Join-Path $WorkspaceRoot ".env.github"),
         (Join-Path $AgentsRoot ".env"),
         (Join-Path $WorkspaceRoot ".env"),
-        (Join-Path $WorkspaceRoot "li-cursor-agents\.env")
+        (Join-Path $WorkspaceRoot "li-cursor-agents\.env"),
+        (Join-Path $WorkspaceRoot "li-cursor-agents-clone\.env")
     )
 
     foreach ($envFile in $files) {
