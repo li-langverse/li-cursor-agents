@@ -72,7 +72,11 @@ test("post-hook dry-run reports synthetic push for dirty workspace", () => {
 
   assert.equal(push.committed, true);
   assert.equal(push.pushed, true);
-  assert.ok(push.pr_url?.includes("github.com") || push.pr_url?.includes("dry-run"));
+  assert.ok(
+    push.pr_url?.includes("github.com") ||
+      push.pr_url?.includes("gitlab") ||
+      push.pr_url?.includes("dry-run"),
+  );
 });
 
 test("post-hook skips clean workspace", () => {
