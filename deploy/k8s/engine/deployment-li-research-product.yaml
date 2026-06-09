@@ -1,4 +1,4 @@
-# Goal-directed agent: li-research product track (li-langverse token — li-agents-secrets).
+﻿# Goal-directed agent: li-research product track (li-langverse token â€” li-agents-secrets).
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -53,6 +53,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: li-research-product
+            - configMapRef:
+                name: li-k8s-git-primary
           env:
             - name: GH_TOKEN
               valueFrom:

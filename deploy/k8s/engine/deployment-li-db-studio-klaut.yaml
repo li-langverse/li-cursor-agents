@@ -1,4 +1,4 @@
-# Goal-directed agent: li-db studio homelab track (cap-jmk token only — klaut-agents-secrets).
+﻿# Goal-directed agent: li-db studio homelab track (cap-jmk token only â€” klaut-agents-secrets).
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -53,6 +53,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: li-db-studio-klaut
+            - configMapRef:
+                name: li-k8s-git-primary
           env:
             - name: GH_TOKEN
               valueFrom:

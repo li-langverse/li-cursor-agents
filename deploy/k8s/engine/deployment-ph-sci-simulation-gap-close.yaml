@@ -1,4 +1,4 @@
-apiVersion: apps/v1
+﻿apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: li-ph-sci-simulation-gap-close
@@ -35,6 +35,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: li-ph-sci-simulation-gap-close
+            - configMapRef:
+                name: li-k8s-git-primary
           env:
             - name: GH_TOKEN
               valueFrom:

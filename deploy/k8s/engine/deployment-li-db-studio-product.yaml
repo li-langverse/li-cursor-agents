@@ -1,4 +1,4 @@
-# Goal-directed agent: li-db studio product track (li-langverse token only — li-agents-secrets).
+﻿# Goal-directed agent: li-db studio product track (li-langverse token only â€” li-agents-secrets).
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -53,6 +53,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: li-db-studio-product
+            - configMapRef:
+                name: li-k8s-git-primary
           env:
             - name: GH_TOKEN
               valueFrom:

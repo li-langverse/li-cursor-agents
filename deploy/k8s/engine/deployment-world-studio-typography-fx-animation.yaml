@@ -1,4 +1,4 @@
-# Always-on World Studio typography/FX/animation goal-directed agent (engine node).
+﻿# Always-on World Studio typography/FX/animation goal-directed agent (engine node).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -102,6 +102,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: li-world-studio-typography-fx-animation
+            - configMapRef:
+                name: li-k8s-git-primary
           env:
             - name: GH_TOKEN
               valueFrom:

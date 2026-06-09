@@ -1,4 +1,4 @@
-# Goal-directed agent: Li-native TOML + httpd config migration (engine node).
+﻿# Goal-directed agent: Li-native TOML + httpd config migration (engine node).
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -53,6 +53,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: li-li-toml-config
+            - configMapRef:
+                name: li-k8s-git-primary
           env:
             - name: GH_TOKEN
               valueFrom:

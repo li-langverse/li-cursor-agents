@@ -1,4 +1,4 @@
-# Goal-directed agent: li-research homelab track (cap-jmk token — klaut-agents-secrets).
+﻿# Goal-directed agent: li-research homelab track (cap-jmk token â€” klaut-agents-secrets).
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -53,6 +53,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: li-research-klaut
+            - configMapRef:
+                name: li-k8s-git-primary
           env:
             - name: GH_TOKEN
               valueFrom:
