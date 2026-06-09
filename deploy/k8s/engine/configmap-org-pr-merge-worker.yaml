@@ -9,3 +9,5 @@ data:
   LI_ORG_PR_MERGE_WORKER_LIMIT: "8"
   LI_CONTROL_PLANE_STORE: "disk"
   NODE_ENV: "production"
+  LI_GIT_HOST: gitlab.lilangverse.xyz
+  LI_GIT_GROUP: li-langverse

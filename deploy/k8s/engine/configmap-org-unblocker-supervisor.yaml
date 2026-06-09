@@ -11,3 +11,5 @@ data:
   LI_ORG_UNBLOCKER_LONG_RUN_JOB_MINUTES: "150"
   LI_ORG_UNBLOCKER_NAMESPACE: "li-swarm"
   NODE_ENV: "production"
+  LI_GIT_HOST: gitlab.lilangverse.xyz
+  LI_GIT_GROUP: li-langverse

@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import https from "node:https";
 import { randomBytes } from "node:crypto";
+import { k8sGitHubSecretEnv } from "../org/k8s-github-secret-env.js";
 import {
   orgResearchSupervisorDeploymentName,
   orgResearchSupervisorImage,
@@ -198,10 +199,7 @@ export async function createResearcherJob(options: {
               ],
               envFrom: [{ configMapRef: { name: "li-org-research-supervisor" } }],
               env: [
-                {
-                  name: "GH_TOKEN",
-                  valueFrom: { secretKeyRef: { name: "li-agents-secrets", key: "GH_SWARM_TOKEN" } },
-                },
+                ...k8sGitHubSecretEnv(),
                 {
                   name: "CURSOR_API_KEY",
                   valueFrom: {

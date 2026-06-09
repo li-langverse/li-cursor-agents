@@ -11,3 +11,5 @@ data:
   LI_AGENTS_ROOT: "/app"
   ORG_SUPERVISOR_DASHBOARD_HOST: "0.0.0.0"
   ORG_SUPERVISOR_DASHBOARD_API_PORT: "9478"
+  LI_GIT_HOST: gitlab.lilangverse.xyz
+  LI_GIT_GROUP: li-langverse

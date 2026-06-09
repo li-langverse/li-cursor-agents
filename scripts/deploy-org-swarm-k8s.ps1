@@ -101,6 +101,9 @@ if ($env:GH_SWARM_TOKEN_BACKUP) {
 } elseif ($env:GH_TOKEN_BACKUP) {
     $secretArgs += "--from-literal=GH_SWARM_TOKEN_BACKUP=$($env:GH_TOKEN_BACKUP)"
 }
+if ($env:GITLAB_TOKEN) {
+    $secretArgs += "--from-literal=GITLAB_TOKEN=$($env:GITLAB_TOKEN)"
+}
 kubectl @secretArgs | kubectl apply -f -
 Write-Host "==> ensure GH_SWARM_TOKEN + GH_TOKEN stay in sync"
 & (Join-Path $PSScriptRoot "org-ensure-swarm-secrets.ps1") -KubeConfig $KubeConfig -Namespace $Namespace

@@ -79,8 +79,14 @@ pull_repo() {
     return 0
   fi
   echo "clone $name"
-  git clone --depth 1 --branch "$REF" "https://github.com/li-langverse/${name}.git" "$dir" \
-    2>/dev/null || git clone --depth 1 "https://github.com/li-langverse/${name}.git" "$dir"
+  local clone_url
+  if [[ -n "${GITLAB_TOKEN:-}" ]]; then
+    clone_url="https://oauth2:${GITLAB_TOKEN}@gitlab.lilangverse.xyz/li-langverse/${name}.git"
+  else
+    clone_url="https://github.com/li-langverse/${name}.git"
+  fi
+  git clone --depth 1 --branch "$REF" "$clone_url" "$dir" \
+    2>/dev/null || git clone --depth 1 "$clone_url" "$dir"
 }
 
 STATE_DIR="$ROOT/data/control-plane"

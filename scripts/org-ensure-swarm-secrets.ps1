@@ -61,3 +61,16 @@ if (-not $backup -and $env:GH_SWARM_TOKEN_BACKUP) {
 } elseif ($backup) {
     Write-Host "li-agents-secrets OK (GH_SWARM_TOKEN_BACKUP present)"
 }
+
+$gitlab = kubectl -n $Namespace get secret li-agents-secrets -o jsonpath='{.data.GITLAB_TOKEN}' 2>$null
+if (-not $gitlab -and $env:GITLAB_TOKEN) {
+    $b64g = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:GITLAB_TOKEN))
+    $patchGitlab = @{ data = @{ GITLAB_TOKEN = $b64g } } | ConvertTo-Json -Compress
+    $tmp3 = Join-Path $env:TEMP "li-agents-secrets-gitlab.json"
+    [System.IO.File]::WriteAllText($tmp3, $patchGitlab)
+    kubectl -n $Namespace patch secret li-agents-secrets --type=merge --patch-file $tmp3
+    Remove-Item $tmp3 -Force -ErrorAction SilentlyContinue
+    Write-Host "Patched GITLAB_TOKEN from local env"
+} elseif ($gitlab) {
+    Write-Host "li-agents-secrets OK (GITLAB_TOKEN present)"
+}

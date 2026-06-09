@@ -14,3 +14,5 @@ data:
   LI_ORG_ISSUE_TRIAGE_SUPERVISOR_IMAGE: "ghcr.io/li-langverse/li-cursor-agents:latest"
   LI_CONTROL_PLANE_STORE: "disk"
   NODE_ENV: "production"
+  LI_GIT_HOST: gitlab.lilangverse.xyz
+  LI_GIT_GROUP: li-langverse

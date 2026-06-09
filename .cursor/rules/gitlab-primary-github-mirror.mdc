@@ -1,0 +1,57 @@
+---
+description: GitLab primary for git/CI; GitHub mirror-only; GHCR for container images
+alwaysApply: true
+---
+
+# GitLab-primary, GitHub-mirror (org policy)
+
+**Develop on GitLab.** **GitHub is read-only mirror.** **Images on GHCR.**
+
+Full runbook: `beelink-cleanup/docs/gitlab-primary-github-mirror.md`.
+
+## Git (clone, branch, push)
+
+| Do | Don't |
+|----|-------|
+| Clone/push `https://gitlab.lilangverse.xyz/li-langverse/<repo>.git` | Push commits directly to `github.com/li-langverse/*` |
+| Use `GITLAB_TOKEN` for git auth (`oauth2:$GITLAB_TOKEN@…`) | Use `GH_TOKEN` for clone/push/git ops |
+| Open MRs on GitLab (or GitHub PR only when repo is still GitHub-primary during transition) | Force-push GitHub after mirror cutover |
+| Fix failed mirrors via GitLab push-mirror settings | Bypass mirror by pushing to GitHub |
+
+**Remotes after cutover:** `origin` → GitLab; `github` → read-only mirror (fetch only).
+
+```bash
+git clone https://gitlab.lilangverse.xyz/li-langverse/lic.git
+git push -u origin feat/my-branch    # mirror syncs to GitHub automatically
+```
+
+## CI and new repos
+
+- **New repos and CI:** create on **GitLab** (`li-langverse` group), add GitHub push mirror.
+- **GitLab CI** is primary for homelab runners and P0 pipelines.
+- GitHub Actions remain for **GitHub Pages** deploys only (see below).
+
+## Container images (GHCR)
+
+| Do | Don't |
+|----|-------|
+| Push/pull `ghcr.io/li-langverse/*` | Push images to GitLab registry for homelab |
+| Use `GH_PACKAGES` / `GHCR_TOKEN` for `docker login ghcr.io` | Sideload tarballs to engine except GHCR outage |
+| Reference GHCR in K8s manifests + `ghcr-li-langverse` pull secret | Fill homelab disk with local `k3s ctr import` |
+
+See `beelink-cleanup/docs/ghcr-image-strategy.md`.
+
+## Token roles
+
+| Token | Use |
+|-------|-----|
+| `GITLAB_TOKEN` | Git clone/fetch/push, GitLab API, CI |
+| `GH_PACKAGES` / `GHCR_TOKEN` | `docker push`/`pull` to GHCR |
+| `GH_TOKEN` | GitHub Issues/PR org workers, ghcr pull fallback, Pages workflows |
+| `GH_MIRROR_TOKEN` | GitLab→GitHub push mirror (blackpearl scripts only) |
+
+## GitHub Pages (unchanged)
+
+Keep **docs**, **benchmarks**, **proofs**, **progress** on **GitHub Pages** — no migration to homelab. Pages workflows may still use `GH_TOKEN` / `GITHUB_TOKEN`; that is not git development.
+
+See `beelink-cleanup/docs/lilangverse-hosting-policy.md`.

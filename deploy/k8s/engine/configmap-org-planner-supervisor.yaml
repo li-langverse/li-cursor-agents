@@ -15,3 +15,5 @@ data:
   LI_ORG_PLANNER_SUPERVISOR_NAMESPACE: "li-swarm"
   LI_CONTROL_PLANE_STORE: "disk"
   NODE_ENV: "production"
+  LI_GIT_HOST: gitlab.lilangverse.xyz
+  LI_GIT_GROUP: li-langverse

@@ -25,10 +25,13 @@ function Load-LiSwarmEnvFiles {
     $beelink = Get-BeelinkCleanupRoot
     foreach ($envFile in @(
             (Join-Path $WorkspaceRoot ".env"),
+            (Join-Path $WorkspaceRoot ".env.local"),
+            (Join-Path $WorkspaceRoot ".env.gitlab"),
             (Join-Path $WorkspaceRoot ".env.github"),
             (Join-Path $AgentsRoot ".env"),
             (Join-Path $beelink ".env"),
-            (Join-Path $beelink "homelab-k3s\.env")
+            (Join-Path $beelink "homelab-k3s\.env"),
+            (Join-Path $beelink ".env.gitlab")
         )) {
         Import-DotEnvFile $envFile
     }

@@ -24,10 +24,10 @@ RUN npm run build \
   && npm prune --omit=dev \
   && npm --prefix apps/org-supervisor-dashboard prune --omit=dev
 
-COPY deploy/org-worker-entrypoint.sh /app/deploy/org-worker-entrypoint.sh
+COPY deploy/org-worker-entrypoint.sh deploy/k8s-git-auth.sh /app/deploy/
 # Windows checkouts often carry CRLF despite .gitattributes; strip before exec.
 RUN find /app/deploy /app/scripts -type f -name '*.sh' -exec sed -i 's/\r$//' {} + \
-  && chmod +x /app/deploy/org-worker-entrypoint.sh
+  && chmod +x /app/deploy/org-worker-entrypoint.sh /app/deploy/k8s-git-auth.sh
 
 ENV NODE_ENV=production
 # Default: org-issue worker one-shot (CronJob overrides command).
