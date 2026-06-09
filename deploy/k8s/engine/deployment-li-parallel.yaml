@@ -77,6 +77,9 @@ spec:
               mountPath: /workspace
             - name: entrypoint
               mountPath: /scripts
+            - name: git-auth
+              mountPath: /git-auth
+              readOnly: true
       volumes:
         - name: workspace
           persistentVolumeClaim:
@@ -84,4 +87,8 @@ spec:
         - name: entrypoint
           configMap:
             name: li-li-parallel-entrypoint
+            defaultMode: 0755
+        - name: git-auth
+          configMap:
+            name: li-k8s-git-auth
             defaultMode: 0755

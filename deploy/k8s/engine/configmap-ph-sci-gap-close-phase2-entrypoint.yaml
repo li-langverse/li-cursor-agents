@@ -10,8 +10,16 @@ data:
   entrypoint.sh: |
     #!/usr/bin/env bash
     set -euo pipefail
-    # shellcheck source=/dev/null
-    source /app/deploy/k8s-git-auth.sh
+    if [[ -f /git-auth/k8s-git-auth.sh ]]; then
+      # shellcheck source=/dev/null
+      source /git-auth/k8s-git-auth.sh
+    elif [[ -f /config/k8s-git-auth.sh ]]; then
+      # shellcheck source=/dev/null
+      source /config/k8s-git-auth.sh
+    else
+      # shellcheck source=/dev/null
+      source /app/deploy/k8s-git-auth.sh
+    fi
     li_git_primary_setup || exit 1
     ORG="${LI_GIT_GROUP:-li-langverse}"
     REPO_LIC="${LI_PROOF_EXPLORER_LIC_REPO:-lic}"
@@ -40,6 +48,8 @@ data:
       if [[ ! -d "$LIC_ROOT/.git" ]]; then
         echo "ph-sci-phase2-entrypoint: cloning ${ORG}/${REPO_LIC}"
         li_git_clone_repo "$REPO_LIC" "$LIC_ROOT" "$PREFERRED_BRANCH"
+      else
+        li_git_ensure_remotes "$LIC_ROOT" "$REPO_LIC"
       fi
       git -C "$LIC_ROOT" fetch origin --prune
       local branch goal_ok=0
