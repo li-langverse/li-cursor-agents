@@ -11,10 +11,14 @@ default:
 
 test-mock-agents:
   stage: test
-  image: node:22-bookworm
+  image:
+    name: node:22-bookworm
+    pull_policy: if-not-present
   variables:
     CURSOR_MOCK: "1"
     CI: "true"
+    GIT_SSL_NO_VERIFY: "true"
+    CI_SERVER_HOST: gitlab.gitlab.svc.cluster.local
   script:
     - npm ci
     - npm run build
