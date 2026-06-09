@@ -71,6 +71,8 @@ if (-not $gitlab -and $env:GITLAB_TOKEN) {
     kubectl -n $Namespace patch secret li-agents-secrets --type=merge --patch-file $tmp3
     Remove-Item $tmp3 -Force -ErrorAction SilentlyContinue
     Write-Host "Patched GITLAB_TOKEN from local env"
+    kubectl -n $Namespace rollout restart deploy/li-lios-kernel 2>$null
+    Write-Host "Restarted li-lios-kernel so pods pick up GITLAB_TOKEN"
 } elseif ($gitlab) {
     Write-Host "li-agents-secrets OK (GITLAB_TOKEN present)"
 }

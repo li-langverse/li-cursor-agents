@@ -17,9 +17,14 @@ Load-LiSwarmEnvFiles -AgentsRoot $Root -WorkspaceRoot $Workspace
 if (-not $env:GH_TOKEN -and $env:GITHUB_TOKEN) { $env:GH_TOKEN = $env:GITHUB_TOKEN }
 if (-not $env:GH_TOKEN -and $env:GH_SWARM_TOKEN) { $env:GH_TOKEN = $env:GH_SWARM_TOKEN }
 if (-not $env:GH_TOKEN) { Write-Error "GH_TOKEN required (gh CLI / GHCR pull)" }
-if (-not $env:GITLAB_TOKEN) { Write-Warning "GITLAB_TOKEN not set - worker will fall back to GitHub for git clone/push" }
 
 $env:KUBECONFIG = $KubeConfig
+$clusterGitlabToken = kubectl -n $Namespace get secret li-agents-secrets -o jsonpath='{.data.GITLAB_TOKEN}' 2>$null
+if (-not $env:GITLAB_TOKEN -and -not $clusterGitlabToken) {
+    Write-Warning "GITLAB_TOKEN not set locally or in li-agents-secrets — worker will fall back to GitHub for git"
+} elseif (-not $env:GITLAB_TOKEN -and $clusterGitlabToken) {
+    Write-Host "GITLAB_TOKEN from cluster secret li-agents-secrets (local env not required)"
+}
 Write-Host "==> kubectl apply li-lios-kernel (namespace=$Namespace)"
 
 kubectl label node $EngineNode li-langverse.io/node-pool=engine --overwrite 2>$null
