@@ -2,8 +2,9 @@
 # K8s entrypoint: sync studio+lic workspace, run goal-directed-loop until completion, then scale down.
 set -euo pipefail
 
-: "${GH_TOKEN:?GH_TOKEN required}"
-export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
+# shellcheck source=k8s-git-auth.sh
+source "${LI_CURSOR_AGENTS_ROOT:-/app}/deploy/k8s-git-auth.sh"
+li_git_primary_setup || exit 1
 
 STUDIO_ROOT="${LI_WORLD_STUDIO_AIMD_DEMO_STUDIO_ROOT:-/workspace/studio}"
 LIC_ROOT="${LI_WORLD_STUDIO_AIMD_DEMO_LIC_ROOT:-/workspace/lic}"
@@ -21,10 +22,6 @@ if [[ -f /config/k8s-goal-loop-common.sh ]]; then
   source /config/k8s-goal-loop-common.sh
 fi
 
-export GH_TOKEN GITHUB_TOKEN
-echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
-gh auth setup-git 2>/dev/null || true
-git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
 git config --global user.email "${LI_GIT_USER_EMAIL:-world-studio@li-langverse.dev}"
 git config --global user.name "${LI_GIT_USER_NAME:-li-world-studio}"
 
@@ -32,6 +29,7 @@ sync_repo() {
   local root="$1"
   local branch="$2"
   [[ -d "$root/.git" ]] || return 0
+  li_git_ensure_remotes "$root" "$(basename "$root")"
   git -C "$root" fetch origin --prune
   git -C "$root" fetch origin "$branch":"refs/remotes/origin/$branch" --depth 1 2>/dev/null || true
   if git -C "$root" show-ref --verify --quiet "refs/remotes/origin/${branch}"; then
@@ -86,6 +84,4 @@ while true; do
     finish_on_goal_complete
   fi
 
-  echo "world-studio-aimd-demo-entrypoint: loop stopped without completion (exit $rc) — retry in ${LOOP_SLEEP}s" >&2
-  sleep "$LOOP_SLEEP"
-done
+  echo "world-studio-aimd-demo-entrypoint: loop stopped without completion (exit $rc) — re

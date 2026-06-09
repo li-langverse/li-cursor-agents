@@ -17,6 +17,8 @@ data:
   LI_GOAL_LOOP_SLEEP_SEC: "120"
   LI_GOAL_DEPLOYMENT_NAME: "li-research-product"
   LI_GOAL_NAMESPACE: "li-swarm"
+  LI_GIT_HOST: "gitlab.lilangverse.xyz"
+  LI_GIT_GROUP: "li-langverse"
   LI_GITHUB_ORG: "li-langverse"
   LI_CURSOR_AGENTS_ROOT: "/app"
   LI_CONTROL_PLANE_STORE: "disk"

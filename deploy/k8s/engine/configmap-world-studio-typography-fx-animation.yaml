@@ -8,6 +8,8 @@ metadata:
     app.kubernetes.io/name: li-world-studio-typography-fx-animation
     app.kubernetes.io/component: goal-directed-agent
 data:
+  LI_GIT_HOST: "gitlab.lilangverse.xyz"
+  LI_GIT_GROUP: "li-langverse"
   LI_WORLD_STUDIO_TYPOGRAPHY_FX_ANIMATION_ALWAYS_ON: "1"
   LI_WORLD_STUDIO_TYPOGRAPHY_FX_ANIMATION_LOOP_SLEEP_SEC: "60"
 

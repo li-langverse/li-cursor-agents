@@ -24,6 +24,8 @@ data:
   LI_GOAL_SCALE_DOWN_ON_COMPLETE: "1"
   LI_GOAL_DEPLOYMENT_NAME: "li-li-toml-config"
   LI_GOAL_NAMESPACE: "li-swarm"
+  LI_GIT_HOST: "gitlab.lilangverse.xyz"
+  LI_GIT_GROUP: "li-langverse"
   LI_GITHUB_ORG: "li-langverse"
   LI_CURSOR_AGENTS_ROOT: "/app"
   LI_CONTROL_PLANE_STORE: "disk"

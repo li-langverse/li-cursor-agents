@@ -2,10 +2,11 @@
 # K8s entrypoint: li-research homelab track (cap-jmk-launchpad).
 set -euo pipefail
 
-: "${GH_TOKEN:?GH_TOKEN required (cap-jmk-launchpad only)}"
-export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
+# shellcheck source=k8s-git-auth.sh
+source "${LI_CURSOR_AGENTS_ROOT:-/app}/deploy/k8s-git-auth.sh"
+li_git_primary_setup || exit 1
 
-ORG="${LI_GITHUB_ORG:-cap-jmk-launchpad}"
+ORG="${LI_GIT_GROUP:-cap-jmk-launchpad}"
 AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
 WORKSPACE="${LI_GOAL_WORKSPACE:-/workspace}"
 BRANCH="${LI_GOAL_BRANCH:-cursor/li-research-homelab-r1b}"
@@ -22,29 +23,23 @@ if [[ -f /config/k8s-goal-loop-common.sh ]]; then
   source /config/k8s-goal-loop-common.sh
 fi
 
-export GH_TOKEN GITHUB_TOKEN
-echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
-gh auth setup-git 2>/dev/null || true
-git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
 git config --global user.email "${LI_GIT_USER_EMAIL:-li-research-klaut@klaut.pro}"
 git config --global user.name "${LI_GIT_USER_NAME:-li-research-klaut-agent}"
 
+repo_exists() {
+  local repo="$1"
+  git ls-remote "$(li_git_remote_url "$repo")" HEAD >/dev/null 2>&1
+}
+
 clone_or_sync() {
-  local org_repo="$1" dest="$2" branch="$3"
+  local repo="$1" dest="$2" branch="$3"
   mkdir -p "$(dirname "$dest")"
   if [[ ! -d "$dest/.git" ]]; then
-    if ! gh repo view "${org_repo}" >/dev/null 2>&1; then
-      echo "li-research-klaut-entrypoint: creating ${org_repo}"
-      gh repo create "${org_repo}" --private --description "li-research homelab k8s" || true
-    fi
-    if ! gh repo view "${org_repo}" >/dev/null 2>&1; then
-      echo "li-research-klaut-entrypoint: repo ${org_repo} unavailable" >&2
+    if ! repo_exists "$repo"; then
+      echo "li-research-klaut-entrypoint: repo ${ORG}/${repo} unavailable on GitLab" >&2
       return 1
     fi
-    gh repo clone "${org_repo}" "$dest" -- --branch "$branch" 2>/dev/null || {
-      gh repo clone "${org_repo}" "$dest"
-      git -C "$dest" checkout -B "$branch"
-    }
+    li_git_clone_repo "$repo" "$dest" "$branch"
     return 0
   fi
   git -C "$dest" fetch origin --prune
@@ -92,7 +87,7 @@ run_goal_loop() {
 }
 
 sync_workspace() {
-  clone_or_sync "${ORG}/klaut-li-research" "$KLAUT_ROOT" "$BRANCH" || true
+  clone_or_sync "klaut-li-research" "$KLAUT_ROOT" "$BRANCH" || true
 }
 
 seed_goal

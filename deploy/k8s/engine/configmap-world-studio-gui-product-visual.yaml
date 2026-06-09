@@ -8,6 +8,8 @@ metadata:
     app.kubernetes.io/name: li-world-studio-gui-product-visual
     app.kubernetes.io/component: goal-directed-agent
 data:
+  LI_GIT_HOST: "gitlab.lilangverse.xyz"
+  LI_GIT_GROUP: "li-langverse"
   LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_ALWAYS_ON: "1"
   LI_WORLD_STUDIO_GUI_PRODUCT_VISUAL_LOOP_SLEEP_SEC: "60"
 

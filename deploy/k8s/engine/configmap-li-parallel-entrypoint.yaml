@@ -10,9 +10,10 @@ data:
   entrypoint.sh: |
     #!/usr/bin/env bash
     set -euo pipefail
-    : "${GH_TOKEN:?GH_TOKEN required}"
-    export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
-    ORG="${LI_GITHUB_ORG:-li-langverse}"
+    # shellcheck source=/dev/null
+    source /app/deploy/k8s-git-auth.sh
+    li_git_primary_setup || exit 1
+    ORG="${LI_GIT_GROUP:-li-langverse}"
     REPO_LIC="${LI_PROOF_EXPLORER_LIC_REPO:-lic}"
     PREFERRED_BRANCH="${LI_PROOF_EXPLORER_BRANCH:-cursor/li-parallel-native-hpc}"
     FALLBACK_RAW="${LI_PROOF_EXPLORER_BRANCH_FALLBACKS:-cursor/li-parallel-native-hpc,main}"
@@ -20,10 +21,6 @@ data:
     AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
     GOAL_REL="${LI_PROOF_EXPLORER_GOAL_FILE:-data/goal-directed-sprints/li-parallel-native-hpc.md}"
     echo "li-parallel-entrypoint: branch=${PREFERRED_BRANCH} goal=${GOAL_REL}"
-    export GH_TOKEN GITHUB_TOKEN
-    echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
-    gh auth setup-git 2>/dev/null || true
-    git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
     git config --global user.email "${LI_GIT_USER_EMAIL:-goal-worker@li-langverse.dev}"
     git config --global user.name "${LI_GIT_USER_NAME:-li-goal-worker}"
 
@@ -42,10 +39,7 @@ data:
       mkdir -p "$(dirname "$LIC_ROOT")"
       if [[ ! -d "$LIC_ROOT/.git" ]]; then
         echo "li-parallel-entrypoint: cloning ${ORG}/${REPO_LIC}"
-        gh repo clone "${ORG}/${REPO_LIC}" "$LIC_ROOT" || {
-          rm -rf "$LIC_ROOT"
-          gh repo clone "${ORG}/${REPO_LIC}" "$LIC_ROOT"
-        }
+        li_git_clone_repo "$REPO_LIC" "$LIC_ROOT" "$PREFERRED_BRANCH"
       fi
       git -C "$LIC_ROOT" fetch origin --prune
       local branch goal_ok=0
