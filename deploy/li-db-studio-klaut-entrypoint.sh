@@ -2,14 +2,9 @@
 # K8s entrypoint: cap-jmk-launchpad homelab track (klaut-supabase + klaut-pro docs).
 set -euo pipefail
 
-if [[ -f /config/k8s-git-auth.sh ]]; then
-  # shellcheck source=/dev/null
-  source /config/k8s-git-auth.sh
-else
-  # shellcheck source=k8s-git-auth.sh
-  source "${LI_CURSOR_AGENTS_ROOT:-/app}/deploy/k8s-git-auth.sh"
-fi
-li_git_primary_setup || exit 1
+# shellcheck source=k8s-git-auth.sh
+source "${LI_CURSOR_AGENTS_ROOT:-/app}/deploy/k8s-git-auth.sh"
+li_git_github_primary_setup || exit 1
 
 ORG="${LI_GIT_GROUP:-cap-jmk-launchpad}"
 AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"

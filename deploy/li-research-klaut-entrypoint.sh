@@ -2,14 +2,9 @@
 # K8s entrypoint: li-research homelab track (cap-jmk-launchpad).
 set -euo pipefail
 
-if [[ -f /config/k8s-git-auth.sh ]]; then
-  # shellcheck source=/dev/null
-  source /config/k8s-git-auth.sh
-else
-  # shellcheck source=k8s-git-auth.sh
-  source "${LI_CURSOR_AGENTS_ROOT:-/app}/deploy/k8s-git-auth.sh"
-fi
-li_git_primary_setup || exit 1
+# shellcheck source=k8s-git-auth.sh
+source "${LI_CURSOR_AGENTS_ROOT:-/app}/deploy/k8s-git-auth.sh"
+li_git_github_primary_setup || exit 1
 
 ORG="${LI_GIT_GROUP:-cap-jmk-launchpad}"
 AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
@@ -41,7 +36,7 @@ clone_or_sync() {
   mkdir -p "$(dirname "$dest")"
   if [[ ! -d "$dest/.git" ]]; then
     if ! repo_exists "$repo"; then
-      echo "li-research-klaut-entrypoint: repo ${ORG}/${repo} unavailable on GitLab" >&2
+      echo "li-research-klaut-entrypoint: repo ${ORG}/${repo} unavailable on GitHub" >&2
       return 1
     fi
     li_git_clone_repo "$repo" "$dest" "$branch"

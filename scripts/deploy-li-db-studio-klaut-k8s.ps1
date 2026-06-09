@@ -33,10 +33,12 @@ kubectl apply -f (Join-Path $K8s "rbac-goal-workers-scale.yaml")
 kubectl apply -f (Join-Path $K8s "configmap-li-db-studio-klaut.yaml")
 kubectl apply -f (Join-Path $K8s "deployment-li-db-studio-klaut.yaml")
 
-$goalKlautSrc = "C:\Users\Julian\Documents\Programming\klaut.pro\goals\wp-klaut-homelab.md"
-if (-not (Test-Path $goalKlautSrc)) {
-    $goalKlautSrc = Join-Path $Root "data\goal-directed-sprints\wp-klaut-homelab.md"
-}
+$goalKlautSrc = @(
+    "C:\Users\Julian\Documents\Programming\klaut.pro\klaut-pro\goals\wp-klaut-homelab.md",
+    "C:\Users\Julian\Documents\Programming\klaut.pro\goals\wp-klaut-homelab.md",
+    (Join-Path $Root "data\goal-directed-sprints\wp-klaut-homelab.md")
+) | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $goalKlautSrc) { Write-Error "wp-klaut-homelab.md not found in klaut.pro or data/goal-directed-sprints" }
 $goalKlaut = Join-Path $env:TEMP "wp-klaut-homelab-lf.md"
 $utf8 = New-Object System.Text.UTF8Encoding $false
 [System.IO.File]::WriteAllText($goalKlaut, ([System.IO.File]::ReadAllText($goalKlautSrc)).Replace("`r`n", "`n"), $utf8)
