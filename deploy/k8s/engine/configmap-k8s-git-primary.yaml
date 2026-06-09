@@ -1,0 +1,17 @@
+# Shared GitLab-primary env for homelab goal-directed workers (org policy).
+# origin → cluster GitLab service; github → read-only mirror.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: li-k8s-git-primary
+  namespace: li-swarm
+  labels:
+    app.kubernetes.io/component: git-auth
+    li-langverse.io/managed-by: li-cursor-agents
+data:
+  LI_GIT_HOST: "10.43.79.43"
+  LI_GIT_SCHEME: "http"
+  LI_GIT_GROUP: "li-langverse"
+  LI_GITHUB_ORG: "li-langverse"
+  LI_GIT_REQUIRE_GITLAB: "1"
+  LI_GIT_SSL_VERIFY: "0"

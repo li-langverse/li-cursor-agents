@@ -8,11 +8,13 @@ metadata:
     app.kubernetes.io/name: li-proof-explorer
     app.kubernetes.io/component: goal-directed-agent
 data:
-  LI_GIT_HOST: "gitlab.lilangverse.xyz"
+  LI_GIT_HOST: "10.43.79.43"
+  LI_GIT_SCHEME: "http"
   LI_GIT_GROUP: "li-langverse"
+  LI_GITHUB_ORG: "li-langverse"
   LI_GIT_REQUIRE_GITLAB: "1"
   LI_GIT_SSL_VERIFY: "0"
-  LI_PROOF_EXPLORER_PHASE_HANDOFF: "1"
+  LI_PROOF_EXPLORER_ALWAYS_ON: "1"
   LI_PROOF_EXPLORER_SWEEP_MODE: "1"
   LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/proof-explorer-phase14-open-catalog-prove.md"
   LI_PROOF_EXPLORER_PHASES_JSON: '[{"id":"phase14","goalRel":"data/goal-directed-sprints/proof-explorer-phase14-open-catalog-prove.md","gateRel":"scripts/proof-explorer-phase14-completion-gate.sh"}]'
@@ -20,9 +22,6 @@ data:
   LI_CURSOR_AGENTS_ROOT: "/app"
   LI_PROOF_EXPLORER_WORKFLOW_REPO: "lic"
   LI_PROOF_EXPLORER_BRANCH: "cursor/proof-explorer-phase14-open-catalog-prove"
-  LI_GIT_HOST: "gitlab.lilangverse.xyz"
-  LI_GIT_GROUP: "li-langverse"
-  LI_GITHUB_ORG: "li-langverse"
   LI_PROOF_EXPLORER_LIC_REPO: "lic"
   LI_PROOF_EXPLORER_LOOP_SLEEP_SEC: "120"
   LI_PROOF_EXPLORER_AGENT: "code_implementer"
