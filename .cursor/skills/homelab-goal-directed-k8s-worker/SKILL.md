@@ -1,4 +1,4 @@
-ï»¿---
+---
 name: homelab-goal-directed-k8s-worker
 description: Deploy always-on goal-directed Cursor agents on the homelab engine Kubernetes cluster using the proof-explorer image (FROM org lic-ci LLVM toolchain) with a dedicated workspace PVC per sprint. Use when launching K8s workers for lic sprints, pure-li-https, ph-ml, proof-explorer, li-swarm, engine node, lic-ci, or homelab goal-directed loops until completion gates pass.
 ---
@@ -14,7 +14,7 @@ Do **not** add custom entrypoint ConfigMaps or override `command`. Reuse what al
 | Resource | Reuse |
 |----------|-------|
 | Image | `ghcr.io/li-langverse/li-cursor-agents:proof-explorer` (built `FROM ghcr.io/li-langverse/lic-ci:debian12-llvm22`) |
-| Entrypoint | Image default (`proof-explorer-entrypoint.sh` â†’ `proof-explorer-worker.js`) |
+| Entrypoint | Image default (`proof-explorer-entrypoint.sh` ? `proof-explorer-worker.js`) |
 | Secrets | `li-agents-secrets` (`GH_TOKEN`, optional `CURSOR_API_KEY`) |
 | Node | `kubernetes.io/hostname: engine` |
 
@@ -56,10 +56,17 @@ LI_SDK_TERMINAL_STREAM: "1"
 | `PHASE_HANDOFF=0` | Without it worker exits immediately when phase handoff logic thinks program is complete |
 | `SKIP_IMPLEMENTER_PREFLIGHT_GATE=1` | Optional when image is rebuilt on lic-ci (has clang-22); keep for faster worker start |
 
+## GitLab-primary remotes (org policy)
+
+- Set `LI_GIT_HOST: gitlab.lilangverse.xyz` and `LI_GIT_GROUP: li-langverse` in the worker ConfigMap.
+- Mount `li-libernetes-git-bundle` (or sprint bundle) at `/config` with `entrypoint.sh` + `k8s-git-auth.sh`.
+- `GITLAB_TOKEN` in `li-agents-secrets` is **required** for push; `GH_TOKEN` remains for `gh` / GHCR.
+- On startup, `li_git_ensure_remotes` migrates `origin` from GitHub ? GitLab and adds read-only `github` remote.
+
 ## Prerequisites
 
-1. **kubeconfig:** `$env:KUBECONFIG = "$env:USERPROFILE\.kube\config-homelab"`
-2. **Tokens:** `GH_TOKEN` from `li/.env.github`; `CURSOR_API_KEY` from `li-cursor-agents/.env`
+1. **kubeconfig:** run `.\scripts\sync-kubeconfig-from-beelink.ps1` (copies from `beelink-cleanup/.kube/config-homelab` ? `%USERPROFILE%\.kube\config-homelab`); then `$env:KUBECONFIG = "$env:USERPROFILE\.kube\config-homelab"`
+2. **Tokens:** `GITLAB_TOKEN` from `.env.gitlab` or launchpad; `GH_TOKEN` from `li/.env.github`; `CURSOR_API_KEY` from `li-cursor-agents/.env`
 3. **Goal file** on branch in `lic/data/goal-directed-sprints/<sprint>.md` with `## Completion gate` bash block
 4. **Branch pushed** to `li-langverse/lic`
 
@@ -67,10 +74,10 @@ LI_SDK_TERMINAL_STREAM: "1"
 
 Add four files under `deploy/k8s/engine/`:
 
-- `pvc-<sprint>-workspace.yaml` â€” dedicated PVC (do not share across concurrent workers)
-- `configmap-<sprint>.yaml` â€” env only
-- `deployment-<sprint>.yaml` â€” no `command`, no entrypoint volume, sprint-specific `claimName`
-- `scripts/setup-engine-k8s-<sprint>.sh` â€” apply namespace, PVC, configmap, secrets, deployment
+- `pvc-<sprint>-workspace.yaml` — dedicated PVC (do not share across concurrent workers)
+- `configmap-<sprint>.yaml` — env only
+- `deployment-<sprint>.yaml` — no `command`, no entrypoint volume, sprint-specific `claimName`
+- `scripts/setup-engine-k8s-<sprint>.sh` — apply namespace, PVC, configmap, secrets, deployment
 
 ```bash
 cd li-cursor-agents
@@ -100,7 +107,7 @@ spawn: bash --agent code_implementer --goal-file .../pure-li-https.md
 
 `GOAL_INCOMPLETE` + completion gate exit 1 between iterations is **expected** until the sprint gate passes.
 
-When the gate passes you should see `GOAL_COMPLETE` then `program complete â€” all phase gates passed` and the pod **exits** (not another sleep cycle). Scale the Deployment to 0 after the sprint finishes to free the engine node:
+When the gate passes you should see `GOAL_COMPLETE` then `program complete — all phase gates passed` and the pod **exits** (not another sleep cycle). Scale the Deployment to 0 after the sprint finishes to free the engine node:
 
 ```bash
 kubectl -n li-swarm scale deploy/<sprint> --replicas=0
@@ -110,11 +117,11 @@ Set `LI_PROOF_EXPLORER_EXIT_ON_COMPLETE=0` only for always-on multi-phase worker
 
 ## Anti-patterns
 
-- **Sharing `li-proof-explorer-workspace` across concurrent deploys** â€” branch checkout races; goal file disappears
-- Custom `command: ["/bin/bash", "/scripts/entrypoint.sh"]` + ConfigMap entrypoint â€” duplicates image entrypoint
-- Missing `LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE` â€” LLVM 22 preflight error before agent runs
-- Missing `LI_PROOF_EXPLORER_PHASE_HANDOFF=0` â€” worker exits thinking program complete
-- Missing `LI_PROOF_EXPLORER_EXIT_ON_COMPLETE=1` on single-goal sprints â€” pod idle-loops every 120s after `GOAL_COMPLETE`
+- **Sharing `li-proof-explorer-workspace` across concurrent deploys** — branch checkout races; goal file disappears
+- Custom `command: ["/bin/bash", "/scripts/entrypoint.sh"]` + ConfigMap entrypoint — duplicates image entrypoint
+- Missing `LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE` — LLVM 22 preflight error before agent runs
+- Missing `LI_PROOF_EXPLORER_PHASE_HANDOFF=0` — worker exits thinking program complete
+- Missing `LI_PROOF_EXPLORER_EXIT_ON_COMPLETE=1` on single-goal sprints — pod idle-loops every 120s after `GOAL_COMPLETE`
 
 ## Examples
 
