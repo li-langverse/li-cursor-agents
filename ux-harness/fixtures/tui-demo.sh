@@ -32,7 +32,7 @@ if [[ "${LI_TUI_ERROR:-}" == "1" ]]; then
   printf 'Error: simulated failure (LI_TUI_ERROR=1)\n' >&2
 fi
 
-printf '\033[2J\033[HLi TUI demo — press h for help, q to quit\n> '
+printf '\033[2J\033[HLi TUI demo - press h for help, q to quit\n> '
 
 _handle_key() {
   local key="$1"

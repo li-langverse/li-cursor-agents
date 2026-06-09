@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- **TUI stdout baseline capture** � ux-harness dumps fixture stdout to `artifacts/{target}/stdout.txt`, compares against committed baselines, and records `baseline_status` / `line_diff` on UI audits; `stdin=DEVNULL` fixes non-interactive fixture hangs.
 - **`explore-li-ecosystem` skill** — repo routing table for goal-directed / implementer agents; injected into SDK system prompt; `resolve-workflow-repo.ts` auto-picks repo from goal frontmatter or path signals; `goal-directed-loop.sh` sets `--workflow-repo` and sibling `--cwd`.
 - **Goal-directed SDK loop** — `run-agent --goal` / `--goal-file` / `LI_AGENT_GOAL`; reusable `scripts/goal-directed-loop.sh` (any registry agent + goal text until done or `--max`).
 - **Parallel Cursor SDK sessions** — `LI_SDK_MAX_CONCURRENT` (default `4` in `env.defaults.sh`) with cross-process slot locks; re-entrant lock fixes lane + backend deadlock.
