@@ -68,6 +68,14 @@ li_git_primary_setup() {
     git config --global "http.${LI_GIT_SCHEME}://${LI_GIT_HOST}/.sslVerify" false
   fi
 
+  # Homelab: route public GitLab host to in-cluster HTTP when external TLS is unavailable.
+  if [[ "$LI_GIT_HOST" == *"lilangverse.xyz"* ]]; then
+    LI_GIT_INTERNAL_SVC="${LI_GIT_INTERNAL_SVC:-gitlab.gitlab.svc}"
+    git config --global url."http://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${LI_GIT_INTERNAL_SVC}/".insteadOf "https://${LI_GIT_HOST}/"
+    git config --global url."http://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${LI_GIT_INTERNAL_SVC}/".insteadOf "https://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${LI_GIT_HOST}/"
+    echo "k8s-git-auth: using in-cluster GitLab (${LI_GIT_INTERNAL_SVC}) for ${LI_GIT_HOST}" >&2
+  fi
+
   if [[ -n "${GH_TOKEN:-}" ]]; then
     export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
     if command -v gh >/dev/null 2>&1; then
@@ -112,7 +120,8 @@ li_git_ensure_remotes() {
       git -C "$dest" remote add github "$origin_url"
     fi
     git -C "$dest" remote set-url origin "$gitlab_url"
-  elif [[ "$origin_url" != *"${LI_GIT_HOST}"* ]]; then
+  else
+    # Refresh credentials/host (PVC clones may embed stale PAT in origin URL).
     git -C "$dest" remote set-url origin "$gitlab_url"
   fi
 
