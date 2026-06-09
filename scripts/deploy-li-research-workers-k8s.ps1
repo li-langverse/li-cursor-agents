@@ -15,7 +15,14 @@ $Root = Split-Path $PSScriptRoot -Parent
 $K8s = Join-Path $Root "deploy\k8s\engine"
 $LiRoot = Split-Path $Root -Parent
 $BeelinkRoot = "C:\Users\Julian\Documents\Programming\beelink-cleanup"
-$KlautProGoals = "C:\Users\Julian\Documents\Programming\klaut.pro\goals"
+$KlautProGoals = @(
+    "C:\Users\Julian\Documents\Programming\klaut.pro\klaut-pro\goals",
+    "C:\Users\Julian\Documents\Programming\klaut.pro\goals",
+    "C:\Users\Julian\Documents\Programming\lauchpad\klaut-pro\goals"
+) | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $KlautProGoals) {
+    $KlautProGoals = Join-Path $Root "data\goal-directed-sprints"
+}
 $BundleScript = Join-Path $Root "scripts\Invoke-K8sGoalLoopBundle.ps1"
 
 function Normalize-GoalFile([string]$Src) {

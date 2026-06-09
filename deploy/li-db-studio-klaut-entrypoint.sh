@@ -4,7 +4,7 @@ set -euo pipefail
 
 # shellcheck source=k8s-git-auth.sh
 source "${LI_CURSOR_AGENTS_ROOT:-/app}/deploy/k8s-git-auth.sh"
-li_git_primary_setup || exit 1
+li_git_github_primary_setup || exit 1
 
 ORG="${LI_GIT_GROUP:-cap-jmk-launchpad}"
 AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"

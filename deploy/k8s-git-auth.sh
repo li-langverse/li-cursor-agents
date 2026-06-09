@@ -3,6 +3,33 @@
 # origin → GitLab; github → read-only mirror (fetch only). GH_TOKEN for gh CLI / GHCR only.
 set -euo pipefail
 
+# GitHub-primary for cap-jmk-launchpad / klaut track (not li-langverse GitLab policy).
+li_git_github_primary_setup() {
+  LI_GIT_HOST="${LI_GIT_HOST:-github.com}"
+  LI_GIT_GROUP="${LI_GIT_GROUP:-${LI_GITHUB_ORG:-cap-jmk-launchpad}}"
+  LI_GITHUB_ORG="${LI_GITHUB_ORG:-$LI_GIT_GROUP}"
+  LI_GIT_SCHEME="${LI_GIT_SCHEME:-https}"
+  LI_GIT_REQUIRE_GITLAB=0
+
+  if [[ -z "${GH_TOKEN:-}" ]]; then
+    echo "ERROR: GH_TOKEN required for GitHub-primary klaut track (klaut-agents-secrets)" >&2
+    return 1
+  fi
+
+  LI_GIT_TOKEN="$GH_TOKEN"
+  LI_GIT_AUTH_PREFIX="x-access-token"
+  export LI_GIT_HOST LI_GIT_GROUP LI_GIT_TOKEN LI_GIT_AUTH_PREFIX LI_GIT_SCHEME LI_GITHUB_ORG LI_GIT_REQUIRE_GITLAB
+
+  git config --global url."${LI_GIT_SCHEME}://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${LI_GIT_HOST}/".insteadOf "${LI_GIT_SCHEME}://${LI_GIT_HOST}/"
+
+  export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
+  if command -v gh >/dev/null 2>&1; then
+    echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
+    gh auth setup-git 2>/dev/null || true
+  fi
+  git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+}
+
 li_git_primary_setup() {
   LI_GIT_HOST="${LI_GIT_HOST:-gitlab.lilangverse.xyz}"
   LI_GIT_GROUP="${LI_GIT_GROUP:-li-langverse}"
