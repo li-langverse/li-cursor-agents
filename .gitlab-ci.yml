@@ -1,0 +1,24 @@
+# Mirrors li-cursor-agents/.github/workflows/ci.yml (test-mock-agents job).
+# lidb-engine-e2e omitted — needs multi-repo checkout + cmake; add when runner disk allows.
+
+stages:
+  - test
+
+default:
+  tags:
+    - homelab-k8s
+  interruptible: true
+
+test-mock-agents:
+  stage: test
+  image: node:22-bookworm
+  variables:
+    CURSOR_MOCK: "1"
+    CI: "true"
+  script:
+    - npm ci
+    - npm run build
+    - npm test
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
