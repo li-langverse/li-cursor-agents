@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Classify open li-langverse issues into action buckets (org-issue-zero sprint).
 
+GitLab primary (LI_VCS_PROVIDER=gitlab, GITLAB_TOKEN). GitHub fallback optional.
+
 Usage:
   python scripts/org-classify-open-issues.py --dry-run
   python scripts/org-classify-open-issues.py --limit 50
@@ -13,13 +15,10 @@ import os
 import re
 import sys
 import time
-import urllib.error
-import urllib.parse
-import urllib.request
 from datetime import datetime, timezone
 
-ORG = "li-langverse"
-API = "https://api.github.com"
+from _vcs_issue_api import mr_merged, search_open_issues
+
 OUT = os.path.join(
     os.path.dirname(__file__), "..", "data", "goal-directed-sprints", "org-issue-queue.json"
 )
@@ -29,52 +28,6 @@ IMPLEMENT_LABELS = {"plan-approved", "bug", "enhancement", "good first issue"}
 PLANNER_LABELS = {"plan-needed", "ecosystem-gap", "master-plan-gap"}
 
 
-from _gh_token import gh_token
-
-
-def headers() -> dict[str, str]:
-    token = gh_token()
-    return {
-        "Authorization": f"Bearer {token}",
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
-
-
-def api(method: str, path: str, body: dict | None = None) -> tuple[int, dict | list | None]:
-    url = path if path.startswith("http") else f"{API}{path}"
-    data = json.dumps(body).encode() if body is not None else None
-    req = urllib.request.Request(url, data=data, headers=headers(), method=method)
-    try:
-        with urllib.request.urlopen(req, timeout=120) as resp:
-            raw = resp.read().decode()
-            return resp.status, json.loads(raw) if raw else None
-    except urllib.error.HTTPError as e:
-        raw = e.read().decode()
-        try:
-            payload = json.loads(raw) if raw else {"message": str(e)}
-        except json.JSONDecodeError:
-            payload = {"message": raw or str(e)}
-        return e.code, payload
-
-
-def search_open_issues() -> list[dict]:
-    out: list[dict] = []
-    page = 1
-    while True:
-        q = urllib.parse.quote(f"org:{ORG} is:open is:issue")
-        status, data = api("GET", f"/search/issues?q={q}&per_page=100&page={page}")
-        if status != 200 or not isinstance(data, dict):
-            raise SystemExit(f"search failed {status}: {data}")
-        items = data.get("items", [])
-        out.extend(items)
-        if len(items) < 100:
-            break
-        page += 1
-        time.sleep(2)
-    return out
-
-
 def parse_iso(s: str | None) -> datetime | None:
     if not s:
         return None
@@ -82,18 +35,20 @@ def parse_iso(s: str | None) -> datetime | None:
 
 
 def label_names(issue: dict) -> set[str]:
-    return {lbl["name"].lower() for lbl in issue.get("labels", [])}
+    labels = issue.get("labels") or []
+    if labels and isinstance(labels[0], dict):
+        return {lbl["name"].lower() for lbl in labels if lbl.get("name")}
+    return {str(lbl).lower() for lbl in labels}
 
 
-def linked_prs(body: str) -> list[int]:
-    return [int(m) for m in re.findall(r"(?:#|pull/)(\d+)", body or "")]
+def repo_from_issue(issue: dict) -> str:
+    if issue.get("repo"):
+        return str(issue["repo"])
+    return issue["repository_url"].rstrip("/").split("/")[-1]
 
 
-def pr_merged(repo: str, num: int) -> bool:
-    status, data = api("GET", f"/repos/{ORG}/{repo}/pulls/{num}")
-    if status != 200 or not isinstance(data, dict):
-        return False
-    return bool(data.get("merged"))
+def linked_mrs(body: str) -> list[int]:
+    return [int(m) for m in re.findall(r"(?:!|#|merge_requests/)(\d+)", body or "")]
 
 
 def normalize_title(title: str) -> str:
@@ -104,7 +59,7 @@ def normalize_title(title: str) -> str:
 
 
 def classify_issue(issue: dict, title_index: dict[str, list[tuple[str, int]]]) -> dict:
-    repo = issue["repository_url"].rstrip("/").split("/")[-1]
+    repo = repo_from_issue(issue)
     num = int(issue["number"])
     title = issue.get("title", "")
     body = issue.get("body") or ""
@@ -125,12 +80,11 @@ def classify_issue(issue: dict, title_index: dict[str, list[tuple[str, int]]]) -
         "close_evidence": "",
     }
 
-    # Explicit label routing
     if labels & {"duplicate"}:
         row["classification_note"] = "label:duplicate"
         row["suggested_reason"] = "duplicate"
         row["close_summary"] = title
-        row["close_evidence"] = "GitHub label `duplicate`"
+        row["close_evidence"] = "GitLab label `duplicate`"
         return {**row, "_bucket": "close_duplicate"}
 
     if labels & CLOSE_LABELS:
@@ -141,7 +95,6 @@ def classify_issue(issue: dict, title_index: dict[str, list[tuple[str, int]]]) -
         row["close_evidence"] = f"Closing labels present: {sorted(labels & CLOSE_LABELS)}"
         return {**row, "_bucket": "close_wontfix" if reason == "wontfix" else "close_spam"}
 
-    # plan-approved wins over plan-needed — avoid re-planning approved work
     if labels & IMPLEMENT_LABELS:
         row["classification_note"] = "ready for implementation"
         return {**row, "_bucket": "implement"}
@@ -150,13 +103,12 @@ def classify_issue(issue: dict, title_index: dict[str, list[tuple[str, int]]]) -
         row["classification_note"] = "needs plan before implementation"
         return {**row, "_bucket": "route_planner"}
 
-    # Linked merged PRs in body
-    for pr_num in linked_prs(body)[:5]:
-        if pr_merged(repo, pr_num):
+    for mr_num in linked_mrs(body)[:5]:
+        if mr_merged(repo, mr_num):
             row["suggested_reason"] = "already_implemented"
             row["close_summary"] = title
-            row["close_evidence"] = f"Body references merged PR #{pr_num}"
-            row["classification_note"] = "merged_pr_reference"
+            row["close_evidence"] = f"Body references merged MR !{mr_num}"
+            row["classification_note"] = "merged_mr_reference"
             return {**row, "_bucket": "close_done"}
 
     if re.search(r"\b(fixed|resolved|implemented)\s+(on|in)\s+main\b", body, re.I):
@@ -166,7 +118,6 @@ def classify_issue(issue: dict, title_index: dict[str, list[tuple[str, int]]]) -
         row["classification_note"] = "body_main_fixed"
         return {**row, "_bucket": "close_done"}
 
-    # Explorer / automation noise titles
     if re.search(r"explorer finding|automation burst|mock issue", title, re.I):
         row["suggested_reason"] = "spam"
         row["close_summary"] = title
@@ -174,7 +125,6 @@ def classify_issue(issue: dict, title_index: dict[str, list[tuple[str, int]]]) -
         row["classification_note"] = "title_spam_pattern"
         return {**row, "_bucket": "close_spam"}
 
-    # Duplicate title clusters (same repo, similar title)
     norm = normalize_title(title)
     key = f"{repo}:{norm[:60]}"
     peers = title_index.get(key, [])
@@ -187,7 +137,6 @@ def classify_issue(issue: dict, title_index: dict[str, list[tuple[str, int]]]) -
             row["classification_note"] = "title_cluster"
             return {**row, "_bucket": "close_duplicate"}
 
-    # Master plan / PH tracking — defer
     if re.search(r"\bPH-[A-Z0-9]", title) or "master-plan" in labels:
         row["classification_note"] = "master-plan or PH-* tracking"
         return {**row, "_bucket": "defer_master_plan"}
@@ -255,7 +204,7 @@ def main() -> None:
 
     title_index: dict[str, list[tuple[str, int]]] = {}
     for issue in issues:
-        repo = issue["repository_url"].rstrip("/").split("/")[-1]
+        repo = repo_from_issue(issue)
         num = int(issue["number"])
         key = f"{repo}:{normalize_title(issue.get('title', ''))[:60]}"
         title_index.setdefault(key, []).append((repo, num))

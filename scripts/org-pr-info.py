@@ -1,29 +1,9 @@
 #!/usr/bin/env python3
+"""Print MR/PR mergeability for org swarm debugging (GitLab primary)."""
 import json
-import os
 import sys
-import urllib.request
 
-ORG = "li-langverse"
-API = "https://api.github.com"
-
-
-def headers() -> dict[str, str]:
-    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
-    if not token:
-        raise SystemExit("GH_TOKEN required")
-    return {
-        "Authorization": f"Bearer {token}",
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
-
-
-def get_pr(repo: str, num: int) -> dict:
-    url = f"{API}/repos/{ORG}/{repo}/pulls/{num}"
-    r = urllib.request.Request(url, headers=headers(), method="GET")
-    with urllib.request.urlopen(r, timeout=120) as resp:
-        return json.loads(resp.read().decode())
+from _vcs_api import _gitlab_mergeable_state, _github_mergeable_state, get_pr, head_sha, is_draft, vcs_provider
 
 
 def main() -> None:
@@ -31,9 +11,19 @@ def main() -> None:
         repo, num_s = spec.split("#")
         num = int(num_s)
         d = get_pr(repo, num)
+        if vcs_provider() == "gitlab":
+            mergeable, mergeable_state = _gitlab_mergeable_state(d)
+            head = head_sha(d)
+            draft = is_draft(d)
+            title = d.get("title", "")[:80]
+        else:
+            mergeable, mergeable_state = _github_mergeable_state(d)
+            head = d["head"]["sha"][:7]
+            draft = d.get("draft")
+            title = d["title"][:80]
         print(
-            f"{repo}#{num} state={d.get('mergeable_state')} mergeable={d.get('mergeable')} "
-            f"draft={d.get('draft')} head={d['head']['ref']} title={d['title'][:80]}"
+            f"{repo}#{num} state={mergeable_state} mergeable={mergeable} "
+            f"draft={draft} head={head} title={title}"
         )
 
 

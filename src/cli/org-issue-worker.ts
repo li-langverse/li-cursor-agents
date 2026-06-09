@@ -24,7 +24,7 @@ if (cmd === "once") {
 }
 
 if (!isOrgIssueWorkerAlwaysOn()) {
-  console.error("Set LI_ORG_ISSUE_WORKER_ALWAYS_ON=1 (and GH_TOKEN) before starting");
+  console.error("Set LI_ORG_ISSUE_WORKER_ALWAYS_ON=1 (and GITLAB_TOKEN) before starting");
   process.exit(1);
 }
 

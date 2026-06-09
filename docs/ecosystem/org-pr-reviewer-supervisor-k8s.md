@@ -98,7 +98,7 @@ kubectl apply -f deploy/k8s/engine/cronjob-org-pr-supervisor-wake.yaml
 kubectl apply -f deploy/k8s/engine/cronjob-org-reviewer-supervisor-wake.yaml
 ```
 
-Secrets (`li-agents-secrets`): `GITLAB_TOKEN` (primary — MR list/classify/merge/comment), `CURSOR_API_KEY` (required for real agent Jobs). Optional: `GH_TOKEN` / `GH_SWARM_TOKEN` (issue blob + GHCR pull), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` for DB sync.
+Secrets (`li-agents-secrets`): `GITLAB_TOKEN` (required — MR/issue list/classify/merge/comment), `CURSOR_API_KEY` (required for real agent Jobs). Optional: `GHCR_PUSH_TOKEN` (ghcr.io publish only), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` for DB sync.
 
 ConfigMaps set `LI_VCS_PROVIDER=gitlab`, `LI_GITLAB_HOST=gitlab.lilangverse.xyz` on PR/reviewer/merge workers.
 

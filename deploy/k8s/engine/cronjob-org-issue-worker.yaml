@@ -36,11 +36,17 @@ spec:
                 - configMapRef:
                     name: li-org-issue-worker
               env:
+                - name: GITLAB_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: li-agents-secrets
+                      key: GITLAB_TOKEN
                 - name: GH_TOKEN
                   valueFrom:
                     secretKeyRef:
                       name: li-agents-secrets
                       key: GH_SWARM_TOKEN
+                      optional: true
               resources:
                 requests:
                   cpu: "250m"

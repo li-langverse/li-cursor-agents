@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fail fast when git + GitHub API credentials are missing from the Cursor workspace .env.
-# GitLab-primary: GITLAB_TOKEN for clone/push; GH_TOKEN still used for Issues API / GHCR.
+# GitLab-primary: GITLAB_TOKEN for clone/push/issues/MRs; GHCR_PUSH_TOKEN optional for image publish.
 # Logs boolean presence only — never print token values.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

@@ -5,11 +5,12 @@ import { agentsPackageRoot } from "../runner.js";
 import { closeOrgIssue } from "../org-issues/org-close-issue.js";
 import {
   ORG_GITHUB_MCP_ID,
+  ORG_VCS_MCP_ID,
   buildOrgGithubMcpServer,
   orgGithubMcpEntryPath,
 } from "./mcp-config.js";
 
-test("org github MCP entry exists after build", () => {
+test("org vcs MCP entry exists after build", () => {
   const path = orgGithubMcpEntryPath();
   assert.equal(existsSync(path), true, path);
 });
@@ -22,11 +23,12 @@ test("buildOrgGithubMcpServer uses stdio node entry", () => {
   assert.equal(cfg.env?.LI_CURSOR_AGENTS_ROOT, agentsPackageRoot());
 });
 
-test("ORG_GITHUB_MCP_ID is li-org-github", () => {
-  assert.equal(ORG_GITHUB_MCP_ID, "li-org-github");
+test("ORG_VCS_MCP_ID is li-org-vcs", () => {
+  assert.equal(ORG_VCS_MCP_ID, "li-org-vcs");
+  assert.equal(ORG_GITHUB_MCP_ID, ORG_VCS_MCP_ID);
 });
 
-test("closeOrgIssue dry_run validates input without GitHub", () => {
+test("closeOrgIssue dry_run validates input without VCS API", () => {
   const bad = closeOrgIssue({
     repo: "",
     number: 0,

@@ -29,16 +29,23 @@ spec:
             - configMapRef:
                 name: li-org-research-supervisor
           env:
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
             - name: GH_SWARM_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: li-agents-secrets
                   key: GH_SWARM_TOKEN
+                  optional: true
             - name: GH_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: li-agents-secrets
                   key: GH_SWARM_TOKEN
+                  optional: true
             - name: SUPABASE_URL
               valueFrom:
                 secretKeyRef:

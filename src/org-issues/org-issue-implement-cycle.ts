@@ -233,7 +233,8 @@ export async function runOrgIssueImplementCycle(
   const output = agentResult.outputText ?? agentResult.error ?? "";
   const prMention =
     /github\.com\/[^\s/]+\/[^\s/]+\/pull\/\d+/i.test(output) ||
-    /\bPR\s*#\s*\d+/i.test(output);
+    /gitlab\.lilangverse\.xyz\/[^\s/]+\/[^\s/]+\/-\/merge_requests\/\d+/i.test(output) ||
+    /\b(MR|PR)\s*[!#]?\s*\d+/i.test(output);
   const agentOk = agentResult.status === "finished";
   const partialSuccess = !agentOk && !issueClosed && prMention;
   const ok = agentOk || issueClosed || partialSuccess;

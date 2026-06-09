@@ -49,7 +49,7 @@ export function buildTriageInstruction(
   const body = issue.body?.trim() || "(empty body)";
 
   return [
-    "## Assigned GitHub issue (org-issue-zero **triage** bucket)",
+    "## Assigned GitLab issue (org-issue-zero **triage** bucket)",
     "",
     `- **Issue:** \`${issueRef}\``,
     `- **URL:** ${issue.html_url}`,
@@ -68,19 +68,19 @@ export function buildTriageInstruction(
     "",
     "You are the **triage** agent for this single issue. Pick **one** outcome and execute it:",
     "",
-    "### A) Close → **must** call MCP tool `close_github_issue` (server `li-org-github`)",
+    "### A) Close → **must** call MCP tool `close_gitlab_issue` (server `li-org-vcs`)",
     "",
     "```",
-    "close_github_issue({",
+    "close_gitlab_issue({",
     `  repo: "${repo}",`,
     `  number: ${issueNum},`,
     '  reason: "<already_implemented|duplicate|wontfix|spam|superseded|not_actionable|stale_no_response>",',
     '  summary: "...",',
-    '  evidence: "PR #123 merged / duplicate of #456 / file X on main"',
+    '  evidence: "MR !123 merged / duplicate of #456 / file X on main"',
     "})",
     "```",
     "",
-    "Success = tool JSON has `\"closed\": true`. Do **not** use GitHub UI or shell `org-close-issue.py` manually unless the tool fails.",
+    "Success = tool JSON has `\"closed\": true`. Do **not** use GitLab UI or shell `org-close-issue.py` manually unless the tool fails.",
     "",
     "### B) Route to implement",
     "Add label `bug` / `enhancement` / `plan-approved`, comment with AC, stop (issue stays open).",
@@ -103,7 +103,8 @@ function outputTail(text: string | undefined, max = 1500): string | undefined {
 }
 
 export function detectTriageRouted(output: string): OrgIssueTriageResult["routed"] {
-  if (/close_github_issue/i.test(output) && /"closed"\s*:\s*true/i.test(output)) return "close";
+  if (/close_gitlab_issue|close_github_issue/i.test(output) && /"closed"\s*:\s*true/i.test(output))
+    return "close";
   if (/org-close-issue\.py/i.test(output) && /"closed"\s*:\s*true/i.test(output)) return "close";
   if (/plan-approved|route.*implement|implement bucket/i.test(output)) return "implement";
   if (/plan-needed|route_planner|issue-feature-planner/i.test(output)) return "planner";
@@ -167,7 +168,7 @@ export async function runOrgIssueTriageCycle(
       issueClosed: true,
       issueWasOpen: false,
       routed: "close",
-      outputTail: "issue already closed on GitHub",
+      outputTail: "issue already closed on GitLab",
     };
   }
 
@@ -228,7 +229,7 @@ export async function runOrgIssueTriageCycle(
 
   if (issueClosed) {
     removeClosedIssueFromQueue(parsed.repo, parsed.number);
-    workerConsole("org-issue-triage", "info", `${options.issueRef} closed on GitHub`);
+    workerConsole("org-issue-triage", "info", `${options.issueRef} closed on GitLab`);
   }
 
   return {

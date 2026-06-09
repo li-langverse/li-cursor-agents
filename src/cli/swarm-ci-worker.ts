@@ -16,7 +16,7 @@ if (cmd === "once") {
     process.exit(0);
 }
 if (!isSwarmCiWorkerAlwaysOn()) {
-    console.error("Set LI_SWARM_CI_WORKER_ALWAYS_ON=1 (and GH_TOKEN) before starting");
+    console.error("Set LI_SWARM_CI_WORKER_ALWAYS_ON=1 (and GITLAB_TOKEN) before starting");
     process.exit(1);
 }
 const r = startSwarmCiWorkerLoop();

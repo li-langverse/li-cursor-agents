@@ -6,6 +6,9 @@ metadata:
   labels:
     app: li-org-supervisor-dashboard
 data:
+  LI_VCS_PROVIDER: "gitlab"
+  LI_GITLAB_HOST: "gitlab.lilangverse.xyz"
+  LI_GITLAB_GROUP: "li-langverse"
   LI_CONTROL_PLANE_STORE: "disk"
   NODE_ENV: "production"
   LI_AGENTS_ROOT: "/app"
