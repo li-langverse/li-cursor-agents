@@ -10,6 +10,7 @@ metadata:
 data:
   LI_GIT_HOST: "gitlab.lilangverse.xyz"
   LI_GIT_GROUP: "li-langverse"
+  LI_GIT_SSL_VERIFY: "0"
   LI_WORLD_STUDIO_AIMD_DEMO_ALWAYS_ON: "1"
   LI_WORLD_STUDIO_AIMD_DEMO_LOOP_SLEEP_SEC: "60"
 
