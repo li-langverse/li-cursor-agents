@@ -11,27 +11,13 @@ $K8s = Join-Path $Root "deploy\k8s\engine"
 $Workspace = Split-Path $Root -Parent
 $BundleScript = Join-Path $Root "scripts\Invoke-K8sGoalLoopBundle.ps1"
 
-foreach ($envFile in @(
-        (Join-Path $Workspace ".env.github"),
-        (Join-Path $Workspace "li-cursor-agents\.env"),
-        (Join-Path $Workspace ".env")
-    )) {
-    if (-not (Test-Path $envFile)) { continue }
-    Get-Content $envFile | ForEach-Object {
-        if ($_ -match '^([^#=]+)=(.*)$') {
-            $k = $matches[1].Trim()
-            if ($k -in @('GH_TOKEN', 'GITHUB_TOKEN', 'CURSOR_API_KEY', 'CURSOR_SDK_KEY')) {
-                $v = $matches[2].Trim()
-                if (-not [string]::IsNullOrWhiteSpace($v)) {
-                    Set-Item -Path "env:$k" -Value $v
-                }
-            }
-        }
-    }
-}
+. (Join-Path $PSScriptRoot "lib\ghcr-env.ps1")
+Load-LiSwarmEnvFiles -AgentsRoot $Root -WorkspaceRoot $Workspace
 
 if (-not $env:GH_TOKEN -and $env:GITHUB_TOKEN) { $env:GH_TOKEN = $env:GITHUB_TOKEN }
-if (-not $env:GH_TOKEN) { Write-Error "GH_TOKEN required" }
+if (-not $env:GH_TOKEN -and $env:GH_SWARM_TOKEN) { $env:GH_TOKEN = $env:GH_SWARM_TOKEN }
+if (-not $env:GH_TOKEN) { Write-Error "GH_TOKEN required (gh CLI / GHCR pull)" }
+if (-not $env:GITLAB_TOKEN) { Write-Warning "GITLAB_TOKEN not set — worker will fall back to GitHub for git clone/push" }
 
 $env:KUBECONFIG = $KubeConfig
 Write-Host "==> kubectl apply li-lios-kernel (namespace=$Namespace)"
@@ -74,7 +60,10 @@ $secretArgs = @(
 )
 if ($env:CURSOR_API_KEY) { $secretArgs += "--from-literal=CURSOR_API_KEY=$($env:CURSOR_API_KEY)" }
 if ($env:CURSOR_SDK_KEY) { $secretArgs += "--from-literal=CURSOR_SDK_KEY=$($env:CURSOR_SDK_KEY)" }
+if ($env:GITLAB_TOKEN) { $secretArgs += "--from-literal=GITLAB_TOKEN=$($env:GITLAB_TOKEN)" }
 kubectl @secretArgs | kubectl apply -f -
+
+& (Join-Path $PSScriptRoot "org-ensure-swarm-secrets.ps1") -KubeConfig $KubeConfig -Namespace $Namespace
 
 kubectl -n $Namespace create secret docker-registry ghcr-li-langverse `
     --docker-server=ghcr.io `
