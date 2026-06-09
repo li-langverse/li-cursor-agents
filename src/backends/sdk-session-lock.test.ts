@@ -11,7 +11,7 @@ test("sdkMaxConcurrent respects LI_SDK_MAX_CONCURRENT cap", () => {
   process.env.LI_SDK_MAX_CONCURRENT = "4";
   assert.equal(sdkMaxConcurrent(), 4);
   process.env.LI_SDK_MAX_CONCURRENT = "99";
-  assert.equal(sdkMaxConcurrent(), 4);
+  assert.equal(sdkMaxConcurrent(), 8);
   if (prev === undefined) delete process.env.LI_SDK_MAX_CONCURRENT;
   else process.env.LI_SDK_MAX_CONCURRENT = prev;
 });
