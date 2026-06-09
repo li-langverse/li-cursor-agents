@@ -1,19 +1,6 @@
-# Create or reuse PAT for K8s goal workers (GitLab-primary git).
-user = User.find_by(username: "root") || User.admins.first
-abort("no admin user") unless user
-
-name = "k8s-goal-worker-git"
-scopes = %w[api read_repository write_repository]
-available = Gitlab::Auth.all_available_scopes.map(&:to_s)
-scopes = scopes & available
-
-user.personal_access_tokens.where(name: name).find_each(&:revoke!)
-token = PersonalAccessToken.new(
-  user: user,
-  name: name,
-  scopes: scopes,
-  expires_at: 1.year.from_now
-)
-token.save!
-
-puts token.token
+# Mint PAT for K8s goal workers (GitLab-primary git).
+# Prefer: scripts/ensure-k8s-gitlab-pat.ps1 -Profile GoalWorker
+# (API-tests li-agents-secrets GITLAB_TOKEN first; revokes only when minting + patching).
+ENV["PAT_NAME"] ||= "k8s-goal-worker-git"
+ENV["PAT_SCOPES"] ||= "api,read_repository,write_repository"
+load ENV.fetch("MINT_LIB", File.expand_path("_mint_k8s_gitlab_pat.rb", __dir__))
