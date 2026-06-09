@@ -9,8 +9,7 @@ metadata:
     app.kubernetes.io/component: git-auth
     li-langverse.io/managed-by: li-cursor-agents
 data:
-  LI_GIT_HOST: "10.43.79.43"
-  LI_GIT_SCHEME: "http"
+  LI_GIT_HOST: "gitlab.lilangverse.xyz"
   LI_GIT_GROUP: "li-langverse"
   LI_GITHUB_ORG: "li-langverse"
   LI_GIT_REQUIRE_GITLAB: "1"

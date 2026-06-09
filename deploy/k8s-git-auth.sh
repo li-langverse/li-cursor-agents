@@ -88,7 +88,12 @@ li_git_primary_setup() {
 
 li_git_remote_url() {
   local repo="$1"
-  echo "${LI_GIT_SCHEME}://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${LI_GIT_HOST}/${LI_GIT_GROUP}/${repo}.git"
+  local host="$LI_GIT_HOST" scheme="$LI_GIT_SCHEME"
+  if [[ "$LI_GIT_HOST" == *"lilangverse.xyz"* ]]; then
+    host="${LI_GIT_INTERNAL_SVC:-gitlab.gitlab.svc}"
+    scheme="http"
+  fi
+  echo "${scheme}://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${host}/${LI_GIT_GROUP}/${repo}.git"
 }
 
 li_git_github_mirror_url() {
