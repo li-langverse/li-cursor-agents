@@ -26,7 +26,7 @@ Do **not** add custom entrypoint ConfigMaps or override `command`. Reuse what al
 
 | Resource | Reuse |
 |----------|-------|
-| Image | `ghcr.io/li-langverse/li-cursor-agents:proof-explorer` (short-term; target `registry.gitlab.lilangverse.xyz/li-langverse/li-cursor-agents`) |
+| Image | `ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22` (GHCR primary; see `beelink-cleanup/docs/ghcr-image-strategy.md`) |
 | Entrypoint | Image default (`proof-explorer-k8s-entrypoint.sh` → `proof-explorer-worker.js`) |
 | Secrets | `li-agents-secrets` (`GITLAB_TOKEN`, `GH_TOKEN`, optional `CURSOR_API_KEY`) |
 | Node | `kubernetes.io/hostname: engine` |

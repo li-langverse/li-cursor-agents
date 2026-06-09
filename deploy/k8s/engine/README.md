@@ -15,7 +15,7 @@ kubectl label node <engine-node-name> li-langverse.io/node-pool=engine
 - **Transition:** `GH_TOKEN` for org-issue/PR workers and ghcr image pull
 - Container image built and pushed (see below)
 
-See `beelink-cleanup/docs/gitlab-primary-github-mirror.md`.
+See `beelink-cleanup/docs/gitlab-primary-github-mirror.md` and `beelink-cleanup/docs/ghcr-image-strategy.md`.
 
 ## Apply
 
