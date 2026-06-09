@@ -3,7 +3,10 @@
 set -euo pipefail
 
 # shellcheck source=k8s-git-auth.sh
-if [[ -f /config/k8s-git-auth.sh ]]; then
+if [[ -f /git-auth/k8s-git-auth.sh ]]; then
+  # shellcheck source=/dev/null
+  source /git-auth/k8s-git-auth.sh
+elif [[ -f /config/k8s-git-auth.sh ]]; then
   # shellcheck source=/dev/null
   source /config/k8s-git-auth.sh
 else

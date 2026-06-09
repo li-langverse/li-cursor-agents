@@ -98,7 +98,6 @@ if ($swarmTok) {
 }
 if ($env:CURSOR_API_KEY) { $secretArgs += "--from-literal=CURSOR_API_KEY=$($env:CURSOR_API_KEY)" }
 if ($env:CURSOR_SDK_KEY) { $secretArgs += "--from-literal=CURSOR_SDK_KEY=$($env:CURSOR_SDK_KEY)" }
-if ($env:GITLAB_TOKEN) { $secretArgs += "--from-literal=GITLAB_TOKEN=$($env:GITLAB_TOKEN)" }
 if ($env:SUPABASE_URL) { $secretArgs += "--from-literal=SUPABASE_URL=$($env:SUPABASE_URL)" }
 if ($env:SUPABASE_SERVICE_ROLE_KEY) { $secretArgs += "--from-literal=SUPABASE_SERVICE_ROLE_KEY=$($env:SUPABASE_SERVICE_ROLE_KEY)" }
 kubectl @secretArgs | kubectl apply -f -

@@ -11,6 +11,7 @@ data:
   LI_GIT_HOST: "gitlab.lilangverse.xyz"
   LI_GIT_GROUP: "li-langverse"
   LI_GIT_REQUIRE_GITLAB: "1"
+  LI_GIT_SSL_VERIFY: "0"
   LI_PROOF_EXPLORER_PHASE_HANDOFF: "1"
   LI_PROOF_EXPLORER_SWEEP_MODE: "1"
   LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/proof-explorer-phase14-open-catalog-prove.md"

@@ -37,7 +37,7 @@ li_git_primary_setup() {
   git config --global user.name "${LI_GIT_USER_NAME:-li-goal-worker}"
   git config --global url."${LI_GIT_SCHEME}://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${LI_GIT_HOST}/".insteadOf "${LI_GIT_SCHEME}://${LI_GIT_HOST}/"
 
-  if [[ "${LI_GIT_SSL_VERIFY:-1}" == "0" ]]; then
+  if [[ "${LI_GIT_SSL_VERIFY:-}" == "0" ]] || [[ "$LI_GIT_HOST" == *"lilangverse.xyz" ]]; then
     git config --global "http.${LI_GIT_SCHEME}://${LI_GIT_HOST}/.sslVerify" false
   fi
 
