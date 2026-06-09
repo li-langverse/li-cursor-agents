@@ -13,6 +13,22 @@ export function gitlabHost(): string {
   return process.env.LI_GITLAB_HOST?.trim() || process.env.LI_GIT_HOST?.trim() || "gitlab.lilangverse.xyz";
 }
 
+/** Clone/fetch host — in-cluster GitLab when homelab external TLS is unavailable. */
+export function gitlabCloneHost(): string {
+  const internal = process.env.LI_GIT_INTERNAL_SVC?.trim();
+  if (internal && gitlabHost().includes("lilangverse.xyz")) {
+    return internal;
+  }
+  return gitlabHost();
+}
+
+export function gitlabCloneScheme(): string {
+  if (process.env.LI_GIT_INTERNAL_SVC?.trim() && gitlabHost().includes("lilangverse.xyz")) {
+    return "http";
+  }
+  return process.env.LI_GIT_SCHEME?.trim() || "https";
+}
+
 export function gitlabGroup(): string {
   return process.env.LI_GITLAB_GROUP?.trim() || process.env.LI_GIT_GROUP?.trim() || DEFAULT_ORG;
 }

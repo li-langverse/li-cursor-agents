@@ -7,7 +7,16 @@ data:
   entrypoint.sh: |
     #!/usr/bin/env bash
     set -euo pipefail
-    source /app/deploy/k8s-git-auth.sh
+    if [[ -f /git-auth/k8s-git-auth.sh ]]; then
+      # shellcheck source=/dev/null
+      source /git-auth/k8s-git-auth.sh
+    elif [[ -f /config/k8s-git-auth.sh ]]; then
+      # shellcheck source=/dev/null
+      source /config/k8s-git-auth.sh
+    else
+      # shellcheck source=/dev/null
+      source /app/deploy/k8s-git-auth.sh
+    fi
     li_git_primary_setup || exit 1
     REPO_LIB="${LI_PROOF_EXPLORER_LIC_REPO:-lib}"
     PREFERRED_BRANCH="${LI_PROOF_EXPLORER_BRANCH:-cursor/ph-br-0-foundation}"
@@ -16,8 +25,8 @@ data:
     AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
     git config --global user.email "${LI_GIT_USER_EMAIL:-goal-worker@li-langverse.dev}"
     git config --global user.name "${LI_GIT_USER_NAME:-li-goal-worker}"
-    if [[ ! -d "$LIB_ROOT/.git" ]]; then li_git_clone_repo "$REPO_LIB" "$LIB_ROOT" "$PREFERRED_BRANCH"; fi
-    if [[ ! -d "$LIC_ROOT/.git" ]]; then li_git_clone_repo "lic" "$LIC_ROOT" "main"; fi
+    if [[ ! -d "$LIB_ROOT/.git" ]]; then li_git_clone_repo "$REPO_LIB" "$LIB_ROOT" "$PREFERRED_BRANCH"; else li_git_ensure_remotes "$LIB_ROOT" "$REPO_LIB"; fi
+    if [[ ! -d "$LIC_ROOT/.git" ]]; then li_git_clone_repo "lic" "$LIC_ROOT" "main"; else li_git_ensure_remotes "$LIC_ROOT" "lic"; fi
     git -C "$LIB_ROOT" fetch origin --prune
     git -C "$LIB_ROOT" checkout -f -B "$PREFERRED_BRANCH" "origin/$PREFERRED_BRANCH" 2>/dev/null || git -C "$LIB_ROOT" checkout -f -B "$PREFERRED_BRANCH"
     git -C "$LIC_ROOT" fetch origin --prune

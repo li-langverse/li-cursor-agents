@@ -78,6 +78,9 @@ spec:
               mountPath: /workspace/lic/data/goal-directed-sprints/physics-codegen-matrix.md
               subPath: physics-codegen-matrix.md
               readOnly: true
+            - name: git-auth
+              mountPath: /git-auth
+              readOnly: true
       volumes:
         - name: workspace
           persistentVolumeClaim:
@@ -85,3 +88,7 @@ spec:
         - name: sprint-goal
           configMap:
             name: li-physics-codegen-matrix-goal
+        - name: git-auth
+          configMap:
+            name: li-k8s-git-auth
+            defaultMode: 0755

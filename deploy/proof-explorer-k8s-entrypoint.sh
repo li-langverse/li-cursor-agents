@@ -16,8 +16,11 @@ li_git_primary_setup || exit 1
 
 ORG="${LI_GIT_GROUP:-li-langverse}"
 REPO_LIC="${LI_PROOF_EXPLORER_LIC_REPO:-lic}"
+REPO_BENCHMARKS="${LI_BENCHMARKS_REPO:-benchmarks}"
 BRANCH="${LI_PROOF_EXPLORER_BRANCH:-cursor/proof-explorer-program}"
+BENCHMARKS_BRANCH="${LI_BENCHMARKS_BRANCH:-main}"
 LIC_ROOT="${LI_PROOF_EXPLORER_LIC_ROOT:-/workspace/lic}"
+BENCHMARKS_ROOT="${BENCHMARKS_ROOT:-/workspace/benchmarks}"
 PL_ROOT="${LI_PROOF_LIBRARY_ROOT:-/workspace/proof-library}"
 REPO_PL="${LI_PROOF_LIBRARY_REPO:-proof-library}"
 AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
@@ -39,6 +42,22 @@ sync_lic_repo() {
 }
 
 sync_lic_repo
+
+sync_benchmarks_repo() {
+  if [[ ! -d "$BENCHMARKS_ROOT/.git" ]]; then
+    echo "proof-explorer-k8s-entrypoint: cloning ${ORG}/${REPO_BENCHMARKS}"
+    li_git_clone_repo "$REPO_BENCHMARKS" "$BENCHMARKS_ROOT" "$BENCHMARKS_BRANCH"
+    return 0
+  fi
+  li_git_ensure_remotes "$BENCHMARKS_ROOT" "$REPO_BENCHMARKS"
+  git -C "$BENCHMARKS_ROOT" fetch origin --prune
+  if git -C "$BENCHMARKS_ROOT" show-ref --verify --quiet "refs/remotes/origin/${BENCHMARKS_BRANCH}"; then
+    git -C "$BENCHMARKS_ROOT" checkout -f -B "$BENCHMARKS_BRANCH" "origin/${BENCHMARKS_BRANCH}"
+    git -C "$BENCHMARKS_ROOT" reset --hard "origin/${BENCHMARKS_BRANCH}"
+  fi
+}
+
+sync_benchmarks_repo
 
 ensure_lic_built() {
   # shellcheck source=/dev/null
@@ -83,6 +102,7 @@ fi
 export LI_PROOF_EXPLORER_LIC_ROOT="$LIC_ROOT"
 export LI_CURSOR_AGENTS_ROOT="$AGENTS_ROOT"
 export LIC_ROOT="$LIC_ROOT"
+export BENCHMARKS_ROOT="$BENCHMARKS_ROOT"
 export LIC="${LIC:-}"
 export LI_PROOF_EXPLORER_ALWAYS_ON="${LI_PROOF_EXPLORER_ALWAYS_ON:-1}"
 if [[ -z "${LI_PROOF_EXPLORER_EXIT_ON_COMPLETE:-}" && "${LI_PROOF_EXPLORER_PHASE_HANDOFF:-1}" == "0" ]]; then

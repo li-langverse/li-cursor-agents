@@ -1,32 +1,34 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: li-ph-sci-electrochemistry
+  name: li-libernetes-platform
   namespace: li-swarm
   labels:
-    app: li-ph-sci-electrochemistry
-    app.kubernetes.io/name: li-ph-sci-electrochemistry
+    app: li-libernetes-platform
     app.kubernetes.io/component: goal-directed-agent
-    li-langverse.io/sprint: ph-sci-electrochemistry
+    li-langverse.io/sprint: libernetes-platform
 data:
   LI_PROOF_EXPLORER_ALWAYS_ON: "1"
   LI_PROOF_EXPLORER_EXIT_ON_COMPLETE: "1"
   LI_PROOF_EXPLORER_PHASE_HANDOFF: "0"
-  LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/ph-sci-electrochemistry-gpu-roadmap.md"
+  LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/libernetes-platform.md"
   LI_PROOF_EXPLORER_LIC_ROOT: "/workspace/lic"
   LI_CURSOR_AGENTS_ROOT: "/app"
   LI_PROOF_EXPLORER_WORKFLOW_REPO: "lic"
-  LI_PROOF_EXPLORER_BRANCH: "cursor/ph-sci-gpu-chem-dft"
-  LI_PROOF_EXPLORER_BRANCH_FALLBACKS: "cursor/ph-sci-gpu-chem-dft,main"
+  LI_PROOF_EXPLORER_BRANCH: "cursor/libernetes-platform"
+  LI_PROOF_EXPLORER_BRANCH_FALLBACKS: "cursor/libernetes-platform,main"
+  LI_GITHUB_ORG: "li-langverse"
   LI_GIT_HOST: "gitlab.lilangverse.xyz"
   LI_GIT_INTERNAL_SVC: "gitlab.gitlab.svc"
+  LI_GIT_REQUIRE_GITLAB: "1"
   LI_GIT_SSL_VERIFY: "0"
   LI_GIT_GROUP: "li-langverse"
-  LI_GITHUB_ORG: "li-langverse"
+  LI_GIT_REQUIRE_GITLAB: "1"
+  LI_GIT_MIRROR_GITHUB: "1"
+  LI_GIT_SSL_VERIFY: "0"
   LI_PROOF_EXPLORER_LIC_REPO: "lic"
   LI_PROOF_EXPLORER_LOOP_SLEEP_SEC: "120"
   LI_PROOF_EXPLORER_AGENT: "code_implementer"
-  LI_PROOF_EXPLORER_LOOP_MAX: "0"
   LI_CONTROL_PLANE_STORE: "disk"
   LI_SDK_TERMINAL_STREAM: "1"
   LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE: "1"

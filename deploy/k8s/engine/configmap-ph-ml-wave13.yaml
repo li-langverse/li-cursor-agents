@@ -25,6 +25,8 @@ data:
   LI_PROOF_EXPLORER_BRANCH: "main"
   LI_PROOF_EXPLORER_BRANCH_FALLBACKS: "main,cursor/ph-ml-li-array-perf-h,cursor/ph-ml-li-array"
   LI_GIT_HOST: "gitlab.lilangverse.xyz"
+  LI_GIT_INTERNAL_SVC: "gitlab.gitlab.svc"
+  LI_GIT_SSL_VERIFY: "0"
   LI_GIT_GROUP: "li-langverse"
   LI_GIT_SSL_VERIFY: "0"
   LI_GIT_REQUIRE_GITLAB: "1"

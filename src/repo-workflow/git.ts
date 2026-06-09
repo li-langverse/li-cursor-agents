@@ -3,8 +3,9 @@ import type { CmdResult } from "./types.js";
 import {
   githubOrg,
   gitAuthToken,
+  gitlabCloneHost,
+  gitlabCloneScheme,
   gitlabGroup,
-  gitlabHost,
   hasGitAuthToken,
   vcsProvider,
 } from "./vcs-config.js";
@@ -44,7 +45,7 @@ function authenticatedCloneUrl(repo: string): string | null {
     const host = process.env.LI_GIT_HOST_LEGACY?.trim() || "github.com";
     return `${scheme}://x-access-token:${token}@${host}/${githubOrg()}/${repo}.git`;
   }
-  return `${scheme}://oauth2:${token}@${gitlabHost()}/${gitlabGroup()}/${repo}.git`;
+  return `${gitlabCloneScheme()}://oauth2:${token}@${gitlabCloneHost()}/${gitlabGroup()}/${repo}.git`;
 }
 
 /** Clone or fetch+reset a repo using GitLab-primary auth (mirrors k8s-git-auth.sh). */
