@@ -5,7 +5,9 @@ metadata:
   namespace: li-swarm
   labels:
     app: li-ph-br-0-lib-browser
+    app.kubernetes.io/name: li-ph-br-0-lib-browser
     app.kubernetes.io/component: goal-directed-agent
+    li-langverse.io/sprint: ph-br-0-lib-browser
 data:
   LI_PROOF_EXPLORER_ALWAYS_ON: "1"
   LI_PROOF_EXPLORER_EXIT_ON_COMPLETE: "0"

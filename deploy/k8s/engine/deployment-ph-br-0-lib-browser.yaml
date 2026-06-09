@@ -3,6 +3,11 @@ kind: Deployment
 metadata:
   name: li-ph-br-0-lib-browser
   namespace: li-swarm
+  labels:
+    app: li-ph-br-0-lib-browser
+    app.kubernetes.io/name: li-ph-br-0-lib-browser
+    app.kubernetes.io/component: goal-directed-agent
+    li-langverse.io/sprint: ph-br-0-lib-browser
 spec:
   replicas: 0
   strategy:
@@ -14,6 +19,9 @@ spec:
     metadata:
       labels:
         app: li-ph-br-0-lib-browser
+        app.kubernetes.io/name: li-ph-br-0-lib-browser
+        app.kubernetes.io/component: goal-directed-agent
+        li-langverse.io/sprint: ph-br-0-lib-browser
     spec:
       nodeSelector:
         kubernetes.io/hostname: engine
