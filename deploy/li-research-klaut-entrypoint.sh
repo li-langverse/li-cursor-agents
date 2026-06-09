@@ -2,8 +2,13 @@
 # K8s entrypoint: li-research homelab track (cap-jmk-launchpad).
 set -euo pipefail
 
-# shellcheck source=k8s-git-auth.sh
-source "${LI_CURSOR_AGENTS_ROOT:-/app}/deploy/k8s-git-auth.sh"
+if [[ -f /config/k8s-git-auth.sh ]]; then
+  # shellcheck source=/dev/null
+  source /config/k8s-git-auth.sh
+else
+  # shellcheck source=k8s-git-auth.sh
+  source "${LI_CURSOR_AGENTS_ROOT:-/app}/deploy/k8s-git-auth.sh"
+fi
 li_git_primary_setup || exit 1
 
 ORG="${LI_GIT_GROUP:-cap-jmk-launchpad}"

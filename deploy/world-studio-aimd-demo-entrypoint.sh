@@ -2,8 +2,13 @@
 # K8s entrypoint: sync studio+lic workspace, run goal-directed-loop until completion, then scale down.
 set -euo pipefail
 
-# shellcheck source=k8s-git-auth.sh
-source "${LI_CURSOR_AGENTS_ROOT:-/app}/deploy/k8s-git-auth.sh"
+if [[ -f /config/k8s-git-auth.sh ]]; then
+  # shellcheck source=/dev/null
+  source /config/k8s-git-auth.sh
+else
+  # shellcheck source=k8s-git-auth.sh
+  source "${LI_CURSOR_AGENTS_ROOT:-/app}/deploy/k8s-git-auth.sh"
+fi
 li_git_primary_setup || exit 1
 
 STUDIO_ROOT="${LI_WORLD_STUDIO_AIMD_DEMO_STUDIO_ROOT:-/workspace/studio}"

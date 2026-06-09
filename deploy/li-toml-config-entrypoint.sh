@@ -2,8 +2,13 @@
 # K8s entrypoint: sync workspace repos + resilient goal-directed-loop for li-toml config migration.
 set -euo pipefail
 
-# shellcheck source=k8s-git-auth.sh
-source "${LI_CURSOR_AGENTS_ROOT:-/app}/deploy/k8s-git-auth.sh"
+if [[ -f /config/k8s-git-auth.sh ]]; then
+  # shellcheck source=/dev/null
+  source /config/k8s-git-auth.sh
+else
+  # shellcheck source=k8s-git-auth.sh
+  source "${LI_CURSOR_AGENTS_ROOT:-/app}/deploy/k8s-git-auth.sh"
+fi
 li_git_primary_setup || exit 1
 
 ORG="${LI_GIT_GROUP:-li-langverse}"
