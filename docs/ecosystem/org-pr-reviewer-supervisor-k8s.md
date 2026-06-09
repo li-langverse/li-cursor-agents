@@ -49,7 +49,7 @@ flowchart TB
 | PR | `li-org-pr-supervisor` | `li-org-pr-supervisor-wake` | `li-org-pr-impl-*` | `org-pr-merge-queue.json` dirty/ci_not_ok/blocked | `code_implementer` |
 | Review | `li-org-reviewer-supervisor` | `li-org-reviewer-supervisor-wake` | `li-org-pr-rev-*` | green + blocked | `pr_reviewer` |
 
-Scaling (all three): `desiredWorkers = min(3, max(1, ceil(open/50)))`.
+Scaling (PR + review): `desiredWorkers = min(maxWorkers, max(1, ceil(open/25)))` with `maxWorkers` up to **16** (`LI_ORG_PR_SUPERVISOR_MAX_WORKERS` / `LI_ORG_REVIEWER_SUPERVISOR_MAX_WORKERS`). Issue blob uses `ceil(open/50)` with its own cap.
 
 ## Coordination (`org-pr-active.json`)
 
