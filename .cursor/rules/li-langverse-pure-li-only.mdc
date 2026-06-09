@@ -1,0 +1,42 @@
+---
+description: li-langverse org hosts Li ecosystem repos only — no foreign/klaut packages
+alwaysApply: true
+---
+
+# li-langverse: pure Li only (org policy)
+
+**`li-langverse` is Li language ecosystem only.** Foreign products (klaut, cap-jmk-launchpad, third-party) live in separate orgs — never under li-langverse.
+
+Full runbook: `beelink-cleanup/docs/lilangverse-hosting-policy.md`.
+
+## Scope
+
+| Org | Hosts |
+|-----|-------|
+| GitLab `li-langverse` / GitHub `li-langverse` | **lic**, **lik**, **lis**, **li-httpd**, **li-os**, **benchmarks**, **proof-library**, **li-cursor-agents**, **lib**, **lit**, Li tooling/docs |
+| GitHub `cap-jmk-launchpad` | **klaut-***, homelab infra, foreign product tracks |
+| klaut.pro GitLab / VPS | klaut.pro product repos (separate from li-langverse) |
+
+## Repos and mirrors
+
+| Do | Don't |
+|----|-------|
+| Create Li repos under `gitlab.lilangverse.xyz/li-langverse/<repo>` | Create/mirror **klaut-***, **beelink-cleanup**, or third-party repos in li-langverse |
+| Mirror Li repos GitLab → GitHub `li-langverse` (per gitlab-primary rule) | Move cap-jmk or klaut repos into li-langverse to "consolidate" |
+| Keep foreign code in `cap-jmk-launchpad/klaut-*` or klaut.pro | Add foreign git remotes, CI, or push mirrors under li-langverse group |
+
+## K8s goal-directed workers
+
+| Track | Secrets | `LI_GITHUB_ORG` | Git target |
+|-------|---------|-----------------|------------|
+| Li product (lic, li-httpd, …) | `li-agents-secrets` | `li-langverse` | `gitlab.lilangverse.xyz/li-langverse` |
+| klaut / homelab foreign | `klaut-agents-secrets` | `cap-jmk-launchpad` | `github.com/cap-jmk-launchpad` |
+
+Foreign sprint manifests: `configmap-*-klaut.yaml`, `deployment-*-klaut.yaml` — never point at li-langverse GitLab.
+
+## Credential rule
+
+- **Li workers:** token from `li/.env.github` → li-langverse only.
+- **klaut workers:** token from `beelink-cleanup/.env` → cap-jmk-launchpad only; never push to `li-langverse/*`.
+
+Sprint templates: `data/goal-directed-sprints/wp-klaut-homelab.md`, `wp-li-research-r0-klaut.md`.

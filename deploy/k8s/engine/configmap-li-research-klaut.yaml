@@ -16,6 +16,10 @@ data:
   LI_GOAL_LOOP_SLEEP_SEC: "120"
   LI_GOAL_DEPLOYMENT_NAME: "li-research-klaut"
   LI_GOAL_NAMESPACE: "li-swarm"
+  # GitHub-primary (cap-jmk-launchpad) — not li-langverse GitLab
+  LI_GIT_HOST: "github.com"
+  LI_GIT_GROUP: "cap-jmk-launchpad"
+  LI_GIT_REQUIRE_GITLAB: "0"
   LI_GITHUB_ORG: "cap-jmk-launchpad"
   LI_CURSOR_AGENTS_ROOT: "/app"
   LI_CONTROL_PLANE_STORE: "disk"

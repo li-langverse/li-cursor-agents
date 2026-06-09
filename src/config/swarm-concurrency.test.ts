@@ -11,21 +11,22 @@ import {
 
 test("defaults and ceiling", () => {
   assert.equal(SWARM_PARALLEL_DEFAULT, 4);
-  assert.equal(SWARM_PARALLEL_CEILING, 4);
+  assert.equal(SWARM_PARALLEL_CEILING, 8);
 });
 
 test("clampSwarmParallel hard-caps at ceiling", () => {
   assert.equal(clampSwarmParallel(1), 1);
   assert.equal(clampSwarmParallel(4), 4);
-  assert.equal(clampSwarmParallel(8), 4);
-  assert.equal(clampSwarmParallel(99), 4);
+  assert.equal(clampSwarmParallel(8), 8);
+  assert.equal(clampSwarmParallel(99), 8);
 });
 
 test("parseSwarmParallelEnv", () => {
   assert.equal(parseSwarmParallelEnv(undefined), 4);
   assert.equal(parseSwarmParallelEnv(""), 4);
   assert.equal(parseSwarmParallelEnv("3"), 3);
-  assert.equal(parseSwarmParallelEnv("8"), 4);
+  assert.equal(parseSwarmParallelEnv("8"), 8);
+  assert.equal(parseSwarmParallelEnv("12"), 8);
   assert.equal(parseSwarmParallelEnv("0", { allowZero: true }), 0);
   assert.equal(parseSwarmParallelEnv("0"), 4);
 });
@@ -35,7 +36,7 @@ test("sdkMaxConcurrentFromEnv", () => {
   process.env.LI_SDK_MAX_CONCURRENT = "2";
   assert.equal(sdkMaxConcurrentFromEnv(), 2);
   process.env.LI_SDK_MAX_CONCURRENT = "99";
-  assert.equal(sdkMaxConcurrentFromEnv(), 4);
+  assert.equal(sdkMaxConcurrentFromEnv(), 8);
   delete process.env.LI_SDK_MAX_CONCURRENT;
   assert.equal(sdkMaxConcurrentFromEnv(), 4);
   if (prev === undefined) delete process.env.LI_SDK_MAX_CONCURRENT;
@@ -51,7 +52,9 @@ test("swarmMaxParallelFromEnv", () => {
   process.env.LI_SWARM_MAX_PARALLEL = "0";
   assert.equal(swarmMaxParallelFromEnv(), 0);
   process.env.LI_SWARM_MAX_PARALLEL = "8";
-  assert.equal(swarmMaxParallelFromEnv(), 4);
+  assert.equal(swarmMaxParallelFromEnv(), 8);
+  process.env.LI_SWARM_MAX_PARALLEL = "12";
+  assert.equal(swarmMaxParallelFromEnv(), 8);
   if (prevParallel == null) delete process.env.LI_SWARM_MAX_PARALLEL;
   else process.env.LI_SWARM_MAX_PARALLEL = prevParallel;
   if (prevSdk == null) delete process.env.LI_SDK_MAX_CONCURRENT;

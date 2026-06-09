@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: li-ph-br-0-lib-browser-entrypoint
+  namespace: li-swarm
+data:
+  entrypoint.sh: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+    source /app/deploy/k8s-git-auth.sh
+    li_git_primary_setup || exit 1
+    REPO_LIB="${LI_PROOF_EXPLORER_LIC_REPO:-lib}"
+    PREFERRED_BRANCH="${LI_PROOF_EXPLORER_BRANCH:-cursor/ph-br-0-foundation}"
+    LIB_ROOT="${LI_PROOF_EXPLORER_LIC_ROOT:-/workspace/lib}"
+    LIC_ROOT="${LIC_ROOT:-/workspace/lic}"
+    AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
+    git config --global user.email "${LI_GIT_USER_EMAIL:-goal-worker@li-langverse.dev}"
+    git config --global user.name "${LI_GIT_USER_NAME:-li-goal-worker}"
+    if [[ ! -d "$LIB_ROOT/.git" ]]; then li_git_clone_repo "$REPO_LIB" "$LIB_ROOT" "$PREFERRED_BRANCH"; fi
+    if [[ ! -d "$LIC_ROOT/.git" ]]; then li_git_clone_repo "lic" "$LIC_ROOT" "main"; fi
+    git -C "$LIB_ROOT" fetch origin --prune
+    git -C "$LIB_ROOT" checkout -f -B "$PREFERRED_BRANCH" "origin/$PREFERRED_BRANCH" 2>/dev/null || git -C "$LIB_ROOT" checkout -f -B "$PREFERRED_BRANCH"
+    git -C "$LIC_ROOT" fetch origin --prune
+    git -C "$LIC_ROOT" checkout -f -B main origin/main 2>/dev/null || true
+    (cd "$LIC_ROOT" && bash scripts/build.sh) || echo "WARN lic build" >&2
+    export LI_PROOF_EXPLORER_LIC_ROOT="$LIB_ROOT"
+    exec node "${AGENTS_ROOT}/dist/cli/proof-explorer-worker.js" start

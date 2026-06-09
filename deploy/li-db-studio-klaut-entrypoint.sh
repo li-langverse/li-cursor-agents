@@ -2,10 +2,11 @@
 # K8s entrypoint: cap-jmk-launchpad homelab track (klaut-supabase + klaut-pro docs).
 set -euo pipefail
 
-: "${GH_TOKEN:?GH_TOKEN required (cap-jmk-launchpad only)}"
-export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
+# shellcheck source=k8s-git-auth.sh
+source "${LI_CURSOR_AGENTS_ROOT:-/app}/deploy/k8s-git-auth.sh"
+li_git_github_primary_setup || exit 1
 
-ORG="${LI_GITHUB_ORG:-cap-jmk-launchpad}"
+ORG="${LI_GIT_GROUP:-cap-jmk-launchpad}"
 AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
 WORKSPACE="${LI_GOAL_WORKSPACE:-/workspace}"
 BRANCH="${LI_GOAL_BRANCH:-cursor/li-db-studio-homelab-p0}"
@@ -22,22 +23,15 @@ if [[ -f /config/k8s-goal-loop-common.sh ]]; then
   source /config/k8s-goal-loop-common.sh
 fi
 
-export GH_TOKEN GITHUB_TOKEN
-echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
-gh auth setup-git 2>/dev/null || true
-git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
 git config --global user.email "${LI_GIT_USER_EMAIL:-li-db-studio-klaut@klaut.pro}"
 git config --global user.name "${LI_GIT_USER_NAME:-li-db-studio-klaut-agent}"
 
 clone_or_sync() {
-  local org_repo="$1" dest="$2" branch="$3"
+  local repo="$1" dest="$2" branch="$3"
   mkdir -p "$(dirname "$dest")"
   if [[ ! -d "$dest/.git" ]]; then
-    echo "li-db-studio-klaut-entrypoint: clone ${org_repo}"
-    gh repo clone "${org_repo}" "$dest" -- --branch "$branch" 2>/dev/null || {
-      gh repo clone "${org_repo}" "$dest"
-      git -C "$dest" checkout -B "$branch"
-    }
+    echo "li-db-studio-klaut-entrypoint: clone ${ORG}/${repo}"
+    li_git_clone_repo "$repo" "$dest" "$branch"
     return 0
   fi
   git -C "$dest" fetch origin --prune
@@ -85,7 +79,7 @@ run_goal_loop() {
 }
 
 sync_workspace() {
-  clone_or_sync "${ORG}/klaut-supabase" "$SUPABASE_ROOT" "$BRANCH"
+  clone_or_sync "klaut-supabase" "$SUPABASE_ROOT" "$BRANCH"
 }
 
 seed_goal

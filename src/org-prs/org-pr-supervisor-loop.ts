@@ -52,7 +52,7 @@ export async function orgPrSupervisorTick(): Promise<PrSupervisorTickResult> {
       desiredWorkers: 0,
       activeWorkers: 0,
       spawned: 0,
-      message: `GitHub rate limit backoff until ${backoff!.until}${backoff?.reason ? ` (${backoff.reason})` : ""}`,
+      message: `VCS rate limit backoff until ${backoff!.until}${backoff?.reason ? ` (${backoff.reason})` : ""}`,
     };
   }
 

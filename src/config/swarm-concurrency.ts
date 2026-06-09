@@ -1,7 +1,7 @@
 /** Shared swarm / SDK parallel run limits (default and hard ceiling). */
 
 export const SWARM_PARALLEL_DEFAULT = 4;
-export const SWARM_PARALLEL_CEILING = 4;
+export const SWARM_PARALLEL_CEILING = 8;
 
 /** Clamp requested parallel runs to [1, SWARM_PARALLEL_CEILING]. */
 export function clampSwarmParallel(requested: number, fallback = SWARM_PARALLEL_DEFAULT): number {

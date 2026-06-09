@@ -29,6 +29,8 @@ spec:
             - -ec
             - |
               set -euo pipefail
+              source /app/deploy/k8s-git-auth.sh
+              li_git_primary_setup || exit 1
               export LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE=1
               export LI_SDK_LOG_SKIP_TOKEN_DELTAS=0
               export LI_CURSOR_AGENTS_ROOT=/app
@@ -39,10 +41,10 @@ spec:
               export PHYSICS_CODEGEN_MODELS="${PHYSICS_CODEGEN_MODELS:-default,qwen-3.5-9b,qwen-3.5-20b}"
               # Sync workspace (reuse PVC from always-on worker)
               if [[ ! -d /workspace/lic/.git ]]; then
-                gh repo clone li-langverse/lic /workspace/lic || true
+                li_git_clone_repo lic /workspace/lic main || true
               fi
               if [[ ! -d /workspace/benchmarks/.git ]]; then
-                gh repo clone li-langverse/benchmarks /workspace/benchmarks || true
+                li_git_clone_repo benchmarks /workspace/benchmarks main || true
               fi
               cd /workspace/benchmarks/scripts/physics-codegen-matrix
               node run-matrix-live.mjs 2>&1 | tee /workspace/benchmarks/results/physics-codegen-live.log
@@ -55,6 +57,13 @@ spec:
                 secretKeyRef:
                   name: li-agents-secrets
                   key: GH_TOKEN
+                  optional: true
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
+                  optional: true
             - name: GITHUB_TOKEN
               valueFrom:
                 secretKeyRef:

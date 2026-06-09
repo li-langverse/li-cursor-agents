@@ -2,8 +2,14 @@
 # K8s entrypoint: sync studio+lic workspace, run goal-directed-loop until completion, then scale down.
 set -euo pipefail
 
-: "${GH_TOKEN:?GH_TOKEN required}"
-export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
+if [[ -f /config/k8s-git-auth.sh ]]; then
+  # shellcheck source=/dev/null
+  source /config/k8s-git-auth.sh
+else
+  # shellcheck source=k8s-git-auth.sh
+  source "${LI_CURSOR_AGENTS_ROOT:-/app}/deploy/k8s-git-auth.sh"
+fi
+li_git_primary_setup || exit 1
 
 STUDIO_ROOT="${LI_WORLD_STUDIO_TYPOGRAPHY_FX_ANIMATION_STUDIO_ROOT:-/workspace/studio}"
 LIC_ROOT="${LI_WORLD_STUDIO_TYPOGRAPHY_FX_ANIMATION_LIC_ROOT:-/workspace/lic}"
@@ -21,10 +27,6 @@ if [[ -f /config/k8s-goal-loop-common.sh ]]; then
   source /config/k8s-goal-loop-common.sh
 fi
 
-export GH_TOKEN GITHUB_TOKEN
-echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
-gh auth setup-git 2>/dev/null || true
-git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
 git config --global user.email "${LI_GIT_USER_EMAIL:-world-studio@li-langverse.dev}"
 git config --global user.name "${LI_GIT_USER_NAME:-li-world-studio}"
 

@@ -10,9 +10,18 @@ data:
   entrypoint.sh: |
     #!/usr/bin/env bash
     set -euo pipefail
-    : "${GH_TOKEN:?GH_TOKEN required}"
-    export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
-    ORG="${LI_GITHUB_ORG:-li-langverse}"
+    if [[ -f /git-auth/k8s-git-auth.sh ]]; then
+      # shellcheck source=/dev/null
+      source /git-auth/k8s-git-auth.sh
+    elif [[ -f /config/k8s-git-auth.sh ]]; then
+      # shellcheck source=/dev/null
+      source /config/k8s-git-auth.sh
+    else
+      # shellcheck source=/dev/null
+      source /app/deploy/k8s-git-auth.sh
+    fi
+    li_git_primary_setup || exit 1
+    ORG="${LI_GIT_GROUP:-li-langverse}"
     REPO_LIC="${LI_PROOF_EXPLORER_LIC_REPO:-lic}"
     PREFERRED_BRANCH="${LI_PROOF_EXPLORER_BRANCH:-cursor/ph-sci-gpu-chem-dft}"
     FALLBACK_RAW="${LI_PROOF_EXPLORER_BRANCH_FALLBACKS:-cursor/ph-sci-gpu-chem-dft,main}"
@@ -20,10 +29,6 @@ data:
     AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
     GOAL_REL="${LI_PROOF_EXPLORER_GOAL_FILE:-data/goal-directed-sprints/ph-sci-electrochemistry-gpu-roadmap.md}"
     echo "ph-sci-echem-entrypoint: branch=${PREFERRED_BRANCH} goal=${GOAL_REL}"
-    export GH_TOKEN GITHUB_TOKEN
-    echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
-    gh auth setup-git 2>/dev/null || true
-    git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
     git config --global user.email "${LI_GIT_USER_EMAIL:-goal-worker@li-langverse.dev}"
     git config --global user.name "${LI_GIT_USER_NAME:-li-goal-worker}"
 
@@ -42,10 +47,9 @@ data:
       mkdir -p "$(dirname "$LIC_ROOT")"
       if [[ ! -d "$LIC_ROOT/.git" ]]; then
         echo "ph-sci-echem-entrypoint: cloning ${ORG}/${REPO_LIC}"
-        gh repo clone "${ORG}/${REPO_LIC}" "$LIC_ROOT" || {
-          rm -rf "$LIC_ROOT"
-          gh repo clone "${ORG}/${REPO_LIC}" "$LIC_ROOT"
-        }
+        li_git_clone_repo "$REPO_LIC" "$LIC_ROOT" "$PREFERRED_BRANCH"
+      else
+        li_git_ensure_remotes "$LIC_ROOT" "$REPO_LIC"
       fi
       git -C "$LIC_ROOT" fetch origin --prune
       local branch goal_ok=0

@@ -4,6 +4,12 @@ import { parseMaxIdleCycles } from "../org/supervisor-idle.js";
 
 const ORG = "li-langverse";
 
+/** Hard ceiling for PR implementer + reviewer K8s job concurrency. */
+export const ORG_PR_SUPERVISOR_WORKER_CEILING = 16;
+
+/** Spawn one worker per this many implement-queue PRs (aggressive when backlog is large). */
+export const ORG_PR_WORKERS_PER_OPEN = 25;
+
 function truthyEnv(name: string): boolean {
   const v = process.env[name]?.trim().toLowerCase();
   return v === "1" || v === "true" || v === "yes";
@@ -40,13 +46,13 @@ export function orgReviewerSupervisorMaxIdleCycles(): number {
 }
 
 export function orgPrSupervisorMaxWorkers(): number {
-  const n = Number(process.env.LI_ORG_PR_SUPERVISOR_MAX_WORKERS ?? 3);
-  return Number.isFinite(n) && n >= 1 ? Math.min(n, 10) : 3;
+  const n = Number(process.env.LI_ORG_PR_SUPERVISOR_MAX_WORKERS ?? 8);
+  return Number.isFinite(n) && n >= 1 ? Math.min(n, ORG_PR_SUPERVISOR_WORKER_CEILING) : 8;
 }
 
 export function orgReviewerSupervisorMaxWorkers(): number {
-  const n = Number(process.env.LI_ORG_REVIEWER_SUPERVISOR_MAX_WORKERS ?? 3);
-  return Number.isFinite(n) && n >= 1 ? Math.min(n, 10) : 3;
+  const n = Number(process.env.LI_ORG_REVIEWER_SUPERVISOR_MAX_WORKERS ?? 8);
+  return Number.isFinite(n) && n >= 1 ? Math.min(n, ORG_PR_SUPERVISOR_WORKER_CEILING) : 8;
 }
 
 export function orgPrSupervisorImage(): string {
@@ -71,7 +77,7 @@ export function orgPrSupervisorNodeSelector(): Record<string, string> {
 
 export function computeDesiredWorkers(openCount: number, maxWorkers: number): number {
   if (openCount <= 0) return 0;
-  return Math.min(maxWorkers, Math.max(1, Math.ceil(openCount / 50)));
+  return Math.min(maxWorkers, Math.max(1, Math.ceil(openCount / ORG_PR_WORKERS_PER_OPEN)));
 }
 
 export function orgName(): string {

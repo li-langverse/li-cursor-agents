@@ -65,7 +65,11 @@ if [[ "$_store" == "supabase" ]]; then
     fi
   fi
 fi
+# shellcheck source=git-primary-setup.sh
+source "$ROOT/scripts/lib/git-primary-setup.sh"
+li_git_primary_bootstrap "$ROOT" || true
 export GH_TOKEN GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
+export GITLAB_TOKEN LI_VCS_PROVIDER="${LI_VCS_PROVIDER:-gitlab}"
 "$ROOT/scripts/swarm-env-preflight.sh"
 NODE_BIN="$(li_resolve_preferred_node_bin)"
 NPM_DIR=""

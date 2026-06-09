@@ -2,10 +2,16 @@
 # K8s entrypoint: li-research warm index ingest track (li-langverse).
 set -euo pipefail
 
-: "${GH_TOKEN:?GH_TOKEN required (li-langverse only)}"
-export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
+if [[ -f /config/k8s-git-auth.sh ]]; then
+  # shellcheck source=/dev/null
+  source /config/k8s-git-auth.sh
+else
+  # shellcheck source=k8s-git-auth.sh
+  source "${LI_CURSOR_AGENTS_ROOT:-/app}/deploy/k8s-git-auth.sh"
+fi
+li_git_primary_setup || exit 1
 
-ORG="${LI_GITHUB_ORG:-li-langverse}"
+ORG="${LI_GIT_GROUP:-li-langverse}"
 AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
 WORKSPACE="${LI_GOAL_WORKSPACE:-/workspace}"
 BRANCH="${LI_GOAL_BRANCH:-cursor/li-research-r1b}"
@@ -23,25 +29,23 @@ if [[ -f /config/k8s-goal-loop-common.sh ]]; then
   source /config/k8s-goal-loop-common.sh
 fi
 
-export GH_TOKEN GITHUB_TOKEN
-echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
-gh auth setup-git 2>/dev/null || true
-git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
 git config --global user.email "${LI_GIT_USER_EMAIL:-li-research-ingest@li-langverse.dev}"
 git config --global user.name "${LI_GIT_USER_NAME:-li-research-ingest-agent}"
 
+repo_exists() {
+  local repo="$1"
+  git ls-remote "$(li_git_remote_url "$repo")" HEAD >/dev/null 2>&1
+}
+
 clone_or_sync() {
-  local org_repo="$1" dest="$2" branch="$3"
+  local repo="$1" dest="$2" branch="$3"
   mkdir -p "$(dirname "$dest")"
   if [[ ! -d "$dest/.git" ]]; then
-    if ! gh repo view "${org_repo}" >/dev/null 2>&1; then
-      echo "li-research-ingest-entrypoint: waiting for ${org_repo} (product worker creates it)" >&2
+    if ! repo_exists "$repo"; then
+      echo "li-research-ingest-entrypoint: waiting for ${ORG}/${repo} (product worker creates it)" >&2
       return 1
     fi
-    gh repo clone "${org_repo}" "$dest" -- --branch "$branch" 2>/dev/null || {
-      gh repo clone "${org_repo}" "$dest"
-      git -C "$dest" checkout -B "$branch"
-    }
+    li_git_clone_repo "$repo" "$dest" "$branch"
     return 0
   fi
   git -C "$dest" fetch origin --prune
@@ -89,8 +93,8 @@ run_goal_loop() {
 }
 
 sync_workspace() {
-  clone_or_sync "${ORG}/li-research-ingest" "$INGEST_ROOT" "$BRANCH" || true
-  clone_or_sync "${ORG}/lidb" "$LIDB_ROOT" "$BRANCH" || true
+  clone_or_sync "li-research-ingest" "$INGEST_ROOT" "$BRANCH" || true
+  clone_or_sync "lidb" "$LIDB_ROOT" "$BRANCH" || true
 }
 
 seed_goal

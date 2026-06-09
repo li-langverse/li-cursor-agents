@@ -18,9 +18,10 @@ $Bash = "C:\Program Files\Git\bin\bash.exe"
 
 New-Item -ItemType Directory -Force -Path $Logs | Out-Null
 
-# Secrets load order (later wins): .env.github -> li-cursor-agents/.env -> .env
+# Secrets load order (later wins): .env.gitlab -> .env.github -> li-cursor-agents/.env -> .env
 # Empty values are ignored so a blank line cannot wipe an earlier token.
 foreach ($f in @(
+        (Join-Path $Work ".env.gitlab"),
         (Join-Path $Work ".env.github"),
         (Join-Path $Work "li-cursor-agents\.env"),
         (Join-Path $Work ".env")
@@ -259,12 +260,17 @@ function Start-SprintJob {
 
     $key = $env:CURSOR_API_KEY
     if (-not $key) { $key = $env:CURSOR_SDK_KEY }
+    $gl = $env:GITLAB_TOKEN
     $gh = $env:GH_TOKEN
     if (-not $gh) { $gh = $env:GITHUB_TOKEN }
-    $extraExports = ""
+    $extraExports = "export LI_GIT_HOST='gitlab.lilangverse.xyz'`nexport LI_GIT_GROUP='li-langverse'`n"
+    if ($gl) {
+        $extraExports += "export GITLAB_TOKEN='$gl'`n"
+    }
     if ($gh) {
         $extraExports += "export GH_TOKEN='$gh'`nexport GITHUB_TOKEN='$gh'`n"
     }
+    $extraExports += "source ./deploy/k8s-git-auth.sh`nli_git_primary_setup || true`n"
     if ($Def.ExtraEnv) {
         foreach ($ek in $Def.ExtraEnv.Keys) {
             $extraExports += "export $($ek)='$($Def.ExtraEnv[$ek])'`n"
@@ -298,7 +304,7 @@ function Start-SprintJob {
     ) -join "`n"
     if ($DryRun) {
         Write-Host "=== $($Def.Id) (dry-run) ==="
-        $redacted = $inner -replace "export CURSOR_API_KEY='[^']*'", "export CURSOR_API_KEY='***'" -replace "export GH_TOKEN='[^']*'", "export GH_TOKEN='***'" -replace "export GITHUB_TOKEN='[^']*'", "export GITHUB_TOKEN='***'"
+        $redacted = $inner -replace "export CURSOR_API_KEY='[^']*'", "export CURSOR_API_KEY='***'" -replace "export GITLAB_TOKEN='[^']*'", "export GITLAB_TOKEN='***'" -replace "export GH_TOKEN='[^']*'", "export GH_TOKEN='***'" -replace "export GITHUB_TOKEN='[^']*'", "export GITHUB_TOKEN='***'"
         Write-Host $redacted
         Write-Host "  log: $log"
         return

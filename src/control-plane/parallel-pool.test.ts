@@ -19,7 +19,7 @@ test("swarmMaxParallelFromEnv re-exports capped parser", () => {
   const prevParallel = process.env.LI_SWARM_MAX_PARALLEL;
   const prevSdk = process.env.LI_SDK_MAX_CONCURRENT;
   process.env.LI_SWARM_MAX_PARALLEL = "8";
-  assert.equal(swarmMaxParallelFromEnv(), 4);
+  assert.equal(swarmMaxParallelFromEnv(), 8);
   delete process.env.LI_SWARM_MAX_PARALLEL;
   delete process.env.LI_SDK_MAX_CONCURRENT;
   assert.equal(swarmMaxParallelFromEnv(), 4);

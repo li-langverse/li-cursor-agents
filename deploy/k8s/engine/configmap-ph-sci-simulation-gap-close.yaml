@@ -17,6 +17,8 @@ data:
   LI_CURSOR_AGENTS_ROOT: "/app"
   LI_PROOF_EXPLORER_WORKFLOW_REPO: "lic"
   LI_PROOF_EXPLORER_BRANCH: "main"
+  LI_GIT_HOST: "gitlab.lilangverse.xyz"
+  LI_GIT_GROUP: "li-langverse"
   LI_GITHUB_ORG: "li-langverse"
   LI_PROOF_EXPLORER_LIC_REPO: "lic"
   LI_PROOF_EXPLORER_LOOP_SLEEP_SEC: "120"

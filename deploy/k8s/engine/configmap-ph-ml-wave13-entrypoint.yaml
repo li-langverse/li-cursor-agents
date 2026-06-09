@@ -10,9 +10,18 @@ data:
   entrypoint.sh: |
     #!/usr/bin/env bash
     set -euo pipefail
-    : "${GH_TOKEN:?GH_TOKEN required}"
-    export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
-    ORG="${LI_GITHUB_ORG:-li-langverse}"
+    if [[ -f /git-auth/k8s-git-auth.sh ]]; then
+      # shellcheck source=/dev/null
+      source /git-auth/k8s-git-auth.sh
+    elif [[ -f /config/k8s-git-auth.sh ]]; then
+      # shellcheck source=/dev/null
+      source /config/k8s-git-auth.sh
+    else
+      # shellcheck source=/dev/null
+      source /app/deploy/k8s-git-auth.sh
+    fi
+    li_git_primary_setup || exit 1
+    ORG="${LI_GIT_GROUP:-li-langverse}"
     REPO_LIC="${LI_PROOF_EXPLORER_LIC_REPO:-lic}"
     REPO_BENCHMARKS="${LI_BENCHMARKS_REPO:-benchmarks}"
     PREFERRED_BRANCH="${LI_PROOF_EXPLORER_BRANCH:-main}"
@@ -35,10 +44,6 @@ data:
       find /usr -name 'libopenblas.so*' 2>/dev/null | head -3 || true
     }
     ensure_openblas
-    export GH_TOKEN GITHUB_TOKEN
-    echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
-    gh auth setup-git 2>/dev/null || true
-    git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
     git config --global user.email "${LI_GIT_USER_EMAIL:-goal-worker@li-langverse.dev}"
     git config --global user.name "${LI_GIT_USER_NAME:-li-goal-worker}"
 
@@ -57,10 +62,9 @@ data:
       mkdir -p "$(dirname "$LIC_ROOT")"
       if [[ ! -d "$LIC_ROOT/.git" ]]; then
         echo "ph-ml-wave13-entrypoint: cloning ${ORG}/${REPO_LIC}"
-        gh repo clone "${ORG}/${REPO_LIC}" "$LIC_ROOT" || {
-          rm -rf "$LIC_ROOT"
-          gh repo clone "${ORG}/${REPO_LIC}" "$LIC_ROOT"
-        }
+        li_git_clone_repo "$REPO_LIC" "$LIC_ROOT" "$PREFERRED_BRANCH"
+      else
+        li_git_ensure_remotes "$LIC_ROOT" "$REPO_LIC"
       fi
       git -C "$LIC_ROOT" fetch origin --prune
       local branch goal_ok=0
@@ -88,15 +92,11 @@ data:
     sync_benchmarks_repo() {
       if [[ ! -d "$BENCHMARKS_ROOT/.git" ]]; then
         echo "ph-ml-wave13-entrypoint: cloning ${ORG}/${REPO_BENCHMARKS}"
-        if gh repo clone "${ORG}/${REPO_BENCHMARKS}" "$BENCHMARKS_ROOT" -- --branch "$BENCHMARKS_BRANCH" 2>/dev/null; then
-          return 0
-        fi
-        rm -rf "$BENCHMARKS_ROOT"
-        gh repo clone "${ORG}/${REPO_BENCHMARKS}" "$BENCHMARKS_ROOT"
-        git -C "$BENCHMARKS_ROOT" checkout -B "$BENCHMARKS_BRANCH" 2>/dev/null || git -C "$BENCHMARKS_ROOT" checkout -B "$BENCHMARKS_BRANCH" origin/HEAD
+        li_git_clone_repo "$REPO_BENCHMARKS" "$BENCHMARKS_ROOT" "$BENCHMARKS_BRANCH"
         return 0
       fi
       echo "ph-ml-wave13-entrypoint: updating benchmarks clone"
+      li_git_ensure_remotes "$BENCHMARKS_ROOT" "$REPO_BENCHMARKS"
       git -C "$BENCHMARKS_ROOT" fetch origin --prune
       if git -C "$BENCHMARKS_ROOT" show-ref --verify --quiet "refs/remotes/origin/${BENCHMARKS_BRANCH}"; then
         git -C "$BENCHMARKS_ROOT" checkout -f -B "$BENCHMARKS_BRANCH" "origin/${BENCHMARKS_BRANCH}"

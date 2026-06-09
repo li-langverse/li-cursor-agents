@@ -19,6 +19,8 @@ data:
   WARM_INGEST_MIN_BYTES: "1073741824"
   LI_GOAL_DEPLOYMENT_NAME: "li-research-ingest"
   LI_GOAL_NAMESPACE: "li-swarm"
+  LI_GIT_HOST: "gitlab.lilangverse.xyz"
+  LI_GIT_GROUP: "li-langverse"
   LI_GITHUB_ORG: "li-langverse"
   LI_CURSOR_AGENTS_ROOT: "/app"
   LI_CONTROL_PLANE_STORE: "disk"

@@ -19,7 +19,11 @@ if [[ -f "$ROOT/.env" ]]; then set -a; source "$ROOT/.env"; set +a; fi
 li_resolve_env_paths "$ROOT"
 if [[ -f "$ENV_FILE" ]]; then set -a; source "$ENV_FILE"; set +a; fi
 elif [[ -f "$LI_GITHUB_ENV" ]]; then set -a; source "$LI_GITHUB_ENV"; set +a; fi
+# shellcheck source=lib/git-primary-setup.sh
+source "$ROOT/scripts/lib/git-primary-setup.sh"
+li_git_primary_bootstrap "$ROOT" || true
 export GH_TOKEN GITHUB_TOKEN="${GITHUB_TOKEN:-${GH_TOKEN:-}}"
+export GITLAB_TOKEN LI_VCS_PROVIDER="${LI_VCS_PROVIDER:-gitlab}"
 # Production stack uses Cursor SDK; tests set CURSOR_MOCK=1 explicitly.
 unset CURSOR_MOCK
 export LI_AUTO_START_SUPERVISOR=0
@@ -111,6 +115,8 @@ nohup env \
   LI_AGENTS_COOLDOWN_MS="$LI_AGENTS_COOLDOWN_MS" \
   LI_SUPERVISOR_MAX_TASKS="$LI_SUPERVISOR_MAX_TASKS" \
   LI_AGENT_DASHBOARD_PORT="$PORT" \
+  GITLAB_TOKEN="${GITLAB_TOKEN:-}" \
+  LI_VCS_PROVIDER="${LI_VCS_PROVIDER:-gitlab}" \
   GH_TOKEN="${GH_TOKEN:-}" \
   GITHUB_TOKEN="${GITHUB_TOKEN:-}" \
   CURSOR_API_KEY="${CURSOR_API_KEY:-}" \

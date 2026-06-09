@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { ensureLicPrebuild } from "../preflight/implementer-preflight-gate.js";
-import { runCmd } from "../repo-workflow/git.js";
+import { gitCloneRepo, runCmd } from "../repo-workflow/git.js";
 import { workerConsole } from "../worker/worker-console.js";
 import {
   proofExplorerGoalFile,
@@ -68,21 +68,17 @@ export function syncProofExplorerLicSmart(): { branch: string; ok: boolean; deta
 
 export function syncBenchmarksRepo(): { ok: boolean; detail: string } {
   const root = process.env.BENCHMARKS_ROOT?.trim() || "/workspace/benchmarks";
-  const org = process.env.LI_GITHUB_ORG?.trim() || "li-langverse";
   const repo = process.env.LI_BENCHMARKS_REPO?.trim() || "benchmarks";
   const branch = process.env.LI_BENCHMARKS_BRANCH?.trim() || "main";
-  const token = process.env.GH_TOKEN?.trim() || process.env.GITHUB_TOKEN?.trim();
 
   if (!existsSync(join(root, ".git"))) {
-    if (!token) {
-      return { ok: false, detail: "benchmarks missing and no GH_TOKEN for clone" };
+    const clone = gitCloneRepo(repo, root, branch, "/");
+    if (!clone.ok) {
+      return {
+        ok: false,
+        detail: clone.stderr || clone.stdout || "benchmarks missing and no GITLAB_TOKEN for clone",
+      };
     }
-    runCmd(
-      "gh",
-      ["repo", "clone", `${org}/${repo}`, root, "--", "--branch", branch],
-      "/",
-      false,
-    );
   } else {
     runCmd("git", ["fetch", "origin", "--prune"], root, false);
     const ref = runCmd(

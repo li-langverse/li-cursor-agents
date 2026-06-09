@@ -40,10 +40,17 @@ spec:
                 secretKeyRef:
                   name: li-agents-secrets
                   key: GH_TOKEN
+                  optional: true
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
+                  optional: true
             - name: GIT_REF
               value: "main"
             - name: GIT_REPO
-              value: "https://github.com/li-langverse/li-cursor-agents.git"
+              value: "https://gitlab.lilangverse.xyz/li-langverse/li-cursor-agents.git"
           command:
             - sh
             - -lc
@@ -51,7 +58,10 @@ spec:
               set -eu
               ref="${GIT_REF:-main}"
               dest=/workspace/li-cursor-agents
-              url="${GIT_REPO/https:\/\//https://x-access-token:${GH_TOKEN}@}"
+              tok="${GITLAB_TOKEN:-$GH_TOKEN}"
+              prefix="oauth2"
+              if [ -z "${GITLAB_TOKEN:-}" ]; then prefix="x-access-token"; fi
+              url="${GIT_REPO/https:\/\//https://${prefix}:${tok}@}"
               git clone --depth 1 --branch "$ref" "$url" "$dest" \
                 || git clone --depth 1 "$url" "$dest"
               test -f "$dest/deploy/Dockerfile"
@@ -69,6 +79,13 @@ spec:
                 secretKeyRef:
                   name: li-agents-secrets
                   key: GH_TOKEN
+                  optional: true
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
+                  optional: true
             - name: IMAGE
               value: ghcr.io/li-langverse/li-cursor-agents:latest
             - name: GHCR_USER

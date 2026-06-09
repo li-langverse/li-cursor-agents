@@ -1,4 +1,4 @@
-﻿# Always-on World Studio GUI demo-recorder goal-directed agent (engine node, prebuilt image + PVC workspace).
+# Always-on World Studio GUI demo-recorder goal-directed agent (engine node, prebuilt image + PVC workspace).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -45,29 +45,51 @@ spec:
                 secretKeyRef:
                   name: li-agents-secrets
                   key: GH_TOKEN
+                  optional: true
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
+                  optional: true
             - name: ORG
               value: "li-langverse"
             - name: STUDIO_REPO
-              value: "https://github.com/li-langverse/studio.git"
+              value: "https://gitlab.lilangverse.xyz/li-langverse/studio.git"
             - name: LIC_REPO
-              value: "https://github.com/li-langverse/lic.git"
+              value: "https://gitlab.lilangverse.xyz/li-langverse/lic.git"
           command:
             - sh
             - -lc
             - |
               set -eu
+              git config --global http.https://gitlab.lilangverse.xyz/.sslVerify false
               auth_url() {
-                echo "$1" | sed "s#https://#https://x-access-token:${GH_TOKEN}@#"
+                tok="${GITLAB_TOKEN:-$GH_TOKEN}"
+                prefix="oauth2"
+                if [ -z "${GITLAB_TOKEN:-}" ]; then prefix="x-access-token"; fi
+                echo "$1" | sed "s#https://#https://${prefix}:${tok}@#"
+              }
+              migrate_origin() {
+                dir="$1" repo="$2"
+                [ -d "$dir/.git" ] || return 0
+                url="$(git -C "$dir" remote get-url origin 2>/dev/null || true)"
+                case "$url" in
+                  *github.com*) git -C "$dir" remote set-url origin "$(auth_url "https://gitlab.lilangverse.xyz/li-langverse/${repo}.git")" ;;
+                  *gitlab.lilangverse.xyz*) git -C "$dir" remote set-url origin "$(auth_url "https://gitlab.lilangverse.xyz/li-langverse/${repo}.git")" ;;
+                esac
               }
               mkdir -p /workspace
               if [ ! -d /workspace/studio/.git ]; then
                 git clone --depth 1 "$(auth_url "$STUDIO_REPO")" /workspace/studio
               else
+                migrate_origin /workspace/studio studio
                 git -C /workspace/studio fetch origin --prune
               fi
               if [ ! -d /workspace/lic/.git ]; then
                 git clone --depth 1 "$(auth_url "$LIC_REPO")" /workspace/lic
               else
+                migrate_origin /workspace/lic lic
                 git -C /workspace/lic fetch origin --prune
               fi
           volumeMounts:
@@ -87,6 +109,13 @@ spec:
                 secretKeyRef:
                   name: li-agents-secrets
                   key: GH_TOKEN
+                  optional: true
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
+                  optional: true
             - name: GITHUB_TOKEN
               valueFrom:
                 secretKeyRef:

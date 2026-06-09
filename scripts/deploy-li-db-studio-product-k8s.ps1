@@ -39,10 +39,12 @@ kubectl apply -f (Join-Path $K8s "rbac-goal-workers-scale.yaml")
 kubectl apply -f (Join-Path $K8s "configmap-li-db-studio-product.yaml")
 kubectl apply -f (Join-Path $K8s "deployment-li-db-studio-product.yaml")
 
-$goalProductSrc = "C:\Users\Julian\Documents\Programming\klaut.pro\goals\wp-li-product.md"
-if (-not (Test-Path $goalProductSrc)) {
-    $goalProductSrc = Join-Path $Root "data\goal-directed-sprints\wp-li-product.md"
-}
+$goalProductSrc = @(
+    "C:\Users\Julian\Documents\Programming\klaut.pro\klaut-pro\goals\wp-li-product.md",
+    "C:\Users\Julian\Documents\Programming\klaut.pro\goals\wp-li-product.md",
+    (Join-Path $Root "data\goal-directed-sprints\wp-li-product.md")
+) | Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $goalProductSrc) { Write-Error "wp-li-product.md not found in klaut.pro or data/goal-directed-sprints" }
 $goalProduct = Join-Path $env:TEMP "wp-li-product-lf.md"
 $utf8 = New-Object System.Text.UTF8Encoding $false
 [System.IO.File]::WriteAllText($goalProduct, ([System.IO.File]::ReadAllText($goalProductSrc)).Replace("`r`n", "`n"), $utf8)

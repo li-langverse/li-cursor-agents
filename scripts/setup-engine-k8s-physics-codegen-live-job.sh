@@ -4,15 +4,14 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 NS=li-swarm
 K8S="$ROOT/deploy/k8s/engine"
+# shellcheck source=lib/apply-li-agents-secrets.sh
+source "$ROOT/scripts/lib/apply-li-agents-secrets.sh"
 
 if ! kubectl config current-context &>/dev/null; then
   echo "ERROR: kubectl has no current-context" >&2
   exit 1
 fi
-if [[ -z "${GH_TOKEN:-}" && -z "${GITHUB_TOKEN:-}" ]]; then
-  echo "ERROR: GH_TOKEN required" >&2
-  exit 1
-fi
+require_li_agents_tokens || exit 1
 if [[ -z "${CURSOR_API_KEY:-}" ]]; then
   echo "ERROR: CURSOR_API_KEY required" >&2
   exit 1
@@ -37,6 +36,7 @@ kubectl -n "$NS" cp "$ROOT/dist/agent-run-trace.js" "$POD:/app/dist/agent-run-tr
   echo "WARN: could not update /app/dist — image may lack token_usage" >&2
 }
 
+apply_li_agents_secrets "$NS"
 kubectl -n "$NS" delete job li-physics-codegen-live --ignore-not-found
 kubectl apply -f "$K8S/job-physics-codegen-live.yaml"
 echo "Job started. Logs:"

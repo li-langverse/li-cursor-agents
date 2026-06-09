@@ -8,6 +8,9 @@ metadata:
     app.kubernetes.io/name: li-world-studio-gui-demo-recorder
     app.kubernetes.io/component: goal-directed-agent
 data:
+  LI_GIT_HOST: "gitlab.lilangverse.xyz"
+  LI_GIT_GROUP: "li-langverse"
+  LI_GIT_SSL_VERIFY: "0"
   LI_WORLD_STUDIO_GUI_DEMO_RECORDER_ALWAYS_ON: "1"
   LI_WORLD_STUDIO_GUI_DEMO_RECORDER_LOOP_SLEEP_SEC: "60"
 

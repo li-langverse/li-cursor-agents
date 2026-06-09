@@ -42,6 +42,13 @@ spec:
                 secretKeyRef:
                   name: li-agents-secrets
                   key: GH_TOKEN
+                  optional: true
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
+                  optional: true
             - name: GITHUB_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -71,6 +78,9 @@ spec:
               mountPath: /workspace
             - name: entrypoint
               mountPath: /scripts
+            - name: git-auth
+              mountPath: /git-auth
+              readOnly: true
       volumes:
         - name: workspace
           persistentVolumeClaim:
@@ -78,4 +88,8 @@ spec:
         - name: entrypoint
           configMap:
             name: li-ph-ml-wave13-entrypoint
+            defaultMode: 0755
+        - name: git-auth
+          configMap:
+            name: li-k8s-git-auth
             defaultMode: 0755

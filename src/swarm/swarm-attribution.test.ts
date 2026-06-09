@@ -54,7 +54,10 @@ test("formatCommitMessageWithAttribution appends trailers once", () => {
 });
 
 test("prKeyFromUrl and parsePrNumberFromUrl", () => {
-  const url = "https://github.com/li-langverse/li-demo/pull/42";
-  assert.equal(prKeyFromUrl(url), "li-demo#42");
-  assert.equal(parsePrNumberFromUrl(url), 42);
+  const gh = "https://github.com/li-langverse/li-demo/pull/42";
+  assert.equal(prKeyFromUrl(gh), "li-demo#42");
+  assert.equal(parsePrNumberFromUrl(gh), 42);
+  const gl = "https://gitlab.lilangverse.xyz/li-langverse/lic/-/merge_requests/7";
+  assert.equal(prKeyFromUrl(gl), "lic#7");
+  assert.equal(parsePrNumberFromUrl(gl), 7);
 });

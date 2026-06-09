@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+# GitLab-primary git auth for K8s goal-directed workers (org policy).
+# origin → GitLab; github → read-only mirror (fetch only). GH_TOKEN for gh CLI / GHCR only.
+set -euo pipefail
+
+# GitHub-primary for cap-jmk-launchpad / klaut track (not li-langverse GitLab policy).
+li_git_github_primary_setup() {
+  LI_GIT_HOST="${LI_GIT_HOST:-github.com}"
+  LI_GIT_GROUP="${LI_GIT_GROUP:-${LI_GITHUB_ORG:-cap-jmk-launchpad}}"
+  LI_GITHUB_ORG="${LI_GITHUB_ORG:-$LI_GIT_GROUP}"
+  LI_GIT_SCHEME="${LI_GIT_SCHEME:-https}"
+  LI_GIT_REQUIRE_GITLAB=0
+
+  if [[ -z "${GH_TOKEN:-}" ]]; then
+    echo "ERROR: GH_TOKEN required for GitHub-primary klaut track (klaut-agents-secrets)" >&2
+    return 1
+  fi
+
+  LI_GIT_TOKEN="$GH_TOKEN"
+  LI_GIT_AUTH_PREFIX="x-access-token"
+  export LI_GIT_HOST LI_GIT_GROUP LI_GIT_TOKEN LI_GIT_AUTH_PREFIX LI_GIT_SCHEME LI_GITHUB_ORG LI_GIT_REQUIRE_GITLAB
+
+  git config --global url."${LI_GIT_SCHEME}://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${LI_GIT_HOST}/".insteadOf "${LI_GIT_SCHEME}://${LI_GIT_HOST}/"
+
+  export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
+  if command -v gh >/dev/null 2>&1; then
+    echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
+    gh auth setup-git 2>/dev/null || true
+  fi
+  git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+}
+
+li_git_primary_setup() {
+  LI_GIT_HOST="${LI_GIT_HOST:-gitlab.lilangverse.xyz}"
+  LI_GIT_GROUP="${LI_GIT_GROUP:-li-langverse}"
+  LI_GIT_SCHEME="${LI_GIT_SCHEME:-https}"
+  LI_GITHUB_ORG="${LI_GITHUB_ORG:-li-langverse}"
+
+  if [[ "${LI_GIT_REQUIRE_GITLAB:-1}" == "1" && -z "${GITLAB_TOKEN:-}" ]]; then
+    if [[ -n "${GH_TOKEN:-}" ]]; then
+      echo "k8s-git-auth: WARN GITLAB_TOKEN missing — falling back to GitHub for git (set GITLAB_TOKEN in li-agents-secrets)" >&2
+    else
+      echo "ERROR: GITLAB_TOKEN required for GitLab-primary git (org policy)" >&2
+      return 1
+    fi
+  fi
+
+  if [[ -n "${GITLAB_TOKEN:-}" ]]; then
+    LI_GIT_TOKEN="$GITLAB_TOKEN"
+    LI_GIT_AUTH_PREFIX="oauth2"
+  elif [[ -n "${GH_TOKEN:-}" ]]; then
+    LI_GIT_TOKEN="$GH_TOKEN"
+    LI_GIT_HOST="${LI_GIT_HOST_LEGACY:-github.com}"
+    LI_GIT_GROUP="${LI_GITHUB_ORG}"
+    LI_GIT_AUTH_PREFIX="x-access-token"
+  else
+    echo "ERROR: GITLAB_TOKEN or GH_TOKEN required" >&2
+    return 1
+  fi
+
+  export LI_GIT_HOST LI_GIT_GROUP LI_GIT_TOKEN LI_GIT_AUTH_PREFIX LI_GIT_SCHEME LI_GITHUB_ORG
+
+  git config --global user.email "${LI_GIT_USER_EMAIL:-goal-worker@li-langverse.dev}"
+  git config --global user.name "${LI_GIT_USER_NAME:-li-goal-worker}"
+  git config --global url."${LI_GIT_SCHEME}://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${LI_GIT_HOST}/".insteadOf "${LI_GIT_SCHEME}://${LI_GIT_HOST}/"
+
+  if [[ -n "${GH_TOKEN:-}" ]]; then
+    export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
+    if command -v gh >/dev/null 2>&1; then
+      echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
+      gh auth setup-git 2>/dev/null || true
+    fi
+    git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+  fi
+}
+
+li_git_remote_url() {
+  local repo="$1"
+  echo "${LI_GIT_SCHEME}://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${LI_GIT_HOST}/${LI_GIT_GROUP}/${repo}.git"
+}
+
+li_git_github_mirror_url() {
+  local repo="$1"
+  if [[ -n "${GH_TOKEN:-}" ]]; then
+    echo "https://x-access-token:${GH_TOKEN}@github.com/${LI_GITHUB_ORG}/${repo}.git"
+  else
+    echo "https://github.com/${LI_GITHUB_ORG}/${repo}.git"
+  fi
+}
+
+li_git_ensure_remotes() {
+  local dest="$1"
+  local repo="${2:-}"
+  [[ -d "$dest/.git" ]] || return 0
+  if [[ -z "$repo" ]]; then
+    repo="$(basename "$dest")"
+  fi
+
+  local gitlab_url origin_url
+  gitlab_url="$(li_git_remote_url "$repo")"
+  origin_url="$(git -C "$dest" remote get-url origin 2>/dev/null || true)"
+
+  if [[ -z "$origin_url" ]]; then
+    git -C "$dest" remote add origin "$gitlab_url"
+  elif [[ "$origin_url" == *"github.com"* ]]; then
+    echo "k8s-git-auth: migrate origin github → gitlab for ${dest} (${repo})"
+    git -C "$dest" remote set-url origin "$gitlab_url"
+  elif [[ "$origin_url" != *"${LI_GIT_HOST}"* ]]; then
+    git -C "$dest" remote set-url origin "$gitlab_url"
+  fi
+
+  local gh_url
+  gh_url="$(li_git_github_mirror_url "$repo")"
+  if git -C "$dest" remote get-url github >/dev/null 2>&1; then
+    git -C "$dest" remote set-url github "$gh_url"
+  else
+    git -C "$dest" remote add github "$gh_url" 2>/dev/null || true
+  fi
+  git -C "$dest" config remote.github.fetch "+refs/heads/*:refs/remotes/github/*"
+  git -C "$dest" remote set-url --push github DISABLED 2>/dev/null || \
+    git -C "$dest" config remote.github.pushurl "DISABLED"
+}
+
+li_git_clone_repo() {
+  local repo="$1" dest="$2" branch="${3:-main}"
+  local url
+  url="$(li_git_remote_url "$repo")"
+  mkdir -p "$(dirname "$dest")"
+  if [[ ! -d "$dest/.git" ]]; then
+    if git clone --branch "$branch" "$url" "$dest" 2>/dev/null; then
+      li_git_ensure_remotes "$dest" "$repo"
+      return 0
+    fi
+    rm -rf "$dest"
+    git clone "$url" "$dest"
+    git -C "$dest" checkout -B "$branch" "origin/${branch}" 2>/dev/null \
+      || git -C "$dest" checkout -B "$branch" origin/HEAD 2>/dev/null \
+      || git -C "$dest" checkout -B "$branch"
+    li_git_ensure_remotes "$dest" "$repo"
+    return 0
+  fi
+  li_git_ensure_remotes "$dest" "$repo"
+  git -C "$dest" fetch origin --prune
+  if git -C "$dest" show-ref --verify --quiet "refs/remotes/origin/${branch}"; then
+    git -C "$dest" checkout -f -B "$branch" "origin/${branch}"
+    git -C "$dest" reset --hard "origin/${branch}"
+  else
+    git -C "$dest" checkout -f -B "$branch"
+  fi
+}
+
+li_git_sync_repo() {
+  local repo="$1" dest="$2" branch="${3:-main}"
+  li_git_clone_repo "$repo" "$dest" "$branch"
+}
+
+# Try branch names in order (deduped); rm dest between failed attempts.
+li_git_clone_repo_try_branches() {
+  local repo="$1" dest="$2"
+  shift 2
+  local branch seen="" b
+  for branch in "$@"; do
+    branch="${branch// /}"
+    [[ -z "$branch" ]] && continue
+    [[ " $seen " == *" $branch "* ]] && continue
+    seen="$seen $branch"
+    if li_git_clone_repo "$repo" "$dest" "$branch"; then
+      return 0
+    fi
+    rm -rf "$dest"
+  done
+  return 1
+}

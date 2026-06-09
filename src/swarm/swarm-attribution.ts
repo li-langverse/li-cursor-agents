@@ -80,14 +80,18 @@ export function parseAttributionFromText(text: string): SwarmAttribution | null 
 }
 
 export function prKeyFromUrl(url: string): string | null {
-  const m = /github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/i.exec(url);
-  if (!m) return null;
-  return `${m[2]}#${m[3]}`;
+  const gh = /github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/i.exec(url);
+  if (gh) return `${gh[2]}#${gh[3]}`;
+  const gl = /\/([^/]+)\/-\/merge_requests\/(\d+)/i.exec(url);
+  if (gl) return `${gl[1]}#${gl[2]}`;
+  return null;
 }
 
 export function parsePrNumberFromUrl(url: string): number | undefined {
-  const m = /github\.com\/[^/]+\/[^/]+\/pull\/(\d+)/i.exec(url);
-  return m ? Number(m[1]) : undefined;
+  const gh = /github\.com\/[^/]+\/[^/]+\/pull\/(\d+)/i.exec(url);
+  if (gh) return Number(gh[1]);
+  const gl = /\/merge_requests\/(\d+)/i.exec(url);
+  return gl ? Number(gl[1]) : undefined;
 }
 
 export function issueKeyFromUrl(url: string): string | null {
