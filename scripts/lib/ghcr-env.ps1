@@ -55,7 +55,7 @@ function Resolve-GitHubBackupTokenFromEnv {
 }
 
 function Resolve-GhcrPushToken {
-    foreach ($name in @("GHCR_PUSH_TOKEN", "GHCR_TOKEN", "GH_TOKEN_OVERVIEW_PAGE")) {
+    foreach ($name in @("GHCR_PUSH_TOKEN", "GHCR_TOKEN", "GH_PACKAGES", "GH_TOKEN_OVERVIEW_PAGE")) {
         $v = (Get-Item -Path "env:$name" -ErrorAction SilentlyContinue).Value
         if ($v -and $v -match '^ghp_') { return @{ Token = $v; Source = $name } }
     }
