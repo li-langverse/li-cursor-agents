@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 # K8s entrypoint: sync workspace repos + resilient goal-directed-loop for li-toml config migration.
 set -euo pipefail
 
@@ -106,10 +106,11 @@ run_goal_loop() {
 
 sync_workspace
 seed_loop_state
-test -f "$(resolve_goal_file)" || {
+goal_path="$(resolve_goal_file)" || true
+if [[ -z "${goal_path:-}" || ! -f "$goal_path" ]]; then
   echo "li-toml-config-entrypoint: missing goal file" >&2
   exit 1
-}
+fi
 
 GOAL_PATH="$(resolve_goal_file)"
 
@@ -125,6 +126,6 @@ while true; do
     finish_on_goal_complete
   fi
 
-  echo "li-toml-config-entrypoint: loop stopped without completion (exit $rc) — retry in ${LOOP_SLEEP}s" >&2
+  echo "li-toml-config-entrypoint: loop stopped without completion (exit $rc) â€” retry in ${LOOP_SLEEP}s" >&2
   sleep "$LOOP_SLEEP"
 done

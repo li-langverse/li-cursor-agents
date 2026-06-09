@@ -1,4 +1,4 @@
-# Apply GitLab-primary k8s-git-auth + entrypoint configmaps and restart goal-directed workers.
+﻿# Apply GitLab-primary k8s-git-auth + entrypoint configmaps and restart goal-directed workers.
 param(
     [string]$KubeConfig = "$env:USERPROFILE\.kube\config-homelab",
     [string]$Namespace = "li-swarm"
@@ -83,7 +83,15 @@ Write-Host "==> refresh goal-loop bundles"
 $proofExtra = @{ "entrypoint.sh" = (Join-Path $Root "deploy\proof-explorer-k8s-entrypoint.sh") }
 . $BundleScript -Root $Root -Namespace $Namespace -ConfigMapName "li-proof-explorer-bundle" -ExtraFiles $proofExtra
 
-$tomlExtra = @{ "entrypoint.sh" = (Join-Path $Root "deploy\li-toml-config-entrypoint.sh") }
+$tomlGoal = Join-Path $Root "data\goal-directed-sprints\li-toml-config-migration.md"
+$tomlState = Join-Path $Root "data\li-toml-config-loop\state.json"
+$tomlLog = Join-Path $Root "data\li-toml-config-loop\iteration-log.md"
+$tomlExtra = @{
+    "entrypoint.sh"               = (Join-Path $Root "deploy\li-toml-config-entrypoint.sh")
+    "li-toml-config-migration.md" = $tomlGoal
+    "state.json"                  = $tomlState
+    "iteration-log.md"            = $tomlLog
+}
 . $BundleScript -Root $Root -Namespace $Namespace -ConfigMapName "li-li-toml-config-bundle" -ExtraFiles $tomlExtra
 
 $libBundleDir = Join-Path $env:TEMP "li-libernetes-git-bundle"
@@ -132,3 +140,4 @@ foreach ($w in $workers) {
 }
 
 Write-Host "Done. Verify logs: no primary github.com fetches for lic/benchmarks."
+

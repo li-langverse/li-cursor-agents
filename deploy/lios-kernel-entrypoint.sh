@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 set -euo pipefail
 
 if [[ -f /git-auth/k8s-git-auth.sh ]]; then
@@ -103,7 +103,11 @@ run_goal_loop() {
 
 sync_workspace
 seed_loop_state
-test -f "$(resolve_goal_file)" || { echo missing goal >&2; exit 1; }
+goal_path="$(resolve_goal_file)" || true
+if [[ -z "${goal_path:-}" || ! -f "$goal_path" ]]; then
+  echo "lios-kernel-entrypoint: missing goal file" >&2
+  exit 1
+fi
 
 while true; do
   sync_workspace

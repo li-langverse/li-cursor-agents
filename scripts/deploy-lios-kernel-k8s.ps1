@@ -1,4 +1,4 @@
-# Deploy li-lios-kernel goal-directed agent on homelab engine cluster.
+﻿# Deploy li-lios-kernel goal-directed agent on homelab engine cluster.
 param(
     [string]$KubeConfig = "$env:USERPROFILE\.kube\config-homelab",
     [string]$Namespace = "li-swarm",
@@ -21,7 +21,7 @@ if (-not $env:GH_TOKEN) { Write-Error "GH_TOKEN required (gh CLI / GHCR pull)" }
 $env:KUBECONFIG = $KubeConfig
 $clusterGitlabToken = kubectl -n $Namespace get secret li-agents-secrets -o jsonpath='{.data.GITLAB_TOKEN}' 2>$null
 if (-not $env:GITLAB_TOKEN -and -not $clusterGitlabToken) {
-    Write-Warning "GITLAB_TOKEN not set locally or in li-agents-secrets — worker will fall back to GitHub for git"
+    Write-Warning "GITLAB_TOKEN not set locally or in li-agents-secrets - worker will fall back to GitHub for git"
 } elseif (-not $env:GITLAB_TOKEN -and $clusterGitlabToken) {
     Write-Host "GITLAB_TOKEN from cluster secret li-agents-secrets (local env not required)"
 }
@@ -34,13 +34,15 @@ kubectl apply -f (Join-Path $K8s "rbac-goal-workers-scale.yaml")
 kubectl apply -f (Join-Path $K8s "deployment-lios-kernel.yaml")
 
 $goal = Join-Path $Root "data\goal-directed-sprints\lios-kernel-m1.md"
-$state = Join-Path $Root "data\lios-kernel-loop\state.json"
+$stateDir = Join-Path $Root "data\lios-kernel-loop"
+$state = Join-Path $stateDir "state.json"
+New-Item -ItemType Directory -Force -Path $stateDir | Out-Null
 $log = Join-Path $Root "data\lios-kernel-loop\iteration-log.md"
 if (-not (Test-Path $state)) {
-    '{"phase":"m1-complete"}' | Set-Content -Encoding utf8NoBOM $state
+    '{"phase":"m1-complete"}' | Set-Content -Encoding utf8 $state
 }
 if (-not (Test-Path $log)) {
-    Set-Content -Encoding utf8NoBOM -Path $log -Value "# lios-kernel loop`n"
+    Set-Content -Encoding utf8 -Path $log -Value "# lios-kernel loop`n"
 }
 
 $extra = @{
@@ -80,3 +82,6 @@ Write-Host ""
 Write-Host "=== li-lios-kernel deployed ==="
 Write-Host "  kubectl -n $Namespace get pods -l app=li-lios-kernel -w"
 Write-Host "  kubectl -n $Namespace logs deploy/li-lios-kernel --tail=80 -f"
+
+
+
