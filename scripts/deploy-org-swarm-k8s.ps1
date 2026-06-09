@@ -83,28 +83,40 @@ kubectl apply -f (Join-Path $K8s "namespace.yaml")
 
 $swarmTok = $env:GH_SWARM_TOKEN
 if (-not $swarmTok) { $swarmTok = $env:GH_TOKEN }
-if (-not $swarmTok) { Write-Error "GH_SWARM_TOKEN required (set in li/.env)" }
+$gitlabTok = $env:GITLAB_TOKEN
+if (-not $gitlabTok) { Write-Error "GITLAB_TOKEN required for GitLab-primary org swarm (set in li/.env.gitlab or launchpad/.env)" }
+if (-not $swarmTok) { Write-Warning "GH_SWARM_TOKEN not set — issue workers / ghcr may need GH_TOKEN separately" }
 
 $secretArgs = @(
     "create", "secret", "generic", "li-agents-secrets",
-    "--from-literal=GH_SWARM_TOKEN=$swarmTok",
-    "--from-literal=GH_TOKEN=$swarmTok",
+    "--from-literal=GITLAB_TOKEN=$gitlabTok",
     "-n", $Namespace, "--dry-run=client", "-o", "yaml"
 )
+if ($swarmTok) {
+    $secretArgs += "--from-literal=GH_SWARM_TOKEN=$swarmTok"
+    $secretArgs += "--from-literal=GH_TOKEN=$swarmTok"
+}
 if ($env:CURSOR_API_KEY) { $secretArgs += "--from-literal=CURSOR_API_KEY=$($env:CURSOR_API_KEY)" }
 if ($env:CURSOR_SDK_KEY) { $secretArgs += "--from-literal=CURSOR_SDK_KEY=$($env:CURSOR_SDK_KEY)" }
+if ($env:GITLAB_TOKEN) { $secretArgs += "--from-literal=GITLAB_TOKEN=$($env:GITLAB_TOKEN)" }
 if ($env:SUPABASE_URL) { $secretArgs += "--from-literal=SUPABASE_URL=$($env:SUPABASE_URL)" }
 if ($env:SUPABASE_SERVICE_ROLE_KEY) { $secretArgs += "--from-literal=SUPABASE_SERVICE_ROLE_KEY=$($env:SUPABASE_SERVICE_ROLE_KEY)" }
 kubectl @secretArgs | kubectl apply -f -
-Write-Host "==> ensure GH_SWARM_TOKEN + GH_TOKEN stay in sync"
+Write-Host "==> ensure GITLAB_TOKEN + GH_SWARM_TOKEN stay in li-agents-secrets"
 & (Join-Path $PSScriptRoot "org-ensure-swarm-secrets.ps1") -KubeConfig $KubeConfig -Namespace $Namespace
 
 $loginToken = $env:GH_SWARM_TOKEN
-kubectl -n $Namespace create secret docker-registry ghcr-li-langverse `
-    --docker-server=ghcr.io `
-    --docker-username=li-langverse `
-    --docker-password=$loginToken `
-    --dry-run=client -o yaml | kubectl apply -f -
+if (-not $loginToken) { $loginToken = $env:GHCR_TOKEN }
+if (-not $loginToken) { $loginToken = $env:GH_TOKEN }
+if ($loginToken) {
+    kubectl -n $Namespace create secret docker-registry ghcr-li-langverse `
+        --docker-server=ghcr.io `
+        --docker-username=li-langverse `
+        --docker-password=$loginToken `
+        --dry-run=client -o yaml | kubectl apply -f -
+} else {
+    Write-Warning "No GHCR pull token — skipping ghcr-li-langverse secret refresh"
+}
 
 $manifests = @(
     "configmap.yaml",

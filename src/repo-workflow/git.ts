@@ -1,5 +1,13 @@
 import { spawnSync } from "node:child_process";
 import type { CmdResult } from "./types.js";
+import {
+  githubOrg,
+  gitAuthToken,
+  gitlabGroup,
+  gitlabHost,
+  hasGitAuthToken,
+  vcsProvider,
+} from "./vcs-config.js";
 
 export function runCmd(
   cmd: string,
@@ -25,11 +33,46 @@ export function runCmd(
 }
 
 export function hasGitToken(): boolean {
-  return Boolean(process.env.GH_TOKEN?.trim() || process.env.GITHUB_TOKEN?.trim());
+  return hasGitAuthToken();
+}
+
+function authenticatedCloneUrl(repo: string): string | null {
+  const token = gitAuthToken();
+  if (!token) return null;
+  const scheme = process.env.LI_GIT_SCHEME?.trim() || "https";
+  if (vcsProvider() === "github") {
+    const host = process.env.LI_GIT_HOST_LEGACY?.trim() || "github.com";
+    return `${scheme}://x-access-token:${token}@${host}/${githubOrg()}/${repo}.git`;
+  }
+  return `${scheme}://oauth2:${token}@${gitlabHost()}/${gitlabGroup()}/${repo}.git`;
+}
+
+/** Clone or fetch+reset a repo using GitLab-primary auth (mirrors k8s-git-auth.sh). */
+export function gitCloneRepo(
+  repo: string,
+  dest: string,
+  branch: string,
+  cwd = "/",
+): CmdResult {
+  const url = authenticatedCloneUrl(repo);
+  if (!url) {
+    return { ok: false, code: 1, stdout: "", stderr: "GITLAB_TOKEN or GH_TOKEN required for clone" };
+  }
+  const clone = runCmd("git", ["clone", "--branch", branch, url, dest], cwd, false);
+  if (clone.ok) return clone;
+  runCmd("git", ["clone", url, dest], cwd, false);
+  const checkout = runCmd("git", ["checkout", "-B", branch, `origin/${branch}`], dest, false);
+  if (!checkout.ok) {
+    runCmd("git", ["checkout", "-B", branch], dest, false);
+  }
+  return checkout;
 }
 
 export function defaultBranch(org: string, repo: string, dryRun: boolean): string {
   if (dryRun) return "main";
+  if (vcsProvider() === "gitlab") {
+    return process.env.LI_DEFAULT_BRANCH?.trim() || "main";
+  }
   const r = runCmd(
     "gh",
     ["repo", "view", `${org}/${repo}`, "--json", "defaultBranchRef", "-q", ".defaultBranchRef.name"],

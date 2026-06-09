@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
-"""Merge li-langverse open PRs via REST (avoids GraphQL rate limit).
+"""Classify and merge li-langverse open PRs/MRs via REST.
+
+GitLab-primary (default): GITLAB_TOKEN + LI_VCS_PROVIDER=gitlab
+GitHub fallback: GH_TOKEN + LI_VCS_PROVIDER=github
 
 Usage:
-  export GH_TOKEN=...
+  export GITLAB_TOKEN=...
   python scripts/org-merge-open-prs.py --dry-run
   python scripts/org-merge-open-prs.py --dry-run --incremental
   python scripts/org-merge-open-prs.py --merge-green
@@ -15,88 +18,24 @@ import json
 import os
 import sys
 import time
-import urllib.error
-import urllib.parse
-import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal
 
-ORG = "li-langverse"
-API = "https://api.github.com"
+from _vcs_api import (
+    classify_issue,
+    get_pr,
+    head_sha,
+    pr_number,
+    repo_from_issue,
+    search_open_prs,
+    squash_merge,
+    update_branch,
+)
+
 QUEUE_BUCKETS = ("green", "blocked", "dirty", "ci_not_ok")
 RefreshAction = Literal["reuse", "lightweight", "full"]
-
-
-def headers() -> dict[str, str]:
-    token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
-    if not token:
-        raise SystemExit("GH_TOKEN required")
-    return {
-        "Authorization": f"Bearer {token}",
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
-
-
-def req(method: str, path: str, body: dict | None = None) -> tuple[int, Any]:
-    url = path if path.startswith("http") else f"{API}{path}"
-    data = json.dumps(body).encode() if body is not None else None
-    r = urllib.request.Request(url, data=data, headers=headers(), method=method)
-    try:
-        with urllib.request.urlopen(r, timeout=120) as resp:
-            raw = resp.read().decode()
-            return resp.status, json.loads(raw) if raw else None
-    except urllib.error.HTTPError as e:
-        raw = e.read().decode()
-        try:
-            payload = json.loads(raw) if raw else {"message": str(e)}
-        except json.JSONDecodeError:
-            payload = {"message": raw or str(e)}
-        return e.code, payload
-
-
-def gh_search_prs() -> list[dict]:
-    out: list[dict] = []
-    page = 1
-    while True:
-        q = urllib.parse.quote(f"org:{ORG} is:open is:pr")
-        status, data = req("GET", f"/search/issues?q={q}&per_page=100&page={page}")
-        if status != 200:
-            raise SystemExit(f"search failed {status}: {data}")
-        items = data.get("items", [])
-        out.extend(items)
-        if len(items) < 100:
-            break
-        page += 1
-        time.sleep(2)  # search rate limit
-    return out
-
-
-def get_pr(repo: str, num: int) -> dict:
-    status, data = req("GET", f"/repos/{ORG}/{repo}/pulls/{num}")
-    if status != 200:
-        raise RuntimeError(f"pull {repo}#{num}: {status} {data}")
-    return data
-
-
-def check_runs(repo: str, sha: str) -> list[dict]:
-    status, data = req("GET", f"/repos/{ORG}/{repo}/commits/{sha}/check-runs?per_page=100")
-    if status != 200:
-        return []
-    return data.get("check_runs", [])
-
-
-def ci_ok(runs: list[dict]) -> tuple[bool, str]:
-    if not runs:
-        return False, "no_checks"
-    for run in runs:
-        if run.get("status") != "completed":
-            return False, "pending"
-        if run.get("conclusion") == "failure":
-            return False, "failure"
-    return True, "ok"
 
 
 @dataclass
@@ -242,21 +181,16 @@ def pr_row_from_cache(cached: dict[str, Any], title: str) -> PrRow:
 
 
 def classify_pr(issue: dict, pr: dict | None = None) -> PrRow:
-    repo = issue["repository_url"].rstrip("/").split("/")[-1]
-    num = int(issue["number"])
-    if pr is None:
-        pr = get_pr(repo, num)
-    runs = check_runs(repo, pr["head"]["sha"])
-    ok, ci = ci_ok(runs)
+    classified = classify_issue(issue, pr)
     return PrRow(
-        repo=repo,
-        number=num,
-        title=issue.get("title", "")[:80],
-        mergeable=pr.get("mergeable"),
-        mergeable_state=pr.get("mergeable_state") or "unknown",
-        draft=bool(pr.get("draft")),
-        ci=ci if ok else ci,
-        head=pr["head"]["sha"][:7],
+        repo=classified["repo"],
+        number=classified["number"],
+        title=classified["title"],
+        mergeable=classified["mergeable"],
+        mergeable_state=classified["mergeable_state"],
+        draft=classified["draft"],
+        ci=classified["ci"],
+        head=classified["head"],
         classified_at=now_iso(),
     )
 
@@ -332,8 +266,8 @@ def classify_all(issues: list[dict], limit: int = 0) -> tuple[list[PrRow], dict[
     for i, issue in enumerate(issues, 1):
         if limit and i > limit:
             break
-        repo = issue["repository_url"].rstrip("/").split("/")[-1]
-        num = int(issue["number"])
+        repo = repo_from_issue(issue)
+        num = pr_number(issue)
         try:
             rows.append(classify_pr(issue))
             stats["full_classify"] += 1
@@ -369,8 +303,8 @@ def classify_incremental(
     for i, issue in enumerate(issues, 1):
         if limit and i > limit:
             break
-        repo = issue["repository_url"].rstrip("/").split("/")[-1]
-        num = int(issue["number"])
+        repo = repo_from_issue(issue)
+        num = pr_number(issue)
         key = pr_key(repo, num)
         open_keys.add(key)
         cached = cache_index.get(key)
@@ -407,7 +341,7 @@ def classify_incremental(
                     classified_at=classified_at,
                     issue_updated_at=issue_updated,
                     head_cached=head_cached,
-                    head_live=pr["head"]["sha"],
+                    head_live=head_sha(pr),
                     in_active_claim=key in active_keys,
                     priority=priority,
                     green_stale_min=green_stale,
@@ -479,30 +413,6 @@ def maybe_serve_cached_queue(max_age_minutes: float | None) -> bool:
     return True
 
 
-def squash_merge(repo: str, num: int) -> tuple[bool, str]:
-    status, data = req(
-        "PUT",
-        f"/repos/{ORG}/{repo}/pulls/{num}/merge",
-        {"merge_method": "squash"},
-    )
-    if status == 200:
-        return True, data.get("sha", "merged")[:7]
-    msg = data.get("message", str(data)) if isinstance(data, dict) else str(data)
-    return False, f"{status}:{msg}"
-
-
-def update_branch(repo: str, num: int) -> tuple[bool, str]:
-    status, data = req(
-        "PUT",
-        f"/repos/{ORG}/{repo}/pulls/{num}/update-branch",
-        {"expected_head_sha": get_pr(repo, num)["head"]["sha"]},
-    )
-    if status in (200, 202):
-        return True, "updated"
-    msg = data.get("message", str(data)) if isinstance(data, dict) else str(data)
-    return False, f"{status}:{msg}"
-
-
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--dry-run", action="store_true")
@@ -513,7 +423,7 @@ def main() -> None:
         "--max-age-minutes",
         type=float,
         default=0,
-        help="Skip GitHub classify when org-pr-merge-queue.json is newer than this many minutes",
+        help="Skip VCS classify when org-pr-merge-queue.json is newer than this many minutes",
     )
     p.add_argument(
         "--incremental",
@@ -528,7 +438,7 @@ def main() -> None:
         if maybe_serve_cached_queue(args.max_age_minutes):
             return
 
-    issues = gh_search_prs()
+    issues = search_open_prs()
     print(f"open_prs={len(issues)}", flush=True)
 
     out_path = queue_path()

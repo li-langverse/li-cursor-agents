@@ -7,8 +7,8 @@ export function buildCommitPushDeliverableBlock(agentId: string): string {
     return [
       "## Git push (blocked)",
       "",
-      "`GH_TOKEN` is not set in the agent environment — commits may stay local only.",
-      `Load secrets from \`${resolveCursorEnvFileHint()}\` and restart the swarm.`,
+      "`GITLAB_TOKEN` (or legacy `GH_TOKEN`) is not set — commits may stay local only.",
+      `Load secrets from \`${resolveCursorEnvFileHint()}\` / \`~/launchpad/.env\` and restart the swarm.`,
     ].join("\n");
   }
 
@@ -22,6 +22,6 @@ export function buildCommitPushDeliverableBlock(agentId: string): string {
     "- [ ] Gates/tests cited in the PR body or deliverable (commands + exit status)",
     "- [ ] Do **not** self-merge",
     "",
-    `Agent: **${agentId}** · GH_TOKEN present in environment.`,
+    `Agent: **${agentId}** · git token present in environment.`,
   ].join("\n");
 }

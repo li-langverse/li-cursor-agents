@@ -29,6 +29,7 @@ sync_repo() {
   local root="$1"
   local branch="$2"
   [[ -d "$root/.git" ]] || return 0
+  li_git_ensure_remotes "$root" "$(basename "$root")"
   git -C "$root" fetch origin --prune
   if git -C "$root" show-ref --verify --quiet "refs/remotes/origin/${branch}"; then
     git -C "$root" checkout -B "$branch" "origin/${branch}"

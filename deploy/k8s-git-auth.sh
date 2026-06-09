@@ -77,6 +77,9 @@ li_git_ensure_remotes() {
     git -C "$dest" remote add origin "$gitlab_url"
   elif [[ "$origin_url" == *"github.com"* ]]; then
     echo "k8s-git-auth: migrate origin github → gitlab for ${dest} (${repo})"
+    if ! git -C "$dest" remote get-url github >/dev/null 2>&1; then
+      git -C "$dest" remote add github "$origin_url"
+    fi
     git -C "$dest" remote set-url origin "$gitlab_url"
   elif [[ "$origin_url" != *"${LI_GIT_HOST}"* ]]; then
     git -C "$dest" remote set-url origin "$gitlab_url"
@@ -125,4 +128,22 @@ li_git_clone_repo() {
 li_git_sync_repo() {
   local repo="$1" dest="$2" branch="${3:-main}"
   li_git_clone_repo "$repo" "$dest" "$branch"
+}
+
+# Try branch names in order (deduped); rm dest between failed attempts.
+li_git_clone_repo_try_branches() {
+  local repo="$1" dest="$2"
+  shift 2
+  local branch seen="" b
+  for branch in "$@"; do
+    branch="${branch// /}"
+    [[ -z "$branch" ]] && continue
+    [[ " $seen " == *" $branch "* ]] && continue
+    seen="$seen $branch"
+    if li_git_clone_repo "$repo" "$dest" "$branch"; then
+      return 0
+    fi
+    rm -rf "$dest"
+  done
+  return 1
 }

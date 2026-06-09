@@ -22,6 +22,11 @@ _abs_file() {
 
 export LI_CURSOR_AGENTS_ROOT="$ROOT"
 
+# GitLab-primary git (org policy); GH_TOKEN remains for Issues API + GHCR.
+export LI_VCS_PROVIDER="${LI_VCS_PROVIDER:-gitlab}"
+export LI_GITLAB_HOST="${LI_GITLAB_HOST:-gitlab.lilangverse.xyz}"
+export LI_GITLAB_GROUP="${LI_GITLAB_GROUP:-li-langverse}"
+
 # After sourcing .env, call this so relative sibling paths still resolve correctly.
 li_resolve_env_paths() {
   local root="${1:-$ROOT}"

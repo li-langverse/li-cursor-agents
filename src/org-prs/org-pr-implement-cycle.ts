@@ -7,8 +7,9 @@ import type { AgentId } from "../types.js";
 import { sprintDataDir } from "../org-issues/org-issue-coordination.js";
 import type { QueuedOrgPr } from "./org-pr-coordination.js";
 import { removeClosedPrFromQueue } from "./org-pr-coordination.js";
-import { fetchGitHubPullRequest, postGitHubPrComment } from "./org-pr-github.js";
+import { fetchOrgPullRequest, postOrgPrComment } from "./org-pr-vcs.js";
 import { orgName, parsePrRef } from "./org-pr-supervisor-config.js";
+import { vcsLabel } from "./vcs-config.js";
 
 export interface OrgPrImplementOptions {
   prRef: string;
@@ -75,9 +76,9 @@ export function buildPrImplementInstruction(
     : "org-pr-merge queue";
 
   return [
-    "## Assigned org PR (implementer)",
+    `## Assigned org ${vcsLabel()} (implementer)`,
     "",
-    `- **PR:** \`${prRef}\``,
+    `- **Ref:** \`${prRef}\``,
     `- **URL:** ${pr.html_url}`,
     `- **Title:** ${pr.title}`,
     `- **Mergeable:** ${pr.mergeable_state ?? "unknown"}${pr.draft ? " (draft)" : ""}`,
@@ -92,7 +93,7 @@ export function buildPrImplementInstruction(
     "",
     "## Your task",
     "",
-    "Fix CI, rebase, resolve dirty merge state, or implement review feedback for this **single** PR.",
+    `Fix CI, rebase, resolve dirty merge state, or implement review feedback for this **single** ${vcsLabel()}.`,
     "",
     "Use existing org tooling where applicable:",
     "- `scripts/org-rerun-stale-ci.py`, `scripts/org-fix-dirty-from-queue.py`",
@@ -101,7 +102,7 @@ export function buildPrImplementInstruction(
     "",
     `workflow repo: ${repo}`,
     "",
-    "Post a brief PR comment when you start substantive work.",
+    `Post a brief ${vcsLabel()} comment when you start substantive work.`,
   ].join("\n");
 }
 
@@ -143,7 +144,7 @@ export async function runOrgPrImplementCycle(
 
   let pr;
   try {
-    pr = await fetchGitHubPullRequest(parsed.org, parsed.repo, parsed.number);
+    pr = await fetchOrgPullRequest(parsed.org, parsed.repo, parsed.number);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     return {
@@ -164,7 +165,7 @@ export async function runOrgPrImplementCycle(
       agentId: orgPrImplementerAgentId(),
       prMerged: true,
       prWasOpen: false,
-      outputTail: "PR already closed on GitHub",
+      outputTail: `${vcsLabel()} already closed`,
     };
   }
 
@@ -174,8 +175,8 @@ export async function runOrgPrImplementCycle(
   const instruction = buildPrImplementInstruction(options.prRef, pr, options.workerId, queueEntry);
 
   if (!options.dryRun) {
-    await postGitHubPrComment(parsed.org, parsed.repo, parsed.number, [
-      "**org-pr implementer** claimed this PR.",
+    await postOrgPrComment(parsed.org, parsed.repo, parsed.number, [
+      `**org-pr implementer** claimed this ${vcsLabel()}.`,
       "",
       `- Worker: \`${options.workerId}\``,
       `- Agent: \`${agentId}\``,
@@ -220,7 +221,7 @@ export async function runOrgPrImplementCycle(
 
   let after;
   try {
-    after = await fetchGitHubPullRequest(parsed.org, parsed.repo, parsed.number);
+    after = await fetchOrgPullRequest(parsed.org, parsed.repo, parsed.number);
   } catch {
     after = pr;
   }

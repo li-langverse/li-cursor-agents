@@ -6,9 +6,8 @@ import json
 import sys
 from pathlib import Path
 
-from _gh_search_retry import search_issues
+from _vcs_api import pr_number, repo_from_issue, search_open_prs
 
-ORG = "li-langverse"
 BASELINE = Path(__file__).resolve().parents[1] / "data" / "goal-directed-sprints" / "org-pr-merge-baseline.json"
 
 
@@ -23,10 +22,10 @@ def baseline_keys() -> set[tuple[str, int]]:
 
 def count_open(new_only: bool = False) -> int:
     baseline = baseline_keys() if new_only else set()
-    items = search_issues(f"org:{ORG} is:open is:pr")
+    items = search_open_prs()
     n = 0
     for item in items:
-        key = (item["repository_url"].rstrip("/").split("/")[-1], int(item["number"]))
+        key = (repo_from_issue(item), pr_number(item))
         if not new_only or key not in baseline:
             n += 1
     return n

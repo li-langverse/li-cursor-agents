@@ -146,7 +146,7 @@ kubectl -n li-swarm logs deploy/li-org-issue-supervisor --tail=50
 - PVC: `li-ph-sci-simulation-gap-close-workspace`
 - Goal: `lic/data/goal-directed-sprints/ph-sci-simulation-gap-close-plan.md`
 - Gate: `lic/scripts/ph-sci-phase0-gates.sh`
-- Deploy: `bash scripts/setup-engine-k8s-ph-sci-simulation-gap-close.sh` (requires `KUBECONFIG`, `GH_TOKEN`, `CURSOR_API_KEY`)
+- Deploy: `bash scripts/setup-engine-k8s-ph-sci-simulation-gap-close.sh` (requires `KUBECONFIG`, `GITLAB_TOKEN`, `CURSOR_API_KEY`)
 - Logs: `kubectl -n li-swarm logs -f deploy/li-ph-sci-simulation-gap-close`
 
 ### PH-SCI electrochemistry + GPU chem (PR #847)

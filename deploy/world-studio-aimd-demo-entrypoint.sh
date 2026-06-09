@@ -84,4 +84,6 @@ while true; do
     finish_on_goal_complete
   fi
 
-  echo "world-studio-aimd-demo-entrypoint: loop stopped without completion (exit $rc) — re
+  echo "world-studio-aimd-demo-entrypoint: loop stopped without completion (exit $rc) — retry in ${LOOP_SLEEP}s" >&2
+  sleep "$LOOP_SLEEP"
+done

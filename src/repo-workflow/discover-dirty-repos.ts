@@ -72,11 +72,15 @@ function remoteRepoSlug(repoPath: string): { org: string; repo: string; url?: st
   const r = runCmd("git", ["remote", "get-url", "origin"], repoPath, false);
   if (!r.ok || !r.stdout) return null;
   const url = r.stdout.trim();
-  const m =
+  const gh =
     /github\.com[:/]([^/]+)\/([^/.]+)(?:\.git)?$/i.exec(url) ??
     /github\.com[:/]([^/]+)\/([^/]+?)(?:\.git)?$/i.exec(url);
-  if (!m) return null;
-  return { org: m[1], repo: m[2].replace(/\.git$/, ""), url };
+  if (gh) return { org: gh[1], repo: gh[2].replace(/\.git$/, ""), url };
+  const gl =
+    /gitlab\.lilangverse\.xyz[:/]([^/]+)\/([^/.]+)(?:\.git)?$/i.exec(url) ??
+    /lilangverse\.xyz[:/]([^/]+)\/([^/]+?)(?:\.git)?$/i.exec(url);
+  if (gl) return { org: gl[1], repo: gl[2].replace(/\.git$/, ""), url };
+  return null;
 }
 
 function currentBranch(repoPath: string): string {

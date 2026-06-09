@@ -8,7 +8,9 @@ metadata:
     app.kubernetes.io/name: li-proof-explorer
     app.kubernetes.io/component: goal-directed-agent
 data:
-  LI_PROOF_EXPLORER_ALWAYS_ON: "1"
+  LI_GIT_HOST: "gitlab.lilangverse.xyz"
+  LI_GIT_GROUP: "li-langverse"
+  LI_GIT_REQUIRE_GITLAB: "1"
   LI_PROOF_EXPLORER_PHASE_HANDOFF: "1"
   LI_PROOF_EXPLORER_SWEEP_MODE: "1"
   LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/proof-explorer-phase14-open-catalog-prove.md"

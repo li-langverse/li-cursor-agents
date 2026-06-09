@@ -9,6 +9,7 @@ function Load-K8sAgentsEnv {
     $files = @(
         (Join-Path $env:USERPROFILE "launchpad\.env"),
         (Join-Path $WorkspaceRoot "beelink-cleanup\.env"),
+        (Join-Path $WorkspaceRoot ".env.gitlab"),
         (Join-Path $WorkspaceRoot ".env.github"),
         (Join-Path $AgentsRoot ".env"),
         (Join-Path $WorkspaceRoot ".env"),
@@ -34,6 +35,16 @@ function Load-K8sAgentsEnv {
     if (-not $env:GH_TOKEN -and $env:GH_SWARM_TOKEN) { $env:GH_TOKEN = $env:GH_SWARM_TOKEN }
 }
 
+function Assert-K8sAgentsDeployTokens {
+    param([switch]$RequireGitLab = $true)
+    if (-not $env:GH_TOKEN) {
+        throw "GH_TOKEN required (GHCR pull secret + GitHub API for org workers)"
+    }
+    if ($RequireGitLab -and -not $env:GITLAB_TOKEN) {
+        throw "GITLAB_TOKEN required for GitLab-primary git (org policy). Add to launchpad/.env, li/.env.gitlab, or beelink-cleanup/.env"
+    }
+}
+
 function Apply-K8sAgentsSecrets {
     param(
         [string]$Namespace = "li-swarm",
@@ -44,10 +55,7 @@ function Apply-K8sAgentsSecrets {
         throw "GH_TOKEN required (GitHub API + GHCR pull secret)"
     }
     if ($RequireGitLab -and -not $env:GITLAB_TOKEN) {
-        throw "GITLAB_TOKEN required for GitLab-primary git (org policy). Add to launchpad/.env or beelink-cleanup/.env"
-    }
-    if (-not $env:GITLAB_TOKEN) {
-        Write-Warning "GITLAB_TOKEN not set — workers may use GitHub for git until secret is patched"
+        throw "GITLAB_TOKEN required for GitLab-primary git (org policy). Add to launchpad/.env, li/.env.gitlab, or beelink-cleanup/.env"
     }
 
     $secretArgs = @(

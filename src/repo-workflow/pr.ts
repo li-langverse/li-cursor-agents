@@ -5,7 +5,9 @@ import {
   parsePrNumberFromUrl,
   type SwarmAttribution,
 } from "../swarm/swarm-attribution.js";
+import { openGitLabMergeRequestSync } from "./gitlab-mr.js";
 import { hasGitToken, gitStatusPorcelain, runCmd } from "./git.js";
+import { vcsProvider } from "./vcs-config.js";
 import type { CommitPushPrResult, RepoWorkflowOptions } from "./types.js";
 
 export function commitPushOpenPr(
@@ -35,11 +37,11 @@ export function commitPushOpenPr(
     return {
       ok: false,
       skipped: true,
-      skip_reason: "GH_TOKEN missing — cannot push or open PR",
+      skip_reason: "GITLAB_TOKEN/GH_TOKEN missing — cannot push or open PR/MR",
       committed: false,
       pushed: false,
       branch,
-      error: `set GH_TOKEN in ${resolveCursorEnvFileHint()} (or LI_CURSOR_ENV_FILE)`,
+      error: `set GITLAB_TOKEN (or GH_TOKEN for legacy) in ${resolveCursorEnvFileHint()} (or LI_CURSOR_ENV_FILE)`,
     };
   }
 
@@ -134,41 +136,68 @@ export function commitPushOpenPr(
   }
 
   const prBody = options.prBody;
-  const ghArgs = [
-    "pr",
-    "create",
-    "--repo",
-    `${options.org}/${options.repo}`,
-    "--base",
-    options.baseBranch,
-    "--head",
-    branch,
-    "--title",
-    options.prTitle,
-    "--body",
-    prBody,
-  ];
-  if (options.swarmAttribution) {
-    for (const label of githubLabelsForSwarm(options.swarmAttribution.agent_id)) {
-      ghArgs.push("--label", label);
+  let prUrl = "";
+  let prNumber: number | undefined;
+
+  if (vcsProvider() === "gitlab") {
+    const mr = dryRun
+      ? { ok: true, url: `https://gitlab.example/${options.repo}/-/merge_requests/1`, number: 1 }
+      : openGitLabMergeRequestSync({
+          repo: options.repo,
+          sourceBranch: branch,
+          targetBranch: options.baseBranch,
+          title: options.prTitle,
+          description: prBody,
+        });
+    if (!mr.ok) {
+      return {
+        ok: false,
+        committed: true,
+        pushed: true,
+        branch,
+        commit_sha: commitSha,
+        error: mr.error || "GitLab MR create failed",
+      };
     }
-  }
-  const pr = runCmd("gh", ghArgs, cloneDir, dryRun);
-
-  if (!pr.ok) {
-    return {
-      ok: false,
-      committed: true,
-      pushed: true,
+    prUrl = mr.url ?? "";
+    prNumber = mr.number;
+  } else {
+    const ghArgs = [
+      "pr",
+      "create",
+      "--repo",
+      `${options.org}/${options.repo}`,
+      "--base",
+      options.baseBranch,
+      "--head",
       branch,
-      commit_sha: commitSha,
-      error: pr.stderr || "gh pr create failed",
-    };
-  }
+      "--title",
+      options.prTitle,
+      "--body",
+      prBody,
+    ];
+    if (options.swarmAttribution) {
+      for (const label of githubLabelsForSwarm(options.swarmAttribution.agent_id)) {
+        ghArgs.push("--label", label);
+      }
+    }
+    const pr = runCmd("gh", ghArgs, cloneDir, dryRun);
 
-  const url = pr.stdout.split("\n").find((l) => l.includes("github.com")) ?? pr.stdout;
-  const prUrl = url.trim();
-  const prNumber = parsePrNumberFromUrl(prUrl);
+    if (!pr.ok) {
+      return {
+        ok: false,
+        committed: true,
+        pushed: true,
+        branch,
+        commit_sha: commitSha,
+        error: pr.stderr || "gh pr create failed",
+      };
+    }
+
+    const url = pr.stdout.split("\n").find((l) => l.includes("github.com")) ?? pr.stdout;
+    prUrl = url.trim();
+    prNumber = parsePrNumberFromUrl(prUrl);
+  }
 
   return {
     ok: true,

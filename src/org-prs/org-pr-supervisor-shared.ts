@@ -43,9 +43,9 @@ export function parsePrOpenCount(tail: string): number | null {
   return m ? Number(m[1]) : null;
 }
 
-export type PrOpenCountSource = "queue" | "github" | "none";
+export type PrOpenCountSource = "queue" | "gitlab" | "github" | "none";
 
-/** Prefer org-pr-merge-queue.json on PVC; avoid GitHub search when cache exists. */
+/** Prefer org-pr-merge-queue.json on PVC; avoid live VCS search when cache exists. */
 export function resolvePrOpenCount(root = agentsPackageRoot()): {
   count: number;
   source: PrOpenCountSource;
@@ -56,7 +56,10 @@ export function resolvePrOpenCount(root = agentsPackageRoot()): {
   }
   const countRes = runPython("org-pr-open-count.py");
   const parsed = parsePrOpenCount(countRes.tail);
-  if (parsed != null) return { count: parsed, source: "github" };
+  if (parsed != null) {
+    const source = process.env.LI_VCS_PROVIDER?.trim().toLowerCase() === "github" ? "github" : "gitlab";
+    return { count: parsed, source };
+  }
   return { count: 0, source: "none" };
 }
 
@@ -64,7 +67,7 @@ export interface PrQueueRefreshResult {
   ok: boolean;
   tail: string;
   skipped: boolean;
-  source: "github" | "queue" | "disabled";
+  source: "gitlab" | "github" | "queue" | "disabled";
 }
 
 export function refreshPrMergeQueue(
@@ -91,5 +94,6 @@ export function refreshPrMergeQueue(
     args.push("--incremental");
   }
   const result = runPython("org-merge-open-prs.py", args);
-  return { ...result, skipped: false, source: "github" };
+  const source = process.env.LI_VCS_PROVIDER?.trim().toLowerCase() === "github" ? "github" : "gitlab";
+  return { ...result, skipped: false, source };
 }

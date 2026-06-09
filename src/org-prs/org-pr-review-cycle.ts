@@ -7,8 +7,9 @@ import type { AgentId } from "../types.js";
 import { sprintDataDir } from "../org-issues/org-issue-coordination.js";
 import type { QueuedOrgPr } from "./org-pr-coordination.js";
 import { setPrBackoff, setPrCooldown } from "./org-pr-coordination.js";
-import { fetchGitHubPullRequest, postGitHubPrComment } from "./org-pr-github.js";
+import { fetchOrgPullRequest, postOrgPrComment } from "./org-pr-vcs.js";
 import { parsePrRef } from "./org-pr-supervisor-config.js";
+import { vcsLabel, vcsProvider } from "./vcs-config.js";
 
 export interface OrgPrReviewOptions {
   prRef: string;
@@ -65,9 +66,9 @@ export function buildPrReviewInstruction(
     : "review queue";
 
   return [
-    "## Assigned org PR (reviewer)",
+    `## Assigned org ${vcsLabel()} (reviewer)`,
     "",
-    `- **PR:** \`${prRef}\``,
+    `- **Ref:** \`${prRef}\``,
     `- **URL:** ${pr.html_url}`,
     `- **Title:** ${pr.title}`,
     `- **Queue:** ${bucketNote}`,
@@ -75,7 +76,7 @@ export function buildPrReviewInstruction(
     "",
     "## Your task",
     "",
-    "Run a **standards / merge-gate review** on this single PR. Approve or request changes with concrete file-level feedback.",
+    `Run a **standards / merge-gate review** on this single ${vcsLabel()}. Approve or request changes with concrete file-level feedback.`,
     "Do not merge unless your role is explicitly merger; leave merge to `pr_merger` / org merge scripts.",
     "",
     "Read: `prompts/pr-reviewer.md`, `data/goal-directed-sprints/org-pr-merge-zero.md`",
@@ -117,10 +118,13 @@ export async function runOrgPrReviewCycle(
 
   let pr;
   try {
-    pr = await fetchGitHubPullRequest(parsed.org, parsed.repo, parsed.number);
+    pr = await fetchOrgPullRequest(parsed.org, parsed.repo, parsed.number);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    if (/rate limit exceeded|secondary rate limit/i.test(msg)) {
+    if (
+      vcsProvider() === "github" &&
+      /rate limit exceeded|secondary rate limit/i.test(msg)
+    ) {
       const ms = Number(process.env.LI_GH_BACKOFF_MS || 15 * 60_000);
       const until = new Date(Date.now() + (Number.isFinite(ms) ? ms : 15 * 60_000)).toISOString();
       setPrBackoff(until, "github_rate_limited");
@@ -155,8 +159,8 @@ export async function runOrgPrReviewCycle(
   );
 
   if (!options.dryRun) {
-    await postGitHubPrComment(parsed.org, parsed.repo, parsed.number, [
-      "**org-pr reviewer** claimed this PR for review.",
+    await postOrgPrComment(parsed.org, parsed.repo, parsed.number, [
+      `**org-pr reviewer** claimed this ${vcsLabel()} for review.`,
       "",
       `- Worker: \`${options.workerId}\``,
       `- Agent: \`${agentId}\``,

@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
 import { defaultBranch, runCmd } from "./git.js";
+import { cloneOrSyncRepo } from "./git-remote.js";
 import { maybePruneWorkspaces } from "./workspace-prune.js";
 import type { PrepareWorkspaceResult, RepoWorkflowOptions } from "./types.js";
 
@@ -31,7 +32,7 @@ export function prepareIsolatedClone(
   repo: string,
   options: RepoWorkflowOptions & { branchName: string },
 ): PrepareWorkspaceResult {
-  const org = options.org ?? process.env.GH_ORG ?? "li-langverse";
+  const org = options.org ?? process.env.LI_GIT_GROUP ?? process.env.GH_ORG ?? "li-langverse";
   const runId = options.runId ?? String(Date.now());
   const dryRun = options.dryRun ?? false;
   const cloneDir = cloneDirFor(org, repo, runId, options.workspaceRoot);
@@ -47,35 +48,15 @@ export function prepareIsolatedClone(
     rmSync(cloneDir, { recursive: true, force: true });
   }
 
-  if (!existsSync(join(cloneDir, ".git"))) {
-    const clone = runCmd(
-      "gh",
-      ["repo", "clone", `${org}/${repo}`, cloneDir, "--", "--branch", baseBranch],
-      process.cwd(),
-      false,
-    );
-    if (!clone.ok) {
-      return {
-        ok: false,
-        cloneDir,
-        baseBranch,
-        branch: options.branchName,
-        error: clone.stderr || clone.stdout || "gh repo clone failed",
-      };
-    }
-  } else {
-    runCmd("git", ["fetch", "origin"], cloneDir, false);
-    runCmd("git", ["checkout", baseBranch], cloneDir, false);
-    const pull = runCmd("git", ["pull", "--ff-only", "origin", baseBranch], cloneDir, false);
-    if (!pull.ok) {
-      return {
-        ok: false,
-        cloneDir,
-        baseBranch,
-        branch: options.branchName,
-        error: pull.stderr || "git pull failed",
-      };
-    }
+  const synced = cloneOrSyncRepo({ org, repo, cloneDir, baseBranch });
+  if (!synced.ok) {
+    return {
+      ok: false,
+      cloneDir,
+      baseBranch,
+      branch: options.branchName,
+      error: synced.error || "git clone/sync failed",
+    };
   }
 
   const trackRemote = process.env.LI_REPO_WORKFLOW_TRACK_REMOTE?.trim().toLowerCase();

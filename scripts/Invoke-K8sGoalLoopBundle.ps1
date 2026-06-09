@@ -15,7 +15,8 @@ New-Item -ItemType Directory -Force -Path $bundleDir | Out-Null
 $scriptPairs = @(
     @("goal-directed-loop.sh", "scripts\goal-directed-loop.sh"),
     @("goal-loop-self-unblock.sh", "scripts\goal-loop-self-unblock.sh"),
-    @("k8s-goal-loop-common.sh", "deploy\k8s-goal-loop-common.sh")
+    @("k8s-goal-loop-common.sh", "deploy\k8s-goal-loop-common.sh"),
+    @("k8s-git-auth.sh", "deploy\k8s-git-auth.sh")
 )
 foreach ($pair in $scriptPairs) {
     $dest = Join-Path $bundleDir $pair[0]

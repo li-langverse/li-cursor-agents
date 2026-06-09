@@ -27,11 +27,11 @@ spec:
             - configMapRef:
                 name: li-org-pr-merge-worker
           env:
-            - name: GH_TOKEN
+            - name: GITLAB_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: li-agents-secrets
-                  key: GH_SWARM_TOKEN
+                  key: GITLAB_TOKEN
           resources:
             requests:
               cpu: "100m"

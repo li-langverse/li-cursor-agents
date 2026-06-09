@@ -15,12 +15,9 @@ import {
   orgPrMergeWorkerEnabled,
   orgPrMergeWorkerLimit,
 } from "./org-pr-merge-worker-config.js";
+import { vcsToken } from "./vcs-config.js";
 
 const MERGE_AUDIT = "org-pr-merge-audit.jsonl";
-
-function hasGhToken(): boolean {
-  return Boolean(process.env.GH_TOKEN?.trim() || process.env.GITHUB_TOKEN?.trim());
-}
 
 function appendMergeAudit(row: Record<string, unknown>, root = agentsPackageRoot()): void {
   const path = `${sprintDataDir(root)}/${MERGE_AUDIT}`;
@@ -52,8 +49,8 @@ export async function orgPrMergeWorkerCycle(): Promise<OrgPrMergeWorkerCycleResu
   if (!orgPrMergeWorkerEnabled()) {
     return { ok: true, skipped: true, skip_reason: "LI_ORG_PR_MERGE_WORKER_ALWAYS_ON not set" };
   }
-  if (!hasGhToken()) {
-    return { ok: false, skipped: true, skip_reason: "GH_TOKEN required" };
+  if (!vcsToken()) {
+    return { ok: false, skipped: true, skip_reason: "GITLAB_TOKEN required" };
   }
 
   const root = agentsPackageRoot();
@@ -63,7 +60,7 @@ export async function orgPrMergeWorkerCycle(): Promise<OrgPrMergeWorkerCycleResu
     return {
       ok: true,
       skipped: true,
-      skip_reason: `GitHub rate limit backoff until ${backoff!.until}`,
+      skip_reason: `VCS rate limit backoff until ${backoff!.until}`,
     };
   }
 

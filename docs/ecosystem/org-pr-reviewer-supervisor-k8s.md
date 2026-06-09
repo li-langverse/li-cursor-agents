@@ -46,8 +46,8 @@ flowchart TB
 | Blob | Deployment | Wake CronJob | Worker Jobs | Queue source | Agent |
 |------|------------|--------------|-------------|--------------|-------|
 | Issue | `li-org-issue-supervisor` | `li-org-issue-supervisor-wake` | `li-org-impl-*` | `org-issue-queue.json` implement | `code_implementer` |
-| PR | `li-org-pr-supervisor` | `li-org-pr-supervisor-wake` | `li-org-pr-impl-*` | `org-pr-merge-queue.json` dirty/ci_not_ok/blocked | `code_implementer` |
-| Review | `li-org-reviewer-supervisor` | `li-org-reviewer-supervisor-wake` | `li-org-pr-rev-*` | green + blocked | `pr_reviewer` |
+| PR | `li-org-pr-supervisor` | `li-org-pr-supervisor-wake` | `li-org-pr-impl-*` | `org-pr-merge-queue.json` dirty/ci_not_ok/blocked (GitLab MRs) | `code_implementer` |
+| Review | `li-org-reviewer-supervisor` | `li-org-reviewer-supervisor-wake` | `li-org-pr-rev-*` | green + blocked (GitLab MRs) | `pr_reviewer` |
 
 Scaling (PR + review): `desiredWorkers = min(maxWorkers, max(1, ceil(open/25)))` with `maxWorkers` up to **16** (`LI_ORG_PR_SUPERVISOR_MAX_WORKERS` / `LI_ORG_REVIEWER_SUPERVISOR_MAX_WORKERS`). Issue blob uses `ceil(open/50)` with its own cap.
 
@@ -98,7 +98,9 @@ kubectl apply -f deploy/k8s/engine/cronjob-org-pr-supervisor-wake.yaml
 kubectl apply -f deploy/k8s/engine/cronjob-org-reviewer-supervisor-wake.yaml
 ```
 
-Secrets (`li-agents-secrets`): `GH_TOKEN`, `CURSOR_API_KEY` (required for real agent Jobs). Optional: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` for DB sync.
+Secrets (`li-agents-secrets`): `GITLAB_TOKEN` (primary — MR list/classify/merge/comment), `CURSOR_API_KEY` (required for real agent Jobs). Optional: `GH_TOKEN` / `GH_SWARM_TOKEN` (issue blob + GHCR pull), `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` for DB sync.
+
+ConfigMaps set `LI_VCS_PROVIDER=gitlab`, `LI_GITLAB_HOST=gitlab.lilangverse.xyz` on PR/reviewer/merge workers.
 
 ## Verify
 
