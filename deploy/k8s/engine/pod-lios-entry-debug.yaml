@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: lios-entry-debug
+  namespace: li-swarm
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: engine
+  restartPolicy: Never
+  serviceAccountName: li-goal-worker
+  containers:
+    - name: debug
+      image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
+      env:
+        - name: GH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: li-agents-secrets
+              key: GH_TOKEN
+        - name: GITHUB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: li-agents-secrets
+              key: GH_TOKEN
+      command:
+        - bash
+        - -xec
+        - |
+          /config/entrypoint.sh
+      volumeMounts:
+        - name: ws
+          mountPath: /workspace
+        - name: ws
+          mountPath: /app/data/lios-kernel-loop
+          subPath: lios-kernel-loop
+        - name: cfg
+          mountPath: /config
+      envFrom:
+        - configMapRef:
+            name: li-lios-kernel
+  volumes:
+    - name: ws
+      persistentVolumeClaim:
+        claimName: li-lios-kernel-workspace
+    - name: cfg
+      configMap:
+        name: li-lios-kernel-bundle
+        defaultMode: 0755

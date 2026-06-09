@@ -29,6 +29,7 @@ spec:
         - name: libernetes-licontainers
           image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
           imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "/config/entrypoint.sh"]
           envFrom:
             - configMapRef:
                 name: li-libernetes-licontainers
@@ -38,6 +39,13 @@ spec:
                 secretKeyRef:
                   name: li-agents-secrets
                   key: GH_TOKEN
+                  optional: true
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
+                  optional: true
             - name: GITHUB_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -55,6 +63,12 @@ spec:
                   name: li-agents-secrets
                   key: CURSOR_SDK_KEY
                   optional: true
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
+                  optional: true
           resources:
             requests:
               cpu: "500m"
@@ -65,7 +79,13 @@ spec:
           volumeMounts:
             - name: workspace
               mountPath: /workspace
+            - name: git-bundle
+              mountPath: /config
       volumes:
         - name: workspace
           persistentVolumeClaim:
             claimName: li-libernetes-licontainers-workspace
+        - name: git-bundle
+          configMap:
+            name: li-libernetes-git-bundle
+            defaultMode: 0755

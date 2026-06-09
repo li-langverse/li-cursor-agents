@@ -1,57 +1,74 @@
 #!/usr/bin/env bash
-# Clone/sync lic workspace, configure GH push auth, start proof-explorer worker.
+# GitLab-primary clone/sync for goal-directed K8s workers (org rule: LI_GIT_HOST).
 set -euo pipefail
 
-: "${GH_TOKEN:?GH_TOKEN required for clone and push}"
-export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=k8s-git-auth.sh
+source "${SCRIPT_DIR}/k8s-git-auth.sh"
 
-ORG="${LI_GITHUB_ORG:-li-langverse}"
 REPO_LIC="${LI_PROOF_EXPLORER_LIC_REPO:-lic}"
 BRANCH="${LI_PROOF_EXPLORER_BRANCH:-cursor/proof-explorer-program}"
+FALLBACK_RAW="${LI_PROOF_EXPLORER_BRANCH_FALLBACKS:-${BRANCH},main}"
 LIC_ROOT="${LI_PROOF_EXPLORER_LIC_ROOT:-/workspace/lic}"
 AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
 
-echo "proof-explorer-entrypoint: auth + workspace sync branch=${BRANCH} lic=${LIC_ROOT}"
+echo "proof-explorer-entrypoint: GitLab-primary sync branch=${BRANCH} lic=${LIC_ROOT}"
 
-export GH_TOKEN GITHUB_TOKEN
-echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
-gh auth setup-git 2>/dev/null || true
-git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
-git config --global user.email "${LI_GIT_USER_EMAIL:-proof-explorer@li-langverse.dev}"
-git config --global user.name "${LI_GIT_USER_NAME:-li-proof-explorer}"
+if ! li_git_primary_setup; then
+  echo "proof-explorer-entrypoint: git auth setup failed (need GITLAB_TOKEN or GH_TOKEN)" >&2
+  exit 1
+fi
 
-mkdir -p "$(dirname "$LIC_ROOT")"
-
-sync_lic_repo() {
-  if [[ ! -d "$LIC_ROOT/.git" ]]; then
-    echo "proof-explorer-entrypoint: cloning ${ORG}/${REPO_LIC}"
-    if gh repo clone "${ORG}/${REPO_LIC}" "$LIC_ROOT" -- --branch "$BRANCH" 2>/dev/null; then
-      return 0
-    fi
-    echo "proof-explorer-entrypoint: branch ${BRANCH} missing, cloning default"
-    rm -rf "$LIC_ROOT"
-    gh repo clone "${ORG}/${REPO_LIC}" "$LIC_ROOT"
-    git -C "$LIC_ROOT" checkout -B "$BRANCH" || git -C "$LIC_ROOT" checkout -B "$BRANCH" origin/HEAD
-    return 0
-  fi
-
-  echo "proof-explorer-entrypoint: updating existing clone"
-  git -C "$LIC_ROOT" fetch origin --prune
-  if git -C "$LIC_ROOT" show-ref --verify --quiet "refs/remotes/origin/${BRANCH}"; then
-    git -C "$LIC_ROOT" checkout -f -B "$BRANCH" "origin/${BRANCH}"
-    git -C "$LIC_ROOT" reset --hard "origin/${BRANCH}"
-  elif git -C "$LIC_ROOT" show-ref --verify --quiet "refs/heads/${BRANCH}"; then
-    git -C "$LIC_ROOT" checkout -f "$BRANCH"
-    git -C "$LIC_ROOT" fetch origin "$BRANCH" 2>/dev/null || true
-    git -C "$LIC_ROOT" reset --hard "origin/${BRANCH}" 2>/dev/null || true
-  else
-    git -C "$LIC_ROOT" checkout -f -B "$BRANCH"
-  fi
+branch_candidates() {
+  local primary="$1" s="" b
+  for b in "$primary" ${FALLBACK_RAW//,/ }; do
+    b="${b// /}"
+    [[ -z "$b" ]] && continue
+    [[ " $s " == *" $b "* ]] && continue
+    s="$s $b"
+    echo "$b"
+  done
 }
 
-sync_lic_repo
+sync_lic_repo() {
+  local b
+  mkdir -p "$(dirname "$LIC_ROOT")"
+  if [[ ! -d "$LIC_ROOT/.git" ]]; then
+    echo "proof-explorer-entrypoint: cloning ${LI_GIT_GROUP}/${REPO_LIC} from ${LI_GIT_HOST}"
+    for b in $(branch_candidates "$BRANCH"); do
+      if li_git_clone_repo "$REPO_LIC" "$LIC_ROOT" "$b"; then
+        li_git_ensure_remotes "$LIC_ROOT" "$REPO_LIC"
+        git -C "$LIC_ROOT" checkout -f -B "$BRANCH" 2>/dev/null || git -C "$LIC_ROOT" checkout -f -B "$b"
+        return 0
+      fi
+    done
+    return 1
+  fi
 
-GOAL_REL="${LI_PROOF_EXPLORER_GOAL_FILE:-data/goal-directed-sprints/proof-explorer-program.md}"; test -f "${LIC_ROOT}/${GOAL_REL}" || {
+  li_git_ensure_remotes "$LIC_ROOT" "$REPO_LIC"
+  echo "proof-explorer-entrypoint: updating existing clone"
+  git -C "$LIC_ROOT" fetch origin --prune 2>/dev/null || true
+  for b in $(branch_candidates "$BRANCH"); do
+    if git -C "$LIC_ROOT" show-ref --verify --quiet "refs/remotes/origin/${b}"; then
+      git -C "$LIC_ROOT" checkout -f -B "$BRANCH" "origin/${b}"
+      git -C "$LIC_ROOT" reset --hard "origin/${b}"
+      return 0
+    fi
+  done
+  if git -C "$LIC_ROOT" show-ref --verify --quiet "refs/heads/${BRANCH}"; then
+    git -C "$LIC_ROOT" checkout -f "$BRANCH"
+    return 0
+  fi
+  git -C "$LIC_ROOT" checkout -f -B "$BRANCH"
+}
+
+sync_lic_repo || {
+  echo "proof-explorer-entrypoint: lic sync failed" >&2
+  exit 1
+}
+
+GOAL_REL="${LI_PROOF_EXPLORER_GOAL_FILE:-data/goal-directed-sprints/proof-explorer-program.md}"
+test -f "${LIC_ROOT}/${GOAL_REL}" || {
   echo "proof-explorer-entrypoint: missing goal file in lic repo" >&2
   exit 1
 }

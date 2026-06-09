@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: lios-loop-debug
+  namespace: li-swarm
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: engine
+  restartPolicy: Never
+  containers:
+    - name: debug
+      image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
+      env:
+        - name: GH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: li-agents-secrets
+              key: GH_TOKEN
+      envFrom:
+        - configMapRef:
+            name: li-lios-kernel
+      command:
+        - bash
+        - -lc
+        - |
+          set -x
+          export GITHUB_TOKEN="$GH_TOKEN"
+          export LIK_ROOT=/workspace/lik LIC_ROOT=/workspace/lic LIOS_ROOT=/workspace/li-os
+          export LI_CURSOR_AGENTS_ROOT=/app
+          mkdir -p /app/data/goal-directed-sprints
+          cp -f /config/lios-kernel-m1.md /app/data/goal-directed-sprints/
+          cp -f /config/goal-directed-loop.sh /app/scripts/goal-directed-loop.sh
+          cp -f /config/goal-loop-self-unblock.sh /app/scripts/goal-loop-self-unblock.sh
+          chmod +x /app/scripts/*.sh
+          /app/scripts/goal-directed-loop.sh --agent code_implementer --workflow-repo li-os --cwd /workspace/li-os --goal-file /app/data/goal-directed-sprints/lios-kernel-m1.md --once 2>&1 | tail -50
+          echo LOOP_EXIT=$?
+      volumeMounts:
+        - name: ws
+          mountPath: /workspace
+        - name: cfg
+          mountPath: /config
+  volumes:
+    - name: ws
+      persistentVolumeClaim:
+        claimName: li-lios-kernel-workspace
+    - name: cfg
+      configMap:
+        name: li-lios-kernel-bundle
+        defaultMode: 0755

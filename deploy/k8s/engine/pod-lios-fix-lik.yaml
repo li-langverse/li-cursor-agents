@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: lios-fix-lik
+  namespace: li-swarm
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: engine
+  restartPolicy: Never
+  containers:
+    - name: fix
+      image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
+      command: ["bash", "-lc", "rm -rf /workspace/lik && ls -la /workspace/"]
+      volumeMounts:
+        - name: ws
+          mountPath: /workspace
+  volumes:
+    - name: ws
+      persistentVolumeClaim:
+        claimName: li-lios-kernel-workspace

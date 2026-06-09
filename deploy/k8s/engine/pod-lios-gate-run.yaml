@@ -1,0 +1,46 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: lios-gate-run
+  namespace: li-swarm
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: engine
+  restartPolicy: Never
+  containers:
+    - name: gates
+      image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
+      env:
+        - name: GITLAB_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: li-agents-secrets
+              key: GITLAB_TOKEN
+              optional: true
+        - name: GH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: li-agents-secrets
+              key: GH_TOKEN
+              optional: true
+      command:
+        - bash
+        - -lc
+        - |
+          set -euo pipefail
+          source /app/deploy/k8s-git-auth.sh
+          li_git_primary_setup
+          li_git_clone_repo lik /tmp/lik-test cursor/lios-kernel-m1
+          ls -la /tmp/lik-test/docs/
+          export LIK_ROOT=/workspace/lik LIC_ROOT=/workspace/lic
+          cd /workspace/li-os
+          bash scripts/gates/phase-0-scaffold-gate.sh
+          bash scripts/gates/check-no-port-caps.sh
+          bash scripts/gates/m1-completion-gate.sh
+      volumeMounts:
+        - name: ws
+          mountPath: /workspace
+  volumes:
+    - name: ws
+      persistentVolumeClaim:
+        claimName: li-lios-kernel-workspace

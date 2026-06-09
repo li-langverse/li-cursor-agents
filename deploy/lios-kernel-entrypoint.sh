@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
-: "${GH_TOKEN:?GH_TOKEN required}"
-export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
-ORG="${LI_GITHUB_ORG:-li-langverse}"
+
+# shellcheck source=k8s-git-auth.sh
+source "${LI_CURSOR_AGENTS_ROOT:-/app}/deploy/k8s-git-auth.sh"
+li_git_primary_setup || exit 1
+
 AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
 WORKSPACE="${LI_GOAL_WORKSPACE:-/workspace}"
 BRANCH_LI_OS="${LI_GOAL_BRANCH_LI_OS:-cursor/lios-kernel-m1}"
@@ -15,72 +17,96 @@ LOOP_SLEEP="${LI_GOAL_LOOP_SLEEP_SEC:-120}"
 LIOS_ROOT="${WORKSPACE}/li-os"
 LIC_ROOT="${WORKSPACE}/lic"
 LIK_ROOT="${WORKSPACE}/lik"
-echo "lios-kernel-entrypoint: workspace=${WORKSPACE}"
+
+echo "lios-kernel-entrypoint: workspace=${WORKSPACE} git=${LI_GIT_HOST}/${LI_GIT_GROUP}"
+
 [[ -f /config/k8s-goal-loop-common.sh ]] && source /config/k8s-goal-loop-common.sh
-export GH_TOKEN GITHUB_TOKEN
-echo "$GH_TOKEN" | gh auth login --with-token 2>/dev/null || true
-gh auth setup-git 2>/dev/null || true
-git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+
 git config --global user.email "${LI_GIT_USER_EMAIL:-lios-kernel-agent@li-langverse.dev}"
 git config --global user.name "${LI_GIT_USER_NAME:-lios-kernel-agent}"
-branch_candidates(){ local p="$1" s="" b; for b in "$p" ${FALLBACK_RAW//,/ }; do b="${b// /}"; [[ -z "$b" ]]&&continue; [[ " $s " == *" $b "* ]]&&continue; s="$s $b"; echo "$b"; done; }
-git_clone_branch(){ local repo="$1" dest="$2" branch="$3"; local url="https://x-access-token:${GH_TOKEN}@github.com/${repo}.git";
-  rm -rf "${dest}"
-  for b in $(branch_candidates "$branch"); do
-    if git clone --depth 1 --branch "$b" "$url" "$dest" 2>/dev/null; then return 0; fi
+
+branch_candidates() {
+  local p="$1" s="" b
+  for b in "$p" ${FALLBACK_RAW//,/ }; do
+    b="${b// /}"
+    [[ -z "$b" ]] && continue
+    [[ " $s " == *" $b "* ]] && continue
+    s="$s $b"
+    echo "$b"
   done
-  git clone --depth 1 "$url" "$dest" 2>/dev/null && { git -C "$dest" checkout -B "$branch" 2>/dev/null || true; return 0; }
-  return 1
 }
-clone_or_sync(){ local repo="$1" dest="$2" pref="$3"; mkdir -p "$(dirname "$dest")";
-  if [[ ! -d "$dest/.git" ]]; then
-    if git_clone_branch "$repo" "$dest" "$pref"; then return 0; fi
-    if gh repo view "$repo" >/dev/null 2>&1; then
-      for b in $(branch_candidates "$pref"); do gh repo clone "$repo" "$dest" -- --branch "$b" 2>/dev/null && return 0; done
-      gh repo clone "$repo" "$dest" 2>/dev/null && { git -C "$dest" checkout -B "$pref" 2>/dev/null || true; return 0; }
-    fi
-    echo "lios-kernel-entrypoint: clone failed for ${repo}" >&2
-    return 1
-  fi
-  git -C "$dest" fetch origin --prune 2>/dev/null || true
-  local b ok=0; for b in $(branch_candidates "$pref"); do
-    if git -C "$dest" show-ref --verify --quiet "refs/remotes/origin/$b"; then
-      git -C "$dest" checkout -f -B "$b" "origin/$b"; git -C "$dest" reset --hard "origin/$b"; ok=1; break
-    fi
-  done; [[ $ok -eq 0 ]] && git -C "$dest" checkout -B "$pref" 2>/dev/null || true; }
-ensure_repo_tree(){ local marker="$1" dest="$2" repo="$3" branch="$4";
+
+sync_repo_with_fallbacks() {
+  local repo="$1" dest="$2" pref="$3"
+  local -a branches=()
+  while IFS= read -r b; do branches+=("$b"); done < <(branch_candidates "$pref")
+  li_git_clone_repo_try_branches "$repo" "$dest" "${branches[@]}"
+}
+
+ensure_repo_tree() {
+  local marker="$1" dest="$2" repo="$3" branch="$4"
   if [[ ! -f "${dest}/${marker}" ]]; then
     echo "lios-kernel-entrypoint: repairing incomplete checkout ${dest} (${marker} missing)" >&2
-    git_clone_branch "$repo" "$dest" "$branch" || clone_or_sync "$repo" "$dest" "$branch"
+    rm -rf "$dest"
+    sync_repo_with_fallbacks "$repo" "$dest" "$branch"
   fi
-  [[ -f "${dest}/${marker}" ]] || { echo "lios-kernel-entrypoint: ${dest} still missing ${marker}" >&2; return 1; }
+  [[ -f "${dest}/${marker}" ]] || {
+    echo "lios-kernel-entrypoint: ${dest} still missing ${marker}" >&2
+    return 1
+  }
 }
-sync_workspace(){
-  clone_or_sync "${ORG}/lik" "$LIK_ROOT" "$BRANCH_LIK"
-  clone_or_sync "${ORG}/lic" "$LIC_ROOT" "$BRANCH_LIC"
-  clone_or_sync "${ORG}/li-os" "$LIOS_ROOT" "$BRANCH_LI_OS"
-  ensure_repo_tree "docs/kernel-abi.md" "$LIK_ROOT" "${ORG}/lik" "$BRANCH_LIK"
-  ensure_repo_tree "docs/compiler-kernel-targets.md" "$LIC_ROOT" "${ORG}/lic" "$BRANCH_LIC"
-  ensure_repo_tree "scripts/gates/m1-completion-gate.sh" "$LIOS_ROOT" "${ORG}/li-os" "$BRANCH_LI_OS"
+
+sync_workspace() {
+  sync_repo_with_fallbacks "lik" "$LIK_ROOT" "$BRANCH_LIK"
+  sync_repo_with_fallbacks "lic" "$LIC_ROOT" "$BRANCH_LIC"
+  sync_repo_with_fallbacks "li-os" "$LIOS_ROOT" "$BRANCH_LI_OS"
+  ensure_repo_tree "docs/kernel-abi.md" "$LIK_ROOT" "lik" "$BRANCH_LIK"
+  ensure_repo_tree "docs/compiler-kernel-targets.md" "$LIC_ROOT" "lic" "$BRANCH_LIC"
+  ensure_repo_tree "scripts/gates/m1-completion-gate.sh" "$LIOS_ROOT" "li-os" "$BRANCH_LI_OS"
   export LIK_ROOT LIC_ROOT LIOS_ROOT
 }
-seed_loop_state(){
+
+seed_loop_state() {
   mkdir -p "${AGENTS_ROOT}/data/goal-directed-sprints" "${AGENTS_ROOT}/data/lios-kernel-loop"
   [[ -f /config/lios-kernel-m1.md ]] && cp -f /config/lios-kernel-m1.md "${AGENTS_ROOT}/data/goal-directed-sprints/"
-  [[ ! -f "${AGENTS_ROOT}/data/lios-kernel-loop/iteration-log.md" && -f /config/iteration-log.md ]] && cp -f /config/iteration-log.md "${AGENTS_ROOT}/data/lios-kernel-loop/"
+  [[ ! -f "${AGENTS_ROOT}/data/lios-kernel-loop/iteration-log.md" && -f /config/iteration-log.md ]] \
+    && cp -f /config/iteration-log.md "${AGENTS_ROOT}/data/lios-kernel-loop/"
   [[ -f /config/state.json ]] && cp -f /config/state.json "${AGENTS_ROOT}/data/lios-kernel-loop/state.json"
 }
-resolve_goal_file(){ [[ -f "${AGENTS_ROOT}/${GOAL_FILE_REL}" ]] && { echo "${AGENTS_ROOT}/${GOAL_FILE_REL}"; return 0; }; [[ -f /config/lios-kernel-m1.md ]] && { echo /config/lios-kernel-m1.md; return 0; }; return 1; }
-run_goal_loop(){
-  install_goal_loop_scripts "$AGENTS_ROOT"; export_goal_loop_self_unblock_env "$BRANCH_LI_OS"
+
+resolve_goal_file() {
+  [[ -f "${AGENTS_ROOT}/${GOAL_FILE_REL}" ]] && { echo "${AGENTS_ROOT}/${GOAL_FILE_REL}"; return 0; }
+  [[ -f /config/lios-kernel-m1.md ]] && { echo /config/lios-kernel-m1.md; return 0; }
+  return 1
+}
+
+run_goal_loop() {
+  install_goal_loop_scripts "$AGENTS_ROOT"
+  export_goal_loop_self_unblock_env "$BRANCH_LI_OS"
   export LIK_ROOT LIC_ROOT LIOS_ROOT LI_CURSOR_AGENTS_ROOT="$AGENTS_ROOT" LI_GOAL_LOOP_SLEEP_SEC="$LOOP_SLEEP"
-  local g; g="$(resolve_goal_file)"; export LI_GOAL_FILE="$g" LI_GOAL_PLAN_FILE="${AGENTS_ROOT}/docs/plans/2026-06-lios-kernel-m1.md"
+  local g
+  g="$(resolve_goal_file)"
+  export LI_GOAL_FILE="$g" LI_GOAL_PLAN_FILE="${AGENTS_ROOT}/docs/plans/2026-06-lios-kernel-m1.md"
   mkdir -p "$LIOS_ROOT/scripts/gates" 2>/dev/null || true
-  "$AGENTS_ROOT/scripts/goal-directed-loop.sh" --agent "$AGENT" --workflow-repo li-os --cwd "$LIOS_ROOT" --goal-file "$g" --max 0 --sleep "$LOOP_SLEEP"; }
-sync_workspace; seed_loop_state; test -f "$(resolve_goal_file)" || { echo missing goal >&2; exit 1; }
-while true; do sync_workspace; set +e; run_goal_loop; rc=$?; set -e
+  "$AGENTS_ROOT/scripts/goal-directed-loop.sh" \
+    --agent "$AGENT" --workflow-repo li-os --cwd "$LIOS_ROOT" \
+    --goal-file "$g" --max 0 --sleep "$LOOP_SLEEP"
+}
+
+sync_workspace
+seed_loop_state
+test -f "$(resolve_goal_file)" || { echo missing goal >&2; exit 1; }
+
+while true; do
+  sync_workspace
+  set +e
+  run_goal_loop
+  rc=$?
+  set -e
   if [[ $rc -eq 0 ]]; then
     finish_on_goal_complete || true
     exec sleep infinity
   fi
-  echo retry $rc; sleep "$LOOP_SLEEP"; done
+  echo retry $rc
+  sleep "$LOOP_SLEEP"
+done

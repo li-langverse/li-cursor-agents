@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: lios-debug
+  namespace: li-swarm
+spec:
+  nodeSelector:
+    kubernetes.io/hostname: engine
+  restartPolicy: Never
+  containers:
+    - name: debug
+      image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
+      command:
+        - bash
+        - -lc
+        - |
+          echo "=== /config ==="
+          ls -la /config/
+          echo "=== /workspace ==="
+          ls -la /workspace/
+          echo "=== lik ==="
+          ls -la /workspace/lik 2>&1 || true
+          echo "=== seed test ==="
+          mkdir -p /app/data/goal-directed-sprints
+          cp -f /config/lios-kernel-m1.md /app/data/goal-directed-sprints/
+          test -f /app/data/goal-directed-sprints/lios-kernel-m1.md && echo goal_ok || echo goal_fail
+          export LIK_ROOT=/workspace/lik LIC_ROOT=/workspace/lic
+          cd /workspace/li-os && bash scripts/gates/phase-0-scaffold-gate.sh 2>&1 || true
+      volumeMounts:
+        - name: ws
+          mountPath: /workspace
+        - name: cfg
+          mountPath: /config
+  volumes:
+    - name: ws
+      persistentVolumeClaim:
+        claimName: li-lios-kernel-workspace
+    - name: cfg
+      configMap:
+        name: li-lios-kernel-bundle

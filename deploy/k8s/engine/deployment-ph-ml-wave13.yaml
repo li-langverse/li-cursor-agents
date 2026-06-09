@@ -1,4 +1,4 @@
-﻿apiVersion: apps/v1
+apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: li-ph-ml-wave13
@@ -7,7 +7,7 @@ metadata:
     app: li-ph-ml-wave13
     app.kubernetes.io/name: li-ph-ml-wave13
     app.kubernetes.io/component: goal-directed-agent
-    li-langverse.io/sprint: ph-ml-program-complete
+    li-langverse.io/sprint: ph-ml-li-array-perf-h
 spec:
   replicas: 1
   strategy:
@@ -21,7 +21,7 @@ spec:
         app: li-ph-ml-wave13
         app.kubernetes.io/name: li-ph-ml-wave13
         app.kubernetes.io/component: goal-directed-agent
-        li-langverse.io/sprint: ph-ml-program-complete
+        li-langverse.io/sprint: ph-ml-li-array-perf-h
     spec:
       nodeSelector:
         kubernetes.io/hostname: engine
@@ -42,6 +42,13 @@ spec:
                 secretKeyRef:
                   name: li-agents-secrets
                   key: GH_TOKEN
+                  optional: true
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
+                  optional: true
             - name: GITHUB_TOKEN
               valueFrom:
                 secretKeyRef:
