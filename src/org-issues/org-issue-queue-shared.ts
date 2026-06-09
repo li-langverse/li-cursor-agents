@@ -41,7 +41,7 @@ export interface IssueClassifyRefreshResult {
   ok: boolean;
   tail: string;
   skipped: boolean;
-  source: "github" | "queue" | "disabled";
+  source: "gitlab" | "github" | "queue" | "disabled";
 }
 
 export function refreshIssueClassify(
@@ -64,5 +64,7 @@ export function refreshIssueClassify(
   }
   const maxAgeMin = Math.max(1, Math.ceil(orgIssueQueueMaxAgeMs() / 60_000));
   const result = runPython("org-classify-open-issues.py", ["--max-age-minutes", String(maxAgeMin)]);
-  return { ...result, skipped: false, source: "github" };
+  const source =
+    process.env.LI_VCS_PROVIDER?.trim().toLowerCase() === "github" ? "github" : "gitlab";
+  return { ...result, skipped: false, source };
 }

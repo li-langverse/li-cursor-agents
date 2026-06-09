@@ -199,8 +199,16 @@ export async function createResearcherJob(options: {
               envFrom: [{ configMapRef: { name: "li-org-research-supervisor" } }],
               env: [
                 {
+                  name: "GITLAB_TOKEN",
+                  valueFrom: {
+                    secretKeyRef: { name: "li-agents-secrets", key: "GITLAB_TOKEN", optional: true },
+                  },
+                },
+                {
                   name: "GH_TOKEN",
-                  valueFrom: { secretKeyRef: { name: "li-agents-secrets", key: "GH_SWARM_TOKEN" } },
+                  valueFrom: {
+                    secretKeyRef: { name: "li-agents-secrets", key: "GH_SWARM_TOKEN", optional: true },
+                  },
                 },
                 {
                   name: "CURSOR_API_KEY",

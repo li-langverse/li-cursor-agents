@@ -4,7 +4,7 @@ import test from "node:test";
 import { detectTriageRouted } from "./org-issue-triage-cycle.js";
 
 const CLOSE_SNIPPETS = [
-  'close_github_issue({}) {"ok":true,"closed":true}',
+  'close_gitlab_issue({}) {"ok":true,"closed":true}',
   "org-close-issue.py done {\"closed\": true}",
 ];
 
@@ -40,7 +40,7 @@ test("detectTriageRouted mixed noise still detects close when JSON present", () 
 test("detectTriageRouted random without close markers is not close", () => {
   for (let i = 0; i < 50; i++) {
     const s = randomAscii(100);
-    if (/close_github_issue|"closed"\s*:\s*true/i.test(s)) continue;
+    if (/close_gitlab_issue|close_github_issue|"closed"\s*:\s*true/i.test(s)) continue;
     const routed = detectTriageRouted(s);
     assert.notEqual(routed, "close");
   }

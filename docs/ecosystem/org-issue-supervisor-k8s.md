@@ -2,6 +2,8 @@
 
 Prototype for **Kubernetes-ready org-issue swarm**: a long-running supervisor on the engine cluster spawns isolated implementer Jobs while open org issues remain.
 
+**VCS:** GitLab-primary (`gitlab.lilangverse.xyz/li-langverse/*`). Issues API, classify, close, and triage MCP use `GITLAB_TOKEN`. GHCR image pull/push is the only GitHub touchpoint.
+
 ## Flow
 
 ```mermaid
@@ -16,7 +18,7 @@ flowchart LR
 
 1. **Wake CronJob** (`li-org-issue-supervisor-wake`, `*/30 * * * *`) runs `org-issue-supervisor.js wake` — scales Deployment `li-org-issue-supervisor` to 1 replica.
 2. **Supervisor Deployment** loops while `total_open > 0`: refreshes `org-issue-queue.json`, reads/writes `org-issue-active.json` on PVC `li-agents-sprint-data`, spawns up to **3** implementer Jobs.
-3. **Implementer Job** (one issue each): loads issue from GitHub, runs `code_implementer` (or `LI_ORG_ISSUE_IMPLEMENTER_AGENT`) via Cursor SDK, posts claim comment, appends `org-issue-implement-audit.jsonl`, marks active entry completed/failed.
+3. **Implementer Job** (one issue each): loads issue from GitLab, runs `code_implementer` (or `LI_ORG_ISSUE_IMPLEMENTER_AGENT`) via Cursor SDK, posts claim comment, appends `org-issue-implement-audit.jsonl`, marks active entry completed/failed.
 
 ## Scaling formula
 
@@ -54,16 +56,16 @@ Requires `li-agents-secrets`:
 
 | Key | Required | Purpose |
 |-----|----------|---------|
-| `GH_TOKEN` | yes | GitHub API (issue fetch, claim comment, agent `gh` / `org-close-issue.py`) |
+| `GITLAB_TOKEN` | yes | GitLab Issues API (fetch, classify, claim comment, close via MCP) |
 | `CURSOR_API_KEY` | yes for real runs | Cursor SDK agent execution (also accepts `CURSOR_SDK_KEY`) |
+| `GHCR_PUSH_TOKEN` | no | Push org-swarm image to ghcr.io only |
 
 Apply secrets from local env (do not commit):
 
 ```powershell
 $env:KUBECONFIG = "C:\Users\Julian\.kube\config-homelab"
-# Load GH_TOKEN from .env.github and CURSOR_API_KEY from Cursor .env
 kubectl create secret generic li-agents-secrets `
-  --from-literal=GH_TOKEN=$env:GH_TOKEN `
+  --from-literal=GITLAB_TOKEN=$env:GITLAB_TOKEN `
   --from-literal=CURSOR_API_KEY=$env:CURSOR_API_KEY `
   -n li-swarm --dry-run=client -o yaml | kubectl apply -f -
 ```
@@ -75,19 +77,6 @@ Supervisor picks **`implement` bucket only** from `org-issue-queue.json` (skips 
 Each Job runs `node dist/cli/org-issue-implementer.js`:
 
 1. Verify PVC claim (`org-issue-active.json` worker-id match)
-2. Fetch issue title/body/labels from GitHub API
+2. Fetch issue title/body/labels from GitLab API
 3. Run Cursor SDK agent (default **`code_implementer`**, override with `LI_ORG_ISSUE_IMPLEMENTER_AGENT=org_issue_triage`)
-4. Agent implements fix (opens PR via repo-workflow) **or** closes with `scripts/org-close-issue.py` (mandatory audit comment)
-5. Append `org-issue-implement-audit.jsonl`; mark active entry `completed` or `failed`
-
-If `CURSOR_API_KEY` is missing, the Job fails fast with a clear log line naming the secret key to add.
-
-Conservative default: `LI_ORG_ISSUE_SUPERVISOR_MAX_WORKERS=1` (raise to 3 when stable). Job `activeDeadlineSeconds=7200` (2h).
-
-## Verify
-
-```bash
-kubectl -n li-swarm get deploy,job,pod -l app=li-org-issue-supervisor
-kubectl -n li-swarm logs deploy/li-org-issue-supervisor --tail=50
-kubectl -n li-swarm get jobs -l li-langverse.io/managed-by=org-issue-supervisor
-```
+4. Agent implements fix (opens MR via repo-workflow) **or** closes with `scripts/org-close-issue.py` / MCP `close_gitlab_issue` (mandatory audit comment)

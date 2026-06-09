@@ -11,7 +11,10 @@ import {
 import { agentsPackageRoot } from "../runner.js";
 
 function hasGhToken(): boolean {
-  return Boolean(process.env.GH_TOKEN?.trim() || process.env.GITHUB_TOKEN?.trim());
+  if (process.env.LI_VCS_PROVIDER?.trim().toLowerCase() === "github") {
+    return Boolean(process.env.GH_TOKEN?.trim() || process.env.GITHUB_TOKEN?.trim());
+  }
+  return Boolean(process.env.GITLAB_TOKEN?.trim());
 }
 
 function scriptPath(workspaceRoot: string, name: string): string {
@@ -82,7 +85,14 @@ export async function orgIssueWorkerCycle(): Promise<OrgIssueWorkerCycleResult> 
     };
   }
   if (!hasGhToken()) {
-    return { ok: false, skipped: true, skip_reason: "GH_TOKEN required" };
+    return {
+      ok: false,
+      skipped: true,
+      skip_reason:
+        process.env.LI_VCS_PROVIDER?.trim().toLowerCase() === "github"
+          ? "GH_TOKEN required"
+          : "GITLAB_TOKEN required",
+    };
   }
 
   const workspaceRoot = agentsPackageRoot();

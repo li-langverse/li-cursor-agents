@@ -1,19 +1,16 @@
 #!/usr/bin/env python3
-"""Count open issues in li-langverse org."""
+"""Count open issues in li-langverse org (GitLab primary)."""
 from __future__ import annotations
 
 import argparse
 import json
 import sys
 
-from _gh_search_retry import search_issues
-
-ORG = "li-langverse"
+from _vcs_issue_api import search_open_issues
 
 
 def count_open() -> int:
-    items = search_issues(f"org:{ORG} is:open is:issue")
-    return len(items)
+    return len(search_open_issues())
 
 
 def main() -> None:

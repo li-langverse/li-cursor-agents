@@ -35,18 +35,11 @@ spec:
         - name: git-clone
           image: alpine/git:latest
           env:
-            - name: GH_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: li-agents-secrets
-                  key: GH_TOKEN
-                  optional: true
             - name: GITLAB_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: li-agents-secrets
                   key: GITLAB_TOKEN
-                  optional: true
             - name: GIT_REF
               value: "main"
             - name: GIT_REPO
@@ -58,10 +51,8 @@ spec:
               set -eu
               ref="${GIT_REF:-main}"
               dest=/workspace/li-cursor-agents
-              tok="${GITLAB_TOKEN:-$GH_TOKEN}"
-              prefix="oauth2"
-              if [ -z "${GITLAB_TOKEN:-}" ]; then prefix="x-access-token"; fi
-              url="${GIT_REPO/https:\/\//https://${prefix}:${tok}@}"
+              tok="${GITLAB_TOKEN:?GITLAB_TOKEN required for GitLab-primary clone}"
+              url="${GIT_REPO/https:\/\//https://oauth2:${tok}@}"
               git clone --depth 1 --branch "$ref" "$url" "$dest" \
                 || git clone --depth 1 "$url" "$dest"
               test -f "$dest/deploy/Dockerfile"
@@ -74,17 +65,17 @@ spec:
           securityContext:
             privileged: true
           env:
+            - name: GHCR_PUSH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GHCR_PUSH_TOKEN
+                  optional: true
             - name: GH_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: li-agents-secrets
-                  key: GH_TOKEN
-                  optional: true
-            - name: GITLAB_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: li-agents-secrets
-                  key: GITLAB_TOKEN
+                  key: GHCR_PUSH_TOKEN
                   optional: true
             - name: IMAGE
               value: ghcr.io/li-langverse/li-cursor-agents:latest
@@ -100,8 +91,10 @@ spec:
             - |
               set -euo pipefail
               cd /workspace/li-cursor-agents
-              token="${GH_TOKEN}"
-              echo "$token" | podman login ghcr.io -u "$GHCR_USER" --password-stdin || true
+              token="${GHCR_PUSH_TOKEN:-$GH_TOKEN}"
+              if [ -n "$token" ]; then
+                echo "$token" | podman login ghcr.io -u "$GHCR_USER" --password-stdin || true
+              fi
               podman build -f deploy/Dockerfile -t "$IMAGE" .
               if podman push "$IMAGE"; then
                 echo "pushed $IMAGE to ghcr.io"

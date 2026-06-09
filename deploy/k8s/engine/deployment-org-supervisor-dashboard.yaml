@@ -36,11 +36,17 @@ spec:
             - configMapRef:
                 name: li-org-supervisor-dashboard
           env:
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
             - name: GH_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: li-agents-secrets
                   key: GH_SWARM_TOKEN
+                  optional: true
             - name: SUPABASE_URL
               valueFrom:
                 secretKeyRef:

@@ -14,7 +14,10 @@ import { configuredStore, dbEnabled, useLidbStore } from "../db/client.js";
 export const CONTROL_PLANE_DB_MCP_ID = "li-control-plane-db";
 export const CONTROL_PLANE_LIQ_MCP_ID = "li-control-plane-liq";
 export const ECOSYSTEM_CONTEXT_MCP_ID = "li-ecosystem-context";
-export const ORG_GITHUB_MCP_ID = "li-org-github";
+/** GitLab-primary org issue MCP server id. */
+export const ORG_VCS_MCP_ID = "li-org-vcs";
+/** @deprecated Use ORG_VCS_MCP_ID — kept for import compatibility. */
+export const ORG_GITHUB_MCP_ID = ORG_VCS_MCP_ID;
 
 export function controlPlaneDbMcpEntryPath(): string {
   const root = agentsPackageRoot();
@@ -54,7 +57,15 @@ export function orgGithubMcpEntryPath(): string {
 
 export function buildOrgGithubMcpServer(root = agentsPackageRoot()): McpServerConfig {
   const env: Record<string, string> = { LI_CURSOR_AGENTS_ROOT: root };
-  for (const key of ["GH_TOKEN", "GITHUB_TOKEN", "LI_CURSOR_AGENTS_ROOT"]) {
+  for (const key of [
+    "GITLAB_TOKEN",
+    "LI_VCS_PROVIDER",
+    "LI_GITLAB_HOST",
+    "LI_GITLAB_GROUP",
+    "GH_TOKEN",
+    "GITHUB_TOKEN",
+    "LI_CURSOR_AGENTS_ROOT",
+  ]) {
     const v = process.env[key];
     if (v) env[key] = v;
   }

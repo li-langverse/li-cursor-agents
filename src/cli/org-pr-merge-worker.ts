@@ -24,7 +24,7 @@ if (cmd === "once") {
 }
 
 if (!isOrgPrMergeWorkerAlwaysOn()) {
-  console.error("Set LI_ORG_PR_MERGE_WORKER_ALWAYS_ON=1 (and GH_TOKEN) before starting");
+  console.error("Set LI_ORG_PR_MERGE_WORKER_ALWAYS_ON=1 (and GITLAB_TOKEN) before starting");
   process.exit(1);
 }
 

@@ -99,6 +99,10 @@ function Restart-K8sGoalDirectedWorkers {
         if ([string]::IsNullOrWhiteSpace($d)) { continue }
         Write-Host "==> rollout restart deploy/$d"
         kubectl -n $Namespace rollout restart "deploy/$d" 2>$null
-        kubectl -n $Namespace rollout status "deploy/$d" --timeout=180s 2>$null
+        $null = kubectl -n $Namespace rollout status "deploy/$d" --timeout=180s 2>&1
+        if ($LASTEXITCODE -ne 0) {
+            Write-Warning "rollout status timed out for deploy/$d (continuing)"
+            $global:LASTEXITCODE = 0
+        }
     }
 }

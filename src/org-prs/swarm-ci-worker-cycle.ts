@@ -6,8 +6,11 @@ import { workerConsole } from "../worker/worker-console.js";
 import { swarmCiWorkerDeferredBySprintRole, swarmCiWorkerEnabled, swarmCiWorkerLabelFilter, swarmCiWorkerMergeLimit, swarmCiWorkerRequireLabels, swarmCiWorkerSubset, } from "./swarm-ci-worker-config.js";
 import { filterQueueRowsByLabels, loadLabelsForQueueRows, type OrgPrRow } from "./swarm-ci-worker-labels.js";
 import { resolveOrgPrWorkspaceRoot } from "./workspace-root.js";
-function hasGhToken(): boolean {
-    return Boolean(process.env.GH_TOKEN?.trim() || process.env.GITHUB_TOKEN?.trim());
+function hasVcsToken(): boolean {
+    if (process.env.LI_VCS_PROVIDER?.trim().toLowerCase() === "github") {
+        return Boolean(process.env.GH_TOKEN?.trim() || process.env.GITHUB_TOKEN?.trim());
+    }
+    return Boolean(process.env.GITLAB_TOKEN?.trim());
 }
 function scriptPath(workspaceRoot: string, name: string): string {
     const inRoot = join(workspaceRoot, "scripts", name);
@@ -78,8 +81,15 @@ export async function swarmCiWorkerCycle(): Promise<SwarmCiWorkerCycleResult> {
         }
         return { ok: true, skipped: true, skip_reason: "LI_SWARM_CI_WORKER_ALWAYS_ON not set" };
     }
-    if (!hasGhToken()) {
-        return { ok: false, skipped: true, skip_reason: "GH_TOKEN required" };
+    if (!hasVcsToken()) {
+        return {
+            ok: false,
+            skipped: true,
+            skip_reason:
+                process.env.LI_VCS_PROVIDER?.trim().toLowerCase() === "github"
+                    ? "GH_TOKEN required"
+                    : "GITLAB_TOKEN required",
+        };
     }
     const workspaceRoot = resolveOrgPrWorkspaceRoot();
     const paths = queuePaths(workspaceRoot);

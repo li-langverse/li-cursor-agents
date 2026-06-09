@@ -64,6 +64,18 @@ li_git_primary_setup() {
   git config --global user.name "${LI_GIT_USER_NAME:-li-goal-worker}"
   git config --global url."${LI_GIT_SCHEME}://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${LI_GIT_HOST}/".insteadOf "${LI_GIT_SCHEME}://${LI_GIT_HOST}/"
 
+  if [[ "${LI_GIT_SSL_VERIFY:-1}" == "0" ]] || [[ "$LI_GIT_SCHEME" == "http" ]] || [[ "$LI_GIT_HOST" == *"lilangverse.xyz" ]]; then
+    git config --global "http.${LI_GIT_SCHEME}://${LI_GIT_HOST}/.sslVerify" false
+  fi
+
+  # Homelab: route public GitLab host to in-cluster HTTP when external TLS is unavailable.
+  if [[ "$LI_GIT_HOST" == *"lilangverse.xyz"* ]]; then
+    LI_GIT_INTERNAL_SVC="${LI_GIT_INTERNAL_SVC:-gitlab.gitlab.svc}"
+    git config --global url."http://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${LI_GIT_INTERNAL_SVC}/".insteadOf "https://${LI_GIT_HOST}/"
+    git config --global url."http://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${LI_GIT_INTERNAL_SVC}/".insteadOf "https://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${LI_GIT_HOST}/"
+    echo "k8s-git-auth: using in-cluster GitLab (${LI_GIT_INTERNAL_SVC}) for ${LI_GIT_HOST}" >&2
+  fi
+
   if [[ -n "${GH_TOKEN:-}" ]]; then
     export GITHUB_TOKEN="${GITHUB_TOKEN:-$GH_TOKEN}"
     if command -v gh >/dev/null 2>&1; then
@@ -104,8 +116,12 @@ li_git_ensure_remotes() {
     git -C "$dest" remote add origin "$gitlab_url"
   elif [[ "$origin_url" == *"github.com"* ]]; then
     echo "k8s-git-auth: migrate origin github → gitlab for ${dest} (${repo})"
+    if ! git -C "$dest" remote get-url github >/dev/null 2>&1; then
+      git -C "$dest" remote add github "$origin_url"
+    fi
     git -C "$dest" remote set-url origin "$gitlab_url"
-  elif [[ "$origin_url" != *"${LI_GIT_HOST}"* ]]; then
+  else
+    # Refresh credentials/host (PVC clones may embed stale PAT in origin URL).
     git -C "$dest" remote set-url origin "$gitlab_url"
   fi
 
@@ -131,6 +147,13 @@ li_git_clone_repo() {
       li_git_ensure_remotes "$dest" "$repo"
       return 0
     fi
+    echo "k8s-git-auth: WARN GitLab clone failed; trying github mirror" >&2
+    local gh_url
+    gh_url="$(li_git_github_mirror_url "$repo")"
+    if git clone --branch "$branch" "$gh_url" "$dest" 2>/dev/null; then
+      li_git_ensure_remotes "$dest" "$repo"
+      return 0
+    fi
     rm -rf "$dest"
     git clone "$url" "$dest"
     git -C "$dest" checkout -B "$branch" "origin/${branch}" 2>/dev/null \
@@ -140,7 +163,22 @@ li_git_clone_repo() {
     return 0
   fi
   li_git_ensure_remotes "$dest" "$repo"
-  git -C "$dest" fetch origin --prune
+  if ! git -C "$dest" fetch origin --prune 2>/dev/null; then
+    echo "k8s-git-auth: WARN GitLab origin fetch failed; using github mirror for read sync" >&2
+    git -C "$dest" fetch github --prune || return 1
+    if git -C "$dest" show-ref --verify --quiet "refs/remotes/github/${branch}"; then
+      git -C "$dest" checkout -f -B "$branch" "refs/remotes/github/${branch}"
+      git -C "$dest" reset --hard "refs/remotes/github/${branch}"
+      return 0
+    fi
+    if git -C "$dest" show-ref --verify --quiet "refs/remotes/origin/${branch}"; then
+      git -C "$dest" checkout -f -B "$branch" "origin/${branch}"
+      git -C "$dest" reset --hard "origin/${branch}"
+      return 0
+    fi
+    git -C "$dest" checkout -f -B "$branch"
+    return 0
+  fi
   if git -C "$dest" show-ref --verify --quiet "refs/remotes/origin/${branch}"; then
     git -C "$dest" checkout -f -B "$branch" "origin/${branch}"
     git -C "$dest" reset --hard "origin/${branch}"
