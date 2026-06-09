@@ -17,7 +17,7 @@ Load-LiSwarmEnvFiles -AgentsRoot $Root -WorkspaceRoot $Workspace
 if (-not $env:GH_TOKEN -and $env:GITHUB_TOKEN) { $env:GH_TOKEN = $env:GITHUB_TOKEN }
 if (-not $env:GH_TOKEN -and $env:GH_SWARM_TOKEN) { $env:GH_TOKEN = $env:GH_SWARM_TOKEN }
 if (-not $env:GH_TOKEN) { Write-Error "GH_TOKEN required (gh CLI / GHCR pull)" }
-if (-not $env:GITLAB_TOKEN) { Write-Warning "GITLAB_TOKEN not set — worker will fall back to GitHub for git clone/push" }
+if (-not $env:GITLAB_TOKEN) { Write-Warning "GITLAB_TOKEN not set - worker will fall back to GitHub for git clone/push" }
 
 $env:KUBECONFIG = $KubeConfig
 Write-Host "==> kubectl apply li-lios-kernel (namespace=$Namespace)"
@@ -35,16 +35,12 @@ if (-not (Test-Path $state)) {
     '{"phase":"m1-complete"}' | Set-Content -Encoding utf8NoBOM $state
 }
 if (-not (Test-Path $log)) {
-    @"
-# lios-kernel loop
-
-| iter | phase | gate | notes |
-|------|-------|------|-------|
-"@ | Set-Content -Encoding utf8NoBOM $log
+    Set-Content -Encoding utf8NoBOM -Path $log -Value "# lios-kernel loop`n"
 }
 
 $extra = @{
     "entrypoint.sh"       = (Join-Path $Root "deploy\lios-kernel-entrypoint.sh")
+    "k8s-git-auth.sh"     = (Join-Path $Root "deploy\k8s-git-auth.sh")
     "lios-kernel-m1.md"   = $goal
     "state.json"          = $state
     "iteration-log.md"    = $log
