@@ -13,7 +13,8 @@ spec:
     requests:
       storage: 20Gi
 ---
-# Goal-directed agent: LiOS kernel M2 on blackpearl (off engine; desktop has broken pod DNS).
+# Goal-directed agent: LiOS kernel M2 on blackpearl (off engine for memory).
+# blackpearl pods cannot reach cluster DNS (10.43.0.10); use homelab-lan-coredns on host :53.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -41,6 +42,18 @@ spec:
         li-langverse.io/sprint: lios-kernel-m2
     spec:
       serviceAccountName: li-goal-worker
+      dnsPolicy: None
+      dnsConfig:
+        nameservers:
+          - 192.168.10.33
+        searches:
+          - li-swarm.svc.cluster.local
+          - svc.cluster.local
+          - cluster.local
+          - fritz.box
+        options:
+          - name: ndots
+            value: "5"
       nodeSelector:
         kubernetes.io/hostname: blackpearl
       imagePullSecrets:
