@@ -38,7 +38,7 @@ $PriorityActive = @(
     "li-li-parallel",
     "li-ph-ml-wave13",
     "li-research-ingest",
-    "li-research-product",
+    "klaut-li-research-product",
     "li-db-studio-product",
     "li-lios-kernel",
     "li-li-toml-config"

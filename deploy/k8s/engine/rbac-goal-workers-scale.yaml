@@ -23,8 +23,8 @@ rules:
       - li-proof-explorer
       - li-db-studio-product
       - li-db-studio-klaut
-      - li-research-product
       - li-research-klaut
+      - klaut-li-research-product
       - li-research-ingest
       - li-li-parallel
       - li-pure-li-https
@@ -37,8 +37,8 @@ rules:
       - li-proof-explorer
       - li-db-studio-product
       - li-db-studio-klaut
-      - li-research-product
       - li-research-klaut
+      - klaut-li-research-product
       - li-research-ingest
       - li-li-parallel
       - li-pure-li-https

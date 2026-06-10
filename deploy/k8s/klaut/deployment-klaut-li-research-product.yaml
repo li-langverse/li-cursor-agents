@@ -1,12 +1,12 @@
-# Goal-directed agent: li-research product track (li-langverse token — li-agents-secrets).
+# Goal-directed agent: klaut.pro research product track (klaut-pro GitHub — klaut-agents-secrets).
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: li-research-product-workspace
+  name: klaut-li-research-product-workspace
   namespace: li-swarm
   labels:
-    app: li-research-product
-    li-langverse.io/sprint: li-research-r0
+    app: klaut-li-research-product
+    klaut.pro/sprint: klaut-research-r1b-product
 spec:
   accessModes:
     - ReadWriteOnce
@@ -17,28 +17,28 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: li-research-product
+  name: klaut-li-research-product
   namespace: li-swarm
   labels:
-    app: li-research-product
-    app.kubernetes.io/name: li-research-product
+    app: klaut-li-research-product
+    app.kubernetes.io/name: klaut-li-research-product
     app.kubernetes.io/component: goal-directed-agent
-    app.kubernetes.io/part-of: li-langverse
-    li-langverse.io/sprint: li-research-r0
+    app.kubernetes.io/part-of: klaut-pro
+    klaut.pro/sprint: klaut-research-r1b-product
 spec:
-  replicas: 1
+  replicas: 0
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: li-research-product
+      app: klaut-li-research-product
   template:
     metadata:
       labels:
-        app: li-research-product
-        app.kubernetes.io/name: li-research-product
+        app: klaut-li-research-product
+        app.kubernetes.io/name: klaut-li-research-product
         app.kubernetes.io/component: goal-directed-agent
-        li-langverse.io/sprint: li-research-r0
+        klaut.pro/sprint: klaut-research-r1b-product
     spec:
       serviceAccountName: li-goal-worker
       nodeSelector:
@@ -52,38 +52,25 @@ spec:
           command: ["/bin/bash", "/config/entrypoint.sh"]
           envFrom:
             - configMapRef:
-                name: li-research-product
+                name: klaut-li-research-product
             - configMapRef:
                 name: li-goal-worker-runtime
           env:
             - name: GH_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: li-agents-secrets
+                  name: klaut-agents-secrets
                   key: GH_TOKEN
-                  optional: true
-            - name: GITLAB_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: li-agents-secrets
-                  key: GITLAB_TOKEN
-                  optional: true
             - name: GITHUB_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: li-agents-secrets
+                  name: klaut-agents-secrets
                   key: GH_TOKEN
             - name: CURSOR_API_KEY
               valueFrom:
                 secretKeyRef:
-                  name: li-agents-secrets
+                  name: klaut-agents-secrets
                   key: CURSOR_API_KEY
-                  optional: true
-            - name: CURSOR_SDK_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: li-agents-secrets
-                  key: CURSOR_SDK_KEY
                   optional: true
           resources:
             requests:
@@ -97,18 +84,11 @@ spec:
               mountPath: /workspace
             - name: config-bundle
               mountPath: /config
-            - name: git-auth
-              mountPath: /git-auth
-              readOnly: true
       volumes:
         - name: workspace
           persistentVolumeClaim:
-            claimName: li-research-product-workspace
+            claimName: klaut-li-research-product-workspace
         - name: config-bundle
           configMap:
-            name: li-research-product-bundle
-            defaultMode: 0755
-        - name: git-auth
-          configMap:
-            name: li-k8s-git-auth
+            name: klaut-li-research-product-bundle
             defaultMode: 0755
