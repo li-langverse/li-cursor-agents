@@ -1,0 +1,129 @@
+# Clone li-cursor-agents, build benchmark-oracle (proof-explorer + PH-ML deps), push to GHCR or sideload k3s.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: build-benchmark-oracle-image
+  namespace: li-swarm
+  labels:
+    app: li-ph-ml-wave13
+    app.kubernetes.io/component: image-build
+spec:
+  ttlSecondsAfterFinished: 3600
+  backoffLimit: 1
+  template:
+    metadata:
+      labels:
+        app: build-benchmark-oracle-image
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/hostname: engine
+      volumes:
+        - name: workspace
+          emptyDir: {}
+        - name: podman-storage
+          emptyDir: {}
+        - name: k3s-bin
+          hostPath:
+            path: /var/lib/rancher/k3s/data/current/bin
+            type: Directory
+        - name: containerd-sock
+          hostPath:
+            path: /run/k3s/containerd/containerd.sock
+            type: Socket
+      initContainers:
+        - name: git-clone
+          image: alpine/git:latest
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+                  optional: true
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
+                  optional: true
+            - name: GIT_REF
+              value: "main"
+            - name: GIT_REPO
+              value: "https://gitlab.lilangverse.xyz/li-langverse/li-cursor-agents.git"
+          command:
+            - sh
+            - -lc
+            - |
+              set -eu
+              ref="${GIT_REF:-main}"
+              dest=/workspace/li-cursor-agents
+              tok="${GITLAB_TOKEN:-$GH_TOKEN}"
+              prefix="oauth2"
+              if [ -z "${GITLAB_TOKEN:-}" ]; then prefix="x-access-token"; fi
+              url="${GIT_REPO/https:\/\//https://${prefix}:${tok}@}"
+              git clone --depth 1 --branch "$ref" "$url" "$dest" \
+                || git clone --depth 1 "$url" "$dest"
+              test -f "$dest/deploy/Dockerfile.benchmark-oracle"
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+      containers:
+        - name: podman
+          image: quay.io/podman/stable:v5.4.2
+          securityContext:
+            privileged: true
+          env:
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_TOKEN
+                  optional: true
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
+                  optional: true
+            - name: IMAGE
+              value: ghcr.io/li-langverse/li-cursor-agents:benchmark-oracle-llvm22
+            - name: GHCR_USER
+              value: cap-jmk-real
+            - name: STORAGE_DRIVER
+              value: vfs
+            - name: BUILDAH_ISOLATION
+              value: chroot
+          command:
+            - bash
+            - -lc
+            - |
+              set -euo pipefail
+              cd /workspace/li-cursor-agents
+              echo "$GH_TOKEN" | podman login ghcr.io -u "$GHCR_USER" --password-stdin || true
+              podman pull ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22 \
+                || podman build -f deploy/Dockerfile.proof-explorer \
+                  --build-arg LI_CI_IMAGE=ghcr.io/li-langverse/lic-ci:debian12-llvm22 \
+                  -t ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22 .
+              podman build -f deploy/Dockerfile.benchmark-oracle \
+                --build-arg PROOF_EXPLORER_IMAGE=ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22 \
+                -t "$IMAGE" .
+              if podman push "$IMAGE"; then
+                echo "pushed to ghcr.io"
+                exit 0
+              fi
+              echo "ghcr push failed - sideloading into k3s containerd"
+              tar=/tmp/benchmark-oracle-image.tar
+              podman save -o "$tar" "$IMAGE"
+              /k3s-bin/ctr --address /run/k3s/containerd/containerd.sock -n k8s.io images import "$tar"
+              echo "imported into k3s"
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: podman-storage
+              mountPath: /var/lib/containers
+            - name: k3s-bin
+              mountPath: /k3s-bin
+              readOnly: true
+            - name: containerd-sock
+              mountPath: /run/k3s/containerd/containerd.sock

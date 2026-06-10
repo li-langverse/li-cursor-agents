@@ -1,0 +1,16 @@
+# Benchmark-oracle image: proof-explorer worker + pre-baked PH-ML Python deps.
+# Build:
+#   docker build -f deploy/Dockerfile.proof-explorer -t ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22 .
+#   docker build -f deploy/Dockerfile.benchmark-oracle \
+#     --build-arg PROOF_EXPLORER_IMAGE=ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22 \
+#     -t ghcr.io/li-langverse/li-cursor-agents:benchmark-oracle-llvm22 .
+ARG PROOF_EXPLORER_IMAGE=ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
+FROM ${PROOF_EXPLORER_IMAGE}
+
+RUN mkdir -p /opt/ph-ml-venv
+
+COPY deploy/requirements-ph-ml-oracle.txt /opt/ph-ml-venv/requirements.txt
+
+RUN python3 -m pip install --break-system-packages -r /opt/ph-ml-venv/requirements.txt \
+  && python3 -c "import numpy, torch, jax; import gymnasium; import stable_baselines3" \
+  && date -u +%Y-%m-%dT%H:%M:%SZ > /opt/ph-ml-venv/.installed
