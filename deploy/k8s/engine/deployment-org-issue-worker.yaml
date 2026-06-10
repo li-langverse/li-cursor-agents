@@ -20,7 +20,7 @@ spec:
         li-langverse.io/node-pool: engine
       containers:
         - name: worker
-          image: ghcr.io/li-langverse/li-cursor-agents:latest
+          image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
           imagePullPolicy: IfNotPresent
           command: ["node", "dist/cli/org-issue-worker.js", "start"]
           envFrom:

@@ -21,7 +21,7 @@ spec:
         li-langverse.io/node-pool: engine
       containers:
         - name: supervisor
-          image: ghcr.io/li-langverse/li-cursor-agents:latest
+          image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
           imagePullPolicy: Always
           command: ["node", "dist/cli/org-unblocker-supervisor.js", "supervise"]
           envFrom:
