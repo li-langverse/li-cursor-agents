@@ -123,15 +123,16 @@ spec:
               podman build -f deploy/Dockerfile.benchmark-oracle \
                 --build-arg PROOF_EXPLORER_IMAGE=ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22 \
                 -t "$IMAGE" .
-              if podman push "$IMAGE"; then
-                echo "pushed to ghcr.io"
-                exit 0
-              fi
-              echo "ghcr push failed - sideloading into k3s containerd"
+              echo "sideloading into k3s containerd before ghcr push"
               tar=/tmp/benchmark-oracle-image.tar
               podman save -o "$tar" "$IMAGE"
               /k3s-bin/ctr --address /run/k3s/containerd/containerd.sock -n k8s.io images import "$tar"
               echo "imported into k3s"
+              if podman push "$IMAGE"; then
+                echo "pushed to ghcr.io"
+              else
+                echo "WARN: ghcr push failed; k3s import already done" >&2
+              fi
           volumeMounts:
             - name: workspace
               mountPath: /workspace
