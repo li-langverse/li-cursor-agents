@@ -7,7 +7,7 @@ metadata:
     app: li-ph-ml-wave13
     app.kubernetes.io/name: li-ph-ml-wave13
     app.kubernetes.io/component: goal-directed-agent
-    li-langverse.io/sprint: ph-ml-li-array-perf-h
+    li-langverse.io/sprint: ph-ml-li-array-perf-ij
 spec:
   replicas: 1
   strategy:
@@ -21,7 +21,7 @@ spec:
         app: li-ph-ml-wave13
         app.kubernetes.io/name: li-ph-ml-wave13
         app.kubernetes.io/component: goal-directed-agent
-        li-langverse.io/sprint: ph-ml-li-array-perf-h
+        li-langverse.io/sprint: ph-ml-li-array-perf-ij
     spec:
       nodeSelector:
         kubernetes.io/hostname: engine
