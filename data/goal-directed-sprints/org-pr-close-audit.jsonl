@@ -35,3 +35,4 @@
 {"ts": "2026-06-02T21:12:50.607881+00:00", "repo": "lic", "number": 712, "reason": "PH-ML duplicate PR stack; keep lic#716 (CI green)", "anchor": "lic#716", "title": "fix(ph-ml): prefer native lic over build-wsl in gates (post-merge #676)"}
 {"ts": "2026-06-02T21:12:55.783069+00:00", "repo": "lic", "number": 713, "reason": "PH-ML duplicate PR stack; keep lic#716 (CI green)", "anchor": "lic#716", "title": "fix(ph-ml): prefer native lic over build-wsl in gates (post-merge #676)"}
 {"ts": "2026-06-02T21:13:03.913288+00:00", "repo": "lic", "number": 715, "reason": "PH-ML duplicate PR stack; keep lic#716 (CI green)", "anchor": "lic#716", "title": "fix(ph-ml): prefer native lic over build-wsl on Linux CI"}
+{"ts": "2026-06-10T03:59:40.639909+00:00", "repo": "li-cursor-agents", "number": 1, "reason": "orphaned_branch", "branch": "feat/dynamic-httpd-routes", "alt_repo": null, "title": "feat(httpd): parallel TLS relay + per-pool ip_hash LB"}
