@@ -31,5 +31,8 @@ data:
   LI_CONTROL_PLANE_STORE: "disk"
   LI_SDK_TERMINAL_STREAM: "1"
   LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE: "1"
+  # Avoid hung pr-merge-queue-plan.py gh API storm on full benchmarks clone.
+  BENCHMARKS_ROOT: "/app/fixtures/e2e-benchmarks"
+  LI_AGENT_MINIMAL_PROMPT: "1"
   LI_SWARM_EXTERNAL: "1"
   NODE_ENV: "production"
