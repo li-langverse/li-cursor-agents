@@ -45,6 +45,26 @@ spec:
         kubernetes.io/hostname: blackpearl
       imagePullSecrets:
         - name: ghcr-li-langverse
+      initContainers:
+        - name: lic-build
+          image: ghcr.io/li-langverse/lic-ci:debian12-llvm22
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "/config/lios-kernel-lic-init.sh"]
+          envFrom:
+            - configMapRef:
+                name: li-lios-kernel
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+            - name: config-bundle
+              mountPath: /config
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "4"
+              memory: "4Gi"
       containers:
         - name: agent
           image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22

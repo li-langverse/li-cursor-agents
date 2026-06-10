@@ -57,8 +57,9 @@ if (-not (Test-Path $log)) {
 
 $goalBundleName = Split-Path $goal -Leaf
 $extra = @{
-    "entrypoint.sh"    = (Join-Path $Root "deploy\lios-kernel-entrypoint.sh")
-    "k8s-git-auth.sh"  = (Join-Path $Root "deploy\k8s-git-auth.sh")
+    "entrypoint.sh"              = (Join-Path $Root "deploy\lios-kernel-entrypoint.sh")
+    "lios-kernel-lic-init.sh"    = (Join-Path $Root "deploy\lios-kernel-lic-init.sh")
+    "k8s-git-auth.sh"            = (Join-Path $Root "deploy\k8s-git-auth.sh")
     $goalBundleName    = $goal
     "state.json"       = $state
     "iteration-log.md" = $log

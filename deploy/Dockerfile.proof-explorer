@@ -3,8 +3,13 @@
 ARG LI_CI_IMAGE=ghcr.io/li-langverse/lic-ci:debian12-llvm22
 FROM ${LI_CI_IMAGE}
 
+# Fail fast when proof-explorer is built without the lic-ci base (LLVM 22 + z3 runtime).
+RUN test -x /usr/bin/clang-22 \
+  && clang-22 --version | head -1 \
+  && ldconfig -p | grep -q 'libz3.so.4'
+
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends curl bash \
+  && apt-get install -y --no-install-recommends libz3-4 curl bash \
   && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
   && apt-get install -y --no-install-recommends nodejs \
   && curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \

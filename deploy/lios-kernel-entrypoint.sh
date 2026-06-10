@@ -22,6 +22,7 @@ LOOP_SLEEP="${LI_GOAL_LOOP_SLEEP_SEC:-120}"
 LIOS_ROOT="${WORKSPACE}/li-os"
 LIC_ROOT="${WORKSPACE}/lic"
 LIK_ROOT="${WORKSPACE}/lik"
+LIC_BUILD="${LI_KERNEL_LIC_BUILD:-${LIC_ROOT}/build-kernel}"
 
 echo "lios-kernel-entrypoint: workspace=${WORKSPACE} git=${LI_GIT_HOST}/${LI_GIT_GROUP}"
 
@@ -81,6 +82,59 @@ sync_workspace() {
   export LIK_ROOT LIC_ROOT LIOS_ROOT
 }
 
+ensure_runtime_deps() {
+  if ldconfig -p 2>/dev/null | grep -q 'libz3.so.4'; then
+    return 0
+  fi
+  echo "lios-kernel-entrypoint: installing libz3-4 runtime for lic"
+  apt-get update -qq
+  apt-get install -y --no-install-recommends libz3-4
+  rm -rf /var/lib/apt/lists/*
+}
+
+ensure_lic_built() {
+  # shellcheck source=lib/lic-bin-select.sh
+  source "${LIC_ROOT}/scripts/lib/lic-bin-select.sh"
+  local lic_bin=""
+  if lic_rel="$(li_pick_lic_bin "$LIC_ROOT" 2>/dev/null)"; then
+    case "$lic_rel" in
+      ./*) lic_bin="${LIC_ROOT}/${lic_rel#./}" ;;
+      *) lic_bin="$lic_rel" ;;
+    esac
+    export LIC="$lic_bin"
+    if [[ "$lic_bin" == *"/build/compiler/"* ]] && "$lic_bin" --version >/dev/null 2>&1; then
+      echo "lios-kernel-entrypoint: lic present at ${LIC}"
+      return 0
+    fi
+  fi
+  if command -v clang-22 >/dev/null 2>&1; then
+    echo "lios-kernel-entrypoint: building lic (LLVM 22 in-container)"
+    export LLVM_DIR="${LLVM_DIR:-/usr/lib/llvm-22/lib/cmake/llvm}"
+    export CC="${CC:-clang-22}" CXX="${CXX:-clang++-22}" LI_LLVM_MAJOR="${LI_LLVM_MAJOR:-22}"
+    if (cd "$LIC_ROOT" && bash scripts/build.sh); then
+      if lic_rel="$(li_pick_lic_bin "$LIC_ROOT")"; then
+        case "$lic_rel" in
+          ./*) export LIC="${LIC_ROOT}/${lic_rel#./}" ;;
+          *) export LIC="$lic_rel" ;;
+        esac
+        echo "lios-kernel-entrypoint: lic build OK ${LIC}"
+        return 0
+      fi
+    fi
+  elif [[ -x "${LIC_ROOT}/scripts/build-kernel-lic.sh" ]]; then
+    echo "lios-kernel-entrypoint: building lic via build-kernel-lic.sh → ${LIC_BUILD}"
+    export LLVM_DIR="${LLVM_DIR:-/usr/lib/llvm-22/lib/cmake/llvm}"
+    export CC="${CC:-clang-22}" CXX="${CXX:-clang++-22}"
+    if LI_KERNEL_LIC_BUILD="$LIC_BUILD" bash "${LIC_ROOT}/scripts/build-kernel-lic.sh"; then
+      export LIC="${LIC_BUILD}/compiler/lic/lic"
+      echo "lios-kernel-entrypoint: lic build OK ${LIC}"
+      return 0
+    fi
+  fi
+  echo "lios-kernel-entrypoint: WARN lic build failed; gates may retry" >&2
+  return 0
+}
+
 goal_bundle_basename() {
   basename "${GOAL_FILE_REL}"
 }
@@ -111,6 +165,8 @@ run_goal_loop() {
   install_goal_loop_scripts "$AGENTS_ROOT"
   export_goal_loop_self_unblock_env "$BRANCH_LI_OS"
   export LIK_ROOT LIC_ROOT LIOS_ROOT LI_CURSOR_AGENTS_ROOT="$AGENTS_ROOT" LI_GOAL_LOOP_SLEEP_SEC="$LOOP_SLEEP"
+  ensure_runtime_deps
+  ensure_lic_built
   local g
   g="$(resolve_goal_file)"
   local plan_file="${AGENTS_ROOT}/docs/plans/2026-06-lios-kernel-m1.md"
@@ -123,6 +179,8 @@ run_goal_loop() {
 }
 
 sync_workspace
+ensure_runtime_deps
+ensure_lic_built
 seed_loop_state
 goal_path="$(resolve_goal_file)" || true
 if [[ -z "${goal_path:-}" || ! -f "$goal_path" ]]; then
@@ -133,6 +191,8 @@ echo "lios-kernel-entrypoint: goal=${goal_path} branches=${BRANCH_LI_OS}"
 
 while true; do
   sync_workspace
+  ensure_runtime_deps
+  ensure_lic_built
   set +e
   run_goal_loop
   rc=$?

@@ -22,3 +22,8 @@ data:
   LI_GOAL_NAMESPACE: "li-swarm"
   LI_GOAL_DEPLOYMENT_NAME: "li-lios-kernel"
   LI_GOAL_SCALE_DOWN_ON_COMPLETE: "0"
+  LLVM_DIR: "/usr/lib/llvm-22/lib/cmake/llvm"
+  CC: "clang-22"
+  CXX: "clang++-22"
+  LI_LLVM_MAJOR: "22"
+  LI_KERNEL_LIC_BUILD: "/workspace/lic/build-kernel"
