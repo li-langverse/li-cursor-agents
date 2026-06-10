@@ -1,0 +1,48 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: engine-disk-prune
+  namespace: li-swarm
+  labels:
+    app: engine-disk-prune
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/hostname: engine
+      tolerations:
+        - key: node.kubernetes.io/disk-pressure
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: prune
+          image: rancher/k3s:v1.35.5-k3s1
+          securityContext:
+            privileged: true
+          command:
+            - /bin/sh
+            - -lc
+            - |
+              set -eu
+              echo "before:"; df -h /var/lib/rancher /var/lib/kubelet 2>/dev/null || df -h /
+              /var/lib/rancher/k3s/data/current/bin/ctr -a /run/k3s/containerd/containerd.sock -n k8s.io images prune || true
+              /var/lib/rancher/k3s/data/current/bin/ctr -a /run/k3s/containerd/containerd.sock -n k8s.io content prune || true
+              rm -rf /var/lib/rancher/k3s/agent/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/*/work 2>/dev/null || true
+              echo "after:"; df -h /var/lib/rancher /var/lib/kubelet 2>/dev/null || df -h /
+          volumeMounts:
+            - name: rancher
+              mountPath: /var/lib/rancher
+            - name: containerd-sock
+              mountPath: /run/k3s/containerd/containerd.sock
+      volumes:
+        - name: rancher
+          hostPath:
+            path: /var/lib/rancher
+            type: Directory
+        - name: containerd-sock
+          hostPath:
+            path: /run/k3s/containerd/containerd.sock
+            type: Socket

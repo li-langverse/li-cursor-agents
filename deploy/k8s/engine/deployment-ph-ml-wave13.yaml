@@ -25,6 +25,10 @@ spec:
     spec:
       nodeSelector:
         kubernetes.io/hostname: engine
+      tolerations:
+        - key: node.kubernetes.io/disk-pressure
+          operator: Exists
+          effect: NoSchedule
       imagePullSecrets:
         - name: ghcr-li-langverse
       containers:
