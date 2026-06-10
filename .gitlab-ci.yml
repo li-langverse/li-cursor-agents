@@ -1,8 +1,9 @@
 # Mirrors li-cursor-agents/.github/workflows/ci.yml (test-mock-agents job).
-# lidb-engine-e2e omitted — needs multi-repo checkout + cmake; add when runner disk allows.
+# Image publish: homelab-k8s runner → GHCR (see also .github/workflows/publish-*-image.yml).
 
 stages:
   - test
+  - publish
 
 default:
   tags:
@@ -22,3 +23,47 @@ test-mock-agents:
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+
+.ghcr_login: &ghcr_login
+  - |
+    if [[ -n "${GHCR_TOKEN:-}" ]]; then
+      echo "$GHCR_TOKEN" | docker login ghcr.io -u "${GHCR_USER:-gitlab-ci}" --password-stdin
+    elif [[ -n "${GH_PACKAGES:-}" ]]; then
+      echo "$GH_PACKAGES" | docker login ghcr.io -u "${GHCR_USER:-gitlab-ci}" --password-stdin
+    else
+      echo "GHCR_TOKEN or GH_PACKAGES required"
+      exit 1
+    fi
+
+publish-benchmark-oracle-image:
+  stage: publish
+  image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  before_script: *ghcr_login
+  script:
+    - |
+      docker pull ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22 \
+        || docker build -f deploy/Dockerfile.proof-explorer \
+          --build-arg LI_CI_IMAGE=ghcr.io/li-langverse/lic-ci:debian12-llvm22 \
+          -t ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22 .
+      docker build -f deploy/Dockerfile.benchmark-oracle \
+        --build-arg PROOF_EXPLORER_IMAGE=ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22 \
+        -t ghcr.io/li-langverse/li-cursor-agents:benchmark-oracle-llvm22 \
+        -t "ghcr.io/li-langverse/li-cursor-agents:benchmark-oracle-${CI_COMMIT_SHA}" .
+      docker push ghcr.io/li-langverse/li-cursor-agents:benchmark-oracle-llvm22
+      docker push "ghcr.io/li-langverse/li-cursor-agents:benchmark-oracle-${CI_COMMIT_SHA}"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - deploy/Dockerfile.benchmark-oracle
+        - deploy/requirements-ph-ml-oracle.txt
+        - deploy/Dockerfile.proof-explorer
+        - deploy/k8s/engine/deployment-ph-ml-wave13.yaml
+    - if: $CI_PIPELINE_SOURCE == "web"

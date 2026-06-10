@@ -23,7 +23,14 @@ kubectl apply -f "$K8S/pvc-ph-ml-wave13-workspace.yaml"
 kubectl apply -f "$K8S/configmap-ph-ml-wave13.yaml"
 kubectl apply -f "$K8S/configmap-ph-ml-wave13-entrypoint.yaml"
 apply_li_agents_secrets "$NS"
-if [[ "${LI_BUILD_PROOF_EXPLORER_IMAGE:-0}" == "1" ]]; then
+if [[ "${LI_BUILD_BENCHMARK_ORACLE_IMAGE:-0}" == "1" ]]; then
+  echo "==> building benchmark-oracle image on engine (proof-explorer + PH-ML deps)"
+  kubectl -n "$NS" delete job build-benchmark-oracle-image --ignore-not-found
+  kubectl apply -f "$K8S/job-build-benchmark-oracle-image.yaml"
+  kubectl -n "$NS" wait --for=condition=complete job/build-benchmark-oracle-image --timeout=3600s || {
+    echo "WARN: benchmark-oracle build job did not complete — check: kubectl -n $NS logs job/build-benchmark-oracle-image -c podman" >&2
+  }
+elif [[ "${LI_BUILD_PROOF_EXPLORER_IMAGE:-0}" == "1" ]]; then
   echo "==> building proof-explorer image on engine (lic-ci LLVM 22 base)"
   kubectl -n "$NS" delete job build-proof-explorer-image --ignore-not-found
   kubectl apply -f "$K8S/job-build-proof-explorer-image.yaml"

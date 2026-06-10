@@ -29,8 +29,8 @@ spec:
         - name: ghcr-li-langverse
       containers:
         - name: ph-ml-wave13
-          image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
-          # FROM ghcr.io/li-langverse/lic-ci:debian12-llvm22 (deploy/lic-ci-base.env)
+          image: ghcr.io/li-langverse/li-cursor-agents:benchmark-oracle-llvm22
+          # benchmark-oracle extends proof-explorer-llvm22; pre-bakes /opt/ph-ml-venv (deploy/Dockerfile.benchmark-oracle)
           imagePullPolicy: IfNotPresent
           command: ["/bin/bash", "/scripts/entrypoint.sh"]
           envFrom:
