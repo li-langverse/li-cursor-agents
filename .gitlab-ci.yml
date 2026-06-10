@@ -1,5 +1,5 @@
 # GitLab-primary CI for li-cursor-agents (images published to GHCR).
-# Schedules (GitLab UI â†’ CI/CD â†’ Schedules; set SCHEDULE_KIND per schedule):
+# Schedules (GitLab UI ÔåÆ CI/CD ÔåÆ Schedules; set SCHEDULE_KIND per schedule):
 #   swarm-audit         cron 0 9 * * 1      SCHEDULE_KIND=swarm-audit
 #   swarm-maintenance   cron 0 */12 * * *   SCHEDULE_KIND=swarm-maintenance
 #
@@ -159,3 +159,26 @@ publish-proof-explorer-image:
       docker push ghcr.io/li-langverse/li-cursor-agents:proof-explorer
       docker push ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
       docker push "ghcr.io/li-langverse/li-cursor-agents:proof-explorer-${CI_COMMIT_SHA}"
+
+publish-benchmark-oracle-image:
+  <<: *publish_image
+  script:
+    - |
+      docker pull ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22 \
+        || docker build -f deploy/Dockerfile.proof-explorer \
+          --build-arg LI_CI_IMAGE=ghcr.io/li-langverse/lic-ci:debian12-llvm22 \
+          -t ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22 .
+      docker build -f deploy/Dockerfile.benchmark-oracle \
+        --build-arg PROOF_EXPLORER_IMAGE=ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22 \
+        -t ghcr.io/li-langverse/li-cursor-agents:benchmark-oracle-llvm22 \
+        -t "ghcr.io/li-langverse/li-cursor-agents:benchmark-oracle-${CI_COMMIT_SHA}" .
+      docker push ghcr.io/li-langverse/li-cursor-agents:benchmark-oracle-llvm22
+      docker push "ghcr.io/li-langverse/li-cursor-agents:benchmark-oracle-${CI_COMMIT_SHA}"
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - deploy/Dockerfile.benchmark-oracle
+        - deploy/requirements-ph-ml-oracle.txt
+        - deploy/Dockerfile.proof-explorer
+        - deploy/k8s/engine/deployment-ph-ml-wave13.yaml
+    - if: $CI_PIPELINE_SOURCE == "web"

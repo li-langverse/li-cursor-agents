@@ -1,4 +1,4 @@
-apiVersion: apps/v1
+﻿apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: li-ph-ml-wave13
@@ -29,8 +29,8 @@ spec:
         - name: ghcr-li-langverse
       containers:
         - name: ph-ml-wave13
-          image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
-          # FROM ghcr.io/li-langverse/lic-ci:debian12-llvm22 (deploy/lic-ci-base.env)
+          image: ghcr.io/li-langverse/li-cursor-agents:benchmark-oracle-llvm22
+          # benchmark-oracle extends proof-explorer-llvm22; pre-bakes /opt/ph-ml-venv (deploy/Dockerfile.benchmark-oracle)
           imagePullPolicy: IfNotPresent
           command: ["/bin/bash", "/scripts/entrypoint.sh"]
           envFrom:
@@ -71,7 +71,7 @@ spec:
           resources:
             requests:
               cpu: "1"
-              memory: "2Gi"
+              memory: "1Gi"
             limits:
               cpu: "8"
               memory: "8Gi"

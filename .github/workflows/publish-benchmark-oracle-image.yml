@@ -1,0 +1,51 @@
+name: Publish benchmark-oracle image
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "deploy/Dockerfile.benchmark-oracle"
+      - "deploy/requirements-ph-ml-oracle.txt"
+      - "deploy/Dockerfile.proof-explorer"
+      - "deploy/k8s/engine/deployment-ph-ml-wave13.yaml"
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Ensure proof-explorer base
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile.proof-explorer
+          push: false
+          load: true
+          build-args: |
+            LI_CI_IMAGE=ghcr.io/li-langverse/lic-ci:debian12-llvm22
+          tags: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
+
+      - name: Build and push benchmark-oracle
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile.benchmark-oracle
+          push: true
+          build-args: |
+            PROOF_EXPLORER_IMAGE=ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
+          tags: |
+            ghcr.io/li-langverse/li-cursor-agents:benchmark-oracle-llvm22
+            ghcr.io/li-langverse/li-cursor-agents:benchmark-oracle-${{ github.sha }}
