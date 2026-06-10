@@ -82,7 +82,11 @@ seed_loop_state() {
   [[ -f "/config/${goal_base}" ]] && cp -f "/config/${goal_base}" "${AGENTS_ROOT}/data/goal-directed-sprints/"
   [[ ! -f "${AGENTS_ROOT}/data/lios-kernel-loop/iteration-log.md" && -f /config/iteration-log.md ]] \
     && cp -f /config/iteration-log.md "${AGENTS_ROOT}/data/lios-kernel-loop/"
-  [[ -f /config/state.json ]] && cp -f /config/state.json "${AGENTS_ROOT}/data/lios-kernel-loop/state.json"
+  if [[ -f /config/state.json ]]; then
+    cp -f /config/state.json "${AGENTS_ROOT}/data/lios-kernel-loop/state.json"
+    mkdir -p "${LIOS_ROOT}/data/lios-kernel-loop"
+    cp -f /config/state.json "${LIOS_ROOT}/data/lios-kernel-loop/state.json"
+  fi
 }
 
 resolve_goal_file() {
