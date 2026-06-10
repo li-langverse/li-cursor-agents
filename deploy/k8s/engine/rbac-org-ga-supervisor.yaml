@@ -1,0 +1,65 @@
+# RBAC for org G&A supervisor (create/list Jobs) and auditor workers.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: li-org-ga-supervisor
+  namespace: li-swarm
+  labels:
+    app: li-org-ga-supervisor
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: li-org-ga-auditor
+  namespace: li-swarm
+  labels:
+    app: li-org-ga-auditor
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: li-org-ga-supervisor
+  namespace: li-swarm
+rules:
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create", "get", "list", "watch", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: li-org-ga-supervisor
+  namespace: li-swarm
+subjects:
+  - kind: ServiceAccount
+    name: li-org-ga-supervisor
+    namespace: li-swarm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: li-org-ga-supervisor
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: li-org-ga-auditor
+  namespace: li-swarm
+rules: []
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: li-org-ga-auditor
+  namespace: li-swarm
+subjects:
+  - kind: ServiceAccount
+    name: li-org-ga-auditor
+    namespace: li-swarm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: li-org-ga-auditor

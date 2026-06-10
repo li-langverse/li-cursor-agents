@@ -1,0 +1,68 @@
+# G&A supervisor: spawns up to 6 auditor Jobs (repo × lane round-robin).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: li-org-ga-supervisor
+  namespace: li-swarm
+  labels:
+    app: li-org-ga-supervisor
+    li-langverse.io/role: org-ga-supervisor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: li-org-ga-supervisor
+  template:
+    metadata:
+      labels:
+        app: li-org-ga-supervisor
+    spec:
+      serviceAccountName: li-org-ga-supervisor
+      nodeSelector:
+        li-langverse.io/node-pool: engine
+      containers:
+        - name: supervisor
+          image: ghcr.io/li-langverse/li-cursor-agents:latest
+          imagePullPolicy: IfNotPresent
+          command: ["node", "dist/cli/org-ga-supervisor.js", "supervise"]
+          envFrom:
+            - configMapRef:
+                name: li-org-ga-supervisor
+          env:
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
+            - name: GH_SWARM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_SWARM_TOKEN
+                  optional: true
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_SWARM_TOKEN
+                  optional: true
+            - name: CURSOR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: CURSOR_API_KEY
+                  optional: true
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1Gi"
+          volumeMounts:
+            - name: sprint-data
+              mountPath: /app/data/goal-directed-sprints
+      volumes:
+        - name: sprint-data
+          persistentVolumeClaim:
+            claimName: li-agents-sprint-data

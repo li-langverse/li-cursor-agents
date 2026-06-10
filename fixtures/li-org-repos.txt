@@ -1,0 +1,15 @@
+lic
+li-language
+lip
+lit
+lis
+benchmarks
+roadmap
+lic-docs
+proof-library
+li-net
+li-httpd
+li-std-core
+li-std-math
+li-demo
+li-cursor-agents

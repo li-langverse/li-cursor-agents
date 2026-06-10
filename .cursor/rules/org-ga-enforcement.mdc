@@ -1,0 +1,41 @@
+---
+description: G&A swarm coverage contract — unit, integration, E2E, visual, SOC, docs per repo
+alwaysApply: true
+---
+
+# Org G&A enforcement (mandatory)
+
+The **Governance & Assurance (G&A) swarm** audits every org repo across six lanes. Agents and humans must satisfy this contract before merge.
+
+## Lanes
+
+| Lane | Evidence |
+|------|----------|
+| **unit** | Co-located tests; exported symbols covered; `std/**` 100% in `lic` |
+| **integration** | Cross-module / API tests; fixtures match contracts |
+| **e2e** | README use cases → Playwright / `li-tests` / CI job |
+| **gui-visual** | Visual regression, a11y, Figma/Magic Patterns parity |
+| **soc** | CVE catalog rows, `run_security.sh`, tier5 exploits where applicable |
+| **documentation** | README quickstart, API docs, runbooks, Li brand tokens |
+
+## Coverage contract
+
+1. **Every documented use case** has an automated test or a GitLab issue labeled `ga-gap`.
+2. **Every exported public function, type, and UI control** has unit/integration/E2E/visual coverage OR a `ga-waiver` issue with owner + expiry.
+3. **No silent gaps** — auditors file `ga-gap` issues; implementers close them or waive explicitly.
+4. **Org gates still apply** — see `li-ecosystem-gates.mdc` (functionality, security, performance).
+
+## Auditor output
+
+- Per-lane audit: `data/ga-audits/<repo>-<lane>.md` (in target repo or `benchmarks/data/ga-audits/`)
+- Supervisor audit log: `li-cursor-agents/data/goal-directed-sprints/org-ga-audit.jsonl`
+
+## Branding (Magic Patterns MCP)
+
+For UI and docs lanes, use **Magic Patterns MCP** (`https://mcp.magicpatterns.com/mcp`) when `MAGIC_PATTERNS_API_KEY` is set — import Li design tokens and verify typography/color/voice consistency across repos.
+
+## Supervisor
+
+- K8s: `li-org-ga-supervisor` in `li-swarm`
+- Config: `LI_ORG_GA_LANES`, `LI_ORG_GA_REPOS` / `roadmap/.github/li-org-repos.txt`
+- Local: `npm run agents:org-ga-supervisor` in `li-cursor-agents`

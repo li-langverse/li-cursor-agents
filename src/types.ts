@@ -39,7 +39,13 @@ export type AgentId =
   | "tui_ui_tester"
   | "tui_ux_tester"
   | "studio_ui_ux_builder"
-  | "world_studio_builder";
+  | "world_studio_builder"
+  | "ga_unit_auditor"
+  | "ga_integration_auditor"
+  | "ga_e2e_auditor"
+  | "ga_gui_auditor"
+  | "ga_soc_auditor"
+  | "ga_docs_auditor";
 
 /** @deprecated Briefing/fixtures may still use legacy ids — resolved in registry. */
 export type LegacyAgentId =
