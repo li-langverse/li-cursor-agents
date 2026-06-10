@@ -53,6 +53,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: li-research-ingest
+            - configMapRef:
+                name: li-goal-worker-runtime
           env:
             - name: GH_TOKEN
               valueFrom:

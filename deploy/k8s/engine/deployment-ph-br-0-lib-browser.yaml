@@ -34,6 +34,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: li-ph-br-0-lib-browser
+            - configMapRef:
+                name: li-goal-worker-runtime
           env:
             - name: GITLAB_TOKEN
               valueFrom:

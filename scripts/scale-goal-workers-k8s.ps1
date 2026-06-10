@@ -4,7 +4,7 @@ param(
     [string]$Namespace = "li-swarm",
     [ValidateSet("0", "1")]
     [string]$Replicas = "0",
-    [ValidateSet("all", "world-studio", "typography-fx", "li-toml", "proof-explorer")]
+    [ValidateSet("all", "world-studio", "typography-fx", "li-toml", "proof-explorer", "li-parallel", "research-product", "research-ingest", "db-studio-product", "ph-ml-wave13", "lios-kernel")]
     [string]$Worker = "all"
 )
 
@@ -12,10 +12,16 @@ $ErrorActionPreference = "Stop"
 $env:KUBECONFIG = $KubeConfig
 
 $map = @{
-    "world-studio"   = "li-world-studio-gui-product-visual"
-    "typography-fx"  = "li-world-studio-typography-fx-animation"
-    "li-toml"        = "li-li-toml-config"
-    "proof-explorer" = "li-proof-explorer"
+    "world-studio"      = "li-world-studio-gui-product-visual"
+    "typography-fx"     = "li-world-studio-typography-fx-animation"
+    "li-toml"           = "li-li-toml-config"
+    "proof-explorer"    = "li-proof-explorer"
+    "li-parallel"       = "li-li-parallel"
+    "research-product"  = "li-research-product"
+    "research-ingest"   = "li-research-ingest"
+    "db-studio-product" = "li-db-studio-product"
+    "ph-ml-wave13"      = "li-ph-ml-wave13"
+    "lios-kernel"       = "li-lios-kernel"
 }
 
 $targets = if ($Worker -eq "all") { $map.Values } else { @($map[$Worker]) }

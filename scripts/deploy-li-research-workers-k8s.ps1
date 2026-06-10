@@ -89,6 +89,7 @@ function Scale-LiResearchWorkers {
 
 kubectl label node $EngineNode li-langverse.io/node-pool=engine --overwrite 2>$null
 kubectl apply -f (Join-Path $K8s "configmap-k8s-git-auth.yaml")
+kubectl apply -f (Join-Path $K8s "configmap-goal-worker-runtime.yaml")
 kubectl apply -f (Join-Path $K8s "namespace.yaml")
 kubectl apply -f (Join-Path $K8s "rbac-goal-workers-scale.yaml")
 

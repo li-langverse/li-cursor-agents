@@ -36,6 +36,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: li-ph-ml-wave13
+            - configMapRef:
+                name: li-goal-worker-runtime
           env:
             - name: GH_TOKEN
               valueFrom:

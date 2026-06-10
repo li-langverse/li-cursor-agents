@@ -27,6 +27,8 @@ node scripts/test-log-timestamps.mjs
 node scripts/test-org-triage-health.mjs
 node scripts/test-org-swarm-stability.mjs
 node scripts/test-org-swarm-infra.mjs
+node scripts/test-k8s-goal-worker-infra.mjs
+bash scripts/test-k8s-git-auth-remotes.sh
 node scripts/test-swarm-health-report.mjs
 node scripts/test-supabase-failover-probe.mjs
 python3 ux-harness/tests/test_harness.py

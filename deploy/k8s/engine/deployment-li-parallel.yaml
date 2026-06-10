@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/component: goal-directed-agent
     li-langverse.io/sprint: li-parallel-native-hpc
 spec:
-  replicas: 0
+  replicas: 1
   strategy:
     type: Recreate
   selector:
@@ -23,6 +23,7 @@ spec:
         app.kubernetes.io/component: goal-directed-agent
         li-langverse.io/sprint: li-parallel-native-hpc
     spec:
+      serviceAccountName: li-goal-worker
       nodeSelector:
         kubernetes.io/hostname: engine
       imagePullSecrets:
@@ -35,6 +36,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: li-li-parallel
+            - configMapRef:
+                name: li-goal-worker-runtime
           env:
             - name: GH_TOKEN
               valueFrom:
@@ -68,10 +71,10 @@ spec:
           resources:
             requests:
               cpu: "500m"
-              memory: "1Gi"
+              memory: "2Gi"
             limits:
               cpu: "4"
-              memory: "4Gi"
+              memory: "8Gi"
           volumeMounts:
             - name: workspace
               mountPath: /workspace

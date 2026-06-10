@@ -26,6 +26,7 @@ rules:
       - li-research-product
       - li-research-klaut
       - li-research-ingest
+      - li-li-parallel
   - apiGroups: ["apps"]
     resources: ["deployments/scale"]
     verbs: ["get", "patch", "update"]
@@ -38,6 +39,7 @@ rules:
       - li-research-product
       - li-research-klaut
       - li-research-ingest
+      - li-li-parallel
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding

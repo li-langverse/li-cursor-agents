@@ -13,6 +13,7 @@ $env:KUBECONFIG = $KubeConfig
 Write-Host "==> GitLab-primary rollout (namespace=$Namespace)"
 
 kubectl apply -f (Join-Path $K8s "configmap-k8s-git-auth.yaml")
+kubectl apply -f (Join-Path $K8s "configmap-goal-worker-runtime.yaml")
 
 $entrypointConfigmaps = @(
     "configmap-li-parallel-entrypoint.yaml",

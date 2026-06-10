@@ -102,6 +102,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: li-world-studio-aimd-demo
+            - configMapRef:
+                name: li-goal-worker-runtime
           env:
             - name: GH_TOKEN
               valueFrom:

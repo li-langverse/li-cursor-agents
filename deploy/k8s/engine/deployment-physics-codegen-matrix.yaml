@@ -34,6 +34,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: li-physics-codegen-matrix
+            - configMapRef:
+                name: li-goal-worker-runtime
           env:
             - name: GH_TOKEN
               valueFrom:

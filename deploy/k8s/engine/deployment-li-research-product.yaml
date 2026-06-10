@@ -53,6 +53,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: li-research-product
+            - configMapRef:
+                name: li-goal-worker-runtime
           env:
             - name: GH_TOKEN
               valueFrom:
@@ -86,10 +88,10 @@ spec:
           resources:
             requests:
               cpu: "500m"
-              memory: "1Gi"
+              memory: "2Gi"
             limits:
               cpu: "4"
-              memory: "4Gi"
+              memory: "8Gi"
           volumeMounts:
             - name: workspace
               mountPath: /workspace

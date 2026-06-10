@@ -102,6 +102,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: li-world-studio-gui-demo-recorder
+            - configMapRef:
+                name: li-goal-worker-runtime
           env:
             - name: GH_TOKEN
               valueFrom:

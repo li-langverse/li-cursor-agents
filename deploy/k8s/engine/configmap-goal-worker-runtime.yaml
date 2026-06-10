@@ -1,0 +1,16 @@
+# Shared runtime env for K8s goal-directed workers (OOM prevention + LLVM build caps).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: li-goal-worker-runtime
+  namespace: li-swarm
+  labels:
+    app.kubernetes.io/part-of: li-langverse
+    app.kubernetes.io/component: goal-directed-agent
+data:
+  # One Cursor SDK session per pod — parallel sessions OOM on 4–8Gi limits.
+  LI_SDK_MAX_CONCURRENT: "1"
+  # Cap Node heap so agent subprocess + git/llvm have headroom under memory limit.
+  NODE_OPTIONS: "--max-old-space-size=2048"
+  # In-container lic rebuild (ensure_lic_built) — limit link/compile parallelism.
+  CMAKE_BUILD_PARALLEL_LEVEL: "2"

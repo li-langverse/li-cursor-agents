@@ -91,8 +91,25 @@ PY
 goal_loop_sync_cwd_from_origin() {
   local cwd="$1"
   local branch="$2"
+  local repo=""
   [[ -d "$cwd/.git" ]] || return 0
   [[ -n "$branch" ]] || return 0
+  if declare -F li_git_ensure_remotes >/dev/null 2>&1; then
+    repo="$(basename "$cwd")"
+    li_git_ensure_remotes "$cwd" "$repo"
+  elif [[ -f /git-auth/k8s-git-auth.sh ]]; then
+    # shellcheck source=/dev/null
+    source /git-auth/k8s-git-auth.sh
+    li_git_primary_setup 2>/dev/null || true
+    repo="$(basename "$cwd")"
+    li_git_ensure_remotes "$cwd" "$repo"
+  elif [[ -f "${LI_CURSOR_AGENTS_ROOT:-/app}/deploy/k8s-git-auth.sh" ]]; then
+    # shellcheck source=/dev/null
+    source "${LI_CURSOR_AGENTS_ROOT:-/app}/deploy/k8s-git-auth.sh"
+    li_git_primary_setup 2>/dev/null || true
+    repo="$(basename "$cwd")"
+    li_git_ensure_remotes "$cwd" "$repo"
+  fi
   git -C "$cwd" fetch origin --prune 2>/dev/null || true
   if git -C "$cwd" show-ref --verify --quiet "refs/remotes/origin/${branch}"; then
     git -C "$cwd" checkout -B "$branch" "origin/${branch}" 2>/dev/null || true
