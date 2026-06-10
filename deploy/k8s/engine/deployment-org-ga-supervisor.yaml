@@ -58,7 +58,7 @@ spec:
               memory: "128Mi"
             limits:
               cpu: "1"
-              memory: "1Gi"
+              memory: "768Mi"
           volumeMounts:
             - name: sprint-data
               mountPath: /app/data/goal-directed-sprints

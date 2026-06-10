@@ -12,7 +12,7 @@ metadata:
     li-langverse.io/sprint: proof-explorer-program
     li-langverse.io/role: proof-explorer
 spec:
-  replicas: 1
+  replicas: 0
   strategy:
     type: Recreate
   selector:
@@ -79,10 +79,10 @@ spec:
           resources:
             requests:
               cpu: "500m"
-              memory: "2Gi"
+              memory: "768Mi"
             limits:
               cpu: "4"
-              memory: "8Gi"
+              memory: "3Gi"
           volumeMounts:
             - name: workspace
               mountPath: /workspace

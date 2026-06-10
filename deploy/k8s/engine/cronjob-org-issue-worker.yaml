@@ -8,6 +8,7 @@ metadata:
     app: li-org-issue-worker
     li-langverse.io/role: org-issue-triage
 spec:
+  suspend: true
   schedule: "*/30 * * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 3

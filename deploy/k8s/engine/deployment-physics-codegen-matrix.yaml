@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/component: goal-directed-agent
     li-langverse.io/sprint: physics-codegen-matrix
 spec:
-  replicas: 1
+  replicas: 0
   strategy:
     type: Recreate
   selector:
@@ -69,10 +69,10 @@ spec:
           resources:
             requests:
               cpu: "1"
-              memory: "2Gi"
+              memory: "768Mi"
             limits:
               cpu: "8"
-              memory: "8Gi"
+              memory: "3Gi"
           volumeMounts:
             - name: workspace
               mountPath: /workspace

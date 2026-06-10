@@ -12,7 +12,7 @@ metadata:
     li-langverse.io/sprint: world-studio-aimd-demo
     li-langverse.io/role: world-studio-builder
 spec:
-  replicas: 1
+  replicas: 0
   strategy:
     type: Recreate
   selector:
@@ -140,7 +140,7 @@ spec:
               memory: "1Gi"
             limits:
               cpu: "8"
-              memory: "8Gi"
+              memory: "3Gi"
           volumeMounts:
             - name: workspace
               mountPath: /workspace

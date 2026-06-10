@@ -188,3 +188,9 @@ kubectl -n li-swarm logs deploy/li-org-issue-supervisor --tail=50
 - Logs: `kubectl -n li-swarm logs -f deploy/li-agent-runs-leaderboard`
 - Tune: `LI_AGENT_RUNS_LEADERBOARD_LOOP_SLEEP_SEC` in ConfigMap (default 180s)
 
+
+### GitLab / engine memory headroom
+
+- **Idle mode:** all goal-directed Deployment replicas **0**, org supervisor workers **0**, org wake CronJob **suspend: true**; goal worker requests trimmed to **768Mi** (limits **3Gi**) in manifests.
+- **Apply:** `.\scripts\free-engine-memory-for-gitlab.ps1 -ApplyManifests` (homelab kubeconfig).
+- **Restore:** scale individual workers + unsuspend cronjobs via `deploy-org-swarm-k8s.ps1` or per-sprint setup scripts.

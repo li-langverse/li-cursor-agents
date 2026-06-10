@@ -6,6 +6,7 @@ metadata:
   labels:
     app: li-org-swarm-stability-check
 spec:
+  suspend: true
   schedule: "*/30 * * * *"
   concurrencyPolicy: Forbid
   successfulJobsHistoryLimit: 6

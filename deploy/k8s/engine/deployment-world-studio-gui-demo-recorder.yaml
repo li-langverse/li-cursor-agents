@@ -12,7 +12,7 @@ metadata:
     li-langverse.io/sprint: world-studio-gui-demo-recorder
     li-langverse.io/role: world-studio-builder
 spec:
-  replicas: 1
+  replicas: 0
   strategy:
     type: Recreate
   selector:
@@ -137,7 +137,7 @@ spec:
           resources:
             requests:
               cpu: "1000m"
-              memory: "2Gi"
+              memory: "768Mi"
             limits:
               cpu: "8"
               memory: "12Gi"

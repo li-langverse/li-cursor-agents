@@ -4,7 +4,7 @@ param(
     [string]$Namespace = "li-swarm",
     [string]$Node = "engine",
     [int]$MemoryRequestBudgetMi = 52000,
-    [ValidateSet("Rebalance", "FreeMemory", "Status")]
+    [ValidateSet("Rebalance", "FreeMemory", "GitlabHeadroom", "Status")]
     [string]$Mode = "Rebalance",
     [switch]$SkipScaleUp
 )
@@ -76,6 +76,17 @@ if ($Mode -eq "Status") {
     kubectl -n $Namespace get deploy -l app.kubernetes.io/component=goal-directed-agent `
         -o custom-columns=NAME:.metadata.name,READY:.status.readyReplicas,REPLICAS:.spec.replicas
     exit 0
+}
+
+if ($Mode -eq "GitlabHeadroom") {
+    Write-Host "==> GitlabHeadroom: scale all goal + org workers to 0"
+    $allGoal = $IdleWhenPressure + $PriorityActive + @(
+        "li-org-ga-supervisor","li-org-issue-supervisor","li-org-issue-triage-supervisor","li-org-issue-worker",
+        "li-org-planner-supervisor","li-org-pr-merge-worker","li-org-pr-supervisor","li-org-research-supervisor",
+        "li-org-reviewer-supervisor","li-org-supervisor-dashboard","li-org-unblocker-supervisor","li-agent-runs-leaderboard"
+    )
+    foreach ($d in ($allGoal | Select-Object -Unique)) { Set-DeployReplicas -Name $d -Replicas 0 }
+    $SkipScaleUp = $true
 }
 
 if ($usedMi -ge $MemoryRequestBudgetMi -or $Mode -eq "FreeMemory") {

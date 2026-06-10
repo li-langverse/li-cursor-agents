@@ -26,7 +26,7 @@ metadata:
     app.kubernetes.io/part-of: li-langverse
     li-langverse.io/sprint: li-toml-config-migration
 spec:
-  replicas: 1
+  replicas: 0
   strategy:
     type: Recreate
   selector:
@@ -88,10 +88,10 @@ spec:
           resources:
             requests:
               cpu: "500m"
-              memory: "2Gi"
+              memory: "768Mi"
             limits:
               cpu: "4"
-              memory: "8Gi"
+              memory: "3Gi"
           volumeMounts:
             - name: workspace
               mountPath: /workspace
