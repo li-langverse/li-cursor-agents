@@ -9,12 +9,14 @@ FROM ${PROOF_EXPLORER_IMAGE}
 
 RUN mkdir -p /opt/ph-ml-venv
 
+ENV PIP_DEFAULT_TIMEOUT=600
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends python3-pip \
   && rm -rf /var/lib/apt/lists/*
 COPY deploy/requirements-ph-ml-oracle.txt /opt/ph-ml-venv/requirements.txt
 
-RUN python3 -m pip install --break-system-packages -r /opt/ph-ml-venv/requirements.txt \
+RUN python3 -m pip install --break-system-packages --retries 10 --timeout 600 \
+    -r /opt/ph-ml-venv/requirements.txt \
   && python3 -c "import numpy, torch, jax; import gymnasium; import stable_baselines3" \
   && date -u +%Y-%m-%dT%H:%M:%SZ > /opt/ph-ml-venv/.installed
