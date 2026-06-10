@@ -183,6 +183,14 @@ export async function createGaAuditorJob(options: {
           restartPolicy: "Never",
           serviceAccountName: "li-org-ga-auditor",
           nodeSelector,
+          tolerations: [
+            {
+              key: "workload",
+              operator: "Equal",
+              value: "burst",
+              effect: "NoSchedule",
+            },
+          ],
           containers: [
             {
               name: "ga-auditor",

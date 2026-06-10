@@ -22,8 +22,8 @@ spec:
         li-langverse.io/node-pool: engine
       containers:
         - name: supervisor
-          image: ghcr.io/li-langverse/li-cursor-agents:latest
-          imagePullPolicy: IfNotPresent
+          image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
+          imagePullPolicy: Always
           command: ["node", "dist/cli/org-ga-supervisor.js", "supervise"]
           envFrom:
             - configMapRef:
@@ -54,8 +54,8 @@ spec:
                   optional: true
           resources:
             requests:
-              cpu: "250m"
-              memory: "512Mi"
+              cpu: "100m"
+              memory: "128Mi"
             limits:
               cpu: "1"
               memory: "1Gi"
