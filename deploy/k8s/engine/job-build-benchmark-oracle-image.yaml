@@ -19,6 +19,12 @@ spec:
       nodeSelector:
         kubernetes.io/hostname: engine
       volumes:
+        - name: benchmark-oracle-dockerfile-overlay
+          configMap:
+            name: benchmark-oracle-dockerfile-overlay
+            items:
+              - key: Dockerfile.benchmark-oracle
+                path: Dockerfile.benchmark-oracle
         - name: workspace
           emptyDir: {}
         - name: podman-storage
@@ -50,7 +56,7 @@ spec:
             - name: GIT_REF
               value: "main"
             - name: GIT_REPO
-              value: "https://gitlab.lilangverse.xyz/li-langverse/li-cursor-agents.git"
+              value: "http://gitlab.gitlab.svc/li-langverse/li-cursor-agents.git"
           command:
             - sh
             - -lc
@@ -61,7 +67,10 @@ spec:
               tok="${GITLAB_TOKEN:-$GH_TOKEN}"
               prefix="oauth2"
               if [ -z "${GITLAB_TOKEN:-}" ]; then prefix="x-access-token"; fi
-              url="${GIT_REPO/https:\/\//https://${prefix}:${tok}@}"
+              case "$GIT_REPO" in
+                http://*) url="http://${prefix}:${tok}@${GIT_REPO#http://}" ;;
+                *) url="${GIT_REPO/https:\/\//https://${prefix}:${tok}@}" ;;
+              esac
               git clone --depth 1 --branch "$ref" "$url" "$dest" \
                 || git clone --depth 1 "$url" "$dest"
               test -f "$dest/deploy/Dockerfile.benchmark-oracle"
@@ -120,6 +129,9 @@ spec:
           volumeMounts:
             - name: workspace
               mountPath: /workspace
+            - name: benchmark-oracle-dockerfile-overlay
+              mountPath: /workspace/li-cursor-agents/deploy/Dockerfile.benchmark-oracle
+              subPath: Dockerfile.benchmark-oracle
             - name: podman-storage
               mountPath: /var/lib/containers
             - name: k3s-bin
