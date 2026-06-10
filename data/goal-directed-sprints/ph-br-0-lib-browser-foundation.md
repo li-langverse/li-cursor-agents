@@ -17,13 +17,15 @@ Bootstrap Li Browser (`li-browser` repo): Token Economy Layer, ACP/MCP stubs, `l
 
 | Phase | Scope | Status |
 |-------|-------|--------|
-| **BR0-1** | `li-browser` repo init — `li.toml`, README, ADRs | pending |
-| **BR0-2** | JSON schemas (page-intent, snapshot-delta, tree) | pending |
-| **BR0-3** | `lib-token-economy` encoder + id_dictionary | pending |
-| **BR0-4** | `lib-acp` + `lib-mcp` stubs | pending |
-| **BR0-5** | `lib-test` unit te budget tests | pending |
-| **BR0-6** | `lib-chrome` stub — `about:li` | pending |
-| **BR0-7** | Bench stubs + GitLab push | pending |
+| **BR0-1** | `li-browser` repo init — `li.toml`, README, ADRs | **done** (`9c1823a`) |
+| **BR0-2** | JSON schemas (page-intent, snapshot-delta, tree) | **done** |
+| **BR0-3** | `lib-token-economy` encoder + id_dictionary | **done** (fixture + C wire seam) |
+| **BR0-4** | `lib-acp` + `lib-mcp` stubs | **done** |
+| **BR0-5** | `lib-test` unit te budget tests | **done** (gates + Python validators) |
+| **BR0-6** | `lib-chrome` stub — `about:li` | **done** |
+| **BR0-7** | Bench stubs + GitLab push | **done** (`li-langverse/li-browser` on GitLab) |
+
+**PH-BR-0 foundation: complete.** Next: PH-BR-1 (real ACP tools, HTML engine, in-Li budget tests).
 
 ## Progress gate
 
