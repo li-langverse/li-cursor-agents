@@ -9,6 +9,7 @@ data/workspaces-test/
 data/supervisor/
 data/control-plane/
 .env
+.env.local
 .env.supabase
 dashboard-ui/.playwright/
 dashboard-ui/playwright-report/
