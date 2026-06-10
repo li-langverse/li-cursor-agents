@@ -13,7 +13,7 @@ spec:
     requests:
       storage: 20Gi
 ---
-# Goal-directed agent: LiOS kernel M1 on engine node (lik + lic + li-os).
+# Goal-directed agent: LiOS kernel M2 on blackpearl (off engine; desktop has broken pod DNS).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -42,7 +42,7 @@ spec:
     spec:
       serviceAccountName: li-goal-worker
       nodeSelector:
-        kubernetes.io/hostname: engine
+        kubernetes.io/hostname: blackpearl
       imagePullSecrets:
         - name: ghcr-li-langverse
       containers:
