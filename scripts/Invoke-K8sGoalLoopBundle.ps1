@@ -29,7 +29,8 @@ foreach ($key in $ExtraFiles.Keys) {
     $src = $ExtraFiles[$key]
     if (-not (Test-Path $src)) { throw "missing extra bundle file: $src" }
     $dest = Join-Path $bundleDir $key
-    if ($src.EndsWith(".sh")) {
+    $textExt = @(".sh", ".md", ".json", ".yaml", ".yml", ".txt", ".ps1")
+    if ($textExt | Where-Object { $src.EndsWith($_) }) {
         $text = ([System.IO.File]::ReadAllText($src)).Replace("`r`n", "`n")
         [System.IO.File]::WriteAllText($dest, $text, (New-Object System.Text.UTF8Encoding $false))
     } else {

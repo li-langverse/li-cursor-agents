@@ -21,9 +21,9 @@ if (-not $env:GH_TOKEN) { Write-Error "GH_TOKEN required (gh CLI / GHCR pull)" }
 $env:KUBECONFIG = $KubeConfig
 $clusterGitlabToken = kubectl -n $Namespace get secret li-agents-secrets -o jsonpath='{.data.GITLAB_TOKEN}' 2>$null
 if (-not $env:GITLAB_TOKEN -and -not $clusterGitlabToken) {
-    Write-Warning "GITLAB_TOKEN not set locally or in li-agents-secrets — worker will fall back to GitHub for git"
+    Write-Warning 'GITLAB_TOKEN not set locally or in li-agents-secrets; worker will fall back to GitHub for git'
 } elseif (-not $env:GITLAB_TOKEN -and $clusterGitlabToken) {
-    Write-Host "GITLAB_TOKEN from cluster secret li-agents-secrets (local env not required)"
+    Write-Host 'GITLAB_TOKEN from cluster secret li-agents-secrets (local env not required)'
 }
 Write-Host "==> kubectl apply li-lios-kernel (namespace=$Namespace)"
 
@@ -78,5 +78,5 @@ kubectl -n $Namespace rollout status deploy/li-lios-kernel --timeout=180s
 
 Write-Host ""
 Write-Host "=== li-lios-kernel deployed ==="
-Write-Host "  kubectl -n $Namespace get pods -l app=li-lios-kernel -w"
-Write-Host "  kubectl -n $Namespace logs deploy/li-lios-kernel --tail=80 -f"
+Write-Host ('  kubectl -n ' + $Namespace + ' get pods -l app=li-lios-kernel -w')
+Write-Host ('  kubectl -n ' + $Namespace + ' logs deploy/li-lios-kernel --tail=80 -f')
