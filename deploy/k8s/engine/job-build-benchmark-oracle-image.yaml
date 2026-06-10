@@ -25,6 +25,12 @@ spec:
             items:
               - key: Dockerfile.benchmark-oracle
                 path: Dockerfile.benchmark-oracle
+        - name: benchmark-oracle-requirements-overlay
+          configMap:
+            name: benchmark-oracle-requirements-overlay
+            items:
+              - key: requirements-ph-ml-oracle.txt
+                path: requirements-ph-ml-oracle.txt
         - name: workspace
           emptyDir: {}
         - name: podman-storage
@@ -132,6 +138,9 @@ spec:
             - name: benchmark-oracle-dockerfile-overlay
               mountPath: /workspace/li-cursor-agents/deploy/Dockerfile.benchmark-oracle
               subPath: Dockerfile.benchmark-oracle
+            - name: benchmark-oracle-requirements-overlay
+              mountPath: /workspace/li-cursor-agents/deploy/requirements-ph-ml-oracle.txt
+              subPath: requirements-ph-ml-oracle.txt
             - name: podman-storage
               mountPath: /var/lib/containers
             - name: k3s-bin
