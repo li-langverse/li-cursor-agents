@@ -108,6 +108,9 @@ spec:
             - name: homelab-secrets
               mountPath: /srv/homelab/li-research/secrets
               readOnly: true
+            - name: git-auth
+              mountPath: /git-auth
+              readOnly: true
       volumes:
         - name: workspace
           persistentVolumeClaim:
@@ -131,3 +134,7 @@ spec:
           hostPath:
             path: /srv/homelab/li-research/secrets
             type: DirectoryOrCreate
+        - name: git-auth
+          configMap:
+            name: li-k8s-git-auth
+            defaultMode: 0755

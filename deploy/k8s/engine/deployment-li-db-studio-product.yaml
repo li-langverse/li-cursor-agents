@@ -95,6 +95,9 @@ spec:
               mountPath: /workspace
             - name: config-bundle
               mountPath: /config
+            - name: git-auth
+              mountPath: /git-auth
+              readOnly: true
       volumes:
         - name: workspace
           persistentVolumeClaim:
@@ -102,4 +105,8 @@ spec:
         - name: config-bundle
           configMap:
             name: li-db-studio-product-bundle
+            defaultMode: 0755
+        - name: git-auth
+          configMap:
+            name: li-k8s-git-auth
             defaultMode: 0755

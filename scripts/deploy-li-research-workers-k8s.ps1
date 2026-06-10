@@ -36,44 +36,15 @@ function Normalize-GoalFile([string]$Src) {
 function Load-LiLangverseEnv {
     $env:GH_TOKEN = $null
     $env:GITHUB_TOKEN = $null
-    foreach ($envFile in @(
-            (Join-Path $LiRoot ".env.github"),
-            (Join-Path $LiRoot ".env"),
-            (Join-Path $Root ".env")
-        )) {
-        if (-not (Test-Path $envFile)) { continue }
-        Get-Content $envFile | ForEach-Object {
-            if ($_ -match '^([^#=]+)=(.*)$') {
-                $k = $matches[1].Trim()
-                if ($k -in @('GH_TOKEN', 'GITHUB_TOKEN', 'CURSOR_API_KEY', 'CURSOR_SDK_KEY')) {
-                    $v = $matches[2].Trim()
-                    if (-not [string]::IsNullOrWhiteSpace($v)) { Set-Item -Path "env:$k" -Value $v }
-                }
-            }
-        }
-    }
-    if (-not $env:GH_TOKEN -and $env:GITHUB_TOKEN) { $env:GH_TOKEN = $env:GITHUB_TOKEN }
-    if (-not $env:GH_TOKEN) {
-        Write-Error "GH_TOKEN required from li/.env.github (or li/.env) for li-langverse workers"
-    }
+    $env:GITLAB_TOKEN = $null
+    . (Join-Path $PSScriptRoot "lib\k8s-agents-env.ps1")
+    Load-K8sAgentsEnv -WorkspaceRoot $LiRoot -AgentsRoot $Root
+    Assert-K8sAgentsDeployTokens
 }
 
 function Apply-LiAgentsSecrets {
     param([string]$Ns)
-    $secretArgs = @(
-        "create", "secret", "generic", "li-agents-secrets",
-        "--from-literal=GH_TOKEN=$($env:GH_TOKEN)",
-        "-n", $Ns, "--dry-run=client", "-o", "yaml"
-    )
-    if ($env:CURSOR_API_KEY) { $secretArgs += "--from-literal=CURSOR_API_KEY=$($env:CURSOR_API_KEY)" }
-    if ($env:CURSOR_SDK_KEY) { $secretArgs += "--from-literal=CURSOR_SDK_KEY=$($env:CURSOR_SDK_KEY)" }
-    kubectl @secretArgs | kubectl apply -f -
-
-    kubectl -n $Ns create secret docker-registry ghcr-li-langverse `
-        --docker-server=ghcr.io `
-        --docker-username=li-langverse `
-        --docker-password=$env:GH_TOKEN `
-        --dry-run=client -o yaml | kubectl apply -f -
+    Apply-K8sAgentsSecrets -Namespace $Ns -RequireGitLab
 }
 
 # cap-jmk-launchpad homelab token only.
@@ -112,6 +83,7 @@ function Scale-LiResearchWorkers {
 }
 
 kubectl label node $EngineNode li-langverse.io/node-pool=engine --overwrite 2>$null
+kubectl apply -f (Join-Path $K8s "configmap-k8s-git-auth.yaml")
 kubectl apply -f (Join-Path $K8s "namespace.yaml")
 kubectl apply -f (Join-Path $K8s "rbac-goal-workers-scale.yaml")
 

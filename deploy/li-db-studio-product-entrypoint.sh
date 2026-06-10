@@ -2,7 +2,10 @@
 # K8s entrypoint: li-langverse product track (TTS, api-kit, studio, lidb schema).
 set -euo pipefail
 
-if [[ -f /config/k8s-git-auth.sh ]]; then
+if [[ -f /git-auth/k8s-git-auth.sh ]]; then
+  # shellcheck source=/dev/null
+  source /git-auth/k8s-git-auth.sh
+elif [[ -f /config/k8s-git-auth.sh ]]; then
   # shellcheck source=/dev/null
   source /config/k8s-git-auth.sh
 else

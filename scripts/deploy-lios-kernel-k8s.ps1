@@ -11,21 +11,14 @@ $K8s = Join-Path $Root "deploy\k8s\engine"
 $Workspace = Split-Path $Root -Parent
 $BundleScript = Join-Path $Root "scripts\Invoke-K8sGoalLoopBundle.ps1"
 
-. (Join-Path $PSScriptRoot "lib\ghcr-env.ps1")
-Load-LiSwarmEnvFiles -AgentsRoot $Root -WorkspaceRoot $Workspace
-
-if (-not $env:GH_TOKEN -and $env:GITHUB_TOKEN) { $env:GH_TOKEN = $env:GITHUB_TOKEN }
-if (-not $env:GH_TOKEN -and $env:GH_SWARM_TOKEN) { $env:GH_TOKEN = $env:GH_SWARM_TOKEN }
-if (-not $env:GH_TOKEN) { Write-Error "GH_TOKEN required (gh CLI / GHCR pull)" }
+. (Join-Path $PSScriptRoot "lib\k8s-agents-env.ps1")
+Load-K8sAgentsEnv -WorkspaceRoot $Workspace -AgentsRoot $Root
+Assert-K8sAgentsDeployTokens
 
 $env:KUBECONFIG = $KubeConfig
-$clusterGitlabToken = kubectl -n $Namespace get secret li-agents-secrets -o jsonpath='{.data.GITLAB_TOKEN}' 2>$null
-if (-not $env:GITLAB_TOKEN -and -not $clusterGitlabToken) {
-    Write-Warning "GITLAB_TOKEN not set locally or in li-agents-secrets - worker will fall back to GitHub for git"
-} elseif (-not $env:GITLAB_TOKEN -and $clusterGitlabToken) {
-    Write-Host "GITLAB_TOKEN from cluster secret li-agents-secrets (local env not required)"
-}
 Write-Host "==> kubectl apply li-lios-kernel (namespace=$Namespace)"
+
+kubectl apply -f (Join-Path $K8s "configmap-k8s-git-auth.yaml")
 
 kubectl label node $EngineNode li-langverse.io/node-pool=engine --overwrite 2>$null
 
@@ -56,23 +49,9 @@ $extra = @{
 
 kubectl apply -f (Join-Path $K8s "configmap-lios-kernel.yaml")
 
-$secretArgs = @(
-    "create", "secret", "generic", "li-agents-secrets",
-    "--from-literal=GH_TOKEN=$($env:GH_TOKEN)",
-    "-n", $Namespace, "--dry-run=client", "-o", "yaml"
-)
-if ($env:CURSOR_API_KEY) { $secretArgs += "--from-literal=CURSOR_API_KEY=$($env:CURSOR_API_KEY)" }
-if ($env:CURSOR_SDK_KEY) { $secretArgs += "--from-literal=CURSOR_SDK_KEY=$($env:CURSOR_SDK_KEY)" }
-if ($env:GITLAB_TOKEN) { $secretArgs += "--from-literal=GITLAB_TOKEN=$($env:GITLAB_TOKEN)" }
-kubectl @secretArgs | kubectl apply -f -
-
+& (Join-Path $PSScriptRoot "ensure-k8s-gitlab-pat.ps1") -KubeConfig $KubeConfig -Namespace $Namespace
+Apply-K8sAgentsSecrets -Namespace $Namespace -RequireGitLab
 & (Join-Path $PSScriptRoot "org-ensure-swarm-secrets.ps1") -KubeConfig $KubeConfig -Namespace $Namespace
-
-kubectl -n $Namespace create secret docker-registry ghcr-li-langverse `
-    --docker-server=ghcr.io `
-    --docker-username=li-langverse `
-    --docker-password=$env:GH_TOKEN `
-    --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl -n $Namespace rollout restart deploy/li-lios-kernel 2>$null
 kubectl -n $Namespace scale deploy/li-lios-kernel --replicas=1

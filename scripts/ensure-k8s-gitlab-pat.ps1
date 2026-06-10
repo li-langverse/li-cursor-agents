@@ -1,6 +1,6 @@
 # Ensure a GitLab PAT in a K8s secret is valid. Reuses when API test passes.
 # Revokes and mints only when the secret token is missing/invalid, then patches the secret
-# in the same run — never revoke without updating the cluster secret.
+# in the same run - never revoke without updating the cluster secret.
 param(
     [ValidateSet("GoalWorker", "Mirror")]
     [string]$Profile = "GoalWorker",
@@ -55,7 +55,8 @@ function Test-GitlabPatApi {
         if ($_.Exception.Response -and $_.Exception.Response.StatusCode.value__ -eq 401) {
             return $false
         }
-        throw
+        $code = curl.exe -k -s -o NUL -w "%{http_code}" -H "PRIVATE-TOKEN: $Token" "$GitlabApiUrl/api/v4/user"
+        return $code -eq "200"
     }
 }
 
@@ -84,13 +85,13 @@ if (Test-GitlabPatApi -Token $existing) {
     exit 0
 }
 
-Write-Host "WARN: $($cfg.SecretName) GITLAB_TOKEN missing or invalid — minting $($cfg.PatName) and patching secret"
+Write-Host ('WARN: ' + $cfg.SecretName + ' GITLAB_TOKEN missing or invalid - minting ' + $cfg.PatName + ' and patching secret')
 
 $cronWasSuspended = $false
 if ($Profile -eq "Mirror" -and ($SuspendMirrorCron -or $cfg.CronJob)) {
     $suspendFlag = kubectl -n $Namespace get cronjob $cfg.CronJob -o jsonpath='{.spec.suspend}' 2>$null
     if ($suspendFlag -ne "true") {
-        Write-Host "==> Suspending cronjob/$($cfg.CronJob) during PAT rotation"
+        Write-Host ('==> Suspending cronjob/' + $cfg.CronJob + ' during PAT rotation')
         Set-MirrorCronSuspended -Suspended $true
         $cronWasSuspended = $true
     }
@@ -116,7 +117,7 @@ try {
     Write-Host "OK: patched $($cfg.SecretName) with new $($cfg.PatName) token"
 } finally {
     if ($cronWasSuspended) {
-        Write-Host "==> Resuming cronjob/$($cfg.CronJob)"
+        Write-Host ('==> Resuming cronjob/' + $cfg.CronJob)
         Set-MirrorCronSuspended -Suspended $false
     }
 }

@@ -69,6 +69,9 @@ $deployments = @(
     "deployment-libernetes-livm.yaml",
     "deployment-libernetes-platform.yaml",
     "deployment-lios-kernel.yaml",
+    "deployment-li-db-studio-product.yaml",
+    "deployment-li-research-product.yaml",
+    "deployment-li-research-ingest.yaml",
     "deployment-world-studio-typography-fx-animation.yaml",
     "deployment-world-studio-aimd-demo.yaml",
     "deployment-world-studio-gui-demo-recorder.yaml"
@@ -132,12 +135,53 @@ foreach ($b in $worldStudioBundles) {
     $extra = @{ "entrypoint.sh" = (Join-Path $Root $b.Entry) }
     . $BundleScript -Root $Root -Namespace $Namespace -ConfigMapName $b.Name -ExtraFiles $extra
 }
+
+$dbProductGoal = @(
+    "C:\Users\Julian\Documents\Programming\klaut.pro\klaut-pro\goals\wp-li-product.md",
+    "C:\Users\Julian\Documents\Programming\klaut.pro\goals\wp-li-product.md",
+    (Join-Path $Root "data\goal-directed-sprints\wp-li-product.md")
+) | Where-Object { Test-Path $_ } | Select-Object -First 1
+if ($dbProductGoal) {
+    $goalLf = Join-Path $env:TEMP "wp-li-product-rollout-lf.md"
+    $utf8 = New-Object System.Text.UTF8Encoding $false
+    [IO.File]::WriteAllText($goalLf, ([IO.File]::ReadAllText($dbProductGoal)).Replace("`r`n", "`n"), $utf8)
+    $dbExtra = @{
+        "entrypoint.sh"    = (Join-Path $Root "deploy\li-db-studio-product-entrypoint.sh")
+        "wp-li-product.md" = $goalLf
+    }
+    . $BundleScript -Root $Root -Namespace $Namespace -ConfigMapName "li-db-studio-product-bundle" -ExtraFiles $dbExtra
+}
+
+$klautGoals = @(
+    "C:\Users\Julian\Documents\Programming\klaut.pro\klaut-pro\goals",
+    "C:\Users\Julian\Documents\Programming\klaut.pro\goals",
+    (Join-Path $Root "data\goal-directed-sprints")
+) | Where-Object { Test-Path $_ } | Select-Object -First 1
+if ($klautGoals) {
+    foreach ($pair in @(
+        @("li-research-product-bundle", "deploy\li-research-product-entrypoint.sh", "wp-li-research-r1b-product.md"),
+        @("li-research-ingest-bundle", "deploy\li-research-ingest-entrypoint.sh", "wp-li-research-r1b-warm-ingest.md")
+    )) {
+        $goalSrc = Join-Path $klautGoals $pair[2]
+        if (-not (Test-Path $goalSrc)) { continue }
+        $goalLf = Join-Path $env:TEMP ("$($pair[2])-rollout-lf.md")
+        $utf8 = New-Object System.Text.UTF8Encoding $false
+        [IO.File]::WriteAllText($goalLf, ([IO.File]::ReadAllText($goalSrc)).Replace("`r`n", "`n"), $utf8)
+        $extra = @{
+            "entrypoint.sh" = (Join-Path $Root $pair[1])
+            $pair[2]        = $goalLf
+        }
+        . $BundleScript -Root $Root -Namespace $Namespace -ConfigMapName $pair[0] -ExtraFiles $extra
+    }
+}
+
 $workers = @(
     "li-li-parallel", "li-li-toml-config", "li-proof-explorer",
     "li-ph-sci-electrochemistry", "li-ph-sci-simulation-gap-close", "li-ph-sci-gap-close-phase2",
     "li-ph-ml-wave13", "li-ph-br-0-lib-browser", "li-pure-li-https", "li-physics-codegen-matrix",
     "li-libernetes-control", "li-libernetes-licontainers", "li-libernetes-livm", "li-libernetes-platform",
-    "li-lios-kernel", "li-world-studio-typography-fx-animation", "li-world-studio-aimd-demo", "li-world-studio-gui-demo-recorder"
+    "li-lios-kernel", "li-world-studio-typography-fx-animation", "li-world-studio-aimd-demo", "li-world-studio-gui-demo-recorder",
+    "li-db-studio-product", "li-research-product", "li-research-ingest"
 )
 foreach ($w in $workers) {
     if (kubectl get deploy -n $Namespace $w 2>$null) {

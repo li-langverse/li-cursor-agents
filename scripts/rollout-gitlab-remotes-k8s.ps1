@@ -12,11 +12,15 @@ $Workspace = Split-Path $Root -Parent
 Load-K8sAgentsEnv -WorkspaceRoot $Workspace -AgentsRoot $Root
 
 $env:KUBECONFIG = $KubeConfig
+Write-Host "==> Ensure valid GitLab PAT in li-agents-secrets"
+& (Join-Path $PSScriptRoot "ensure-k8s-gitlab-pat.ps1") -KubeConfig $KubeConfig -Namespace $Namespace
+
 Write-Host "==> Apply li-agents-secrets (GITLAB_TOKEN + GH_TOKEN)"
 Apply-K8sAgentsSecrets -Namespace $Namespace -RequireGitLab
+& (Join-Path $PSScriptRoot "org-ensure-swarm-secrets.ps1") -KubeConfig $KubeConfig -Namespace $Namespace
 
-Write-Host "==> Restart goal-directed workers"
-Restart-K8sGoalDirectedWorkers -Namespace $Namespace
+Write-Host "==> Apply GitLab-primary manifests + restart workers"
+& (Join-Path $PSScriptRoot "apply-k8s-gitlab-primary-rollout.ps1") -KubeConfig $KubeConfig -Namespace $Namespace
 
 Write-Host ""
 Write-Host "=== GitLab-primary rollout complete ==="
