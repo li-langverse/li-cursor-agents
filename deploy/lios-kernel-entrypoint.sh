@@ -61,20 +61,6 @@ ensure_repo_tree() {
   }
 }
 
-ensure_qemu_dev_vm() {
-  if command -v qemu-system-x86_64 >/dev/null 2>&1; then
-    return 0
-  fi
-  if ! command -v apt-get >/dev/null 2>&1; then
-    echo "lios-kernel-entrypoint: qemu-system-x86_64 missing and apt-get unavailable" >&2
-    return 1
-  fi
-  echo "lios-kernel-entrypoint: installing qemu-system-x86 for M2 dev-vm gate"
-  export DEBIAN_FRONTEND=noninteractive
-  apt-get update -qq
-  apt-get install -y -qq qemu-system-x86
-}
-
 sync_workspace() {
   sync_repo_with_fallbacks "lik" "$LIK_ROOT" "$BRANCH_LIK"
   sync_repo_with_fallbacks "lic" "$LIC_ROOT" "$BRANCH_LIC"
@@ -128,7 +114,6 @@ run_goal_loop() {
 
 sync_workspace
 seed_loop_state
-ensure_qemu_dev_vm || true
 test -f "$(resolve_goal_file)" || { echo missing goal >&2; exit 1; }
 
 while true; do
