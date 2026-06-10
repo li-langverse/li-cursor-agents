@@ -12,11 +12,11 @@ li_git_primary_setup || exit 1
 
 AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
 WORKSPACE="${LI_GOAL_WORKSPACE:-/workspace}"
-BRANCH_LI_OS="${LI_GOAL_BRANCH_LI_OS:-cursor/lios-kernel-m1}"
-BRANCH_LIC="${LI_GOAL_BRANCH_LIC:-cursor/lios-kernel-m1}"
-BRANCH_LIK="${LI_GOAL_BRANCH_LIK:-cursor/lios-kernel-m1}"
-FALLBACK_RAW="${LI_GOAL_BRANCH_FALLBACKS:-cursor/lios-kernel-m1,main}"
-GOAL_FILE_REL="${LI_GOAL_FILE:-data/goal-directed-sprints/lios-kernel-m1.md}"
+BRANCH_LI_OS="${LI_GOAL_BRANCH_LI_OS:-cursor/lios-kernel-m2}"
+BRANCH_LIC="${LI_GOAL_BRANCH_LIC:-cursor/lios-kernel-m2}"
+BRANCH_LIK="${LI_GOAL_BRANCH_LIK:-cursor/lios-kernel-m2}"
+FALLBACK_RAW="${LI_GOAL_BRANCH_FALLBACKS:-cursor/lios-kernel-m2,cursor/lios-kernel-m1,main}"
+GOAL_FILE_REL="${LI_GOAL_FILE:-data/goal-directed-sprints/lios-kernel-m2.md}"
 AGENT="${LI_GOAL_AGENT:-code_implementer}"
 LOOP_SLEEP="${LI_GOAL_LOOP_SLEEP_SEC:-120}"
 LIOS_ROOT="${WORKSPACE}/li-os"
@@ -61,13 +61,23 @@ ensure_repo_tree() {
   }
 }
 
+lios_gate_marker() {
+  if [[ "${GOAL_FILE_REL}" == *m2* ]]; then
+    echo "scripts/gates/m2-progress-gate.sh"
+  else
+    echo "scripts/gates/m1-completion-gate.sh"
+  fi
+}
+
 sync_workspace() {
+  local lios_marker
+  lios_marker="$(lios_gate_marker)"
   sync_repo_with_fallbacks "lik" "$LIK_ROOT" "$BRANCH_LIK"
   sync_repo_with_fallbacks "lic" "$LIC_ROOT" "$BRANCH_LIC"
   sync_repo_with_fallbacks "li-os" "$LIOS_ROOT" "$BRANCH_LI_OS"
   ensure_repo_tree "docs/kernel-abi.md" "$LIK_ROOT" "lik" "$BRANCH_LIK"
   ensure_repo_tree "docs/compiler-kernel-targets.md" "$LIC_ROOT" "lic" "$BRANCH_LIC"
-  ensure_repo_tree "scripts/gates/m1-completion-gate.sh" "$LIOS_ROOT" "li-os" "$BRANCH_LI_OS"
+  ensure_repo_tree "$lios_marker" "$LIOS_ROOT" "li-os" "$BRANCH_LI_OS"
   export LIK_ROOT LIC_ROOT LIOS_ROOT
 }
 
@@ -114,7 +124,12 @@ run_goal_loop() {
 
 sync_workspace
 seed_loop_state
-test -f "$(resolve_goal_file)" || { echo missing goal >&2; exit 1; }
+goal_path="$(resolve_goal_file)" || true
+if [[ -z "${goal_path:-}" || ! -f "$goal_path" ]]; then
+  echo "lios-kernel-entrypoint: missing goal file (${GOAL_FILE_REL})" >&2
+  exit 1
+fi
+echo "lios-kernel-entrypoint: goal=${goal_path} branches=${BRANCH_LI_OS}"
 
 while true; do
   sync_workspace

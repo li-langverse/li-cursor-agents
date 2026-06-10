@@ -5,7 +5,7 @@ metadata:
   namespace: li-swarm
   labels:
     app: li-lios-kernel
-    li-langverse.io/sprint: lios-kernel-m1
+    li-langverse.io/sprint: lios-kernel-m2
 spec:
   accessModes:
     - ReadWriteOnce
@@ -24,7 +24,7 @@ metadata:
     app.kubernetes.io/name: li-lios-kernel
     app.kubernetes.io/component: goal-directed-agent
     app.kubernetes.io/part-of: li-langverse
-    li-langverse.io/sprint: lios-kernel-m1
+    li-langverse.io/sprint: lios-kernel-m2
 spec:
   replicas: 1
   strategy:
@@ -38,7 +38,7 @@ spec:
         app: li-lios-kernel
         app.kubernetes.io/name: li-lios-kernel
         app.kubernetes.io/component: goal-directed-agent
-        li-langverse.io/sprint: lios-kernel-m1
+        li-langverse.io/sprint: lios-kernel-m2
     spec:
       serviceAccountName: li-goal-worker
       nodeSelector:
@@ -86,7 +86,7 @@ spec:
           resources:
             requests:
               cpu: "500m"
-              memory: "1Gi"
+              memory: "256Mi"
             limits:
               cpu: "4"
               memory: "4Gi"
