@@ -29,8 +29,8 @@ spec:
         - name: ghcr-li-langverse
       containers:
         - name: ph-ml-wave13
-          image: ghcr.io/li-langverse/li-cursor-agents:benchmark-oracle-llvm22
-          # benchmark-oracle extends proof-explorer-llvm22; pre-bakes /opt/ph-ml-venv (deploy/Dockerfile.benchmark-oracle)
+          image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
+          # benchmark-oracle-llvm22 optional (LI_BUILD_BENCHMARK_ORACLE_IMAGE=1); entrypoint installs PH-ML deps at runtime.
           imagePullPolicy: IfNotPresent
           command: ["/bin/bash", "/scripts/entrypoint.sh"]
           envFrom:

@@ -23,6 +23,7 @@ spec:
         app.kubernetes.io/component: goal-directed-agent
         li-langverse.io/sprint: pure-li-https
     spec:
+      serviceAccountName: li-goal-worker
       nodeSelector:
         kubernetes.io/hostname: engine
       imagePullSecrets:
@@ -31,6 +32,7 @@ spec:
         - name: pure-li-https
           image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
           imagePullPolicy: IfNotPresent
+          command: ["/bin/bash", "/config/entrypoint.sh"]
           envFrom:
             - configMapRef:
                 name: li-pure-li-https
@@ -77,17 +79,19 @@ spec:
           volumeMounts:
             - name: workspace
               mountPath: /workspace
+            - name: config-bundle
+              mountPath: /config
             - name: git-auth
               mountPath: /git-auth
-              readOnly: true
-            - name: git-auth
-              mountPath: /config/k8s-git-auth.sh
-              subPath: k8s-git-auth.sh
               readOnly: true
       volumes:
         - name: workspace
           persistentVolumeClaim:
             claimName: li-pure-li-https-workspace
+        - name: config-bundle
+          configMap:
+            name: li-pure-li-https-bundle
+            defaultMode: 0755
         - name: git-auth
           configMap:
             name: li-k8s-git-auth

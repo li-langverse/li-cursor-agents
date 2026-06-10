@@ -72,4 +72,15 @@ for (const name of readdirSync(engineDir)) {
   assert.doesNotMatch(text, /memory: "4Gi"/, `${name} must not keep 4Gi memory limit`);
 }
 
+const pureLiHttps = read("deploy/k8s/engine/deployment-pure-li-https.yaml");
+assert.match(pureLiHttps, /command: \[\"\/bin\/bash\", \"\/config\/entrypoint\.sh\"\]/);
+assert.match(pureLiHttps, /li-pure-li-https-bundle/);
+
+const phMl = read("deploy/k8s/engine/deployment-ph-ml-wave13.yaml");
+assert.match(phMl, /image: ghcr\.io\/li-langverse\/li-cursor-agents:proof-explorer-llvm22/);
+
+const rebalance = read("scripts/rebalance-engine-goal-workers.ps1");
+assert.match(rebalance, /MemoryRequestBudgetMi/);
+assert.match(rebalance, /li-ph-ml-wave13/);
+
 console.log("test-k8s-goal-worker-infra: ok");
