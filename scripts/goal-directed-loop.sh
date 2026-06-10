@@ -13,6 +13,12 @@
 #
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+# Homelab kubeconfig: copy from beelink-cleanup before any kubectl in agent runs.
+if [[ -f "$ROOT/scripts/sync-kubeconfig-from-beelink.sh" ]]; then
+  # shellcheck source=sync-kubeconfig-from-beelink.sh
+  source "$ROOT/scripts/sync-kubeconfig-from-beelink.sh" || true
+fi
 AGENT="${LI_GOAL_AGENT:-code_implementer}"
 GOAL_FILE=""
 GOAL_INLINE=""

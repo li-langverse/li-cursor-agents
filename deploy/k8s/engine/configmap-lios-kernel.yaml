@@ -7,14 +7,14 @@ metadata:
     app: li-lios-kernel
     app.kubernetes.io/name: li-lios-kernel
     app.kubernetes.io/component: goal-directed-agent
-    li-langverse.io/sprint: lios-kernel-m1
+    li-langverse.io/sprint: lios-kernel-m2
 data:
   LI_GITHUB_ORG: "li-langverse"
-  LI_GOAL_FILE: "data/goal-directed-sprints/lios-kernel-m1.md"
-  LI_GOAL_BRANCH_LI_OS: "cursor/lios-kernel-m1"
-  LI_GOAL_BRANCH_LIC: "cursor/lios-kernel-m1"
-  LI_GOAL_BRANCH_LIK: "cursor/lios-kernel-m1"
-  LI_GOAL_BRANCH_FALLBACKS: "cursor/lios-kernel-m1,main"
+  LI_GOAL_FILE: "data/goal-directed-sprints/lios-kernel-m2.md"
+  LI_GOAL_BRANCH_LI_OS: "cursor/lios-kernel-m2"
+  LI_GOAL_BRANCH_LIC: "cursor/lios-kernel-m2"
+  LI_GOAL_BRANCH_LIK: "cursor/lios-kernel-m2"
+  LI_GOAL_BRANCH_FALLBACKS: "cursor/lios-kernel-m2,cursor/lios-kernel-m1,main"
   LI_GOAL_WORKSPACE: "/workspace"
   LI_GOAL_WORKSPACE_REPOS: "lik,lic,li-os"
   LI_GOAL_AGENT: "code_implementer"

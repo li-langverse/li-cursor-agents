@@ -71,17 +71,25 @@ sync_workspace() {
   export LIK_ROOT LIC_ROOT LIOS_ROOT
 }
 
+goal_bundle_basename() {
+  basename "${GOAL_FILE_REL}"
+}
+
 seed_loop_state() {
+  local goal_base
+  goal_base="$(goal_bundle_basename)"
   mkdir -p "${AGENTS_ROOT}/data/goal-directed-sprints" "${AGENTS_ROOT}/data/lios-kernel-loop"
-  [[ -f /config/lios-kernel-m1.md ]] && cp -f /config/lios-kernel-m1.md "${AGENTS_ROOT}/data/goal-directed-sprints/"
+  [[ -f "/config/${goal_base}" ]] && cp -f "/config/${goal_base}" "${AGENTS_ROOT}/data/goal-directed-sprints/"
   [[ ! -f "${AGENTS_ROOT}/data/lios-kernel-loop/iteration-log.md" && -f /config/iteration-log.md ]] \
     && cp -f /config/iteration-log.md "${AGENTS_ROOT}/data/lios-kernel-loop/"
   [[ -f /config/state.json ]] && cp -f /config/state.json "${AGENTS_ROOT}/data/lios-kernel-loop/state.json"
 }
 
 resolve_goal_file() {
+  local goal_base
+  goal_base="$(goal_bundle_basename)"
   [[ -f "${AGENTS_ROOT}/${GOAL_FILE_REL}" ]] && { echo "${AGENTS_ROOT}/${GOAL_FILE_REL}"; return 0; }
-  [[ -f /config/lios-kernel-m1.md ]] && { echo /config/lios-kernel-m1.md; return 0; }
+  [[ -f "/config/${goal_base}" ]] && { echo "/config/${goal_base}"; return 0; }
   return 1
 }
 
@@ -91,7 +99,9 @@ run_goal_loop() {
   export LIK_ROOT LIC_ROOT LIOS_ROOT LI_CURSOR_AGENTS_ROOT="$AGENTS_ROOT" LI_GOAL_LOOP_SLEEP_SEC="$LOOP_SLEEP"
   local g
   g="$(resolve_goal_file)"
-  export LI_GOAL_FILE="$g" LI_GOAL_PLAN_FILE="${AGENTS_ROOT}/docs/plans/2026-06-lios-kernel-m1.md"
+  local plan_file="${AGENTS_ROOT}/docs/plans/2026-06-lios-kernel-m1.md"
+  [[ "${GOAL_FILE_REL}" == *m2* ]] && plan_file="${AGENTS_ROOT}/docs/plans/2026-06-lios-kernel-m2.md"
+  export LI_GOAL_FILE="$g" LI_GOAL_PLAN_FILE="${plan_file}"
   mkdir -p "$LIOS_ROOT/scripts/gates" 2>/dev/null || true
   "$AGENTS_ROOT/scripts/goal-directed-loop.sh" \
     --agent "$AGENT" --workflow-repo li-os --cwd "$LIOS_ROOT" \

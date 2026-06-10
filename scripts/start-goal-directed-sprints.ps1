@@ -18,6 +18,9 @@ $Bash = "C:\Program Files\Git\bin\bash.exe"
 
 New-Item -ItemType Directory -Force -Path $Logs | Out-Null
 
+. (Join-Path $PSScriptRoot "sync-kubeconfig-from-beelink.ps1")
+$null = Sync-KubeconfigFromBeelink
+
 # Secrets load order (later wins): .env.github -> li-cursor-agents/.env -> .env
 # Empty values are ignored so a blank line cannot wipe an earlier token.
 foreach ($f in @(

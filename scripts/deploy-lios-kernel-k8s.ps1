@@ -2,7 +2,9 @@
 param(
     [string]$KubeConfig = "$env:USERPROFILE\.kube\config-homelab",
     [string]$Namespace = "li-swarm",
-    [string]$EngineNode = "engine"
+    [string]$EngineNode = "engine",
+    [ValidateSet("m1", "m2")]
+    [string]$Sprint = "m2"
 )
 
 $ErrorActionPreference = "Stop"
@@ -33,22 +35,33 @@ kubectl apply -f (Join-Path $K8s "namespace.yaml")
 kubectl apply -f (Join-Path $K8s "rbac-goal-workers-scale.yaml")
 kubectl apply -f (Join-Path $K8s "deployment-lios-kernel.yaml")
 
-$goal = Join-Path $Root "data\goal-directed-sprints\lios-kernel-m1.md"
-$state = Join-Path $Root "data\lios-kernel-loop\state.json"
+$sprintId = "lios-kernel-$Sprint"
+$goal = Join-Path $Root "data\goal-directed-sprints\$sprintId.md"
+$state = if ($Sprint -eq "m2") {
+    Join-Path $Root "data\lios-kernel-loop\state-m2.json"
+} else {
+    Join-Path $Root "data\lios-kernel-loop\state.json"
+}
 $log = Join-Path $Root "data\lios-kernel-loop\iteration-log.md"
+if (-not (Test-Path $goal)) { Write-Error "missing goal file: $goal" }
 if (-not (Test-Path $state)) {
-    '{"phase":"m1-complete"}' | Set-Content -Encoding utf8NoBOM $state
+    if ($Sprint -eq "m2") {
+        '{"phase":"m2-qemu-dev-vm","sprint":"m2","prerequisite":"m1-complete"}' | Set-Content -Encoding utf8NoBOM $state
+    } else {
+        '{"phase":"m1-complete"}' | Set-Content -Encoding utf8NoBOM $state
+    }
 }
 if (-not (Test-Path $log)) {
     Set-Content -Encoding utf8NoBOM -Path $log -Value "# lios-kernel loop`n"
 }
 
+$goalBundleName = Split-Path $goal -Leaf
 $extra = @{
-    "entrypoint.sh"       = (Join-Path $Root "deploy\lios-kernel-entrypoint.sh")
-    "k8s-git-auth.sh"     = (Join-Path $Root "deploy\k8s-git-auth.sh")
-    "lios-kernel-m1.md"   = $goal
-    "state.json"          = $state
-    "iteration-log.md"    = $log
+    "entrypoint.sh"    = (Join-Path $Root "deploy\lios-kernel-entrypoint.sh")
+    "k8s-git-auth.sh"  = (Join-Path $Root "deploy\k8s-git-auth.sh")
+    $goalBundleName    = $goal
+    "state.json"       = $state
+    "iteration-log.md" = $log
 }
 . $BundleScript -Root $Root -Namespace $Namespace -ConfigMapName "li-lios-kernel-bundle" -ExtraFiles $extra
 
