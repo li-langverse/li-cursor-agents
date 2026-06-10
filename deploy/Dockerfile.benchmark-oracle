@@ -9,6 +9,10 @@ FROM ${PROOF_EXPLORER_IMAGE}
 
 RUN mkdir -p /opt/ph-ml-venv
 
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends python3-pip \
+  && rm -rf /var/lib/apt/lists/*
 COPY deploy/requirements-ph-ml-oracle.txt /opt/ph-ml-venv/requirements.txt
 
 RUN python3 -m pip install --break-system-packages -r /opt/ph-ml-venv/requirements.txt \
