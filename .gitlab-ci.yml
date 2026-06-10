@@ -1,28 +1,161 @@
-# Mirrors li-cursor-agents/.github/workflows/ci.yml (test-mock-agents job).
-# lidb-engine-e2e omitted — needs multi-repo checkout + cmake; add when runner disk allows.
+# GitLab-primary CI for li-cursor-agents (images published to GHCR).
+# Schedules (GitLab UI → CI/CD → Schedules; set SCHEDULE_KIND per schedule):
+#   swarm-audit         cron 0 9 * * 1      SCHEDULE_KIND=swarm-audit
+#   swarm-maintenance   cron 0 */12 * * *   SCHEDULE_KIND=swarm-maintenance
+#
+# Required CI/CD variables:
+#   GITLAB_TOKEN              clone lic sibling (audit job)
+#   GHCR_TOKEN or GH_PACKAGES docker login ghcr.io (publish jobs)
+#   LI_BENCHMARKS_DISPATCH_TOKEN  optional; trigger benchmarks pipeline via API
 
 stages:
   - test
+  - audit
+  - maintenance
+  - publish
 
 default:
   tags:
     - homelab-k8s
   interruptible: true
 
+variables:
+  CURSOR_MOCK: "1"
+  CI: "true"
+  GIT_SSL_NO_VERIFY: "true"
+  CI_SERVER_HOST: gitlab.gitlab.svc.cluster.local
+
+.node_before: &node_before
+  - npm ci
+  - npm run build
+
+.ghcr_login: &ghcr_login
+  - |
+    if [[ -n "${GHCR_TOKEN:-}" ]]; then
+      echo "$GHCR_TOKEN" | docker login ghcr.io -u "${GHCR_USER:-gitlab-ci}" --password-stdin
+    elif [[ -n "${GH_PACKAGES:-}" ]]; then
+      echo "$GH_PACKAGES" | docker login ghcr.io -u "${GHCR_USER:-gitlab-ci}" --password-stdin
+    else
+      echo "GHCR_TOKEN or GH_PACKAGES required"
+      exit 1
+    fi
+
 test-mock-agents:
   stage: test
   image:
     name: node:22-bookworm
     pull_policy: if-not-present
-  variables:
-    CURSOR_MOCK: "1"
-    CI: "true"
-    GIT_SSL_NO_VERIFY: "true"
-    CI_SERVER_HOST: gitlab.gitlab.svc.cluster.local
   script:
-    - npm ci
-    - npm run build
+    - *node_before
     - npm test
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+swarm-audit:
+  stage: audit
+  image: node:22-bookworm
+  variables:
+    LI_CONTROL_PLANE_STORE: disk
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq git python3 python3-pip
+    - git clone --depth 1 "http://oauth2:${GITLAB_TOKEN}@${CI_SERVER_HOST}/li-langverse/lic.git" lic
+    - *node_before
+  script:
+    - |
+      node --test dist/handoffs/*.test.js dist/briefing/*.test.js dist/lanes/*.test.js
+      node --test dist/e2e/async-handoff.e2e.js dist/e2e/goal-lic-workflow.e2e.js dist/e2e/heap.e2e.js
+    - |
+      pip install -q -r lic/docs/requirements.txt
+      python3 -m mkdocs build -f lic/mkdocs.yml
+      export LIC_ROOT="$CI_PROJECT_DIR/lic"
+      python3 ux-harness/run_audit.py --target lic-docs --mode both --out-dir /tmp/ux-audit-out
+      test -f /tmp/ux-audit-out/ui-audit.json
+      python3 ux-harness/run_audit.py --all --mock --out-dir /tmp/ux-audit-mock
+      python3 ux-harness/tests/test_harness.py
+    - python3 fixtures/e2e-benchmarks/scripts/agent-briefing.py
+    - |
+      python3 - <<'PY'
+      import json
+      from pathlib import Path
+      p = Path("fixtures/e2e-benchmarks/data/latest/agent-briefing.json")
+      d = json.loads(p.read_text())
+      for key in ("swarm_scorecard", "research_goals_status", "handoff_audit", "heap_plan", "ui_audit", "ux_audit"):
+          assert key in d, f"missing {key}"
+      print("ok")
+      PY
+    - |
+      if [[ "${DISPATCH_BENCHMARKS:-}" == "true" && -n "${LI_BENCHMARKS_DISPATCH_TOKEN:-}" ]]; then
+        curl -sS -X POST \
+          -H "PRIVATE-TOKEN: ${LI_BENCHMARKS_DISPATCH_TOKEN}" \
+          -F "ref=main" \
+          "${CI_API_V4_URL}/projects/li-langverse%2Fbenchmarks/pipeline" || true
+      fi
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_KIND == "swarm-audit"
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+swarm-maintenance:
+  stage: maintenance
+  image: node:22-bookworm
+  variables:
+    LI_CONTROL_PLANE_STORE: disk
+    BENCHMARKS_ROOT: $CI_PROJECT_DIR/fixtures/e2e-benchmarks
+  script:
+    - *node_before
+    - python3 fixtures/e2e-benchmarks/scripts/agent-briefing.py
+    - npm run agents:maintenance-lane -- --once
+  artifacts:
+    paths:
+      - fixtures/e2e-benchmarks/data/latest/agent-briefing.json
+      - data/latest/agent-briefing.json
+    expire_in: 7 days
+    when: always
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule" && $SCHEDULE_KIND == "swarm-maintenance"
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+.publish_image: &publish_image
+  stage: publish
+  image: docker:24
+  services:
+    - name: docker:24-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  before_script: *ghcr_login
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes:
+        - deploy/**/*
+        - src/**/*
+        - apps/org-supervisor-dashboard/**/*
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+publish-org-issue-image:
+  <<: *publish_image
+  script:
+    - |
+      docker build -f deploy/Dockerfile \
+        --build-arg LI_CI_IMAGE=ghcr.io/li-langverse/lic-ci:debian12-llvm22 \
+        -t ghcr.io/li-langverse/li-cursor-agents:latest \
+        -t "ghcr.io/li-langverse/li-cursor-agents:${CI_COMMIT_SHA}" .
+      docker push ghcr.io/li-langverse/li-cursor-agents:latest
+      docker push "ghcr.io/li-langverse/li-cursor-agents:${CI_COMMIT_SHA}"
+
+publish-proof-explorer-image:
+  <<: *publish_image
+  script:
+    - |
+      docker build -f deploy/Dockerfile.proof-explorer \
+        --build-arg LI_CI_IMAGE=ghcr.io/li-langverse/lic-ci:debian12-llvm22 \
+        -t ghcr.io/li-langverse/li-cursor-agents:proof-explorer \
+        -t ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22 \
+        -t "ghcr.io/li-langverse/li-cursor-agents:proof-explorer-${CI_COMMIT_SHA}" .
+      docker push ghcr.io/li-langverse/li-cursor-agents:proof-explorer
+      docker push ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
+      docker push "ghcr.io/li-langverse/li-cursor-agents:proof-explorer-${CI_COMMIT_SHA}"
