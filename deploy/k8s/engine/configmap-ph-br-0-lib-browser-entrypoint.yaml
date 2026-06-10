@@ -18,9 +18,9 @@ data:
       source /app/deploy/k8s-git-auth.sh
     fi
     li_git_primary_setup || exit 1
-    REPO_LIB="${LI_PROOF_EXPLORER_LIC_REPO:-lib}"
+    REPO_LIB="${LI_PROOF_EXPLORER_LIC_REPO:-li-browser}"
     PREFERRED_BRANCH="${LI_PROOF_EXPLORER_BRANCH:-cursor/ph-br-0-foundation}"
-    LIB_ROOT="${LI_PROOF_EXPLORER_LIC_ROOT:-/workspace/lib}"
+    LIB_ROOT="${LI_PROOF_EXPLORER_LIC_ROOT:-/workspace/li-browser}"
     LIC_ROOT="${LIC_ROOT:-/workspace/lic}"
     AGENTS_ROOT="${LI_CURSOR_AGENTS_ROOT:-/app}"
     git config --global user.email "${LI_GIT_USER_EMAIL:-goal-worker@li-langverse.dev}"
