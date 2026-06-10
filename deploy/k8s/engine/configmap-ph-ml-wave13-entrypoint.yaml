@@ -44,6 +44,16 @@ data:
       find /usr -name 'libopenblas.so*' 2>/dev/null | head -3 || true
     }
     ensure_openblas
+    ensure_lic_runtime_deps() {
+      if ldconfig -p 2>/dev/null | grep -q 'libz3.so.4'; then
+        echo "ph-ml-wave13-entrypoint: libz3 runtime present"
+        return 0
+      fi
+      echo "ph-ml-wave13-entrypoint: installing libz3-4 (PVC lic + in-container rebuild runtime)"
+      apt-get update
+      apt-get install -y --no-install-recommends libz3-4
+      rm -rf /var/lib/apt/lists/*
+    }
     git config --global user.email "${LI_GIT_USER_EMAIL:-goal-worker@li-langverse.dev}"
     git config --global user.name "${LI_GIT_USER_NAME:-li-goal-worker}"
 
@@ -206,6 +216,7 @@ data:
       echo "ph-ml-wave13-entrypoint: missing benchmarks harness at ${BENCHMARKS_ROOT}/harness/bench.py" >&2
       exit 1
     }
+    ensure_lic_runtime_deps
     ensure_lic_built
     ensure_inference_native_backend
     export LI_PROOF_EXPLORER_LIC_ROOT="$LIC_ROOT" LI_CURSOR_AGENTS_ROOT="$AGENTS_ROOT" LIC_ROOT="$LIC_ROOT" BENCHMARKS_ROOT="$BENCHMARKS_ROOT"

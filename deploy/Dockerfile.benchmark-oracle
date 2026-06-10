@@ -7,6 +7,11 @@
 ARG PROOF_EXPLORER_IMAGE=ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
 FROM ${PROOF_EXPLORER_IMAGE}
 
+# Inherit lic-ci LLVM 22 + z3 runtime from proof-explorer; fail fast on broken bases.
+RUN test -x /usr/bin/clang-22 \
+  && clang-22 --version | head -1 \
+  && ldconfig -p | grep -q 'libz3.so.4'
+
 RUN mkdir -p /opt/ph-ml-venv
 
 ENV PIP_DEFAULT_TIMEOUT=600

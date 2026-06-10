@@ -19,18 +19,6 @@ spec:
       nodeSelector:
         kubernetes.io/hostname: engine
       volumes:
-        - name: benchmark-oracle-dockerfile-overlay
-          configMap:
-            name: benchmark-oracle-dockerfile-overlay
-            items:
-              - key: Dockerfile.benchmark-oracle
-                path: Dockerfile.benchmark-oracle
-        - name: benchmark-oracle-requirements-overlay
-          configMap:
-            name: benchmark-oracle-requirements-overlay
-            items:
-              - key: requirements-ph-ml-oracle.txt
-                path: requirements-ph-ml-oracle.txt
         - name: workspace
           emptyDir: {}
         - name: podman-storage
@@ -116,10 +104,11 @@ spec:
               set -euo pipefail
               cd /workspace/li-cursor-agents
               echo "$GH_TOKEN" | podman login ghcr.io -u "$GHCR_USER" --password-stdin || true
-              podman pull ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22 \
-                || podman build -f deploy/Dockerfile.proof-explorer \
-                  --build-arg LI_CI_IMAGE=ghcr.io/li-langverse/lic-ci:debian12-llvm22 \
-                  -t ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22 .
+              # Always build proof-explorer from lic-ci — GHCR :proof-explorer-llvm22 may lack LLVM.
+              podman pull ghcr.io/li-langverse/lic-ci:debian12-llvm22
+              podman build -f deploy/Dockerfile.proof-explorer \
+                --build-arg LI_CI_IMAGE=ghcr.io/li-langverse/lic-ci:debian12-llvm22 \
+                -t ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22 .
               podman build -f deploy/Dockerfile.benchmark-oracle \
                 --build-arg PROOF_EXPLORER_IMAGE=ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22 \
                 -t "$IMAGE" .
@@ -136,12 +125,6 @@ spec:
           volumeMounts:
             - name: workspace
               mountPath: /workspace
-            - name: benchmark-oracle-dockerfile-overlay
-              mountPath: /workspace/li-cursor-agents/deploy/Dockerfile.benchmark-oracle
-              subPath: Dockerfile.benchmark-oracle
-            - name: benchmark-oracle-requirements-overlay
-              mountPath: /workspace/li-cursor-agents/deploy/requirements-ph-ml-oracle.txt
-              subPath: requirements-ph-ml-oracle.txt
             - name: podman-storage
               mountPath: /var/lib/containers
             - name: k3s-bin
