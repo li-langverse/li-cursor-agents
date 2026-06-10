@@ -62,17 +62,36 @@ if (-not $backup -and $env:GH_SWARM_TOKEN_BACKUP) {
     Write-Host "li-agents-secrets OK (GH_SWARM_TOKEN_BACKUP present)"
 }
 
-$gitlab = kubectl -n $Namespace get secret li-agents-secrets -o jsonpath='{.data.GITLAB_TOKEN}' 2>$null
-if (-not $gitlab -and $env:GITLAB_TOKEN) {
-    $b64g = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:GITLAB_TOKEN))
-    $patchGitlab = @{ data = @{ GITLAB_TOKEN = $b64g } } | ConvertTo-Json -Compress
-    $tmp3 = Join-Path $env:TEMP "li-agents-secrets-gitlab.json"
-    [System.IO.File]::WriteAllText($tmp3, $patchGitlab)
-    kubectl -n $Namespace patch secret li-agents-secrets --type=merge --patch-file $tmp3
-    Remove-Item $tmp3 -Force -ErrorAction SilentlyContinue
-    Write-Host "Patched GITLAB_TOKEN from local env"
-    kubectl -n $Namespace rollout restart deploy/li-lios-kernel 2>$null
-    Write-Host "Restarted li-lios-kernel so pods pick up GITLAB_TOKEN"
-} elseif ($gitlab) {
-    Write-Host "li-agents-secrets OK (GITLAB_TOKEN present)"
+$gitlabB64 = kubectl -n $Namespace get secret li-agents-secrets -o jsonpath='{.data.GITLAB_TOKEN}' 2>$null
+$gitlabPatched = $false
+if ($env:GITLAB_TOKEN) {
+    $wantB64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($env:GITLAB_TOKEN))
+    if (-not $gitlabB64 -or $gitlabB64 -ne $wantB64) {
+        $patchGitlab = @{ data = @{ GITLAB_TOKEN = $wantB64 } } | ConvertTo-Json -Compress
+        $tmp3 = Join-Path $env:TEMP "li-agents-secrets-gitlab.json"
+        [System.IO.File]::WriteAllText($tmp3, $patchGitlab)
+        kubectl -n $Namespace patch secret li-agents-secrets --type=merge --patch-file $tmp3
+        Remove-Item $tmp3 -Force -ErrorAction SilentlyContinue
+        Write-Host "Patched GITLAB_TOKEN from local env (sync/rotate)"
+        $gitlabPatched = $true
+    } else {
+        Write-Host "li-agents-secrets OK (GITLAB_TOKEN matches local env)"
+    }
+} elseif ($gitlabB64) {
+    Write-Host "li-agents-secrets OK (GITLAB_TOKEN present; no local env to compare)"
+} else {
+    Write-Host "WARN: GITLAB_TOKEN missing in secret and local env"
+}
+
+if ($gitlabPatched) {
+    foreach ($deploy in @(
+            "li-org-issue-worker",
+            "li-org-issue-supervisor",
+            "li-org-issue-triage-supervisor",
+            "li-org-pr-supervisor",
+            "li-lios-kernel"
+        )) {
+        kubectl -n $Namespace rollout restart deploy/$deploy 2>$null
+    }
+    Write-Host "Restarted org swarm deploys for GITLAB_TOKEN pickup"
 }
