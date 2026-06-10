@@ -7,15 +7,13 @@ scopes = %w[api read_repository write_repository]
 available = Gitlab::Auth.all_available_scopes.map(&:to_s)
 scopes = scopes & available
 
-token = user.personal_access_tokens.active.find_by(name: name)
-unless token
-  token = PersonalAccessToken.new(
-    user: user,
-    name: name,
-    scopes: scopes,
-    expires_at: 1.year.from_now
-  )
-  token.save!
-end
+user.personal_access_tokens.where(name: name).find_each(&:revoke!)
+token = PersonalAccessToken.new(
+  user: user,
+  name: name,
+  scopes: scopes,
+  expires_at: 1.year.from_now
+)
+token.save!
 
 puts token.token
