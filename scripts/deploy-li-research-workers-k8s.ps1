@@ -14,6 +14,7 @@ $ErrorActionPreference = "Stop"
 $Root = Split-Path $PSScriptRoot -Parent
 $K8s = Join-Path $Root "deploy\k8s\engine"
 $LiRoot = Split-Path $Root -Parent
+. (Join-Path $PSScriptRoot "lib\k8s-agents-env.ps1")
 $BeelinkRoot = "C:\Users\Julian\Documents\Programming\beelink-cleanup"
 $KlautProGoals = @(
     "C:\Users\Julian\Documents\Programming\klaut.pro\klaut-pro\goals",
@@ -37,7 +38,6 @@ function Load-LiLangverseEnv {
     $env:GH_TOKEN = $null
     $env:GITHUB_TOKEN = $null
     $env:GITLAB_TOKEN = $null
-    . (Join-Path $PSScriptRoot "lib\k8s-agents-env.ps1")
     Load-K8sAgentsEnv -WorkspaceRoot $LiRoot -AgentsRoot $Root
     Assert-K8sAgentsDeployTokens
 }
@@ -76,10 +76,15 @@ $BundleProduct = if ($Sprint -eq "R1b") { "wp-li-research-r1b-product.md" } else
 $BundleKlaut = if ($Sprint -eq "R1b") { "wp-li-research-r1b-klaut.md" } else { "wp-li-research-r1-klaut.md" }
 
 function Scale-LiResearchWorkers {
-    param([string]$Ns)
-    foreach ($d in @("li-research-product", "li-research-klaut", "li-research-ingest")) {
-        kubectl -n $Ns scale "deploy/$d" --replicas=1 2>$null
-    }
+    param(
+        [string]$Ns,
+        [switch]$SkipProduct,
+        [switch]$SkipKlaut,
+        [switch]$SkipIngest
+    )
+    if (-not $SkipProduct) { kubectl -n $Ns scale "deploy/li-research-product" --replicas=1 2>$null }
+    if (-not $SkipKlaut) { kubectl -n $Ns scale "deploy/li-research-klaut" --replicas=1 2>$null }
+    if (-not $SkipIngest) { kubectl -n $Ns scale "deploy/li-research-ingest" --replicas=1 2>$null }
 }
 
 kubectl label node $EngineNode li-langverse.io/node-pool=engine --overwrite 2>$null
@@ -151,7 +156,7 @@ if (-not $SkipIngest) {
     kubectl -n $Namespace rollout status deploy/li-research-ingest --timeout=300s
 }
 
-Scale-LiResearchWorkers -Ns $Namespace
+Scale-LiResearchWorkers -Ns $Namespace -SkipProduct:$SkipProduct -SkipKlaut:$SkipKlaut -SkipIngest:$SkipIngest
 
 Write-Host ""
 Write-Host "=== li-research workers deployed (sprint=$Sprint) ==="

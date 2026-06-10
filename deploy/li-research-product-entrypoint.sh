@@ -53,13 +53,8 @@ clone_or_sync() {
     li_git_clone_repo "$repo" "$dest" "$branch"
     return 0
   fi
-  git -C "$dest" fetch origin --prune
-  if git -C "$dest" show-ref --verify --quiet "refs/remotes/origin/${branch}"; then
-    git -C "$dest" checkout -f -B "$branch" "origin/${branch}"
-    git -C "$dest" reset --hard "origin/${branch}"
-  else
-    git -C "$dest" checkout -B "$branch"
-  fi
+  li_git_ensure_remotes "$dest" "$repo"
+  li_git_sync_repo "$repo" "$dest" "$branch"
 }
 
 ensure_repos() {
