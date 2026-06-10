@@ -148,6 +148,13 @@ data:
         esac
         export LIC="$lic_bin"
       fi
+      if [[ -n "$lic_bin" ]] && [[ -x "$lic_bin" ]] && "$lic_bin" --version &>/dev/null; then
+        if [[ ! -x /usr/bin/clang-22 ]]; then
+          export LIC="$lic_bin"
+          echo "ph-ml-wave13-entrypoint: PVC lic runnable at ${LIC} (no LLVM 22 in-container; skip rebuild)"
+          return 0
+        fi
+      fi
       if [[ -n "$lic_bin" ]] && [[ -x "$lic_bin" ]] && ! lic_stale_for_inference_sse "$lic_bin"; then
         echo "ph-ml-wave13-entrypoint: lic compiler present at ${LIC}"
         return 0
