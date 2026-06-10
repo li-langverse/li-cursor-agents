@@ -51,6 +51,7 @@ export function orgGaSupervisorImage(): string {
   );
 }
 
+/** Supervisor pod — stays on engine pool (shared sprint-data PVC). */
 export function orgGaSupervisorNodeSelector(): Record<string, string> {
   const raw = process.env.LI_ORG_GA_SUPERVISOR_NODE_SELECTOR?.trim();
   if (raw) {
@@ -62,6 +63,16 @@ export function orgGaSupervisorNodeSelector(): Record<string, string> {
     if (Object.keys(out).length) return out;
   }
   return { "li-langverse.io/node-pool": "engine" };
+}
+
+/** Auditor Job hostnames (comma-separated). Default: desktop + engine (amd64). */
+export function orgGaAuditorNodeNames(): string[] {
+  const raw = process.env.LI_ORG_GA_AUDITOR_NODES?.trim() ?? "desktop,engine";
+  return raw.split(",").map((s) => s.trim()).filter(Boolean);
+}
+
+export function orgGaAuditorArch(): string {
+  return process.env.LI_ORG_GA_AUDITOR_ARCH?.trim() || "amd64";
 }
 
 export function defaultGaLanes(): GaLaneId[] {

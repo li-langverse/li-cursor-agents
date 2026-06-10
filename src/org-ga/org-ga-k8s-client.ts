@@ -3,10 +3,11 @@ import https from "node:https";
 import { randomBytes } from "node:crypto";
 import {
   gaSlug,
+  orgGaAuditorArch,
+  orgGaAuditorNodeNames,
   orgGaSupervisorDeploymentName,
   orgGaSupervisorImage,
   orgGaSupervisorNamespace,
-  orgGaSupervisorNodeSelector,
 } from "./org-ga-supervisor-config.js";
 
 interface InClusterConfig {
@@ -150,7 +151,7 @@ export async function createGaAuditorJob(options: {
   }
   const ns = orgGaSupervisorNamespace();
   const jobName = gaAuditorJobName(options.repo, options.lane);
-  const nodeSelector = orgGaSupervisorNodeSelector();
+  const auditorNodes = orgGaAuditorNodeNames();
   const image = orgGaSupervisorImage();
   const labels = jobLabels(options.gaRef, options.workerId);
 
@@ -182,7 +183,28 @@ export async function createGaAuditorJob(options: {
         spec: {
           restartPolicy: "Never",
           serviceAccountName: "li-org-ga-auditor",
-          nodeSelector,
+          affinity: {
+            nodeAffinity: {
+              requiredDuringSchedulingIgnoredDuringExecution: {
+                nodeSelectorTerms: [
+                  {
+                    matchExpressions: [
+                      {
+                        key: "kubernetes.io/arch",
+                        operator: "In",
+                        values: [orgGaAuditorArch()],
+                      },
+                      {
+                        key: "kubernetes.io/hostname",
+                        operator: "In",
+                        values: auditorNodes,
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          },
           tolerations: [
             {
               key: "workload",
@@ -207,6 +229,7 @@ export async function createGaAuditorJob(options: {
               ],
               envFrom: [{ configMapRef: { name: "li-org-ga-supervisor" } }],
               env: [
+                { name: "LI_ORG_GA_K8S_WORKER", value: "1" },
                 {
                   name: "GITLAB_TOKEN",
                   valueFrom: {
@@ -243,18 +266,9 @@ export async function createGaAuditorJob(options: {
                 },
               ],
               resources: {
-                requests: { cpu: "250m", memory: "512Mi" },
+                requests: { cpu: "250m", memory: "256Mi" },
                 limits: { cpu: "2", memory: "2Gi" },
               },
-              volumeMounts: [
-                { name: "sprint-data", mountPath: "/app/data/goal-directed-sprints" },
-              ],
-            },
-          ],
-          volumes: [
-            {
-              name: "sprint-data",
-              persistentVolumeClaim: { claimName: "li-agents-sprint-data" },
             },
           ],
         },

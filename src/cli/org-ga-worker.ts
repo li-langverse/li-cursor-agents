@@ -36,41 +36,52 @@ async function main(): Promise<void> {
   }
 
   const ref = ga;
-  const state = readGaActiveState();
-  const entry = state.audits[ref];
-  if (!entry || entry.workerId !== workerId) {
-    workerConsole("org-ga-worker", "ERROR", `not claimed by worker ${workerId}: ${ref}`);
-    process.exit(1);
-  }
+  const k8sWorker = process.env.LI_ORG_GA_K8S_WORKER === "1";
+  const parsedRef = parseGaRef(ref);
+  const entry = readGaActiveState().audits[ref];
 
-  updateGaAuditStatus(ref, "running", `ga-worker ${workerId} started`);
-  workerConsole("org-ga-worker", "info", `claimed ${ref} lane=${entry.lane} repo=${entry.repo}`);
+  if (!k8sWorker) {
+    if (!entry || entry.workerId !== workerId) {
+      workerConsole("org-ga-worker", "ERROR", `not claimed by worker ${workerId}: ${ref}`);
+      process.exit(1);
+    }
+    updateGaAuditStatus(ref, "running", `ga-worker ${workerId} started`);
+    workerConsole("org-ga-worker", "info", `claimed ${ref} lane=${entry.lane} repo=${entry.repo}`);
+  } else {
+    workerConsole(
+      "org-ga-worker",
+      "info",
+      `k8s worker ${workerId} for ${ref} lane=${parsedRef?.lane ?? "?"} repo=${parsedRef?.repo ?? "?"}`,
+    );
+  }
 
   const result = await runOrgGaCycle({ gaRef: ref, workerId, mock, dryRun });
 
-  appendGaAudit({
-    gaRef: ref,
-    repo: result.repo,
-    lane: result.lane,
-    workerId,
-    status: result.status,
-    agentId: result.agentId,
-    stub: result.stub,
-    agentStatus: result.agentStatus,
-    durationMs: result.durationMs,
-    error: result.error,
-    outputTail: result.outputTail,
-  });
+  if (!k8sWorker) {
+    appendGaAudit({
+      gaRef: ref,
+      repo: result.repo,
+      lane: result.lane,
+      workerId,
+      status: result.status,
+      agentId: result.agentId,
+      stub: result.stub,
+      agentStatus: result.agentStatus,
+      durationMs: result.durationMs,
+      error: result.error,
+      outputTail: result.outputTail,
+    });
 
-  updateGaAuditStatus(
-    ref,
-    result.status,
-    result.ok
-      ? result.stub
-        ? "stub completed"
-        : "agent run finished"
-      : (result.error ?? "ga-worker failed"),
-  );
+    updateGaAuditStatus(
+      ref,
+      result.status,
+      result.ok
+        ? result.stub
+          ? "stub completed"
+          : "agent run finished"
+        : (result.error ?? "ga-worker failed"),
+    );
+  }
 
   workerConsole(
     "org-ga-worker",
