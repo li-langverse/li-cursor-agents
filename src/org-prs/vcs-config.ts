@@ -8,11 +8,34 @@ export function vcsProvider(): VcsProvider {
 }
 
 export function gitlabHost(): string {
-  return process.env.LI_GITLAB_HOST?.trim() || "gitlab.lilangverse.xyz";
+  return (
+    process.env.LI_GITLAB_HOST?.trim() ||
+    process.env.LI_GIT_HOST?.trim() ||
+    "gitlab.lilangverse.xyz"
+  );
+}
+
+export function gitlabApiHost(): string {
+  const internal = process.env.LI_GIT_INTERNAL_SVC?.trim();
+  const host = gitlabHost();
+  if (internal && host.includes("lilangverse.xyz")) return internal;
+  return host;
+}
+
+export function gitlabApiScheme(): "http" | "https" {
+  const internal = process.env.LI_GIT_INTERNAL_SVC?.trim();
+  const host = gitlabHost();
+  if (internal && host.includes("lilangverse.xyz")) return "http";
+  const raw = process.env.LI_GITLAB_SCHEME?.trim();
+  return raw === "http" ? "http" : "https";
 }
 
 export function gitlabGroup(): string {
-  return process.env.LI_GITLAB_GROUP?.trim() || "li-langverse";
+  return (
+    process.env.LI_GITLAB_GROUP?.trim() ||
+    process.env.LI_GIT_GROUP?.trim() ||
+    "li-langverse"
+  );
 }
 
 export function vcsToken(): string | undefined {

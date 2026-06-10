@@ -1,6 +1,14 @@
+import http from "node:http";
 import https from "node:https";
 import { ghToken } from "../org-issues/org-issue-github.js";
-import { gitlabGroup, gitlabHost, vcsProvider, vcsToken } from "./vcs-config.js";
+import {
+  gitlabApiHost,
+  gitlabApiScheme,
+  gitlabGroup,
+  gitlabHost,
+  vcsProvider,
+  vcsToken,
+} from "./vcs-config.js";
 
 export interface OrgPullRequest {
   number: number;
@@ -28,10 +36,11 @@ function glRequest<T>(
     return Promise.resolve({ status: 401, data: null, raw: "GITLAB_TOKEN required" });
   }
   const payload = body === undefined ? undefined : JSON.stringify(body);
+  const transport = gitlabApiScheme() === "http" ? http : https;
   return new Promise((resolve, reject) => {
-    const req = https.request(
+    const req = transport.request(
       {
-        hostname: gitlabHost(),
+        hostname: gitlabApiHost(),
         path: `/api/v4${path}`,
         method,
         headers: {

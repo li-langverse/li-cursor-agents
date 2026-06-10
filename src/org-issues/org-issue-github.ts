@@ -1,7 +1,10 @@
+import http from "node:http";
 import https from "node:https";
 import type { GitHubResponseHeaders } from "../github/github-rate-limit.js";
 import {
   gitAuthToken,
+  gitlabApiHost,
+  gitlabApiScheme,
   gitlabGroup,
   gitlabHost,
   vcsProvider,
@@ -50,10 +53,11 @@ function glRequest<T>(
     });
   }
   const payload = body === undefined ? undefined : JSON.stringify(body);
+  const transport = gitlabApiScheme() === "http" ? http : https;
   return new Promise((resolve, reject) => {
-    const req = https.request(
+    const req = transport.request(
       {
-        hostname: gitlabHost(),
+        hostname: gitlabApiHost(),
         path: `/api/v4${path}`,
         method,
         headers: {
