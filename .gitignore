@@ -10,6 +10,7 @@ data/supervisor/
 data/control-plane/
 .env
 .env.local
+.env.gitlab
 .env.supabase
 dashboard-ui/.playwright/
 dashboard-ui/playwright-report/
