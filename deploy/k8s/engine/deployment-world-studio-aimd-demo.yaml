@@ -134,16 +134,19 @@ spec:
                   optional: true
           resources:
             requests:
-              cpu: "2000m"
-              memory: "4Gi"
+              cpu: "1000m"
+              memory: "1Gi"
             limits:
-              cpu: "16"
-              memory: "16Gi"
+              cpu: "8"
+              memory: "8Gi"
           volumeMounts:
             - name: workspace
               mountPath: /workspace
             - name: config-bundle
               mountPath: /config
+            - name: git-auth
+              mountPath: /git-auth
+              readOnly: true
       volumes:
         - name: workspace
           persistentVolumeClaim:
@@ -151,4 +154,8 @@ spec:
         - name: config-bundle
           configMap:
             name: li-world-studio-aimd-demo-bundle
+            defaultMode: 0755
+        - name: git-auth
+          configMap:
+            name: li-k8s-git-auth
             defaultMode: 0755
