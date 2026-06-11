@@ -8,16 +8,10 @@ plan: lic/data/goal-directed-sprints/li-parallel-killer-package.md
 
 Canonical goal: **`lic/data/goal-directed-sprints/li-parallel-killer-package.md`**
 
-## Progress gate
-
-```bash
-bash scripts/check-li-parallel-full-suite.sh
-```
+**Status: GOAL_COMPLETE** (lic #881 + benchmarks #370 merged 2026-06-11). Worker `li-li-parallel` may stay scaled to 0.
 
 ## Completion gate
 
 ```bash
-bash scripts/check-li-parallel-killer-gate.sh
+bash scripts/check-li-parallel-goal-complete-gate.sh
 ```
-
-Phases 0–4 partial foundation landed; Phases 5–99 pending. Do not weaken gates. `LIPAR_KILLER_SKIP_FULL` removed.
