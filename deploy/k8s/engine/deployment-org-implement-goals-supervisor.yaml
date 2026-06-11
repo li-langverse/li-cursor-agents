@@ -1,0 +1,84 @@
+# Implement-goals supervisor: handoff queue + implement-goals.yaml backlog → worker Jobs.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: li-org-implement-goals-supervisor
+  namespace: li-swarm
+  labels:
+    app: li-org-implement-goals-supervisor
+    li-langverse.io/role: org-implement-goals-supervisor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: li-org-implement-goals-supervisor
+  template:
+    metadata:
+      labels:
+        app: li-org-implement-goals-supervisor
+    spec:
+      serviceAccountName: li-org-implement-goals-supervisor
+      nodeSelector:
+        li-langverse.io/node-pool: engine
+      containers:
+        - name: supervisor
+          image: ghcr.io/li-langverse/li-cursor-agents:latest
+          imagePullPolicy: Always
+          command: ["node", "dist/cli/org-implement-goals-supervisor.js", "supervise"]
+          envFrom:
+            - configMapRef:
+                name: li-org-implement-goals-supervisor
+          env:
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
+            - name: GH_SWARM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_SWARM_TOKEN
+                  optional: true
+            - name: GH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GH_SWARM_TOKEN
+                  optional: true
+            - name: CURSOR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: CURSOR_API_KEY
+                  optional: true
+            - name: CURSOR_SDK_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: CURSOR_SDK_KEY
+                  optional: true
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "384Mi"
+            limits:
+              cpu: "1"
+              memory: "768Mi"
+          volumeMounts:
+            - name: sprint-data
+              mountPath: /app/data/goal-directed-sprints
+            - name: handoffs-data
+              mountPath: /app/data/handoffs
+            - name: lanes-data
+              mountPath: /app/data/lanes
+      volumes:
+        - name: sprint-data
+          persistentVolumeClaim:
+            claimName: li-agents-sprint-data
+        - name: handoffs-data
+          persistentVolumeClaim:
+            claimName: li-agents-sprint-data
+        - name: lanes-data
+          persistentVolumeClaim:
+            claimName: li-agents-sprint-data

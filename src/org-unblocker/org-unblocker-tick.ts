@@ -353,7 +353,7 @@ async function unsuspendAllCrons(
   ns: string,
 ): Promise<UnblockerAction[]> {
   const actions: UnblockerAction[] = [];
-  for (const name of [...ORG_WAKE_CRONJOBS, "li-org-issue-worker"]) {
+  for (const name of [...ORG_WAKE_CRONJOBS, "li-org-issue-worker", "li-org-swarm-stability-check"]) {
     const a = await unsuspendCron(cfg, ns, name);
     if (a) actions.push(a);
   }

@@ -27,6 +27,11 @@ import {
   readActiveState as readResearchActive,
   updateResearchStatus,
 } from "../org-research/org-research-coordination.js";
+import {
+  pruneTerminalActiveEntries as pruneImplementTerminal,
+  readActiveState as readImplementActive,
+  updateImplementStatus,
+} from "../org-implement-goals/org-implement-coordination.js";
 import type { UnblockerAction } from "./org-unblocker-config.js";
 
 const BACKOFF_FILES = ["org-pr-gh-backoff.json", "org-planner-gh-backoff.json"] as const;
@@ -134,7 +139,8 @@ export function pruneTerminalLaneClaims(root = agentsPackageRoot()): UnblockerAc
     pruneTerminalTriageEntries(root) +
     prunePrTerminal(root) +
     prunePlannerTerminal(root) +
-    pruneResearchTerminal(root);
+    pruneResearchTerminal(root) +
+    pruneImplementTerminal(root);
   if (n === 0) return [];
   return [{ kind: "pruned_terminal_claims", detail: String(n) }];
 }
@@ -183,6 +189,14 @@ export function reconcileOrphanedLaneClaims(
     if (entry.status !== "claimed" && entry.status !== "running") continue;
     if (!entry.jobName || liveJobNames.has(entry.jobName)) continue;
     updateResearchStatus(ref, "failed", "unblocker: job missing", root);
+    n++;
+  }
+
+  const implement = readImplementActive(root);
+  for (const [ref, entry] of Object.entries(implement.implement)) {
+    if (entry.status !== "claimed" && entry.status !== "running") continue;
+    if (!entry.jobName || liveJobNames.has(entry.jobName)) continue;
+    updateImplementStatus(ref, "failed", "unblocker: job missing", root);
     n++;
   }
 

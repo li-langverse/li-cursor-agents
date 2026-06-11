@@ -1,0 +1,63 @@
+# Org observer supervisor: gap ingest, failure demotion, stability thresholds, swarm_observer.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: li-org-observer-supervisor
+  namespace: li-swarm
+  labels:
+    app: li-org-observer-supervisor
+    li-langverse.io/role: org-observer-supervisor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: li-org-observer-supervisor
+  template:
+    metadata:
+      labels:
+        app: li-org-observer-supervisor
+    spec:
+      serviceAccountName: li-org-observer-supervisor
+      nodeSelector:
+        li-langverse.io/node-pool: engine
+      containers:
+        - name: supervisor
+          image: ghcr.io/li-langverse/li-cursor-agents:latest
+          imagePullPolicy: Always
+          command: ["node", "dist/cli/org-observer-supervisor.js", "supervise"]
+          envFrom:
+            - configMapRef:
+                name: li-org-observer-supervisor
+          env:
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
+                  optional: true
+            - name: CURSOR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: CURSOR_API_KEY
+                  optional: true
+            - name: CURSOR_SDK_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: CURSOR_SDK_KEY
+                  optional: true
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          volumeMounts:
+            - name: sprint-data
+              mountPath: /app/data/goal-directed-sprints
+      volumes:
+        - name: sprint-data
+          persistentVolumeClaim:
+            claimName: li-agents-sprint-data

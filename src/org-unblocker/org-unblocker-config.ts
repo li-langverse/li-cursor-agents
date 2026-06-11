@@ -50,6 +50,8 @@ export const ORG_SUPERVISOR_DEPLOYMENTS = [
   "li-org-pr-supervisor",
   "li-org-reviewer-supervisor",
   "li-org-research-supervisor",
+  "li-org-implement-goals-supervisor",
+  "li-org-observer-supervisor",
   "li-org-supervisor-dashboard",
   "li-org-unblocker-supervisor",
 ] as const;
@@ -61,6 +63,8 @@ export const ORG_WAKE_CRONJOBS = [
   "li-org-pr-supervisor-wake",
   "li-org-reviewer-supervisor-wake",
   "li-org-research-supervisor-wake",
+  "li-org-implement-goals-supervisor-wake",
+  "li-org-observer-supervisor-wake",
   "li-org-unblocker-supervisor-wake",
 ] as const;
 

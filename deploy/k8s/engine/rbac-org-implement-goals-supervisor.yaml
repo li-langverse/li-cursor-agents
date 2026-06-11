@@ -1,0 +1,65 @@
+# RBAC for org implement-goals supervisor (create/list Jobs) and wake CronJob.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: li-org-implement-goals-supervisor
+  namespace: li-swarm
+  labels:
+    app: li-org-implement-goals-supervisor
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: li-org-implement-goals-worker
+  namespace: li-swarm
+  labels:
+    app: li-org-implement-goals-worker
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: li-org-implement-goals-supervisor
+  namespace: li-swarm
+rules:
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create", "get", "list", "watch", "delete"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "watch", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: li-org-implement-goals-supervisor
+  namespace: li-swarm
+subjects:
+  - kind: ServiceAccount
+    name: li-org-implement-goals-supervisor
+    namespace: li-swarm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: li-org-implement-goals-supervisor
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: li-org-implement-goals-worker
+  namespace: li-swarm
+rules: []
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: li-org-implement-goals-worker
+  namespace: li-swarm
+subjects:
+  - kind: ServiceAccount
+    name: li-org-implement-goals-worker
+    namespace: li-swarm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: li-org-implement-goals-worker
