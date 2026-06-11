@@ -8,9 +8,9 @@
 #
 # Prerequisites:
 #   - li/.env.local and/or li/.env.gitlab with:
-#       GITLAB_TOKEN          (required) — GitLab API + pipeline clone/push
-#       GH_PACKAGES or GHCR_TOKEN (required) — GHCR image publish jobs
-#       GHCR_USER             (optional) — defaults to gitlab-ci
+#       GITLAB_TOKEN          (required) - GitLab API + pipeline clone/push
+#       GH_PACKAGES or GHCR_TOKEN (required) - GHCR image publish jobs
+#       GHCR_USER             (optional) - defaults to gitlab-ci
 #   - PAT scopes: api (minimum). Group variables need Owner (access_level 50);
 #     Maintainer (40) can set project-level variables on CI repos.
 #   - Network reachability to gitlab.lilangverse.xyz API.
@@ -257,7 +257,7 @@ $headers = Get-GitlabHeaders -Token $env:GITLAB_TOKEN
 $groupApplied = $false
 
 Write-Host "==> GitLab CI variables (group=$GroupPath, projects=$($Projects -join ', '))"
-if ($DryRun) { Write-Host "    (dry-run — no writes)" }
+if ($DryRun) { Write-Host "    (dry-run - no writes)" }
 if ($IncludeDispatch) { Write-Host "    (including LI_BENCHMARKS_DISPATCH_TOKEN)" }
 
 if (-not $SkipGroup) {
@@ -268,9 +268,9 @@ if (-not $SkipGroup) {
     if ($groupResult -is [hashtable] -and $groupResult.Error) {
         $status = $groupResult.Error
         if ($status -eq 403) {
-            Write-Warning "Group variables API returned 403 — needs Owner PAT (access_level 50)."
+            Write-Warning "Group variables API returned 403 - needs Owner PAT (access_level 50)."
         } else {
-            Write-Warning "Group variables API returned $status — $($groupResult.Message)"
+            Write-Warning "Group variables API returned $status - $($groupResult.Message)"
         }
         Write-Warning "Maintainer tokens (access_level 40) can manage project variables only."
         Write-Host "Falling back to project-level variables."
@@ -288,7 +288,7 @@ if (-not $groupApplied) {
         Write-Host "`n==> project $projectPath"
         $projectResult = Apply-VariableSet -Scope "project" -Target $projectPath -Headers $headers -Defs $variableDefs
         if ($projectResult -is [hashtable] -and $projectResult.Error) {
-            Write-Warning "  cannot list variables ($($projectResult.Error)) — check Maintainer access on $projectPath"
+            Write-Warning "  cannot list variables ($($projectResult.Error)) - check Maintainer access on $projectPath"
             continue
         }
         Write-Host "  done (created=$($projectResult.created) updated=$($projectResult.updated) skipped=$($projectResult.skipped) failed=$($projectResult.failed))"
