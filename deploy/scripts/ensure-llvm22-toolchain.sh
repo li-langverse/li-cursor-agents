@@ -17,18 +17,23 @@ ensure_llvm22() {
     echo "ensure-toolchain: clang-22 present ($(clang-22 --version | head -1))"
     return 0
   fi
-  echo "ensure-toolchain: installing LLVM 22 (apt.llvm.org)"
+  echo "ensure-toolchain: installing LLVM 22"
   apt-get update
-  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends wget gnupg ca-certificates
+  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    wget gnupg ca-certificates lsb-release
+  # Prefer apt.llvm.org script (needs lsb_release).
   tmp="$(mktemp)"
   wget -qO "$tmp" https://apt.llvm.org/llvm.sh
   chmod +x "$tmp"
-  # Non-interactive; skip sudo (container runs as root).
-  LLVM_VERSION=22 bash "$tmp"
+  if ! bash "$tmp" 22; then
+    echo "ensure-toolchain: llvm.sh failed — trying apt package names" >&2
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      clang-22 llvm-22-dev || return 1
+  fi
   rm -f "$tmp"
   rm -rf /var/lib/apt/lists/*
   command -v clang-22 >/dev/null 2>&1 || {
-    echo "ensure-toolchain: ERROR clang-22 missing after llvm.sh" >&2
+    echo "ensure-toolchain: ERROR clang-22 missing after install" >&2
     return 1
   }
   echo "ensure-toolchain: clang-22 OK"
