@@ -1,4 +1,4 @@
-# Shared env for desktop proof-explorer shards (phase15 honest catalog).
+# Shared env for proof-explorer shards (phase15 honest catalog).
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -8,12 +8,11 @@ metadata:
     app.kubernetes.io/component: goal-directed-agent
     li-langverse.io/sprint: proof-explorer-phase15
 data:
-  LI_GIT_HOST: "192.168.10.40"
-  LI_GIT_PORT: "30481"
+  LI_GIT_HOST: "gitlab.lilangverse.xyz"
   LI_GIT_SCHEME: "http"
   LI_GIT_GROUP: "li-langverse"
   LI_GITHUB_ORG: "li-langverse"
-  LI_GIT_INTERNAL_SVC: "192.168.10.40"
+  LI_GIT_INTERNAL_SVC: "gitlab.gitlab.svc"
   LI_GIT_REQUIRE_GITLAB: "1"
   LI_GIT_SSL_VERIFY: "0"
   BENCHMARKS_ROOT: "/workspace/benchmarks"
@@ -31,6 +30,7 @@ data:
   LI_PROOF_EXPLORER_LOOP_SLEEP_SEC: "90"
   LI_PROOF_EXPLORER_AGENT: "code_implementer"
   LI_PROOF_EXPLORER_SHARD_TOTAL: "6"
+  LI_PROOF_EXPLORER_AGENT_STAGGER_SEC: "120"
   LI_GOAL_GATE_PREFER_CWD: "0"
   LI_GOAL_SYNC_CWD_AFTER_RUN: "1"
   LI_GOAL_SELF_UNBLOCK: "1"
