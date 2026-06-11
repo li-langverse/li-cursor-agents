@@ -22,17 +22,15 @@ Post-M1 kernel bring-up: real QEMU dev-vm smoke, virtio block/net stubs, and bas
 - `/workspace/lic` — `cursor/lios-kernel-m2`
 - `/workspace/li-os` — `cursor/lios-kernel-m2` (primary `--cwd`)
 
-### Phase P1
+## Phase checklist
 
-QEMU x86_64 guest boot via `dev-vm.sh` (not just lic smoke-kernel in-process).
+| Phase | Status | Deliverable |
+|-------|--------|-------------|
+| **P1** | **DONE** | QEMU x86_64 guest boot via `dev-vm.sh --engine qemu` |
+| **P2** | **DONE** | Virtio-mmio probe + minimal block read in lik |
+| **P3** | **DONE** | Physical memory map + bump allocator gate in lik |
 
-### Phase P2
-
-Virtio-mmio probe + minimal block read in lik.
-
-### Phase P3
-
-Physical memory map + bump allocator gate in lik.
+Advance `data/lios-kernel-loop/state.json` only when the current phase gate exits 0 (`m2-progress-gate.sh` advances automatically).
 
 ## Progress gate
 
@@ -56,4 +54,5 @@ Expected: QEMU dev-vm smoke green; virtio probe gate; MM alloc gate.
 
 - M1 gates must stay green — run `m1-completion-gate.sh` before M2 work
 - Kernel code in **lik**; gates under **li-os/scripts/gates/**
-- Add gate scripts before claiming phase done
+- **GitLab-primary:** push to `origin` on `gitlab.lilangverse.xyz/li-langverse/*`; open a **GitLab merge request** (e.g. li-os !2). Do **not** open GitHub PRs — GitHub is a read-only mirror (`push DISABLED`).
+- Sprint success = completion gate bash exits 0 (`LI_GOAL_LOOP_GATE_ONLY=1`); MR is optional once gates are green

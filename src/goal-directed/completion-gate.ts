@@ -64,6 +64,13 @@ export interface EvaluateGoalCompletionInput {
   gateScriptPath?: string;
 }
 
+/** When true, completion bash is authoritative — skip markdown phase-table blocking. */
+export function gateOnlyMode(): boolean {
+  return (
+    process.env.LI_GOAL_LOOP_GATE_ONLY === "1" ||
+    process.env.LI_GOAL_GATE_ONLY === "1"
+  );
+}
 
 function resolveGateScriptBody(
   gateScript: string,
@@ -118,8 +125,9 @@ export function evaluateGoalCompletion(
     input.gateScriptPath?.trim() ||
     process.env.LI_GOAL_COMPLETION_SCRIPT?.trim() ||
     extractCompletionGateScript(goalText);
+  const gateOnly = gateOnlyMode();
 
-  if (missingPhases.length > 0 && progressGateScript) {
+  if (missingPhases.length > 0 && progressGateScript && !gateOnly) {
     const gateScript = resolveGateScriptBody(progressGateScript, cwd);
     const proc = runBashGate(gateScript, cwd, goalFile);
     if (proc.status !== 0) {
@@ -178,7 +186,7 @@ export function evaluateGoalCompletion(
     };
   }
 
-  if (missingPhases.length > 0) {
+  if (missingPhases.length > 0 && !gateOnly) {
     return {
       complete: false,
       reason: `gate bash passed but phases not DONE: ${missingPhases.join(", ")}`,
@@ -190,7 +198,9 @@ export function evaluateGoalCompletion(
 
   return {
     complete: true,
-    reason: "completion gate passed; all phases DONE",
+    reason: gateOnly
+      ? "completion gate passed (gate-only mode)"
+      : "completion gate passed; all phases DONE",
     phases_done: done,
     phases_required: required,
     gate_exit_code: 0,

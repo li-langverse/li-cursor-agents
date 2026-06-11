@@ -80,6 +80,39 @@ false
   assert.match(result.reason, /progress gate passed; phases remaining: B/);
 });
 
+test("evaluateGoalCompletion gate-only skips phase table when completion gate passes", () => {
+  const dir = mkdtempSync(join(tmpdir(), "goal-gate-only-"));
+  const goal = join(dir, "plan.md");
+  writeFileSync(
+    goal,
+    `### Phase A — a
+### Phase B — b
+
+## Progress gate
+
+\`\`\`bash
+false
+\`\`\`
+
+## Completion gate
+
+\`\`\`bash
+true
+\`\`\`
+`,
+  );
+  const prev = process.env.LI_GOAL_LOOP_GATE_ONLY;
+  process.env.LI_GOAL_LOOP_GATE_ONLY = "1";
+  try {
+    const result = evaluateGoalCompletion({ goalFile: goal, cwd: dir });
+    assert.equal(result.complete, true);
+    assert.match(result.reason, /gate-only mode/);
+  } finally {
+    if (prev === undefined) delete process.env.LI_GOAL_LOOP_GATE_ONLY;
+    else process.env.LI_GOAL_LOOP_GATE_ONLY = prev;
+  }
+});
+
 test("phasesMarkedDone reads **DONE** in last column (3-col table)", () => {
   const md = `### Phase W0 - foundation
 ### Phase W1 - core
