@@ -309,7 +309,7 @@ $gitEnvBlock
             defaultMode: 0755
 "@ | kubectl apply -f -
 
-    & kubectl -n $Namespace rollout status "deploy/$name" --timeout=600s
+    & kubectl -n $Namespace rollout status "deploy/$name" --timeout=1200s
     if ($LASTEXITCODE -ne 0) {
         Write-Warning "shard $i rollout not ready within timeout (continuing)"
     }
