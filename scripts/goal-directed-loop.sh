@@ -226,10 +226,25 @@ STUCK
 )"
   fi
 
+  local shard_ctx=""
+  if [[ -n "${LI_PROOF_EXPLORER_SHARD_INDEX:-}" && -n "${LI_PROOF_EXPLORER_SHARD_TOTAL:-}" ]]; then
+    shard_ctx="$(cat <<SHARD
+
+## Shard assignment (mandatory)
+
+You are **shard ${LI_PROOF_EXPLORER_SHARD_INDEX} of ${LI_PROOF_EXPLORER_SHARD_TOTAL}**. Only edit catalog rows whose \`id\` satisfies \`sum(ord(c) for c in id) % ${LI_PROOF_EXPLORER_SHARD_TOTAL} == ${LI_PROOF_EXPLORER_SHARD_INDEX}\`.
+
+List your rows: \`bash scripts/proof-explorer-gates/wp-p15-shard-tranche.sh\` (or \`/config/wp-p15-shard-tranche.sh\`).
+Do **not** touch rows owned by other shards. Before push: \`git pull --rebase origin ${LI_REPO_WORKFLOW_BRANCH:-HEAD}\`.
+SHARD
+)"
+  fi
+
   cat <<EOF
 ## Goal-directed loop — iteration $iter
 
 ${branch_note}
+${shard_ctx}
 
 Pick the **first pending** plan todo and implement it in code (not metadata-only commits).
 Success = \`## Completion gate\` bash exits 0. Assessment JSON / manifest alone never completes the sprint.

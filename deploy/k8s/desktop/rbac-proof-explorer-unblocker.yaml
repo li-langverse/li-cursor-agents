@@ -1,0 +1,36 @@
+# RBAC for proof-explorer shard unblocker (scale/restart shard deploys).
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: li-proof-explorer-unblocker
+  namespace: li-swarm
+  labels:
+    app: li-proof-explorer-unblocker
+    app.kubernetes.io/component: goal-directed-agent
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: li-proof-explorer-unblocker
+  namespace: li-swarm
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "list", "patch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: li-proof-explorer-unblocker
+  namespace: li-swarm
+subjects:
+  - kind: ServiceAccount
+    name: li-proof-explorer-unblocker
+    namespace: li-swarm
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: li-proof-explorer-unblocker

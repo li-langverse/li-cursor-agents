@@ -1,0 +1,43 @@
+# Shared env for desktop proof-explorer shards (phase15 honest catalog).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: li-proof-explorer-shard-base
+  namespace: li-swarm
+  labels:
+    app.kubernetes.io/component: goal-directed-agent
+    li-langverse.io/sprint: proof-explorer-phase15
+data:
+  LI_GIT_HOST: "gitlab.lilangverse.xyz"
+  LI_GIT_GROUP: "li-langverse"
+  LI_GITHUB_ORG: "li-langverse"
+  LI_GIT_INTERNAL_SVC: "gitlab.gitlab.svc"
+  LI_GIT_REQUIRE_GITLAB: "1"
+  LI_GIT_SSL_VERIFY: "0"
+  BENCHMARKS_ROOT: "/workspace/benchmarks"
+  LI_BENCHMARKS_REPO: "benchmarks"
+  LI_BENCHMARKS_BRANCH: "main"
+  LI_PROOF_EXPLORER_ALWAYS_ON: "1"
+  LI_PROOF_EXPLORER_SWEEP_MODE: "1"
+  LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/proof-explorer-phase15-honest-catalog-prove.md"
+  LI_PROOF_EXPLORER_PHASES_JSON: '[{"id":"phase15","goalRel":"data/goal-directed-sprints/proof-explorer-phase15-honest-catalog-prove.md","gateRel":"scripts/proof-explorer-phase15-completion-gate.sh"}]'
+  LI_PROOF_EXPLORER_LIC_ROOT: "/workspace/lic"
+  LI_CURSOR_AGENTS_ROOT: "/app"
+  LI_PROOF_EXPLORER_WORKFLOW_REPO: "lic"
+  LI_PROOF_EXPLORER_BRANCH: "cursor/proof-explorer-phase15-honest-catalog-prove"
+  LI_PROOF_EXPLORER_LIC_REPO: "lic"
+  LI_PROOF_EXPLORER_LOOP_SLEEP_SEC: "90"
+  LI_PROOF_EXPLORER_AGENT: "code_implementer"
+  LI_PROOF_EXPLORER_SHARD_TOTAL: "6"
+  LI_GOAL_GATE_PREFER_CWD: "0"
+  LI_GOAL_SYNC_CWD_AFTER_RUN: "1"
+  LI_GOAL_SELF_UNBLOCK: "1"
+  LI_GOAL_STUCK_THRESHOLD: "5"
+  LI_GOAL_SCALE_DOWN_ON_COMPLETE: "0"
+  LI_PROOF_LIBRARY_ROOT: "/workspace/proof-library"
+  LI_GOAL_NAMESPACE: "li-swarm"
+  LI_PROOF_EXPLORER_EXIT_ON_COMPLETE: "0"
+  LI_CONTROL_PLANE_STORE: "disk"
+  LI_SDK_TERMINAL_STREAM: "1"
+  LI_SKIP_IMPLEMENTER_PREFLIGHT_GATE: "1"
+  NODE_ENV: "production"
