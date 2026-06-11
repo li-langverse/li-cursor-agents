@@ -8,10 +8,11 @@ metadata:
     app.kubernetes.io/component: goal-directed-agent
     li-langverse.io/sprint: proof-explorer-phase15
 data:
-  LI_GIT_HOST: "gitlab.lilangverse.xyz"
+  LI_GIT_HOST: "10.43.79.43"
+  LI_GIT_SCHEME: "http"
   LI_GIT_GROUP: "li-langverse"
   LI_GITHUB_ORG: "li-langverse"
-  LI_GIT_INTERNAL_SVC: "gitlab.gitlab.svc"
+  LI_GIT_INTERNAL_SVC: "10.43.79.43"
   LI_GIT_REQUIRE_GITLAB: "1"
   LI_GIT_SSL_VERIFY: "0"
   BENCHMARKS_ROOT: "/workspace/benchmarks"
