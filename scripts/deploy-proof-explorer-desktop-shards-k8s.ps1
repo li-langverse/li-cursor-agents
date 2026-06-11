@@ -7,6 +7,8 @@ param(
     [int]$ShardCount = 6,
     [int]$ShardMemoryLimitGi = 4,
     [int]$InitStaggerSec = 60,
+    [string]$GitLabNodeHost = "192.168.10.40",
+    [string]$GitLabNodePort = "30481",
     [switch]$KeepEngineWorker
 )
 
@@ -23,6 +25,7 @@ Assert-K8sAgentsDeployTokens
 
 $env:KUBECONFIG = $KubeConfig
 Write-Host "==> Deploy proof-explorer shards on node=$DesktopNode (count=$ShardCount)"
+Write-Host "==> GitLab via NodePort ${GitLabNodeHost}:${GitLabNodePort} (desktop cannot reach ClusterIP)"
 
 kubectl apply -f (Join-Path $K8sEngine "namespace.yaml")
 kubectl apply -f (Join-Path $K8sEngine "rbac-goal-workers-scale.yaml")
@@ -91,7 +94,7 @@ $gitSyncScript = @'
                 fi
               fi
               hdr="PRIVATE-TOKEN: ${GITLAB_TOKEN}"
-              base="http://10.43.79.43/li-langverse"
+              base="GITLAB_BASE_URL"
               mkdir -p /workspace
               rm -rf /workspace/lic
               echo "git-sync: cloning lic branch=${BRANCH}"
@@ -103,6 +106,8 @@ $gitSyncScript = @'
                 git -c "http.extraHeader=${hdr}" clone --depth 1 --branch main "${base}/proof-library.git" /workspace/proof-library || true
               fi
 '@
+$gitlabBase = "http://${GitLabNodeHost}:${GitLabNodePort}/li-langverse"
+$gitSyncScript = $gitSyncScript.Replace('GITLAB_BASE_URL', $gitlabBase)
 
 for ($i = 0; $i -lt $ShardCount; $i++) {
     $name = "li-proof-explorer-shard-$i"
@@ -209,9 +214,11 @@ $gitSyncScript
                 name: li-goal-worker-runtime
           env:
             - name: LI_GIT_HOST
-              value: "10.43.79.43"
+              value: "$GitLabNodeHost"
+            - name: LI_GIT_PORT
+              value: "$GitLabNodePort"
             - name: LI_GIT_INTERNAL_SVC
-              value: "10.43.79.43"
+              value: "$GitLabNodeHost"
             - name: LI_GIT_SCHEME
               value: "http"
             - name: LI_GIT_NO_GITHUB_MIRROR
@@ -274,7 +281,10 @@ $gitSyncScript
             defaultMode: 0755
 "@ | kubectl apply -f -
 
-    kubectl -n $Namespace rollout status "deploy/$name" --timeout=300s
+    & kubectl -n $Namespace rollout status "deploy/$name" --timeout=600s
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "shard $i rollout not ready within timeout (continuing)"
+    }
 }
 
 @"

@@ -58,14 +58,22 @@ li_git_primary_setup() {
     return 1
   fi
 
-  export LI_GIT_HOST LI_GIT_GROUP LI_GIT_TOKEN LI_GIT_AUTH_PREFIX LI_GIT_SCHEME LI_GITHUB_ORG
+  export LI_GIT_HOST LI_GIT_GROUP LI_GIT_TOKEN LI_GIT_AUTH_PREFIX LI_GIT_SCHEME LI_GITHUB_ORG LI_GIT_PORT
+
+  local _git_netloc="${LI_GIT_HOST}"
+  if [[ -n "${LI_GIT_PORT:-}" ]]; then
+    _git_netloc="${LI_GIT_HOST}:${LI_GIT_PORT}"
+  fi
 
   git config --global user.email "${LI_GIT_USER_EMAIL:-goal-worker@li-langverse.dev}"
   git config --global user.name "${LI_GIT_USER_NAME:-li-goal-worker}"
-  git config --global url."${LI_GIT_SCHEME}://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${LI_GIT_HOST}/".insteadOf "${LI_GIT_SCHEME}://${LI_GIT_HOST}/"
+  git config --global url."${LI_GIT_SCHEME}://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${_git_netloc}/".insteadOf "${LI_GIT_SCHEME}://${LI_GIT_HOST}/"
+  if [[ -n "${LI_GIT_PORT:-}" ]]; then
+    git config --global url."${LI_GIT_SCHEME}://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${_git_netloc}/".insteadOf "${LI_GIT_SCHEME}://${LI_GIT_HOST}:${LI_GIT_PORT}/"
+  fi
 
   if [[ "${LI_GIT_SSL_VERIFY:-1}" == "0" ]] || [[ "$LI_GIT_SCHEME" == "http" ]] || [[ "$LI_GIT_HOST" == *"lilangverse.xyz" ]]; then
-    git config --global "http.${LI_GIT_SCHEME}://${LI_GIT_HOST}/.sslVerify" false
+    git config --global "http.${LI_GIT_SCHEME}://${_git_netloc}/.sslVerify" false
   fi
 
   # Homelab: route public GitLab host to in-cluster HTTP when external TLS is unavailable.
@@ -78,11 +86,18 @@ li_git_primary_setup() {
     echo "k8s-git-auth: using in-cluster GitLab (${LI_GIT_INTERNAL_SVC}) for ${LI_GIT_HOST}" >&2
   fi
 
-  # Direct IP GitLab (desktop: no gitlab.gitlab.svc DNS, no external TLS).
+  # Direct IP / NodePort GitLab (desktop: no ClusterIP route, no gitlab.gitlab.svc DNS).
   if [[ -n "${LI_GIT_INTERNAL_SVC:-}" && "$LI_GIT_HOST" != *"lilangverse.xyz"* ]]; then
-    git config --global url."http://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${LI_GIT_INTERNAL_SVC}/".insteadOf "http://${LI_GIT_HOST}/"
-    git config --global url."http://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${LI_GIT_INTERNAL_SVC}/".insteadOf "http://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${LI_GIT_HOST}/"
-    echo "k8s-git-auth: using in-cluster GitLab (${LI_GIT_INTERNAL_SVC}) for ${LI_GIT_HOST}" >&2
+    local _internal="${LI_GIT_INTERNAL_SVC}"
+    if [[ -n "${LI_GIT_PORT:-}" ]]; then
+      _internal="${LI_GIT_INTERNAL_SVC}:${LI_GIT_PORT}"
+    fi
+    git config --global url."http://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${_internal}/".insteadOf "http://${LI_GIT_HOST}/"
+    git config --global url."http://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${_internal}/".insteadOf "http://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${LI_GIT_HOST}/"
+    if [[ -n "${LI_GIT_PORT:-}" ]]; then
+      git config --global url."http://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${_internal}/".insteadOf "http://${LI_GIT_HOST}:${LI_GIT_PORT}/"
+    fi
+    echo "k8s-git-auth: using GitLab at ${_internal} for ${LI_GIT_HOST}" >&2
   fi
 
   if [[ -n "${GH_TOKEN:-}" ]]; then
@@ -104,6 +119,9 @@ li_git_remote_url() {
   elif [[ -n "${LI_GIT_INTERNAL_SVC:-}" ]]; then
     host="$LI_GIT_INTERNAL_SVC"
     scheme="http"
+  fi
+  if [[ -n "${LI_GIT_PORT:-}" ]]; then
+    host="${host}:${LI_GIT_PORT}"
   fi
   echo "${scheme}://${LI_GIT_AUTH_PREFIX}:${LI_GIT_TOKEN}@${host}/${LI_GIT_GROUP}/${repo}.git"
 }
