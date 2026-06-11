@@ -7,7 +7,9 @@ alwaysApply: true
 
 **Develop on GitLab.** **GitHub is read-only mirror.** **Images on GHCR.**
 
-Full runbook: `beelink-cleanup/docs/gitlab-primary-github-mirror.md`.
+Full runbook: `homelab-k3s/docs/gitlab-primary-github-mirror.md`.
+
+**GitLab is always the source of truth.** GitHub receives commits only via GitLab push-mirror — never develop or merge there.
 
 ## Git (clone, branch, push)
 
@@ -15,8 +17,10 @@ Full runbook: `beelink-cleanup/docs/gitlab-primary-github-mirror.md`.
 |----|-------|
 | Clone/push `https://gitlab.lilangverse.xyz/li-langverse/<repo>.git` | Push commits directly to `github.com/li-langverse/*` |
 | Use `GITLAB_TOKEN` for git auth (`oauth2:$GITLAB_TOKEN@…`) | Use `GH_TOKEN` for clone/push/git ops |
-| Open MRs on GitLab (or GitHub PR only when repo is still GitHub-primary during transition) | Force-push GitHub after mirror cutover |
+| Open and merge **MRs on GitLab**; mirror syncs to GitHub | Admin-merge GitHub PRs for li-langverse code repos |
 | Fix failed mirrors via GitLab push-mirror settings | Bypass mirror by pushing to GitHub |
+| After drift: merge `github/main` locally, push to `origin` (GitLab) | Treat GitHub `main` as canonical when branches diverge |
+| Run `scripts/assert-gitlab-primary.ps1`; sync with `scripts/run-gitlab-github-mirror-local.ps1` | Leave GitHub ahead of GitLab |
 
 **Remotes after cutover:** `origin` → GitLab; `github` → read-only mirror (fetch only).
 
