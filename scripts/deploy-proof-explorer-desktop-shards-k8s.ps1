@@ -1,9 +1,12 @@
 # Deploy 6 proof-explorer shards + unblocker on desktop node (burst pool).
+# Node choice: desktop (32c/32Gi, burst taint) — never engine (74%+ memory requests, OOM during clone/agent peaks).
 param(
     [string]$KubeConfig = "$env:USERPROFILE\.kube\config-homelab",
     [string]$Namespace = "li-swarm",
     [string]$DesktopNode = "desktop",
     [int]$ShardCount = 6,
+    [int]$ShardMemoryLimitGi = 4,
+    [int]$InitStaggerSec = 60,
     [switch]$KeepEngineWorker
 )
 
@@ -25,7 +28,10 @@ kubectl apply -f (Join-Path $K8sEngine "namespace.yaml")
 kubectl apply -f (Join-Path $K8sEngine "rbac-goal-workers-scale.yaml")
 kubectl apply -f (Join-Path $K8sDesktop "rbac-proof-explorer-unblocker.yaml")
 kubectl apply -f (Join-Path $K8sEngine "configmap-k8s-git-primary.yaml") 2>$null
-kubectl apply -f (Join-Path $K8sEngine "configmap-k8s-git-auth.yaml") 2>$null
+$gitAuthScript = Join-Path $Root "deploy\k8s-git-auth.sh"
+kubectl -n $Namespace create configmap li-k8s-git-auth `
+  --from-file="k8s-git-auth.sh=$gitAuthScript" `
+  --dry-run=client -o yaml | kubectl apply -f -
 kubectl apply -f (Join-Path $K8sDesktop "configmap-proof-explorer-shard-base.yaml")
 
 $extra = @{
@@ -72,6 +78,31 @@ $tolerationYaml = @"
           operator: Exists
           effect: NoSchedule
 "@
+
+# Bash vars must not be expanded by PowerShell's @"..."@ here-string.
+$gitSyncScript = @'
+              set -eu
+              test -n "${GITLAB_TOKEN:-}" || { echo "git-sync: missing GITLAB_TOKEN" >&2; exit 1; }
+              if [ -n "${SHARD_INDEX:-}" ]; then
+                delay=$((SHARD_INDEX * STAGGER_SEC))
+                if [ "$delay" -gt 0 ]; then
+                  echo "git-sync: shard ${SHARD_INDEX} sleeping ${delay}s to avoid clone OOM spike"
+                  sleep "$delay"
+                fi
+              fi
+              hdr="PRIVATE-TOKEN: ${GITLAB_TOKEN}"
+              base="http://10.43.79.43/li-langverse"
+              mkdir -p /workspace
+              rm -rf /workspace/lic
+              echo "git-sync: cloning lic branch=${BRANCH}"
+              git -c "http.extraHeader=${hdr}" clone --depth 1 --branch "$BRANCH" "${base}/lic.git" /workspace/lic
+              if [ ! -d /workspace/benchmarks/.git ]; then
+                git -c "http.extraHeader=${hdr}" clone --depth 1 --branch main "${base}/benchmarks.git" /workspace/benchmarks || true
+              fi
+              if [ ! -d /workspace/proof-library/.git ]; then
+                git -c "http.extraHeader=${hdr}" clone --depth 1 --branch main "${base}/proof-library.git" /workspace/proof-library || true
+              fi
+'@
 
 for ($i = 0; $i -lt $ShardCount; $i++) {
     $name = "li-proof-explorer-shard-$i"
@@ -134,6 +165,36 @@ spec:
 $tolerationYaml
       imagePullSecrets:
         - name: ghcr-li-langverse
+      initContainers:
+        - name: git-sync
+          image: alpine/git:latest
+          env:
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
+            - name: BRANCH
+              value: "cursor/proof-explorer-phase15-honest-catalog-prove"
+            - name: SHARD_INDEX
+              value: "$i"
+            - name: STAGGER_SEC
+              value: "$InitStaggerSec"
+          command:
+            - sh
+            - -lc
+            - |
+$gitSyncScript
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "1"
+              memory: "768Mi"
       containers:
         - name: proof-explorer
           image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
@@ -145,10 +206,16 @@ $tolerationYaml
             - configMapRef:
                 name: $name
             - configMapRef:
-                name: li-k8s-git-primary
-            - configMapRef:
                 name: li-goal-worker-runtime
           env:
+            - name: LI_GIT_HOST
+              value: "10.43.79.43"
+            - name: LI_GIT_INTERNAL_SVC
+              value: "10.43.79.43"
+            - name: LI_GIT_SCHEME
+              value: "http"
+            - name: LI_GIT_NO_GITHUB_MIRROR
+              value: "1"
             - name: GH_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -181,10 +248,10 @@ $tolerationYaml
           resources:
             requests:
               cpu: "500m"
-              memory: "1Gi"
+              memory: "1536Mi"
             limits:
               cpu: "4"
-              memory: "4Gi"
+              memory: "${ShardMemoryLimitGi}Gi"
           volumeMounts:
             - name: workspace
               mountPath: /workspace
