@@ -1,27 +1,27 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: li-research-ingest
+  name: klaut-research-ingest
   namespace: li-swarm
   labels:
-    app: li-research-ingest
-    app.kubernetes.io/name: li-research-ingest
+    app: klaut-research-ingest
+    app.kubernetes.io/name: klaut-research-ingest
     app.kubernetes.io/component: goal-directed-agent
-    li-langverse.io/sprint: li-research-r1b-ingest
+    klaut.pro/sprint: klaut-research-r1b-ingest
 data:
   LI_GOAL_WORKSPACE: "/workspace"
-  LI_GOAL_FILE: "data/goal-directed-sprints/wp-li-research-r1b-warm-ingest.md"
-  LI_GOAL_BRANCH: "cursor/li-research-r1b"
-  LI_RESEARCH_INGEST_ROOT: "/workspace/li-research-ingest"
+  LI_GOAL_FILE: "data/goal-directed-sprints/wp-klaut-research-r1b-warm-ingest.md"
+  LI_GOAL_BRANCH: "cursor/klaut-research-r1b"
+  LI_RESEARCH_INGEST_ROOT: "/workspace/klaut-research-ingest"
   LI_SECRETS_DIR: "/srv/homelab/li-research/secrets"
   LI_GOAL_AGENT: "code_implementer"
   LI_GOAL_LOOP_SLEEP_SEC: "300"
   WARM_INGEST_MIN_BYTES: "1073741824"
-  LI_GOAL_DEPLOYMENT_NAME: "li-research-ingest"
+  LI_GOAL_DEPLOYMENT_NAME: "klaut-research-ingest"
   LI_GOAL_NAMESPACE: "li-swarm"
-  LI_GIT_HOST: "gitlab.lilangverse.xyz"
-  LI_GIT_GROUP: "li-langverse"
-  LI_GITHUB_ORG: "li-langverse"
+  LI_GIT_GROUP: "klaut-pro"
+  LI_GITHUB_ORG: "klaut-pro"
+  LI_LIDB_ORG: "li-langverse"
   LI_CURSOR_AGENTS_ROOT: "/app"
   LI_CONTROL_PLANE_STORE: "disk"
   LI_SDK_TERMINAL_STREAM: "1"

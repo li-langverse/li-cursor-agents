@@ -21,7 +21,6 @@ assert.match(runtime, /NODE_OPTIONS:/);
 assert.match(runtime, /CMAKE_BUILD_PARALLEL_LEVEL:/);
 
 const gitLangverseEntrypoints = [
-  "deploy/li-research-ingest-entrypoint.sh",
   "deploy/li-db-studio-product-entrypoint.sh",
 ];
 
@@ -50,6 +49,13 @@ assert.match(parallelDep, /li-goal-worker-runtime/);
 
 const rbac = read("deploy/k8s/engine/rbac-goal-workers-scale.yaml");
 assert.match(rbac, /li-li-parallel/);
+
+const klautIngest = read("deploy/klaut/klaut-research-ingest-entrypoint.sh");
+assert.match(klautIngest, /li_git_github_primary_setup/);
+assert.match(klautIngest, /klaut-research-ingest/);
+
+const klautIngestDeploy = read("deploy/k8s/klaut/deployment-klaut-research-ingest.yaml");
+assert.match(klautIngestDeploy, /klaut-agents-secrets/);
 
 const klautProduct = read("deploy/klaut/klaut-li-research-product-entrypoint.sh");
 assert.match(klautProduct, /li_git_github_primary_setup/);

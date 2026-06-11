@@ -4,7 +4,7 @@ param(
     [string]$Namespace = "li-swarm",
     [ValidateSet("0", "1")]
     [string]$Replicas = "0",
-    [ValidateSet("all", "world-studio", "typography-fx", "li-toml", "proof-explorer", "li-parallel", "klaut-research-product", "research-ingest", "db-studio-product", "ph-ml-wave13", "lios-kernel")]
+    [ValidateSet("all", "world-studio", "typography-fx", "li-toml", "proof-explorer", "li-parallel", "klaut-research-product", "klaut-research-ingest", "db-studio-product", "ph-ml-wave13", "lios-kernel")]
     [string]$Worker = "all"
 )
 
@@ -18,7 +18,7 @@ $map = @{
     "proof-explorer"    = "li-proof-explorer"
     "li-parallel"       = "li-li-parallel"
     "klaut-research-product" = "klaut-li-research-product"
-    "research-ingest"   = "li-research-ingest"
+    "klaut-research-ingest" = "klaut-research-ingest"
     "db-studio-product" = "li-db-studio-product"
     "ph-ml-wave13"      = "li-ph-ml-wave13"
     "lios-kernel"       = "li-lios-kernel"

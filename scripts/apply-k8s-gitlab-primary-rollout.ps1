@@ -71,7 +71,6 @@ $deployments = @(
     "deployment-libernetes-platform.yaml",
     "deployment-lios-kernel.yaml",
     "deployment-li-db-studio-product.yaml",
-    "deployment-li-research-ingest.yaml",
     "deployment-world-studio-typography-fx-animation.yaml",
     "deployment-world-studio-aimd-demo.yaml",
     "deployment-world-studio-gui-demo-recorder.yaml"
@@ -159,7 +158,7 @@ $klautGoals = @(
 ) | Where-Object { Test-Path $_ } | Select-Object -First 1
 if ($klautGoals) {
     foreach ($pair in @(
-        @("li-research-ingest-bundle", "deploy\li-research-ingest-entrypoint.sh", "wp-li-research-r1b-warm-ingest.md")
+        @("klaut-research-ingest-bundle", "deploy\klaut\klaut-research-ingest-entrypoint.sh", "wp-klaut-research-r1b-warm-ingest.md")
     )) {
         $goalSrc = Join-Path $klautGoals $pair[2]
         if (-not (Test-Path $goalSrc)) { continue }
@@ -180,7 +179,7 @@ $workers = @(
     "li-ph-ml-wave13", "li-ph-br-0-lib-browser", "li-pure-li-https", "li-physics-codegen-matrix",
     "li-libernetes-control", "li-libernetes-licontainers", "li-libernetes-livm", "li-libernetes-platform",
     "li-lios-kernel", "li-world-studio-typography-fx-animation", "li-world-studio-aimd-demo", "li-world-studio-gui-demo-recorder",
-    "li-db-studio-product", "li-research-ingest"
+    "li-db-studio-product", "klaut-research-ingest", "klaut-li-research-product"
 )
 foreach ($w in $workers) {
     if (kubectl get deploy -n $Namespace $w 2>$null) {

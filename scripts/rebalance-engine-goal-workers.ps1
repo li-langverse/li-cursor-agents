@@ -37,7 +37,7 @@ $IdleWhenPressure = @(
 $PriorityActive = @(
     "li-li-parallel",
     "li-ph-ml-wave13",
-    "li-research-ingest",
+    "klaut-research-ingest",
     "klaut-li-research-product",
     "li-db-studio-product",
     "li-lios-kernel",

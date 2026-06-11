@@ -93,7 +93,7 @@ function Restart-K8sGoalDirectedWorkers {
             'li-world-studio-gui-demo-recorder', 'li-world-studio-gui-product-visual',
             'li-world-studio-typography-fx-animation', 'li-world-studio-aimd-demo',
             'li-li-parallel', 'li-ph-sci-simulation-gap-close', 'li-li-toml-config',
-            'li-db-studio-product', 'klaut-li-research-product', 'li-research-ingest',
+            'li-db-studio-product', 'klaut-li-research-product', 'klaut-research-ingest',
             'li-lios-kernel', 'li-ph-br-0-lib-browser'
         ) -join ' '
     }

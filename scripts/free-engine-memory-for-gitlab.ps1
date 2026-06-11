@@ -35,6 +35,7 @@ if ($ApplyManifests) {
     Write-Host "==> kubectl apply gitlab-headroom manifests"
     Get-ChildItem $K8s -Filter "deployment-*.yaml" | ForEach-Object { kubectl apply -f $_.FullName | Out-Null }
     kubectl apply -f (Join-Path $Klaut "deployment-klaut-li-research-product.yaml") | Out-Null
+    kubectl apply -f (Join-Path $Klaut "deployment-klaut-research-ingest.yaml") | Out-Null
     Get-ChildItem $K8s -Filter "cronjob-org*.yaml" | ForEach-Object { kubectl apply -f $_.FullName | Out-Null }
 } else {
     & (Join-Path $PSScriptRoot "rebalance-engine-goal-workers.ps1") -KubeConfig $KubeConfig -Mode FreeMemory -SkipScaleUp
@@ -42,7 +43,7 @@ if ($ApplyManifests) {
         "li-org-ga-supervisor","li-org-issue-supervisor","li-org-issue-triage-supervisor","li-org-issue-worker",
         "li-org-planner-supervisor","li-org-pr-merge-worker","li-org-pr-supervisor","li-org-research-supervisor",
         "li-org-reviewer-supervisor","li-org-supervisor-dashboard","li-org-unblocker-supervisor",
-        "li-agent-runs-leaderboard","li-li-parallel","li-lios-kernel","li-research-ingest","li-ph-ml-wave13",
+        "li-agent-runs-leaderboard","li-li-parallel","li-lios-kernel","klaut-research-ingest","li-ph-ml-wave13",
         "li-proof-explorer","li-pure-li-https","klaut-li-research-product"
     )
     foreach ($d in $orgDeploys) {
