@@ -41,4 +41,5 @@ data:
   LI_SDK_TERMINAL_STREAM: "1"
   LI_SWARM_EXTERNAL: "1"
   LI_ARRAY_BLAS: "openblas"
+  LI_ARRAY_GEMM_TILE: "16"
   NODE_ENV: "production"

@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/component: goal-directed-agent
     li-langverse.io/sprint: ph-ml-li-array-perf-ij
 spec:
-  replicas: 0
+  replicas: 1
   strategy:
     type: Recreate
   selector:
@@ -33,9 +33,8 @@ spec:
         - name: ghcr-li-langverse
       containers:
         - name: ph-ml-wave13
-          image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
-          # proof-explorer-llvm22 carries lic-ci LLVM22+z3; entrypoint installs PH-ML deps at runtime.
-          # benchmark-oracle-llvm22 optional pre-bake (LI_BUILD_BENCHMARK_ORACLE_IMAGE=1).
+          image: ghcr.io/li-langverse/li-cursor-agents:benchmark-oracle-llvm22
+          # benchmark-oracle-llvm22: lic-ci LLVM22+z3 + pre-baked PH-ML python deps (fast cold start).
           imagePullPolicy: IfNotPresent
           command: ["/bin/bash", "/scripts/entrypoint.sh"]
           envFrom:
