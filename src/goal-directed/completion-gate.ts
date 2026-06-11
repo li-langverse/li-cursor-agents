@@ -20,20 +20,39 @@ export function extractCompletionGateScript(goalText: string): string | null {
   return extractGateScript(goalText, "Completion gate");
 }
 
-/** Phases marked **DONE** in status table (2-col or 3+ col with **DONE** in last column). */
+/** Slice from ## Status through the next ## heading (status table only). */
+function statusTableText(goalText: string): string {
+  const lines = goalText.split(/\r?\n/);
+  let inStatus = false;
+  const buf: string[] = [];
+  for (const line of lines) {
+    if (/^##\s+Status\s*$/.test(line)) {
+      inStatus = true;
+      buf.push(line);
+      continue;
+    }
+    if (inStatus && /^## [^#]/.test(line)) break;
+    if (inStatus) buf.push(line);
+  }
+  return buf.length ? buf.join("\n") : goalText;
+}
+
+/** Phases marked **DONE** in the ## Status table (2-col or 3+ col). */
 export function phasesMarkedDone(goalText: string): string[] {
   const done: string[] = [];
   const add = (phase: string) => {
     const p = phase.toUpperCase();
     if (!done.includes(p)) done.push(p);
   };
+  const scope = statusTableText(goalText);
   const statusColRe =
-    /\|\s*\*\*([A-Z0-9]+)\*\*\s*(?:\|[^|\n]*)+\|\s*\*\*DONE\*\*\s*\|/gi;
-  for (const m of goalText.matchAll(statusColRe)) {
+    /\|\s*\*\*([A-Z0-9]+)\*\*\s*(?:\|[^|\n]*)+\|\s*\*\*DONE\*\*(?:[^|\n]*)?\s*\|/gi;
+  for (const m of scope.matchAll(statusColRe)) {
     add(m[1]);
   }
-  const twoColRe = /\|\s*\*\*([A-Z0-9]+)\*\*\s*\|\s*\*\*DONE\*\*\s*\|/gi;
-  for (const m of goalText.matchAll(twoColRe)) {
+  const twoColRe =
+    /\|\s*\*\*([A-Z0-9]+)\*\*\s*\|\s*\*\*DONE\*\*(?:[^|\n]*)?\s*\|/gi;
+  for (const m of scope.matchAll(twoColRe)) {
     add(m[1]);
   }
   return done;

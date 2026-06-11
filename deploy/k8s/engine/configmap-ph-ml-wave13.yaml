@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/component: goal-directed-agent
     li-langverse.io/sprint: ph-ml-li-array-perf-ij
   annotations:
-    li-langverse.io/goal-status: ph-ml-li-array-perf-ij-active
+    li-langverse.io/goal-status: ph-ml-li-array-perf-ij-complete
     li-langverse.io/gate-honesty: >-
       PH_ML_REQUIRE_SB3, PH_ML_REQUIRE_RAY, PH_ML_REQUIRE_GPU are opt-in only.
       Do NOT set them in this ConfigMap unless you require executed:true on competitor
@@ -17,6 +17,7 @@ metadata:
 data:
   LI_PROOF_EXPLORER_ALWAYS_ON: "1"
   LI_PROOF_EXPLORER_PHASE_HANDOFF: "0"
+  LI_PROOF_EXPLORER_EXIT_ON_COMPLETE: "1"
   LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/ph-ml-li-array-perf-ij.md"
   LI_PROOF_EXPLORER_LIC_ROOT: "/workspace/lic"
   BENCHMARKS_ROOT: "/workspace/benchmarks"

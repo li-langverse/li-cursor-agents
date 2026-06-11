@@ -42,10 +42,13 @@ python3 scripts/audit-dashboard-gaps.py
 });
 
 test("requiredPhases and phasesMarkedDone (status column only)", () => {
-  const md = `### Phase A — foo
-### Phase B — bar
-| **A** | **DONE** | notes |
-| **B** | in progress | **DONE** in notes only |
+  const md = `## Status
+| Phase | Status |
+| **A** | **DONE** |
+| **B** | in progress |
+
+### Phase A - foo
+### Phase B - bar
 `;
   assert.deepEqual(requiredPhases(md), ["A", "B"]);
   assert.deepEqual(phasesMarkedDone(md), ["A"]);
@@ -56,10 +59,13 @@ test("evaluateGoalCompletion runs progress gate when phases remain", () => {
   const goal = join(dir, "plan.md");
   writeFileSync(
     goal,
-    `### Phase A — a
-### Phase B — b
+    `## Status
+| Phase | Status |
 | **A** | **DONE** |
 | **B** | NEXT |
+
+### Phase A - a
+### Phase B - b
 
 ## Progress gate
 
@@ -80,12 +86,26 @@ false
   assert.match(result.reason, /progress gate passed; phases remaining: B/);
 });
 
+test("phasesMarkedDone accepts **DONE** with trailing notes in status column", () => {
+  const md = `## Status
+| Phase | Status |
+| **I** | **DONE** - dense BLAS path + tile sweep |
+| **J** | **DONE** - bench metadata refresh |
+
+### Phase I - dense
+### Phase J - bench
+`;
+  assert.deepEqual(phasesMarkedDone(md), ["I", "J"]);
+});
+
 test("phasesMarkedDone reads **DONE** in last column (3-col table)", () => {
-  const md = `### Phase W0 - foundation
-### Phase W1 - core
+  const md = `## Status
 | Phase | Scope | Status |
 | **W0** | docs | **DONE** |
 | **W1** | sim | pending |
+
+### Phase W0 - foundation
+### Phase W1 - core
 `;
   assert.deepEqual(phasesMarkedDone(md), ["W0"]);
   assert.deepEqual(requiredPhases(md), ["W0", "W1"]);

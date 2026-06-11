@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { agentLog } from "../agent-log.js";
 import { workerConsole } from "../worker/worker-console.js";
-import { resolveActivePhase } from "./proof-explorer-phase-handoff.js";
+import { isPhaseHandoffEnabled, resolveActivePhase } from "./proof-explorer-phase-handoff.js";
 import {
   isProofExplorerExitOnComplete,
   isProofExplorerWorkerAlwaysOn,
@@ -134,6 +134,14 @@ async function proofExplorerWorkerLoop(signal: AbortSignal): Promise<void> {
           "info",
           `phase ${activePhaseId ?? "?"} goal gate passed — checking handoff`,
         );
+        if (
+          exitCode === 0 &&
+          !isPhaseHandoffEnabled() &&
+          isProofExplorerExitOnComplete()
+        ) {
+          workerConsole("li-proof-explorer", "info", "program complete — all phase gates passed");
+          process.exit(0);
+        }
         const next = await resolveActivePhase();
         if (next.allComplete) {
           workerConsole("li-proof-explorer", "info", "program complete — all phase gates passed");
