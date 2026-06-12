@@ -7,9 +7,9 @@ metadata:
     app: li-ph-ml-wave13
     app.kubernetes.io/name: li-ph-ml-wave13
     app.kubernetes.io/component: goal-directed-agent
-    li-langverse.io/sprint: ph-ml-li-array-perf-ij
+    li-langverse.io/sprint: ph-ml-training-toy-sota
 spec:
-  replicas: 0
+  replicas: 1
   strategy:
     type: Recreate
   selector:
@@ -21,7 +21,7 @@ spec:
         app: li-ph-ml-wave13
         app.kubernetes.io/name: li-ph-ml-wave13
         app.kubernetes.io/component: goal-directed-agent
-        li-langverse.io/sprint: ph-ml-li-array-perf-ij
+        li-langverse.io/sprint: ph-ml-training-toy-sota
     spec:
       nodeSelector:
         kubernetes.io/hostname: engine

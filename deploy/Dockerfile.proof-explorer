@@ -18,6 +18,8 @@ RUN apt-get update \
   && apt-get update \
   && apt-get install -y --no-install-recommends gh \
   && ldconfig -p | grep -q 'libz3.so.4' \
+  && test -x /usr/bin/clang-22 \
+  && clang-22 --version | head -1 \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

@@ -1,9 +1,16 @@
-# Deploy 6 proof-explorer shards + unblocker on desktop node (burst pool).
+# Deploy 6 proof-explorer shards + unblocker (phase15 honest catalog).
+# Default node: blackpearl — has Cursor API egress + memory headroom.
+# Avoid desktop: no outbound HTTPS to api.cursor.com (SDK NetworkError) despite low memory use.
 param(
     [string]$KubeConfig = "$env:USERPROFILE\.kube\config-homelab",
     [string]$Namespace = "li-swarm",
-    [string]$DesktopNode = "desktop",
+    [string]$WorkerNode = "blackpearl",
     [int]$ShardCount = 6,
+    [int]$ShardMemoryLimitGi = 3,
+    [int]$InitStaggerSec = 60,
+    [int]$AgentStaggerSec = 120,
+    [string]$GitLabNodeHost = "192.168.10.40",
+    [string]$GitLabNodePort = "30481",
     [switch]$KeepEngineWorker
 )
 
@@ -19,18 +26,68 @@ Load-K8sAgentsEnv -WorkspaceRoot $Workspace -AgentsRoot $Root
 Assert-K8sAgentsDeployTokens
 
 $env:KUBECONFIG = $KubeConfig
-Write-Host "==> Deploy proof-explorer shards on node=$DesktopNode (count=$ShardCount)"
+$UseNodePortGit = ($WorkerNode -eq "desktop")
+Write-Host "==> Deploy proof-explorer shards on node=$WorkerNode (count=$ShardCount)"
+if ($UseNodePortGit) {
+    Write-Host "==> GitLab via NodePort ${GitLabNodeHost}:${GitLabNodePort} (desktop cannot reach ClusterIP)"
+    $gitlabBase = "http://${GitLabNodeHost}:${GitLabNodePort}/li-langverse"
+    $gitEnvBlock = @"
+            - name: LI_GIT_HOST
+              value: "$GitLabNodeHost"
+            - name: LI_GIT_PORT
+              value: "$GitLabNodePort"
+            - name: LI_GIT_INTERNAL_SVC
+              value: "$GitLabNodeHost"
+            - name: LI_GIT_SCHEME
+              value: "http"
+            - name: LI_GIT_NO_GITHUB_MIRROR
+              value: "1"
+"@
+    $tolerationYaml = @"
+      tolerations:
+        - key: workload
+          operator: Equal
+          value: burst
+          effect: NoSchedule
+        - key: node.kubernetes.io/disk-pressure
+          operator: Exists
+          effect: NoSchedule
+"@
+} else {
+    Write-Host "==> GitLab via in-cluster gitlab.gitlab.svc (standard engine/blackpearl routing)"
+    $gitlabBase = "http://gitlab.gitlab.svc/li-langverse"
+    $gitEnvBlock = @"
+            - name: LI_GIT_HOST
+              value: "gitlab.lilangverse.xyz"
+            - name: LI_GIT_INTERNAL_SVC
+              value: "gitlab.gitlab.svc"
+            - name: LI_GIT_SCHEME
+              value: "http"
+            - name: LI_GIT_NO_GITHUB_MIRROR
+              value: "1"
+"@
+    $tolerationYaml = @"
+      tolerations:
+        - key: node.kubernetes.io/disk-pressure
+          operator: Exists
+          effect: NoSchedule
+"@
+}
 
 kubectl apply -f (Join-Path $K8sEngine "namespace.yaml")
 kubectl apply -f (Join-Path $K8sEngine "rbac-goal-workers-scale.yaml")
 kubectl apply -f (Join-Path $K8sDesktop "rbac-proof-explorer-unblocker.yaml")
 kubectl apply -f (Join-Path $K8sEngine "configmap-k8s-git-primary.yaml") 2>$null
-kubectl apply -f (Join-Path $K8sEngine "configmap-k8s-git-auth.yaml") 2>$null
+$gitAuthScript = Join-Path $Root "deploy\k8s-git-auth.sh"
+kubectl -n $Namespace create configmap li-k8s-git-auth `
+  --from-file="k8s-git-auth.sh=$gitAuthScript" `
+  --dry-run=client -o yaml | kubectl apply -f -
 kubectl apply -f (Join-Path $K8sDesktop "configmap-proof-explorer-shard-base.yaml")
 
 $extra = @{
     "entrypoint.sh" = (Join-Path $Root "deploy\proof-explorer-k8s-entrypoint.sh")
     "wp-p15-shard-tranche.sh" = (Join-Path $Root "deploy\scripts\wp-p15-shard-tranche.sh")
+    "ensure-llvm22-toolchain.sh" = (Join-Path $Root "deploy\scripts\ensure-llvm22-toolchain.sh")
 }
 . $BundleScript -Root $Root -Namespace $Namespace -ConfigMapName "li-proof-explorer-shard-bundle" -ExtraFiles $extra
 
@@ -62,16 +119,31 @@ sys.exit(proc.returncode)
 
 Apply-K8sAgentsSecrets -Namespace $Namespace -RequireGitLab
 
-$tolerationYaml = @"
-      tolerations:
-        - key: workload
-          operator: Equal
-          value: burst
-          effect: NoSchedule
-        - key: node.kubernetes.io/disk-pressure
-          operator: Exists
-          effect: NoSchedule
-"@
+# Bash vars must not be expanded by PowerShell's @"..."@ here-string.
+$gitSyncScript = @'
+              set -eu
+              test -n "${GITLAB_TOKEN:-}" || { echo "git-sync: missing GITLAB_TOKEN" >&2; exit 1; }
+              if [ -n "${SHARD_INDEX:-}" ]; then
+                delay=$((SHARD_INDEX * STAGGER_SEC))
+                if [ "$delay" -gt 0 ]; then
+                  echo "git-sync: shard ${SHARD_INDEX} sleeping ${delay}s to avoid clone OOM spike"
+                  sleep "$delay"
+                fi
+              fi
+              hdr="PRIVATE-TOKEN: ${GITLAB_TOKEN}"
+              base="GITLAB_BASE_URL"
+              mkdir -p /workspace
+              rm -rf /workspace/lic
+              echo "git-sync: cloning lic branch=${BRANCH}"
+              git -c "http.extraHeader=${hdr}" clone --depth 1 --branch "$BRANCH" "${base}/lic.git" /workspace/lic
+              if [ ! -d /workspace/benchmarks/.git ]; then
+                git -c "http.extraHeader=${hdr}" clone --depth 1 --branch main "${base}/benchmarks.git" /workspace/benchmarks || true
+              fi
+              if [ ! -d /workspace/proof-library/.git ]; then
+                git -c "http.extraHeader=${hdr}" clone --depth 1 --branch main "${base}/proof-library.git" /workspace/proof-library || true
+              fi
+'@
+$gitSyncScript = $gitSyncScript.Replace('GITLAB_BASE_URL', $gitlabBase)
 
 for ($i = 0; $i -lt $ShardCount; $i++) {
     $name = "li-proof-explorer-shard-$i"
@@ -102,6 +174,7 @@ metadata:
 data:
   LI_PROOF_EXPLORER_SHARD_INDEX: "$i"
   LI_GOAL_DEPLOYMENT_NAME: "$name"
+  LI_PROOF_EXPLORER_AGENT_STAGGER_SEC: "$AgentStaggerSec"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -130,14 +203,44 @@ spec:
     spec:
       serviceAccountName: li-goal-worker
       nodeSelector:
-        kubernetes.io/hostname: $DesktopNode
+        kubernetes.io/hostname: $WorkerNode
 $tolerationYaml
       imagePullSecrets:
         - name: ghcr-li-langverse
+      initContainers:
+        - name: git-sync
+          image: alpine/git:latest
+          env:
+            - name: GITLAB_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: li-agents-secrets
+                  key: GITLAB_TOKEN
+            - name: BRANCH
+              value: "cursor/proof-explorer-phase15-honest-catalog-prove"
+            - name: SHARD_INDEX
+              value: "$i"
+            - name: STAGGER_SEC
+              value: "$InitStaggerSec"
+          command:
+            - sh
+            - -lc
+            - |
+$gitSyncScript
+          volumeMounts:
+            - name: workspace
+              mountPath: /workspace
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "1"
+              memory: "768Mi"
       containers:
         - name: proof-explorer
           image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           command: ["/bin/bash", "/config/entrypoint.sh"]
           envFrom:
             - configMapRef:
@@ -145,10 +248,9 @@ $tolerationYaml
             - configMapRef:
                 name: $name
             - configMapRef:
-                name: li-k8s-git-primary
-            - configMapRef:
                 name: li-goal-worker-runtime
           env:
+$gitEnvBlock
             - name: GH_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -181,10 +283,10 @@ $tolerationYaml
           resources:
             requests:
               cpu: "500m"
-              memory: "1Gi"
+              memory: "1536Mi"
             limits:
               cpu: "4"
-              memory: "4Gi"
+              memory: "${ShardMemoryLimitGi}Gi"
           volumeMounts:
             - name: workspace
               mountPath: /workspace
@@ -207,7 +309,10 @@ $tolerationYaml
             defaultMode: 0755
 "@ | kubectl apply -f -
 
-    kubectl -n $Namespace rollout status "deploy/$name" --timeout=300s
+    & kubectl -n $Namespace rollout status "deploy/$name" --timeout=1200s
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "shard $i rollout not ready within timeout (continuing)"
+    }
 }
 
 @"
@@ -232,14 +337,14 @@ spec:
     spec:
       serviceAccountName: li-proof-explorer-unblocker
       nodeSelector:
-        kubernetes.io/hostname: $DesktopNode
+        kubernetes.io/hostname: $WorkerNode
 $tolerationYaml
       imagePullSecrets:
         - name: ghcr-li-langverse
       containers:
         - name: unblocker
           image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           command: ["python3", "/config/proof-explorer-shard-unblocker.py"]
           env:
             - name: LI_GOAL_NAMESPACE

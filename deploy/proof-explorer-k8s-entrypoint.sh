@@ -35,6 +35,34 @@ if [[ -f /config/k8s-goal-loop-common.sh ]]; then
   export_goal_loop_self_unblock_env "$BRANCH"
 fi
 
+if [[ -f /config/ensure-llvm22-toolchain.sh ]]; then
+  set +e
+  # shellcheck source=/dev/null
+  source /config/ensure-llvm22-toolchain.sh
+  _tc=$?
+  set -e
+  if [[ "$_tc" -ne 0 ]]; then
+    echo "proof-explorer-k8s-entrypoint: WARN ensure-toolchain exit $_tc" >&2
+  fi
+elif [[ -f "${AGENTS_ROOT}/deploy/scripts/ensure-llvm22-toolchain.sh" ]]; then
+  set +e
+  # shellcheck source=/dev/null
+  source "${AGENTS_ROOT}/deploy/scripts/ensure-llvm22-toolchain.sh"
+  _tc=$?
+  set -e
+  if [[ "$_tc" -ne 0 ]]; then
+    echo "proof-explorer-k8s-entrypoint: WARN ensure-toolchain exit $_tc" >&2
+  fi
+fi
+
+if [[ -n "${LI_PROOF_EXPLORER_SHARD_INDEX:-}" && -n "${LI_PROOF_EXPLORER_AGENT_STAGGER_SEC:-}" ]]; then
+  _stagger_delay=$(( LI_PROOF_EXPLORER_SHARD_INDEX * LI_PROOF_EXPLORER_AGENT_STAGGER_SEC ))
+  if [[ "$_stagger_delay" -gt 0 ]]; then
+    echo "proof-explorer-k8s-entrypoint: shard ${LI_PROOF_EXPLORER_SHARD_INDEX} agent stagger ${_stagger_delay}s"
+    sleep "$_stagger_delay"
+  fi
+fi
+
 mkdir -p "$(dirname "$LIC_ROOT")"
 
 sync_lic_repo() {
@@ -67,10 +95,17 @@ ensure_lic_built() {
       ./*) export LIC="${LIC_ROOT}/${lic_rel#./}" ;;
       *) export LIC="$lic_rel" ;;
     esac
-    echo "proof-explorer-k8s-entrypoint: lic present at ${LIC}"
+    if [[ -x "$LIC" ]] && "$LIC" --version &>/dev/null; then
+      echo "proof-explorer-k8s-entrypoint: lic present at ${LIC}"
+      return 0
+    fi
+  fi
+  if ! command -v clang-22 >/dev/null 2>&1; then
+    echo "proof-explorer-k8s-entrypoint: WARN no clang-22 — lic build skipped" >&2
     return 0
   fi
-  echo "proof-explorer-k8s-entrypoint: building lic (LLVM in-container)"
+  echo "proof-explorer-k8s-entrypoint: building lic (LLVM 22 in-container)"
+  export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-2}"
   if (cd "$LIC_ROOT" && bash scripts/build.sh); then
     if lic_rel="$(li_pick_lic_bin "$LIC_ROOT")"; then
       case "$lic_rel" in
