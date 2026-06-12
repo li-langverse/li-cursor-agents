@@ -123,15 +123,15 @@ kubectl -n li-swarm get deploy li-org-issue-supervisor
 kubectl -n li-swarm logs deploy/li-org-issue-supervisor --tail=50
 ```
 
-### PH-ML Wave 13 (li-array perf I/J)
+### PH-ML Wave 13 (training toy + SOTA)
 
 - Deployment: `li-ph-ml-wave13` (namespace `li-swarm`, node `engine`)
-- Goal: `lic/data/goal-directed-sprints/ph-ml-li-array-perf-ij.md`
-- Branch: `cursor/ph-ml-li-array-perf-ij` (fallback `cursor/ph-ml-li-array-perf-h`, `main`)
-- Gate: `lic/scripts/ph-ml-li-array-perf-ij-gates.sh` (loop max 0 until pass)
+- Goal: `lic/data/goal-directed-sprints/ph-ml-training-toy-sota.md`
+- Branch: `main` (fallback `cursor/ph-ml-training-toy-sota`, `cursor/ph-ml-li-array-perf-ij`)
+- Gate: `lic/scripts/ph-ml-training-toy-sota-gates.sh` (loop max 0 until pass)
 - Deploy: `bash scripts/setup-engine-k8s-ph-ml-wave13.sh` (requires `KUBECONFIG`, `GITLAB_TOKEN`, `CURSOR_API_KEY`)
 - Logs: `kubectl -n li-swarm logs -f deploy/li-ph-ml-wave13`
-- **Idle stop (2026-06-08):** `ph-ml-li-array-competitive` complete (lic #1077); `replicas: 0` until a new `ph-ml-*` goal exists on lic `main`.
+- **Idle stop (2026-06-12):** `ph-ml-training-toy-sota` complete (lic `d5903e402`, phases K–N); `replicas: 0` until a new `ph-ml-*` goal exists on lic `main`.
 ### Pure Li HTTPS
 
 - Deployment: `li-pure-li-https` (namespace `li-swarm`, node `engine`)
