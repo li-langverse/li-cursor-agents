@@ -9,6 +9,8 @@ metadata:
     li-langverse.io/role: org-observer-supervisor
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: li-org-observer-supervisor
@@ -20,10 +22,14 @@ spec:
       serviceAccountName: li-org-observer-supervisor
       nodeSelector:
         li-langverse.io/node-pool: engine
+      tolerations:
+        - key: node.kubernetes.io/disk-pressure
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: supervisor
-          image: ghcr.io/li-langverse/li-cursor-agents:latest
-          imagePullPolicy: Always
+          image: ghcr.io/li-langverse/li-cursor-agents:org-lanes-bb41200
+          imagePullPolicy: IfNotPresent
           command: ["node", "dist/cli/org-observer-supervisor.js", "supervise"]
           envFrom:
             - configMapRef:

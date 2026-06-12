@@ -51,6 +51,9 @@ const triage = recent(readJsonl("org-issue-triage-audit.jsonl"));
 const closes = readJsonl("org-issue-close-audit.jsonl");
 const backoff = readJson("org-pr-gh-backoff.json");
 const queue = readJson("org-issue-queue.json");
+const gaActive = readJson("org-ga-active.json");
+const gaGhostStaleMs = Number(process.env.LI_ORG_GA_GHOST_STALE_MS ?? 3 * 3600 * 1000);
+const gaMinGhostBlock = Number(process.env.LI_ORG_GA_GHOST_BLOCK_MIN ?? 6);
 
 const completed = triage.filter((r) => r.status === "completed");
 const failed = triage.filter((r) => r.status === "failed");
@@ -63,6 +66,13 @@ const bashCrash = failed.filter((r) => /bash\\r|'bash\\r'/i.test(String(r.error 
 const failRate = triage.length ? failed.length / triage.length : 0;
 const open = queue?.report?.total_open ?? null;
 const needsTriage = Array.isArray(queue?.needs_triage) ? queue.needs_triage.length : null;
+
+const gaAudits = gaActive?.audits && typeof gaActive.audits === "object" ? Object.values(gaActive.audits) : [];
+const gaActiveRows = gaAudits.filter((e) => e.status === "claimed" || e.status === "running");
+const gaGhosts = gaActiveRows.filter((e) => {
+  const ts = Date.parse(String(e.updatedAt ?? ""));
+  return Number.isFinite(ts) && now - ts > gaGhostStaleMs;
+});
 
 const report = {
   ts: new Date().toISOString(),
@@ -78,6 +88,8 @@ const report = {
   open_issues: open,
   needs_triage: needsTriage,
   close_audit_total: closes.length,
+  ga_active: gaActiveRows.length,
+  ga_ghost_claims: gaGhosts.length,
 };
 
 console.log("org-swarm-stability:", JSON.stringify(report, null, 2));
@@ -101,6 +113,15 @@ if (
   triage.length >= 5
 ) {
   errors.push("all recent triage failures are GitHub rate limits — check token quota");
+}
+
+if (
+  gaActiveRows.length >= gaMinGhostBlock &&
+  gaGhosts.length === gaActiveRows.length
+) {
+  errors.push(
+    `G&A queue ghost-blocked (${gaGhosts.length} stale running/claimed — run org-ga-reconcile or restart supervisor)`,
+  );
 }
 
 if (errors.length) {

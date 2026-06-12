@@ -1,0 +1,54 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: li-org-ga-reconcile
+  namespace: li-swarm
+  labels:
+    app: li-org-ga-reconcile
+spec:
+  suspend: false
+  schedule: "*/15 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 6
+  failedJobsHistoryLimit: 12
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 86400
+      backoffLimit: 0
+      activeDeadlineSeconds: 120
+      template:
+        metadata:
+          labels:
+            app: li-org-ga-reconcile
+        spec:
+          restartPolicy: Never
+          serviceAccountName: li-org-ga-supervisor
+          nodeSelector:
+            li-langverse.io/node-pool: engine
+          containers:
+            - name: reconcile
+              image: ghcr.io/li-langverse/li-cursor-agents:latest
+              imagePullPolicy: Always
+              command:
+                - node
+                - dist/cli/org-ga-reconcile.js
+              envFrom:
+                - configMapRef:
+                    name: li-org-ga-supervisor
+              env:
+                - name: LI_ORG_GA_GHOST_FAIL_THRESHOLD
+                  value: "10"
+              resources:
+                requests:
+                  cpu: "25m"
+                  memory: "64Mi"
+                limits:
+                  cpu: "200m"
+                  memory: "128Mi"
+              volumeMounts:
+                - name: sprint-data
+                  mountPath: /app/data/goal-directed-sprints
+          volumes:
+            - name: sprint-data
+              persistentVolumeClaim:
+                claimName: li-agents-sprint-data

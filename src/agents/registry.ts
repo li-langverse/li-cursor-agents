@@ -478,6 +478,20 @@ export const AGENT_REGISTRY: AgentDefinition[] = [
     cursorSdkMode: "plan",
   },
   {
+    id: "ga_swarm_healer",
+    name: "G&A swarm healer",
+    description:
+      "Meta agent: diagnose ghost claims in org-ga-active.json, fix reconcile/supervisor/K8s scheduling in li-cursor-agents.",
+    category: "governance",
+    promptFile: "ga-swarm-healer.md",
+    skills: ["li-ecosystem-discipline", "agent-self-unblock"],
+    needsWeb: false,
+    preflightKeys: ["briefing"],
+    repoWorkflow: true,
+    guaranteedPush: true,
+    cursorSdkMode: "agent",
+  },
+  {
     id: "world_studio_builder",
     name: "World Studio builder",
     description:

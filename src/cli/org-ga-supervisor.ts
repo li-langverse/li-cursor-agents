@@ -22,5 +22,21 @@ if (cmd === "supervise" || cmd === "start") {
   process.exit(0);
 }
 
-console.error(`Usage: node dist/cli/org-ga-supervisor.js <wake|supervise>`);
+if (cmd === "reconcile") {
+  const { reconcileGaActiveWithK8sJobs, countGaGhostClaimsByAge, readGaActiveState, pendingGaCount } =
+    await import("../org-ga/org-ga-coordination.js");
+  const { isInKubernetesCluster, listGaAuditorJobs } = await import("../org-ga/org-ga-k8s-client.js");
+  if (!isInKubernetesCluster()) {
+    console.error("reconcile requires in-cluster K8s");
+    process.exit(1);
+  }
+  const jobs = await listGaAuditorJobs();
+  const before = countGaGhostClaimsByAge(readGaActiveState());
+  const result = reconcileGaActiveWithK8sJobs(jobs);
+  const after = countGaGhostClaimsByAge(readGaActiveState());
+  console.log(JSON.stringify({ before, after, pending: pendingGaCount(), ...result }, null, 2));
+  process.exit(after > 0 ? 1 : 0);
+}
+
+console.error(`Usage: node dist/cli/org-ga-supervisor.js <wake|supervise|reconcile>`);
 process.exit(1);

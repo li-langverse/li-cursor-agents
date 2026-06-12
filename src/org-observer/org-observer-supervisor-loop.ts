@@ -30,7 +30,7 @@ export async function runOrgObserverSupervisorLoop(signal?: AbortSignal): Promis
   workerConsole(
     "org-observer",
     "info",
-    `loop started interval_ms=${intervalMs} max_idle=${maxIdle === 0 ? "Infinity" : maxIdle}`,
+    `loop started interval_ms=${intervalMs} max_idle=${Number.isFinite(maxIdle) ? maxIdle : "Infinity"}`,
   );
 
   let idleCycles = 0;

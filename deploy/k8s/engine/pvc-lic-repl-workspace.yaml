@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: li-lic-repl-workspace
+  namespace: li-swarm
+  labels:
+    app: li-lic-repl
+    app.kubernetes.io/name: li-lic-repl
+    app.kubernetes.io/component: goal-directed-agent
+    li-langverse.io/sprint: lic-repl-compile-run
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: local-path

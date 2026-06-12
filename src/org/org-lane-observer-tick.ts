@@ -4,9 +4,11 @@ import { agentsPackageRoot, runAgent, shouldUseMock } from "../runner.js";
 import { workerConsole } from "../worker/worker-console.js";
 import { applyIssueFailurePolicy } from "../org-issues/org-issue-failure-policy.js";
 import { implementAuditPath } from "../org-issues/org-issue-coordination.js";
+import { countGaGhostClaimsByAge, readGaActiveState } from "../org-ga/org-ga-coordination.js";
 import { runSwarmGapIngestTick } from "../observer/gap-registry-ingest.js";
 
 const META_STAMP = "org-lane-swarm-observer-last.json";
+const GA_HEALER_STAMP = "org-ga-swarm-healer-last.json";
 
 function observerEnabled(): boolean {
   return process.env.LI_ORG_LANE_OBSERVER_DISABLE !== "1";
@@ -16,12 +18,8 @@ function metaObserverEnabled(): boolean {
   return process.env.LI_ORG_SCHEDULE_SWARM_OBSERVER === "1";
 }
 
-function metaStampPath(root = agentsPackageRoot()): string {
-  return join(root, "data", "goal-directed-sprints", META_STAMP);
-}
-
-function hoursSinceMetaRun(root: string): number {
-  const path = metaStampPath(root);
+function hoursSinceStamp(stampFile: string, root: string): number {
+  const path = join(root, "data", "goal-directed-sprints", stampFile);
   if (!existsSync(path)) return Infinity;
   try {
     const { at } = JSON.parse(readFileSync(path, "utf8")) as { at?: string };
@@ -32,12 +30,20 @@ function hoursSinceMetaRun(root: string): number {
   }
 }
 
-function recordMetaRun(root = agentsPackageRoot()): void {
+function recordStamp(stampFile: string, root = agentsPackageRoot()): void {
   writeFileSync(
-    metaStampPath(root),
+    join(root, "data", "goal-directed-sprints", stampFile),
     `${JSON.stringify({ at: new Date().toISOString() })}\n`,
     "utf8",
   );
+}
+
+function hoursSinceMetaRun(root: string): number {
+  return hoursSinceStamp(META_STAMP, root);
+}
+
+function recordMetaRun(root = agentsPackageRoot()): void {
+  recordStamp(META_STAMP, root);
 }
 
 function recentFailedImplementRuns(root = agentsPackageRoot(), windowMs = 3_600_000): number {
@@ -70,7 +76,7 @@ export interface OrgLaneObserverResult {
  * Complements the dashboard control-plane observer — no full preflight required.
  */
 export async function runOrgLaneObserverTick(
-  lane: "issue" | "pr" | "review",
+  lane: "issue" | "pr" | "review" | "ga",
 ): Promise<OrgLaneObserverResult> {
   if (!observerEnabled()) {
     return { message: "observer disabled", demoted: [], metaScheduled: false };
@@ -78,11 +84,18 @@ export async function runOrgLaneObserverTick(
 
   const root = agentsPackageRoot();
   let demoted: string[] = [];
+  let gaGhosts = 0;
   if (lane === "issue") {
     const policy = applyIssueFailurePolicy(root);
     demoted = policy.demoted;
     if (demoted.length) {
       workerConsole("org-lane-observer", "info", `demoted ${demoted.length}: ${demoted.join(", ")}`);
+    }
+  }
+  if (lane === "ga") {
+    gaGhosts = countGaGhostClaimsByAge(readGaActiveState(root));
+    if (gaGhosts > 0) {
+      workerConsole("org-lane-observer", "warn", `ga ghost claims=${gaGhosts} (reconcile may be failing)`);
     }
   }
 
@@ -95,8 +108,46 @@ export async function runOrgLaneObserverTick(
   const failStreak = recentFailedImplementRuns(root);
   const metaMinHours = Number(process.env.LI_ORG_SWARM_OBSERVER_MIN_HOURS ?? 12);
   const metaFailThreshold = Number(process.env.LI_ORG_SWARM_OBSERVER_FAIL_THRESHOLD ?? 5);
+  const gaHealerMinHours = Number(process.env.LI_ORG_GA_HEALER_MIN_HOURS ?? 12);
+  const gaGhostThreshold = Number(process.env.LI_ORG_GA_GHOST_HEALER_THRESHOLD ?? 5);
 
   if (
+    lane === "ga" &&
+    metaObserverEnabled() &&
+    !shouldUseMock(false) &&
+    gaGhosts >= gaGhostThreshold &&
+    hoursSinceStamp(GA_HEALER_STAMP, root) >= gaHealerMinHours
+  ) {
+    metaScheduled = true;
+    recordStamp(GA_HEALER_STAMP, root);
+    workerConsole(
+      "org-lane-observer",
+      "info",
+      `scheduling ga_swarm_healer (${gaGhosts} ghost claims)`,
+    );
+    try {
+      await runAgent({
+        agentId: "ga_swarm_healer",
+        cwd: root,
+        mock: false,
+        dryRun: false,
+        extraInstruction: [
+          "## G&A swarm healer trigger",
+          "",
+          `Ghost claims in org-ga-active.json: **${gaGhosts}**`,
+          "",
+          "Investigate: supervisor reconcile, K8s Job TTL, PVC org-ga-active.json, auditor scheduling.",
+          "Fix li-cursor-agents org-ga code or deploy config; do not manually delete active jobs.",
+        ].join("\n"),
+      });
+    } catch (err) {
+      workerConsole(
+        "org-lane-observer",
+        "warn",
+        `ga_swarm_healer failed: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
+  } else if (
     metaObserverEnabled() &&
     !shouldUseMock(false) &&
     failStreak >= metaFailThreshold &&
@@ -140,7 +191,8 @@ export async function runOrgLaneObserverTick(
     `lane=${lane}`,
     ingest.ok ? "gap-ingest=ok" : "gap-ingest=warn",
     demoted.length ? `demoted=${demoted.length}` : "",
-    metaScheduled ? "meta=swarm_observer" : "",
+    gaGhosts ? `ga_ghosts=${gaGhosts}` : "",
+    metaScheduled ? (lane === "ga" ? "meta=ga_swarm_healer" : "meta=swarm_observer") : "",
   ].filter(Boolean);
 
   return { message: parts.join(" "), demoted, metaScheduled };

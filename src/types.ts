@@ -45,7 +45,8 @@ export type AgentId =
   | "ga_e2e_auditor"
   | "ga_gui_auditor"
   | "ga_soc_auditor"
-  | "ga_docs_auditor";
+  | "ga_docs_auditor"
+  | "ga_swarm_healer";
 
 /** @deprecated Briefing/fixtures may still use legacy ids — resolved in registry. */
 export type LegacyAgentId =

@@ -6,6 +6,7 @@ import { agentsPackageRoot } from "../runner.js";
 import { workerConsole } from "../worker/worker-console.js";
 import { applyIssueFailurePolicy } from "../org-issues/org-issue-failure-policy.js";
 import { sprintDataDir } from "../org-issues/org-issue-coordination.js";
+import { parseMaxIdleCycles } from "../org/supervisor-idle.js";
 import { runOrgLaneObserverTick } from "../org/org-lane-observer-tick.js";
 
 export interface OrgSwarmStabilityReport {
@@ -140,8 +141,7 @@ export function orgObserverIntervalMs(): number {
 }
 
 export function orgObserverMaxIdleCycles(): number {
-  const n = Number(process.env.LI_ORG_OBSERVER_MAX_IDLE_CYCLES ?? 0);
-  return Number.isFinite(n) && n >= 0 ? n : 0;
+  return parseMaxIdleCycles(process.env.LI_ORG_OBSERVER_MAX_IDLE_CYCLES, 0);
 }
 
 export function orgObserverEnabledFlag(): boolean {

@@ -1,28 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: li-ph-ml-wave13
+  name: li-lic-repl
   namespace: li-swarm
   labels:
-    app: li-ph-ml-wave13
-    app.kubernetes.io/name: li-ph-ml-wave13
+    app: li-lic-repl
+    app.kubernetes.io/name: li-lic-repl
     app.kubernetes.io/component: goal-directed-agent
-    li-langverse.io/sprint: ph-ml-training-toy-sota
+    li-langverse.io/sprint: lic-repl-compile-run
 spec:
-  replicas: 0
+  replicas: 1
   strategy:
     type: Recreate
   selector:
     matchLabels:
-      app: li-ph-ml-wave13
+      app: li-lic-repl
   template:
     metadata:
       labels:
-        app: li-ph-ml-wave13
-        app.kubernetes.io/name: li-ph-ml-wave13
+        app: li-lic-repl
+        app.kubernetes.io/name: li-lic-repl
         app.kubernetes.io/component: goal-directed-agent
-        li-langverse.io/sprint: ph-ml-training-toy-sota
+        li-langverse.io/sprint: lic-repl-compile-run
     spec:
+      serviceAccountName: li-goal-worker
       nodeSelector:
         kubernetes.io/hostname: engine
       tolerations:
@@ -32,14 +33,14 @@ spec:
       imagePullSecrets:
         - name: ghcr-li-langverse
       containers:
-        - name: ph-ml-wave13
+        - name: lic-repl
           image: ghcr.io/li-langverse/li-cursor-agents:benchmark-oracle-llvm22
-          # benchmark-oracle-llvm22: lic-ci LLVM22+z3 + pre-baked PH-ML python deps (fast cold start).
+          # benchmark-oracle-llvm22: lic-ci LLVM22+z3 pre-baked (same as ph-ml-wave13).
           imagePullPolicy: IfNotPresent
           command: ["/bin/bash", "/scripts/entrypoint.sh"]
           envFrom:
             - configMapRef:
-                name: li-ph-ml-wave13
+                name: li-lic-repl
             - configMapRef:
                 name: li-goal-worker-runtime
           env:
@@ -74,10 +75,10 @@ spec:
                   optional: true
           resources:
             requests:
-              cpu: "1"
-              memory: "1Gi"
+              cpu: "500m"
+              memory: "768Mi"
             limits:
-              cpu: "8"
+              cpu: "4"
               memory: "3Gi"
           volumeMounts:
             - name: workspace
@@ -90,10 +91,10 @@ spec:
       volumes:
         - name: workspace
           persistentVolumeClaim:
-            claimName: li-ph-ml-wave13-workspace
+            claimName: li-lic-repl-workspace
         - name: entrypoint
           configMap:
-            name: li-ph-ml-wave13-entrypoint
+            name: li-lic-repl-entrypoint
             defaultMode: 0755
         - name: git-auth
           configMap:

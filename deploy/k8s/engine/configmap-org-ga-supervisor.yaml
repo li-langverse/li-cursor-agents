@@ -18,5 +18,8 @@ data:
   LI_ORG_GA_AUDITOR_ARCH: "amd64"
   LI_ORG_GA_LANES: "unit,integration,e2e,gui-visual,soc,documentation"
   LI_ORG_GA_REPOS_FILE: "/workspace/roadmap/.github/li-org-repos.txt"
+  LI_ORG_GA_STALE_CLAIM_MS: "7200000"
+  LI_ORG_GA_ORPHAN_CLAIM_MS: "300000"
+  LI_ORG_SCHEDULE_SWARM_OBSERVER: "1"
   LI_CONTROL_PLANE_STORE: "disk"
   NODE_ENV: "production"
