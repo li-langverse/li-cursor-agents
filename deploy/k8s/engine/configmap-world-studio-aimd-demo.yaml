@@ -17,12 +17,13 @@ data:
   LI_WORLD_STUDIO_AIMD_DEMO_ALWAYS_ON: "1"
   LI_WORLD_STUDIO_AIMD_DEMO_LOOP_SLEEP_SEC: "60"
 
-  LI_WORLD_STUDIO_AIMD_DEMO_GOAL_FILE: "data/goal-directed-sprints/world-studio-aimd-gpu-pilot.md"
+  LI_WORLD_STUDIO_AIMD_DEMO_GOAL_FILE: "data/goal-directed-sprints/world-studio-aimd-gpu-production.md"
   LI_WORLD_STUDIO_AIMD_DEMO_WORKFLOW_REPO: "studio"
   LI_WORLD_STUDIO_AIMD_DEMO_AGENT: "world_studio_builder"
 
-  LI_WORLD_STUDIO_AIMD_DEMO_STUDIO_BRANCH: "main"
-  LI_WORLD_STUDIO_AIMD_DEMO_LIC_BRANCH: "main"
+  LI_WORLD_STUDIO_AIMD_DEMO_STUDIO_BRANCH: "cursor/world-studio-aimd-gpu-production"
+  LI_WORLD_STUDIO_AIMD_DEMO_LIC_BRANCH: "cursor/world-studio-aimd-gpu-production"
+  LI_WORLD_STUDIO_AIMD_DEMO_REAL_AIMD_COMPLETION: "1"
 
   LI_WORLD_STUDIO_AIMD_DEMO_STUDIO_ROOT: "/workspace/studio"
   LI_WORLD_STUDIO_AIMD_DEMO_LIC_ROOT: "/workspace/lic"
@@ -34,7 +35,7 @@ data:
   LI_GOAL_SELF_UNBLOCK: "1"
   LI_REPO_WORKFLOW_TRACK_REMOTE: "1"
   LI_GOAL_STUCK_THRESHOLD: "5"
-  LI_GOAL_SCALE_DOWN_ON_COMPLETE: "0"
+  LI_GOAL_SCALE_DOWN_ON_COMPLETE: "1"
   LI_GOAL_DEPLOYMENT_NAME: "li-world-studio-aimd-demo"
   LI_GOAL_NAMESPACE: "li-swarm"
 
