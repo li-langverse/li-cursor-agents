@@ -84,6 +84,26 @@ data:
       rm -rf /var/lib/apt/lists/*
     }
 
+    ensure_llvm22() {
+      if [[ -x /usr/bin/clang-22 ]]; then
+        export LLVM_DIR="${LLVM_DIR:-/usr/lib/llvm-22/lib/cmake/llvm}"
+        export CC="${CC:-clang-22}"
+        export CXX="${CXX:-clang++-22}"
+        return 0
+      fi
+      if [[ -f "${LIC_ROOT}/scripts/ci-install-llvm.sh" ]]; then
+        echo "lic-repl-entrypoint: installing LLVM 22 via ci-install-llvm.sh"
+        chmod +x "${LIC_ROOT}/scripts/ci-install-llvm.sh"
+        sudo LI_LLVM_MAJOR=22 bash "${LIC_ROOT}/scripts/ci-install-llvm.sh"
+        export LLVM_DIR="${LLVM_DIR:-/usr/lib/llvm-22/lib/cmake/llvm}"
+        export CC="${CC:-clang-22}"
+        export CXX="${CXX:-clang++-22}"
+        return 0
+      fi
+      echo "lic-repl-entrypoint: WARN clang-22 missing and no ci-install-llvm.sh" >&2
+      return 1
+    }
+
     ensure_lic_built() {
       # shellcheck source=lib/lic-bin-select.sh
       source "${LIC_ROOT}/scripts/lib/lic-bin-select.sh"
@@ -97,6 +117,7 @@ data:
           return 0
         fi
       fi
+      ensure_llvm22 || true
       echo "lic-repl-entrypoint: building lic (LLVM 22 in-container)"
       if (cd "$LIC_ROOT" && bash scripts/build.sh); then
         if lic_rel="$(li_pick_lic_bin "$LIC_ROOT")"; then
@@ -113,6 +134,7 @@ data:
     }
 
     sync_lic_repo
+    ensure_llvm22 || true
     ensure_lic_runtime_deps
     ensure_lic_built
     export LI_PROOF_EXPLORER_LIC_ROOT="$LIC_ROOT" LI_CURSOR_AGENTS_ROOT="$AGENTS_ROOT" LIC_ROOT="$LIC_ROOT" LIC="${LIC:-}"

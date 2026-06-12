@@ -34,7 +34,8 @@ spec:
         - name: ghcr-li-langverse
       containers:
         - name: lic-repl
-          image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
+          image: ghcr.io/li-langverse/li-cursor-agents:benchmark-oracle-llvm22
+          # benchmark-oracle-llvm22: lic-ci LLVM22+z3 pre-baked (same as ph-ml-wave13).
           imagePullPolicy: IfNotPresent
           command: ["/bin/bash", "/scripts/entrypoint.sh"]
           envFrom:
