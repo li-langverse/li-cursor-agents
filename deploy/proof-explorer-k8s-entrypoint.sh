@@ -36,11 +36,23 @@ if [[ -f /config/k8s-goal-loop-common.sh ]]; then
 fi
 
 if [[ -f /config/ensure-llvm22-toolchain.sh ]]; then
+  set +e
   # shellcheck source=/dev/null
   source /config/ensure-llvm22-toolchain.sh
+  _tc=$?
+  set -e
+  if [[ "$_tc" -ne 0 ]]; then
+    echo "proof-explorer-k8s-entrypoint: WARN ensure-toolchain exit $_tc" >&2
+  fi
 elif [[ -f "${AGENTS_ROOT}/deploy/scripts/ensure-llvm22-toolchain.sh" ]]; then
+  set +e
   # shellcheck source=/dev/null
   source "${AGENTS_ROOT}/deploy/scripts/ensure-llvm22-toolchain.sh"
+  _tc=$?
+  set -e
+  if [[ "$_tc" -ne 0 ]]; then
+    echo "proof-explorer-k8s-entrypoint: WARN ensure-toolchain exit $_tc" >&2
+  fi
 fi
 
 if [[ -n "${LI_PROOF_EXPLORER_SHARD_INDEX:-}" && -n "${LI_PROOF_EXPLORER_AGENT_STAGGER_SEC:-}" ]]; then

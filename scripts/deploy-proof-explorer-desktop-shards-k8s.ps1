@@ -240,7 +240,7 @@ $gitSyncScript
       containers:
         - name: proof-explorer
           image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           command: ["/bin/bash", "/config/entrypoint.sh"]
           envFrom:
             - configMapRef:
@@ -344,7 +344,7 @@ $tolerationYaml
       containers:
         - name: unblocker
           image: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           command: ["python3", "/config/proof-explorer-shard-unblocker.py"]
           env:
             - name: LI_GOAL_NAMESPACE
