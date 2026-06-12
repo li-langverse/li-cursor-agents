@@ -21,8 +21,8 @@ data:
   LI_WORLD_STUDIO_AIMD_DEMO_WORKFLOW_REPO: "studio"
   LI_WORLD_STUDIO_AIMD_DEMO_AGENT: "world_studio_builder"
 
-  LI_WORLD_STUDIO_AIMD_DEMO_STUDIO_BRANCH: "cursor/world-studio-aimd-gpu-production"
-  LI_WORLD_STUDIO_AIMD_DEMO_LIC_BRANCH: "cursor/world-studio-aimd-gpu-production"
+  LI_WORLD_STUDIO_AIMD_DEMO_STUDIO_BRANCH: "main"
+  LI_WORLD_STUDIO_AIMD_DEMO_LIC_BRANCH: "main"
   LI_WORLD_STUDIO_AIMD_DEMO_REAL_AIMD_COMPLETION: "1"
 
   LI_WORLD_STUDIO_AIMD_DEMO_STUDIO_ROOT: "/workspace/studio"
