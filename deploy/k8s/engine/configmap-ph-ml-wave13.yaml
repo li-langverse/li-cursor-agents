@@ -7,9 +7,9 @@ metadata:
     app: li-ph-ml-wave13
     app.kubernetes.io/name: li-ph-ml-wave13
     app.kubernetes.io/component: goal-directed-agent
-    li-langverse.io/sprint: ph-ml-li-array-perf-ij
+    li-langverse.io/sprint: ph-ml-training-toy-sota
   annotations:
-    li-langverse.io/goal-status: ph-ml-li-array-perf-ij-complete
+    li-langverse.io/goal-status: ph-ml-training-toy-sota-phase-k
     li-langverse.io/gate-honesty: >-
       PH_ML_REQUIRE_SB3, PH_ML_REQUIRE_RAY, PH_ML_REQUIRE_GPU are opt-in only.
       Do NOT set them in this ConfigMap unless you require executed:true on competitor
@@ -18,13 +18,13 @@ data:
   LI_PROOF_EXPLORER_ALWAYS_ON: "1"
   LI_PROOF_EXPLORER_PHASE_HANDOFF: "0"
   LI_PROOF_EXPLORER_EXIT_ON_COMPLETE: "1"
-  LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/ph-ml-li-array-perf-ij.md"
+  LI_PROOF_EXPLORER_GOAL_FILE: "data/goal-directed-sprints/ph-ml-training-toy-sota.md"
   LI_PROOF_EXPLORER_LIC_ROOT: "/workspace/lic"
   BENCHMARKS_ROOT: "/workspace/benchmarks"
   LI_CURSOR_AGENTS_ROOT: "/app"
   LI_PROOF_EXPLORER_WORKFLOW_REPO: "lic"
   LI_PROOF_EXPLORER_BRANCH: "main"
-  LI_PROOF_EXPLORER_BRANCH_FALLBACKS: "main,cursor/ph-ml-li-array-perf-ij,cursor/ph-ml-li-array-perf-h,cursor/ph-ml-li-array"
+  LI_PROOF_EXPLORER_BRANCH_FALLBACKS: "main,cursor/ph-ml-training-toy-sota,cursor/ph-ml-li-array-perf-ij,cursor/ph-ml-li-array-perf-h"
   LI_GIT_HOST: "gitlab.lilangverse.xyz"
   LI_GIT_INTERNAL_SVC: "gitlab.gitlab.svc"
   LI_GIT_SSL_VERIFY: "0"
