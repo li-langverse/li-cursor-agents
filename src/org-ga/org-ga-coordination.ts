@@ -1,8 +1,31 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { agentsPackageRoot } from "../runner.js";
-import { defaultGaLanes, gaRef } from "./org-ga-supervisor-config.js";
+import { reconcileOrphanedK8sJobs } from "../org/k8s-job-reconcile.js";
+import {
+  defaultGaLanes,
+  gaLaneAgentId,
+  gaRef,
+  orgGaOrphanClaimGraceMs,
+  orgGaStaleClaimMaxAgeMs,
+  type GaLaneId,
+} from "./org-ga-supervisor-config.js";
 import { loadOrgRepoList } from "./org-ga-repo-queue.js";
+
+export interface GaReconcileJobSummary {
+  name: string;
+  gaRef: string;
+  active: boolean;
+  succeeded: boolean;
+  failed: boolean;
+}
+
+export interface GaReconcileResult {
+  terminalUpdated: number;
+  orphanedJobs: number;
+  staleByAge: number;
+  orphanClaims: number;
+}
 
 export type GaActiveStatus = "claimed" | "running" | "completed" | "failed";
 
@@ -161,4 +184,108 @@ export function pendingGaCount(root = agentsPackageRoot()): number {
   const lanes = defaultGaLanes().length;
   const active = countActiveGaWorkers(readGaActiveState(root));
   return Math.max(0, repos * lanes - active);
+}
+
+function entryAgeMs(entry: GaActiveEntry, now = Date.now()): number {
+  const ts = Date.parse(entry.updatedAt || "");
+  return Number.isFinite(ts) ? now - ts : Infinity;
+}
+
+function reconcileAppendAudit(
+  entry: GaActiveEntry,
+  status: "completed" | "failed",
+  detail: string,
+  root: string,
+): void {
+  appendGaAudit(
+    {
+      gaRef: entry.gaRef,
+      repo: entry.repo,
+      lane: entry.lane,
+      workerId: entry.workerId,
+      status,
+      agentId: gaLaneAgentId(entry.lane as GaLaneId),
+      stub: true,
+      agentStatus: status === "completed" ? "finished" : "error",
+      error: status === "failed" ? detail : undefined,
+      outputTail: detail.slice(0, 500),
+    },
+    root,
+  );
+}
+
+/** Count claimed/running rows older than stale threshold (PVC-only health probe). */
+export function countGaGhostClaimsByAge(
+  state = readGaActiveState(),
+  staleMs = orgGaStaleClaimMaxAgeMs(),
+): number {
+  const now = Date.now();
+  return Object.values(state.audits).filter((e) => {
+    if (e.status !== "claimed" && e.status !== "running") return false;
+    return entryAgeMs(e, now) > staleMs;
+  }).length;
+}
+
+/**
+ * Sync org-ga-active.json with Batch Job status — terminal updates, orphaned jobs, stale claims.
+ * Mirrors org-issue / org-pr supervisor reconcile (see org/k8s-job-reconcile.ts).
+ */
+export function reconcileGaActiveWithK8sJobs(
+  jobs: GaReconcileJobSummary[],
+  root = agentsPackageRoot(),
+): GaReconcileResult {
+  const result: GaReconcileResult = {
+    terminalUpdated: 0,
+    orphanedJobs: 0,
+    staleByAge: 0,
+    orphanClaims: 0,
+  };
+  const state = readGaActiveState(root);
+  const jobByName = new Map(jobs.map((j) => [j.name, j]));
+  const activeJobRefs = new Set(jobs.filter((j) => j.active).map((j) => j.gaRef));
+  const staleMs = orgGaStaleClaimMaxAgeMs();
+  const orphanGraceMs = orgGaOrphanClaimGraceMs();
+  const now = Date.now();
+
+  for (const job of jobs) {
+    if (!job.succeeded && !job.failed) continue;
+    const entry = Object.values(state.audits).find((e) => e.jobName === job.name);
+    if (!entry || (entry.status !== "claimed" && entry.status !== "running")) continue;
+    const status = job.succeeded ? "completed" : "failed";
+    const detail = job.succeeded ? "job succeeded" : "job failed";
+    updateGaAuditStatus(entry.gaRef, status, detail, root);
+    reconcileAppendAudit(entry, status, detail, root);
+    result.terminalUpdated += 1;
+  }
+
+  result.orphanedJobs = reconcileOrphanedK8sJobs(state.audits, jobs, (ref, entry) => {
+    updateGaAuditStatus(ref, "failed", "job missing (reconciled)", root);
+    reconcileAppendAudit(entry, "failed", "job missing (reconciled)", root);
+  });
+
+  const refreshed = readGaActiveState(root);
+  for (const [ref, entry] of Object.entries(refreshed.audits)) {
+    if (entry.status !== "claimed" && entry.status !== "running") continue;
+    const age = entryAgeMs(entry, now);
+
+    if (!entry.jobName && age > orphanGraceMs) {
+      updateGaAuditStatus(ref, "failed", "orphan claim without job (reconciled)", root);
+      reconcileAppendAudit(entry, "failed", "orphan claim without job (reconciled)", root);
+      result.orphanClaims += 1;
+      continue;
+    }
+
+    if (entry.jobName && !jobByName.has(entry.jobName)) continue;
+
+    const jobAlive = entry.jobName ? (jobByName.get(entry.jobName)?.active ?? false) : false;
+    const refActive = activeJobRefs.has(ref);
+    if (!jobAlive && !refActive && age > staleMs) {
+      updateGaAuditStatus(ref, "failed", "stale claim (reconciled by age)", root);
+      reconcileAppendAudit(entry, "failed", "stale claim (reconciled by age)", root);
+      result.staleByAge += 1;
+    }
+  }
+
+  pruneTerminalActiveEntries(root);
+  return result;
 }

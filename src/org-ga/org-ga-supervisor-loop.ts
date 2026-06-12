@@ -4,6 +4,7 @@ import { saveOrgSupervisorCycle } from "../db/org-supervisor-cycle.js";
 import { idleLimitReached } from "../org/supervisor-idle.js";
 import { workerConsole } from "../worker/worker-console.js";
 import { agentsPackageRoot } from "../runner.js";
+import { runOrgLaneObserverTick } from "../org/org-lane-observer-tick.js";
 import {
   activeClaimsForDb,
   activeGaRefs,
@@ -11,6 +12,7 @@ import {
   countActiveGaWorkers,
   pendingGaCount,
   readGaActiveState,
+  reconcileGaActiveWithK8sJobs,
   setGaCursor,
   updateGaAuditStatus,
   updateGaJobName,
@@ -55,30 +57,29 @@ export async function orgGaSupervisorTick(): Promise<GaSupervisorTickResult> {
 
   const repos = loadOrgRepoList();
   const lanes = defaultGaLanes();
-  const pendingCount = pendingGaCount(root);
-  const desiredWorkers = computeDesiredGaWorkers(pendingCount, orgGaSupervisorMaxWorkers());
 
-  let state = readGaActiveState(root);
-  let activeWorkers = countActiveGaWorkers(state);
+  let activeWorkers = countActiveGaWorkers(readGaActiveState(root));
 
   if (isInKubernetesCluster()) {
     const jobs = await listGaAuditorJobs();
     activeWorkers = jobs.filter((j) => j.active).length;
-    for (const job of jobs) {
-      if (job.succeeded || job.failed) {
-        const entry = Object.values(state.audits).find((e) => e.jobName === job.name);
-        if (entry && (entry.status === "claimed" || entry.status === "running")) {
-          updateGaAuditStatus(
-            entry.gaRef,
-            job.succeeded ? "completed" : "failed",
-            job.succeeded ? "job succeeded" : "job failed",
-            root,
-          );
-        }
-      }
+    const reconciled = reconcileGaActiveWithK8sJobs(jobs, root);
+    const total =
+      reconciled.terminalUpdated +
+      reconciled.orphanedJobs +
+      reconciled.staleByAge +
+      reconciled.orphanClaims;
+    if (total > 0) {
+      workerConsole(
+        "org-ga-supervisor",
+        "info",
+        `reconciled ga queue: terminal=${reconciled.terminalUpdated} orphaned=${reconciled.orphanedJobs} stale=${reconciled.staleByAge} no_job=${reconciled.orphanClaims}`,
+      );
     }
-    state = readGaActiveState(root);
   }
+
+  const pendingCount = pendingGaCount(root);
+  const desiredWorkers = computeDesiredGaWorkers(pendingCount, orgGaSupervisorMaxWorkers());
 
   const slots = Math.max(0, desiredWorkers - activeWorkers);
   const activeSet = activeGaRefs(readGaActiveState(root));
@@ -135,6 +136,10 @@ export async function orgGaSupervisorTick(): Promise<GaSupervisorTickResult> {
     active_claims: activeClaimsForDb(latest),
   }).catch((err) => {
     workerConsole("org-ga-supervisor", "warn", `db sync failed: ${String(err)}`);
+  });
+
+  runOrgLaneObserverTick("ga").catch((err) => {
+    workerConsole("org-ga-supervisor", "warn", `ga observer: ${String(err)}`);
   });
 
   return { pendingCount, desiredWorkers, activeWorkers, spawned, message: msg };

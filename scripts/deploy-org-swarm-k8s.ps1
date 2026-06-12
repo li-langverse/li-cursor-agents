@@ -160,6 +160,7 @@ $manifests = @(
     "cronjob-org-research-supervisor-wake.yaml",
     "cronjob-org-implement-goals-supervisor-wake.yaml",
     "cronjob-org-observer-supervisor-wake.yaml",
+    "cronjob-org-ga-reconcile.yaml",
     "cronjob-org-swarm-stability-check.yaml",
     "service-org-supervisor-dashboard.yaml"
 )

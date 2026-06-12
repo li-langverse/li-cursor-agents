@@ -59,6 +59,7 @@
     "agents:org-ga-supervisor": "npm run build && node dist/cli/org-ga-supervisor.js supervise",
     "agents:org-ga-supervisor-wake": "npm run build && node dist/cli/org-ga-supervisor.js wake",
     "agents:org-ga-worker": "npm run build && node dist/cli/org-ga-worker.js",
+    "agents:org-ga-reconcile": "npm run build && node dist/cli/org-ga-reconcile.js",
     "agents:proof-explorer-worker": "npm run build && node dist/cli/proof-explorer-worker.js start",
     "agents:proof-explorer-worker-once": "npm run build && node dist/cli/proof-explorer-worker.js once",
     "research-goals:sync": "npm run build && node dist/cli/sync-research-goals-from-factory.js",

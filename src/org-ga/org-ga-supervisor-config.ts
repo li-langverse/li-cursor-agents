@@ -113,3 +113,15 @@ export function computeDesiredGaWorkers(
   if (pendingCount <= 0) return 0;
   return Math.min(maxWorkers, Math.max(1, Math.ceil(pendingCount / 4)));
 }
+
+/** Max age for claimed/running rows with no live K8s Job before auto-fail (default 2h). */
+export function orgGaStaleClaimMaxAgeMs(): number {
+  const n = Number(process.env.LI_ORG_GA_STALE_CLAIM_MS ?? 7_200_000);
+  return Number.isFinite(n) && n >= 60_000 ? n : 7_200_000;
+}
+
+/** Claim without jobName is abandoned after this grace (default 5m). */
+export function orgGaOrphanClaimGraceMs(): number {
+  const n = Number(process.env.LI_ORG_GA_ORPHAN_CLAIM_MS ?? 300_000);
+  return Number.isFinite(n) && n >= 30_000 ? n : 300_000;
+}
