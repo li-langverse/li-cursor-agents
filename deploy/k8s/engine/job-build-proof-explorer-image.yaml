@@ -1,4 +1,4 @@
-# Clone li-cursor-agents, build with Podman, push to GHCR or sideload into k3s on engine.
+# Clone li-cursor-agents, overlay local toolchain fixes, build proof-explorer-llvm22, sideload k3s + push GHCR.
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -27,6 +27,9 @@ spec:
           emptyDir: {}
         - name: podman-storage
           emptyDir: {}
+        - name: overlays
+          configMap:
+            name: li-proof-explorer-build-overlays
         - name: k3s-bin
           hostPath:
             path: /var/lib/rancher/k3s/data/current/bin
@@ -39,22 +42,15 @@ spec:
         - name: git-clone
           image: alpine/git:latest
           env:
-            - name: GH_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: li-agents-secrets
-                  key: GH_TOKEN
-                  optional: true
             - name: GITLAB_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: li-agents-secrets
                   key: GITLAB_TOKEN
-                  optional: true
             - name: GIT_REF
               value: "main"
             - name: GIT_REPO
-              value: "https://gitlab.lilangverse.xyz/li-langverse/li-cursor-agents.git"
+              value: "http://gitlab.gitlab.svc/li-langverse/li-cursor-agents.git"
           command:
             - sh
             - -lc
@@ -62,16 +58,20 @@ spec:
               set -eu
               ref="${GIT_REF:-main}"
               dest=/workspace/li-cursor-agents
-              tok="${GITLAB_TOKEN:-$GH_TOKEN}"
-              prefix="oauth2"
-              if [ -z "${GITLAB_TOKEN:-}" ]; then prefix="x-access-token"; fi
-              url="${GIT_REPO/https:\/\//https://${prefix}:${tok}@}"
+              tok="${GITLAB_TOKEN}"
+              url="http://oauth2:${tok}@${GIT_REPO#http://}"
               git clone --depth 1 --branch "$ref" "$url" "$dest" \
                 || git clone --depth 1 "$url" "$dest"
+              cp /overlays/deploy__scripts__ensure-llvm22-toolchain.sh "$dest/deploy/scripts/ensure-llvm22-toolchain.sh"
+              cp /overlays/deploy__proof-explorer-k8s-entrypoint.sh "$dest/deploy/proof-explorer-k8s-entrypoint.sh"
+              cp /overlays/deploy__Dockerfile.proof-explorer "$dest/deploy/Dockerfile.proof-explorer"
+              chmod +x "$dest/deploy/scripts/ensure-llvm22-toolchain.sh" "$dest/deploy/proof-explorer-k8s-entrypoint.sh"
               test -f "$dest/deploy/Dockerfile.proof-explorer"
           volumeMounts:
             - name: workspace
               mountPath: /workspace
+            - name: overlays
+              mountPath: /overlays
       containers:
         - name: podman
           image: quay.io/podman/stable:v5.4.2
@@ -83,17 +83,10 @@ spec:
                 secretKeyRef:
                   name: li-agents-secrets
                   key: GH_TOKEN
-                  optional: true
-            - name: GITLAB_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: li-agents-secrets
-                  key: GITLAB_TOKEN
-                  optional: true
             - name: IMAGE
-              value: ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22
+              value: "ghcr.io/li-langverse/li-cursor-agents:proof-explorer-llvm22"
             - name: GHCR_USER
-              value: cap-jmk-real
+              value: li-langverse
             - name: STORAGE_DRIVER
               value: vfs
             - name: BUILDAH_ISOLATION
@@ -104,21 +97,21 @@ spec:
             - |
               set -euo pipefail
               cd /workspace/li-cursor-agents
-              echo "$GH_TOKEN" | podman login ghcr.io -u "$GHCR_USER" --password-stdin || true
+              echo "$GH_TOKEN" | podman login ghcr.io -u "$GHCR_USER" --password-stdin
+              echo "==> pull lic-ci base"
               podman pull ghcr.io/li-langverse/lic-ci:debian12-llvm22
+              echo "==> build $IMAGE"
               podman build -f deploy/Dockerfile.proof-explorer \
                 --build-arg LI_CI_IMAGE=ghcr.io/li-langverse/lic-ci:debian12-llvm22 \
                 -t "$IMAGE" .
-              echo "sideloading into k3s containerd before ghcr push"
+              podman run --rm "$IMAGE" clang-22 --version | head -1
+              echo "==> sideload into k3s containerd"
               tar=/tmp/proof-explorer-image.tar
               podman save -o "$tar" "$IMAGE"
               /k3s-bin/ctr --address /run/k3s/containerd/containerd.sock -n k8s.io images import "$tar"
-              echo "imported into k3s"
-              if podman push "$IMAGE"; then
-                echo "pushed to ghcr.io"
-              else
-                echo "WARN: ghcr push failed; k3s import already done" >&2
-              fi
+              echo "==> push to ghcr.io (required for blackpearl workers)"
+              podman push "$IMAGE"
+              echo "pushed to ghcr.io"
           volumeMounts:
             - name: workspace
               mountPath: /workspace
